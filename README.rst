@@ -1,4 +1,4 @@
-selenium-wire
+Selenium Wire
 =============
 
 
