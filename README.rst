@@ -13,7 +13,7 @@ selenium-wire
         :alt: Documentation Status
 
 
-Extends the Selenium Python bindings to give you the ability to inspect the requests made by the browser.
+Extends the Selenium Python bindings giving you the ability to inspect requests made by the browser.
 
 
 Features
