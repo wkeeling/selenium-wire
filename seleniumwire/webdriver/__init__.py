@@ -1,7 +1,2 @@
-from selenium.webdriver import Firefox as _Firefox
+from .browser import Firefox
 
-from .request import RequestMixin
-
-
-class Firefox(RequestMixin, _Firefox):
-    pass
