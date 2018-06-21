@@ -51,9 +51,9 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
     certdir = join_with_script_dir('certs/')
     timeout = 5
     lock = threading.Lock()
+    admin_path = 'http://proxy2'
 
-    def __init__(self, *args, admin_path='http://proxy2', **kwargs):
-        self._admin_path = admin_path
+    def __init__(self, *args, **kwargs):
         self.tls = threading.local()
         self.tls.conns = {}
 
@@ -124,7 +124,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 other.sendall(data)
 
     def do_GET(self):
-        if self.path.startswith(self._admin_path):
+        if self.path.startswith(self.admin_path):
             self.admin_handler()
             return
 
