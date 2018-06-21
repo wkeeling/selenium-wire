@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
-"""
-This code is based on proxy2 from the project https://github.com/inaz2/proxy2
-"""
+
+#
+#
+# This code is from the project https://github.com/inaz2/proxy2, with some
+# minor modifications.
+#
+#
+
 import gzip
 import html
 import http.client
@@ -57,7 +62,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         self.tls = threading.local()
         self.tls.conns = {}
 
-        BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def log_error(self, format_, *args):
         # suppress "Request timed out: timeout('timed out',)"
