@@ -3,6 +3,7 @@
 This code is based on proxy2 from the project https://github.com/inaz2/proxy2
 """
 import gzip
+import html
 import http.client
 import json
 import os
@@ -51,21 +52,23 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
     timeout = 5
     lock = threading.Lock()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, admin_path='http://proxy2', **kwargs):
+        self._admin_path = admin_path
         self.tls = threading.local()
         self.tls.conns = {}
 
         BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
 
-    def log_error(self, format, *args):
-        # surpress "Request timed out: timeout('timed out',)"
+    def log_error(self, format_, *args):
+        # suppress "Request timed out: timeout('timed out',)"
         if isinstance(args[0], socket.timeout):
             return
 
-        self.log_message(format, *args)
+        self.log_message(format_, *args)
 
     def do_CONNECT(self):
-        if os.path.isfile(self.cakey) and os.path.isfile(self.cacert) and os.path.isfile(self.certkey) and os.path.isdir(self.certdir):
+        if os.path.isfile(self.cakey) and os.path.isfile(self.cacert) and os.path.isfile(self.certkey) \
+                and os.path.isdir(self.certdir):
             self.connect_intercept()
         else:
             self.connect_relay()
@@ -78,7 +81,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             if not os.path.isfile(certpath):
                 epoch = "%d" % (time.time() * 1000)
                 p1 = Popen(["openssl", "req", "-new", "-key", self.certkey, "-subj", "/CN=%s" % hostname], stdout=PIPE)
-                p2 = Popen(["openssl", "x509", "-req", "-days", "3650", "-CA", self.cacert, "-CAkey", self.cakey, "-set_serial", epoch, "-out", certpath], stdin=p1.stdout, stderr=PIPE)
+                p2 = Popen(["openssl", "x509", "-req", "-days", "3650", "-CA", self.cacert, "-CAkey", self.cakey,
+                            "-set_serial", epoch, "-out", certpath], stdin=p1.stdout, stderr=PIPE)
                 p2.communicate()
 
         self.wfile.write("%s %d %s\r\n" % (self.protocol_version, 200, 'Connection Established'))
@@ -99,7 +103,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         address[1] = int(address[1]) or 443
         try:
             s = socket.create_connection(address, timeout=self.timeout)
-        except Exception as e:
+        except Exception:
             self.send_error(502)
             return
         self.send_response(200, 'Connection Established')
@@ -120,8 +124,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 other.sendall(data)
 
     def do_GET(self):
-        if self.path == 'http://proxy2.test/':
-            self.send_cacert()
+        if self.path.startswith(self._admin_path):
+            self.admin_handler()
             return
 
         req = self
@@ -149,8 +153,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             req.headers['Host'] = netloc
         setattr(req, 'headers', self.filter_headers(req.headers))
 
+        origin = (scheme, netloc)
         try:
-            origin = (scheme, netloc)
             if origin not in self.tls.conns:
                 if scheme == 'https':
                     self.tls.conns[origin] = http.client.HTTPSConnection(netloc, timeout=self.timeout)
@@ -174,7 +178,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 return
 
             res_body = res.read()
-        except Exception as e:
+        except Exception:
             if origin in self.tls.conns:
                 del self.tls.conns[origin]
             self.send_error(502)
@@ -231,7 +235,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
     def filter_headers(self, headers):
         # http://tools.ietf.org/html/rfc2616#section-13.5.1
-        hop_by_hop = ('connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailers', 'transfer-encoding', 'upgrade')
+        hop_by_hop = ('connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailers',
+                      'transfer-encoding', 'upgrade')
         for k in hop_by_hop:
             del headers[k]
 
@@ -360,7 +365,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 m = re.search(r'<title[^>]*>\s*([^<]+?)\s*</title>', res_body, re.I)
                 if m:
                     h = HTMLParser()
-                    print(with_color(32, "==== HTML TITLE ====\n%s\n" % h.unescape(m.group(1))))
+                    print(with_color(32, "==== HTML TITLE ====\n%s\n" % html.unescape(m.group(1))))
             elif content_type.startswith('text/') and len(res_body) < 1024:
                 res_body_text = res_body
 
@@ -376,16 +381,20 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
     def save_handler(self, req, req_body, res, res_body):
         self.print_info(req, req_body, res, res_body)
 
+    def admin_handler(self):
+        if self.path == 'http://proxy2.test/':
+            self.send_cacert()
 
-def test(HandlerClass=ProxyRequestHandler, ServerClass=ThreadingHTTPServer, protocol="HTTP/1.1"):
+
+def test(handler_class=ProxyRequestHandler, server_class=ThreadingHTTPServer, protocol="HTTP/1.1"):
     if sys.argv[1:]:
         port = int(sys.argv[1])
     else:
         port = 8080
     server_address = ('::1', port)
 
-    HandlerClass.protocol_version = protocol
-    httpd = ServerClass(server_address, HandlerClass)
+    handler_class.protocol_version = protocol
+    httpd = server_class(server_address, handler_class)
 
     sa = httpd.socket.getsockname()
     print("Serving HTTP Proxy on", sa[0], "port", sa[1], "...")
