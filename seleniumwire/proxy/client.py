@@ -1,7 +1,7 @@
 import http.client
 import threading
 
-from .handler import admin_path, CaptureRequestHandler
+from .handler import ADMIN_PATH, CaptureRequestHandler
 from .proxy2 import ThreadingHTTPServer
 
 
@@ -9,7 +9,7 @@ class AdministrationClient:
 
     def __init__(self):
         self._proxy = None
-        self._proxy_host = ''
+        self._proxy_host = 'localhost'
         self._proxy_port = 0
 
     def create_proxy(self):
@@ -22,8 +22,8 @@ class AdministrationClient:
         t.daemon = True
         t.start()
 
-        sock_name = self._proxy.socket.getsockname()
-        self._proxy_host, self._proxy_port = sock_name[0], sock_name[1]
+        # self._proxy_host = self._proxy.socket.gethostname()
+        self._proxy_port = self._proxy.socket.getsockname()[1]
 
         return self._proxy_host, self._proxy_port
 
@@ -32,13 +32,12 @@ class AdministrationClient:
 
     def start_capture(self):
         conn = http.client.HTTPConnection(self._proxy_host, self._proxy_port)
-        conn.request('GET', '{}/start_capture'.format(admin_path))
+        conn.request('GET', '{}/start_capture'.format(ADMIN_PATH))
         response = conn.getresponse()
+        conn.close()
 
         if response.status != 200:
             raise ProxyException('Proxy returned status code {} for start_capture'.format(response.status))
-
-        conn.close()
 
 
 class ProxyException(Exception):
