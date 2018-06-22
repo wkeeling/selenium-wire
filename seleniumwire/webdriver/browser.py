@@ -1,7 +1,7 @@
 from selenium.webdriver import Firefox as _Firefox
 
-from .request import RequestMixin
+from .request import InspectRequestsMixin
 
 
-class Firefox(RequestMixin, _Firefox):
+class Firefox(InspectRequestsMixin, _Firefox):
     pass

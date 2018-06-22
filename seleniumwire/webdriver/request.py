@@ -1,11 +1,11 @@
 from seleniumwire.proxy import client
 
 
-class RequestMixin:
-    """Mixin class that provides the capture and manipulation of browser reqeusts."""
+class InspectRequestsMixin:
+    """Mixin class that provides functions to capture and inspect browser requests."""
 
     def capture_requests(self):
-        client.capture_requests()
+        client.start_capture()
 
     def end_capture_requests(self):
         pass
@@ -24,3 +24,8 @@ class RequestMixin:
     def header_overrides(self, headers):
         pass
 
+    def _create_proxy(self):
+        return client.create_proxy()
+
+    def _destroy_proxy(self):
+        client.destroy_proxy()

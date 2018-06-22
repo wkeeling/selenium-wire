@@ -1,14 +1,14 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from seleniumwire.webdriver.request import RequestMixin
+from seleniumwire.webdriver.request import InspectRequestsMixin
 
 
-class Driver(RequestMixin):
+class Driver(InspectRequestsMixin):
     pass
 
 
-class RequestMixinTest(TestCase):
+class InspectRequestsMixinTest(TestCase):
 
     @patch('seleniumwire.webdriver.request.client')
     def test_capture_requests(self, mock_client):
