@@ -11,6 +11,6 @@ class FirefoxEndToEndTest(TestCase):
         firefox = Firefox()
         firefox.get('http://www.bbc.co.uk')
         firefox.get('http://www.google.co.uk')
-        firefox.capture_requests()
         firefox.get('http://www.github.com')
+        print(firefox.requests)
         firefox.quit()

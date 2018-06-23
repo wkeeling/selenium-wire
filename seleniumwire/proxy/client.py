@@ -31,13 +31,14 @@ class AdminClient:
         self._proxy.shutdown()
 
     def start_capture(self):
+        url = '{}/requests'.format(ADMIN_PATH)
         conn = http.client.HTTPConnection(self._proxy_host, self._proxy_port)
-        conn.request('GET', '{}/start_capture'.format(ADMIN_PATH))
+        conn.request('GET', url)
         response = conn.getresponse()
         conn.close()
 
         if response.status != 200:
-            raise ProxyException('Proxy returned status code {} for start_capture'.format(response.status))
+            raise ProxyException('Proxy returned status code {} for {}'.format(response.status, url))
 
 
 class ProxyException(Exception):
