@@ -5,7 +5,7 @@ from .handler import ADMIN_PATH, CaptureRequestHandler
 from .proxy2 import ThreadingHTTPServer
 
 
-class AdministrationClient:
+class AdminClient:
 
     def __init__(self):
         self._proxy = None

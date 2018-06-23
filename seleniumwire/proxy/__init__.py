@@ -1,3 +1,3 @@
-from .client import AdministrationClient
+from .client import AdminClient
 
-client = AdministrationClient()
+client = AdminClient()
