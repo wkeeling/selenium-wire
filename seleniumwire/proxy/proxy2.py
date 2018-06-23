@@ -122,7 +122,10 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 break
             for r in rlist:
                 other = conns[1] if r is conns[0] else conns[0]
-                data = r.recv(8192)
+                try:
+                    data = r.recv(8192)
+                except ConnectionError:
+                    return
                 if not data:
                     self.close_connection = 1
                     break
