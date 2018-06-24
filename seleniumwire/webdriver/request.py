@@ -6,6 +6,11 @@ class InspectRequestsMixin:
 
     @property
     def requests(self):
+        # Want to be able to support:
+        #
+        # webdriver.requests -> []  (list of all requests)
+        # webdriver.requests['/path/of/some/request'] -> []  (list of all requests that match)
+        # del webdriver.requests (clears the requests from the proxy)
         pass
 
     @requests.deleter
