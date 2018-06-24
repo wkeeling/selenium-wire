@@ -1,3 +1,4 @@
+import json
 import logging
 
 from .proxy2 import ProxyRequestHandler
@@ -25,7 +26,7 @@ class AdminMixin:
         return self.path == '{}{}'.format(self.admin_path, path)
 
     def _captured_requests(self):
-        self._send_response(storage.load_captured_requests())
+        self._send_response(json.dumps(storage.load_captured_requests()), is_json=True)
 
     def _send_response(self, body, is_json=False):
         content_type = 'application/json' if is_json else 'text/plain'

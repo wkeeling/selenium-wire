@@ -1,5 +1,5 @@
 import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 from unittest import TestCase
 
 from seleniumwire.webdriver import Firefox
