@@ -1,4 +1,5 @@
 import http.client
+import json
 import threading
 
 from .handler import ADMIN_PATH, CaptureRequestHandler
@@ -28,20 +29,28 @@ class AdminClient:
         return self._proxy_host, self._proxy_port
 
     def destroy_proxy(self):
+        # TODO: should this also remove request data folders? But these folders would have to be per-proxy instance.
         self._proxy.shutdown()
 
-    def start_capture(self):
+    def requests(self):
         url = '{}/requests'.format(ADMIN_PATH)
         conn = http.client.HTTPConnection(self._proxy_host, self._proxy_port)
         conn.request('GET', url)
-        response = conn.getresponse()
-        conn.close()
-
-        if response.status != 200:
-            raise ProxyException('Proxy returned status code {} for {}'.format(response.status, url))
+        try:
+            response = conn.getresponse()
+            if response.status != 200:
+                raise ProxyException('Proxy returned status code {} for {}'.format(response.status, url))
+            return json.load(response)
+        except ProxyException:
+            raise
+        except Exception as e:
+            raise ProxyException('Unable to retrieve data from proxy: {}'.format(e))
+        finally:
+            try:
+                conn.close()
+            except ConnectionError:
+                pass
 
 
 class ProxyException(Exception):
     """Raised when there is a problem communicating with the proxy server."""
-
-

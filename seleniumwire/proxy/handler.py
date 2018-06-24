@@ -1,6 +1,7 @@
 import logging
 
 from .proxy2 import ProxyRequestHandler
+from .storage import storage
 
 log = logging.getLogger(__name__)
 
@@ -18,13 +19,13 @@ class AdminMixin:
 
     def admin_handler(self):
         if self._is_path('/requests'):
-            self._get_captured_requests()
+            self._captured_requests()
 
     def _is_path(self, path):
         return self.path == '{}{}'.format(self.admin_path, path)
 
-    def _get_captured_requests(self):
-        self._send_response('OK')
+    def _captured_requests(self):
+        self._send_response(storage.load_captured_requests())
 
     def _send_response(self, body, is_json=False):
         content_type = 'application/json' if is_json else 'text/plain'
@@ -39,6 +40,7 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
 
     def request_handler(self, req, req_body):
         log.info('Capturing request: {}'.format(req.path))
+        storage.save_request(req, req_body)
 
     def save_handler(self, req, req_body, res, res_body):
         pass
@@ -47,6 +49,5 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
         log.debug('{} {}'.format(self.path, code))
 
     def log_error(self, format_, *args):
-        log.debug('{} {}'.format(self.path, format_ % args))
-
+        log.debug(format_ % args)
 

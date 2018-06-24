@@ -11,7 +11,7 @@ class InspectRequestsMixin:
         # webdriver.requests -> []  (list of all requests)
         # webdriver.requests['/path/of/some/request'] -> []  (list of all requests that match)
         # del webdriver.requests (clears the requests from the proxy)
-        pass
+        return client.requests()
 
     @requests.deleter
     def requests(self):
