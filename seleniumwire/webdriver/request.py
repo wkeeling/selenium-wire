@@ -42,3 +42,21 @@ class InspectRequestsMixin:
 
     def _destroy_proxy(self):
         client.destroy_proxy()
+
+
+class Request:
+    """Represents a request made by the browser to a URL."""
+
+    def __init__(self, data):
+        self.id = data['id']
+        self.method = data['method']
+        self.path = data['path']
+        self.headers = data['headers']
+        self.response = data['response']
+
+    @property
+    def response(self):
+        """Lazily retrieve the response data when it is asked for.
+
+        Returns: The response bytes.
+        """
