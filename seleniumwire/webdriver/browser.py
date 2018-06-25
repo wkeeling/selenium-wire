@@ -13,10 +13,11 @@ class Firefox(InspectRequestsMixin, _Firefox):
         capabilities['proxy'] = {
             'proxyType': 'manual',
             'httpProxy': '{}:{}'.format(addr, port),
-            'sslProxy': '{}:{}'.format(addr, port)
+            'sslProxy': '{}:{}'.format(addr, port),
+            'noProxy': []
         }
 
-        super().__init__(*args, desired_capabilities=capabilities, **kwargs)
+        super().__init__(*args, capabilities=capabilities, **kwargs)
 
     def quit(self):
         self._destroy_proxy()
