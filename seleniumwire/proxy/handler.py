@@ -26,7 +26,7 @@ class AdminMixin:
         return self.path == '{}{}'.format(self.admin_path, path)
 
     def _captured_requests(self):
-        self._send_response(json.dumps(storage.load_captured_requests()).encode('utf-8'), 'application/json')
+        self._send_response(json.dumps(storage.load_requests()).encode('utf-8'), 'application/json')
 
     def _send_response(self, body, content_type):
         self.send_response(200)

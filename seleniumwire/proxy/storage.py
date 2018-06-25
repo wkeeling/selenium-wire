@@ -68,7 +68,7 @@ class RequestStorage:
         self._save(response_data, request_dir, 'response')
         self._save(response_body, request_dir, 'responsebody')
 
-    def load_captured_requests(self):
+    def load_requests(self):
         with self._lock:
             index = self._index[:]
 
