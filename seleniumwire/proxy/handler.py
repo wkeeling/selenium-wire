@@ -26,15 +26,14 @@ class AdminMixin:
         return self.path == '{}{}'.format(self.admin_path, path)
 
     def _captured_requests(self):
-        self._send_response(json.dumps(storage.load_captured_requests()), is_json=True)
+        self._send_response(json.dumps(storage.load_captured_requests()).encode('utf-8'), 'application/json')
 
-    def _send_response(self, body, is_json=False):
-        content_type = 'application/json' if is_json else 'text/plain'
+    def _send_response(self, body, content_type):
         self.send_response(200)
         self.send_header('Content-Type', content_type)
         self.send_header('Content-Length', len(body))
         self.end_headers()
-        self.wfile.write(body.encode('utf-8'))
+        self.wfile.write(body)
 
 
 class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
