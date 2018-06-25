@@ -1,25 +1,29 @@
-import uuid
+import atexit
 import logging
 import os
 import pickle
 import shutil
+import signal
 import tempfile
 import threading
+import uuid
 
 log = logging.getLogger(__name__)
 
 
 class RequestStorage:
 
-    _storage_dir = os.path.join(tempfile.gettempdir(), 'seleniumwire', 'proxy-{}'.format(str(uuid.uuid4())))
-
-    _index = []  # Index of requests received
-    _lock = threading.Lock()
-
     def __init__(self):
-        # This should remove subfolders older than e.g. 2 hours? Not the whole parent...
-        shutil.rmtree(self._storage_dir, ignore_errors=True)
-        os.mkdir(self._storage_dir)
+        self._storage_dir = os.path.join(tempfile.gettempdir(), 'seleniumwire', 'storage-{}'.format(str(uuid.uuid4())))
+        os.makedirs(self._storage_dir)
+
+        self._index = []  # Index of requests received
+        self._lock = threading.Lock()
+
+        # Register shutdown hooks for cleaning up stored requests
+        atexit.register(self._cleanup)
+        signal.signal(signal.SIGTERM, self._cleanup)
+        signal.signal(signal.SIGINT, self._cleanup)
 
     def save_request(self, request, request_body):
         request_id = self._index_request(request)
@@ -47,6 +51,12 @@ class RequestStorage:
 
         return request_id
 
+    def _save(self, obj, dirname, filename):
+        request_dir = os.path.join(self._storage_dir, dirname)
+
+        with open(os.path.join(request_dir, filename), 'wb') as out:
+            pickle.dump(obj, out)
+
     def save_response(self, response, response_body, request_id):
         response_data = {
             'status_code': response.status,
@@ -57,12 +67,6 @@ class RequestStorage:
         request_dir = self._get_request_dir(request_id)
         self._save(response_data, request_dir, 'response')
         self._save(response_body, request_dir, 'responsebody')
-
-    def _save(self, obj, dirname, filename):
-        request_dir = os.path.join(self._storage_dir, dirname)
-
-        with open(os.path.join(request_dir, filename), 'wb') as out:
-            pickle.dump(obj, out)
 
     def load_captured_requests(self):
         with self._lock:
@@ -84,5 +88,11 @@ class RequestStorage:
 
     def _get_request_dir(self, request_id):
         return os.path.join(self._storage_dir, 'request-{}'.format(request_id))
+
+    def _cleanup(self):
+        """Clean up and remove all saved requests associated with this storage."""
+        log.debug('Cleaning up {}'.format(self._storage_dir))
+        shutil.rmtree(self._storage_dir, ignore_errors=True)
+
 
 storage = RequestStorage()
