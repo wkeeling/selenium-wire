@@ -27,7 +27,6 @@ class RequestTest(TestCase):
 
         request = Request(data)
 
-        self.assertEqual(request.id, request_id)
         self.assertEqual(request.method, 'GET'),
         self.assertEqual(request.path, 'http://www.example.com/some/path/')
         self.assertEqual(len(request.headers), 3)
@@ -86,9 +85,9 @@ class RequestTest(TestCase):
     def test_load_response_body(self):
         self.fail('Implement')
 
-    def _request_data(self, request_id):
+    def _request_data(self):
         data = {
-            'id': request_id,
+            'id': uuid.uuid4(),
             'method': 'GET',
             'path': 'http://www.example.com/some/path/',
             'headers': {
@@ -112,3 +111,9 @@ class RequestTest(TestCase):
         }
 
         return data
+
+
+class ResponseTest(TestCase):
+
+    def test_foo(self):
+        self.fail('Implement')

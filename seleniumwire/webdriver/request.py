@@ -48,13 +48,39 @@ class Request:
     """An HTTP request made by the browser to the server."""
 
     def __init__(self, data):
+        """Initialise a new Request object with a dictionary of data, which takes
+        the format:
+
+        data = {
+            'id': 'request id',
+            'method': 'GET',
+            'path': 'http://www.example.com/some/path',
+            'headers': {
+                'Accept': '*/*',
+                'Host': 'www.example.com'
+            }
+            'response': {
+                'status_code': 200,
+                'reason': 'OK',
+                'headers': {
+                    'Content-Type': 'text/plain',
+                    'Content-Length': 15012
+                }
+            }
+        }
+
+        Note that the value of the 'response' key may be None where no response
+        is associated with a given request.
+
+        Args:
+            data: The dictionary of data.
+        """
         self._data = data
-        self.id = data['id']
         self.method = data['method']
         self.path = data['path']
         self.headers = data['headers']
         if data['response'] is not None:
-            self.response = Response(data['response'])
+            self.response = Response(self._data['id'], data['response'])
         else:
             self.response = None
 
@@ -75,7 +101,24 @@ class Request:
 class Response:
     """An HTTP response returned from the server to the browser."""
 
-    def __init__(self, data):
+    def __init__(self, request_id, data):
+        """Initialise a new Response object with a request id and a dictionary
+        of data, which takes the format:
+
+        data = {
+            'status_code': 200,
+            'reason': 'OK',
+            'headers': {
+                'Content-Type': 'text/plain',
+                'Content-Length': 15012
+            }
+        }
+
+        Args:
+            request_id: The request id.
+            data: The dictionary of data.
+        """
+        self._request_id = request_id
         self._data = data
         self.status_code = data['status_code']
         self.reason = data['reason']
@@ -89,7 +132,7 @@ class Response:
         """
 
     def __repr__(self):
-        return 'Response({})'.format(self._data)
+        return 'Response({}, {})'.format(self._request_id, self._data)
 
     def __str__(self):
         return '{} {}'.format(self.status_code, self.reason)
