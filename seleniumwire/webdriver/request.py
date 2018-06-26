@@ -57,7 +57,6 @@ class Request:
             self.response = Response(data['response'])
         else:
             self.response = None
-        self._body = data['body']
 
     @property
     def body(self):
@@ -81,7 +80,6 @@ class Response:
         self.status_code = data['status_code']
         self.reason = data['reason']
         self.headers = data['headers']
-        self._body = data['body']
 
     @property
     def body(self):

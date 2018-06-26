@@ -32,7 +32,6 @@ class RequestTest(TestCase):
         self.assertEqual(request.path, 'http://www.example.com/some/path/')
         self.assertEqual(len(request.headers), 3)
         self.assertEqual(request.headers['Host'], 'www.example.com')
-        self.assertIsNone(request.body)
         self.assertIsNone(request.response)
 
     def test_request_repr(self):
@@ -58,7 +57,6 @@ class RequestTest(TestCase):
         self.assertEqual(response.reason, 'OK')
         self.assertEqual(len(response.headers), 2)
         self.assertEqual(response.headers['Content-Type'], 'application/json')
-        self.assertIsNone(response.body)
 
     def test_response_repr(self):
         data = self._response_data()
@@ -98,7 +96,6 @@ class RequestTest(TestCase):
                 'Host': 'www.example.com',
                 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
             },
-            'body': None,
             'response': None
         }
 
@@ -112,7 +109,6 @@ class RequestTest(TestCase):
                 'Content-Type': 'application/json',
                 'Content-Length': 120
             },
-            'body': None
         }
 
         return data
