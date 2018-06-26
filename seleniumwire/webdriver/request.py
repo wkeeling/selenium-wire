@@ -45,18 +45,53 @@ class InspectRequestsMixin:
 
 
 class Request:
-    """Represents a request made by the browser to a URL."""
+    """An HTTP request made by the browser to the server."""
 
     def __init__(self, data):
+        self._data = data
         self.id = data['id']
         self.method = data['method']
         self.path = data['path']
         self.headers = data['headers']
-        self.response = data['response']
+        if data['response'] is not None:
+            self.response = Response(data['response'])
+        else:
+            self.response = None
+        self._body = data['body']
 
     @property
-    def response(self):
-        """Lazily retrieve the response data when it is asked for.
+    def body(self):
+        """Lazily retrieve the request body when it is asked for.
 
         Returns: The response bytes.
         """
+
+    def __repr__(self):
+        return 'Request({})'.format(self._data)
+
+    def __str__(self):
+        return self.path
+
+
+class Response:
+    """An HTTP response returned from the server to the browser."""
+
+    def __init__(self, data):
+        self._data = data
+        self.status_code = data['status_code']
+        self.reason = data['reason']
+        self.headers = data['headers']
+        self._body = data['body']
+
+    @property
+    def body(self):
+        """Lazily retrieve the response body when it is asked for.
+
+        Returns: The response bytes.
+        """
+
+    def __repr__(self):
+        return 'Response({})'.format(self._data)
+
+    def __str__(self):
+        return '{} {}'.format(self.status_code, self.reason)
