@@ -10,7 +10,7 @@ class InspectRequestsMixin:
         #
         # webdriver.requests -> []  (list of all requests)
         # webdriver.requests['/path/of/some/request'] -> []  (list of all requests that match)
-        # del webdriver.requests (clears the requests from the proxy)
+        # del webdriver.requests (clears the requests from the proxy by clearing the index)
         return client.requests()
 
     @requests.deleter
@@ -35,6 +35,9 @@ class InspectRequestsMixin:
 
     @header_overrides.deleter
     def header_overrides(self):
+        pass
+
+    def wait_for_pending_requests(self, wait, timeout):
         pass
 
     def _create_proxy(self):
