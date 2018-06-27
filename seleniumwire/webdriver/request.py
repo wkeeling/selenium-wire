@@ -90,6 +90,10 @@ class Request:
 
         Returns: The response bytes.
         """
+        if self._data.get('body') is None:
+            self._data['body'] = client.request_body(self._data['id'])
+
+        return self._data['body']
 
     def __repr__(self):
         return 'Request({})'.format(self._data)
@@ -130,9 +134,13 @@ class Response:
 
         Returns: The response bytes.
         """
+        if self._data.get('body') is None:
+            self._data['body'] = client.response_body(self._request_id)
+
+        return self._data['body']
 
     def __repr__(self):
-        return 'Response({}, {})'.format(self._request_id, self._data)
+        return "Response('{}', {})".format(self._request_id, self._data)
 
     def __str__(self):
         return '{} {}'.format(self.status_code, self.reason)
