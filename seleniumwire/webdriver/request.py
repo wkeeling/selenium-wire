@@ -6,15 +6,19 @@ class InspectRequestsMixin:
 
     @property
     def requests(self):
-        # Want to be able to support:
-        #
-        # webdriver.requests -> []  (list of all requests)
-        # del webdriver.requests (clears the requests from the proxy by clearing the index)
+        """Retrieve the requests made between the browser and server.
+
+        Existing captured requests can be cleared with 'del', e.g:
+
+            del firefox.requests
+
+        Returns: The requests made between the browser and server.
+        """
         return client.requests()
 
     @requests.deleter
     def requests(self):
-        pass
+        client.clear_requests()
 
     @property
     def header_overrides(self):
