@@ -29,7 +29,7 @@ class AdminClient:
         return self._proxy_host, self._proxy_port
 
     def destroy_proxy(self):
-        # TODO: should this also remove request data folders? But these folders would have to be per-proxy instance.
+        # TODO: clear index
         self._proxy.shutdown()
 
     def requests(self):
@@ -50,6 +50,15 @@ class AdminClient:
                 conn.close()
             except ConnectionError:
                 pass
+
+    def clear_requests(self):
+        pass
+
+    def request_body(self, request_id):
+        pass
+
+    def response_body(self, request_id):
+        pass
 
 
 class ProxyException(Exception):

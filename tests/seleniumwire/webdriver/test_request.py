@@ -12,11 +12,24 @@ class Driver(InspectRequestsMixin):
 class InspectRequestsMixinTest(TestCase):
 
     @patch('seleniumwire.webdriver.request.client')
-    def test_request_property(self, mock_client):
+    def test_get_requests(self, mock_client):
         driver = Driver()
         driver.requests
 
-        mock_client.capture_requests.assert_called_once_with()
+        mock_client.requests.assert_called_once_with()
+
+    @patch('seleniumwire.webdriver.request.client')
+    def test_delete_requests(self, mock_client):
+        driver = Driver()
+        del driver.requests
+
+        mock_client.clear_requests.assert_called_once_with()
+
+    def test_set_requests(self):
+        driver = Driver()
+
+        with self.assertRaises(AttributeError):
+            driver.requests = ['some request']
 
 
 class RequestTest(TestCase):
