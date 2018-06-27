@@ -93,6 +93,3 @@ class RequestStorage:
         """Clean up and remove all saved requests associated with this storage."""
         log.debug('Cleaning up {}'.format(self._storage_dir))
         shutil.rmtree(self._storage_dir, ignore_errors=True)
-
-
-storage = RequestStorage()

@@ -3,7 +3,7 @@ import json
 import threading
 
 from .handler import ADMIN_PATH, CaptureRequestHandler
-from .proxy2 import ThreadingHTTPServer
+from .server import ProxyHTTPServer
 
 
 class AdminClient:
@@ -17,7 +17,7 @@ class AdminClient:
         # This at some point may interact with a remote service
         # to create the proxy and retrieve its address details.
         CaptureRequestHandler.protocol_version = 'HTTP/1.1'
-        self._proxy = ThreadingHTTPServer((self._proxy_host, self._proxy_port), CaptureRequestHandler)
+        self._proxy = ProxyHTTPServer((self._proxy_host, self._proxy_port), CaptureRequestHandler)
 
         t = threading.Thread(name='Selenium Wire Proxy Server', target=self._proxy.serve_forever)
         t.daemon = True
