@@ -10,7 +10,8 @@ class InspectRequestsMixin:
 
             del firefox.requests
 
-        Returns: The requests made between the browser and server.
+        Returns:
+            The requests made between the browser and server.
         """
         return self._client.requests()
 
@@ -89,7 +90,8 @@ class Request:
     def body(self):
         """Lazily retrieve the request body when it is asked for.
 
-        Returns: The response bytes.
+        Returns:
+            The response bytes.
         """
         if self._data.get('body') is None:
             self._data['body'] = self._client.request_body(self._data['id'])
@@ -137,7 +139,8 @@ class Response:
     def body(self):
         """Lazily retrieve the response body when it is asked for.
 
-        Returns: The response bytes.
+        Returns:
+            The response bytes.
         """
         if self._data.get('body') is None:
             self._data['body'] = self._client.response_body(self._request_id)

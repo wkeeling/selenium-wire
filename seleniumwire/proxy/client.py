@@ -7,6 +7,11 @@ from .server import ProxyHTTPServer
 
 
 class AdminClient:
+    """Provides the means to communicate with the proxy server and ask it for information
+    and tell it to do certain things.
+
+    This implementation starts a proxy server instance in a separate thread.
+    """
 
     def __init__(self):
         self._proxy = None
@@ -14,6 +19,12 @@ class AdminClient:
         self._proxy_port = 0
 
     def create_proxy(self):
+        """Create a new proxy server and return the host and port number that the
+        server was started on.
+
+        Returns:
+            A tuple of the host and port number of the created proxy server.
+        """
         # This at some point may interact with a remote service
         # to create the proxy and retrieve its address details.
         CaptureRequestHandler.protocol_version = 'HTTP/1.1'
@@ -29,10 +40,36 @@ class AdminClient:
         return self._proxy_host, self._proxy_port
 
     def destroy_proxy(self):
+        """Stop the proxy server and perform any clean up actions."""
         # TODO: clear index
         self._proxy.shutdown()
 
     def requests(self):
+        """Return the requests currently captured by the proxy server.
+
+        The data is returned as a list of dictionaries in the format:
+
+        [{
+            'id': 'request id',
+            'method': 'GET',
+            'path': 'http://www.example.com/some/path',
+            'headers': {
+                'Accept': '*/*',
+                'Host': 'www.example.com'
+            }
+            'response': {
+                'status_code': 200,
+                'reason': 'OK',
+                'headers': {
+                    'Content-Type': 'text/plain',
+                    'Content-Length': 15012
+                }
+            }
+        }, ...]
+
+        Returns:
+            A list of request dictionaries.
+        """
         url = '{}/requests'.format(ADMIN_PATH)
         conn = http.client.HTTPConnection(self._proxy_host, self._proxy_port)
         conn.request('GET', url)
