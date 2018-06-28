@@ -10,10 +10,6 @@ from seleniumwire.proxy.storage import RequestStorage
 
 class RequestStorageTest(TestCase):
 
-    def setUp(self):
-        self.base_dir = os.path.join(os.path.dirname(__file__), 'data')
-        self.storage = RequestStorage(base_dir=self.base_dir)
-
     def test_initialise(self):
         storage_dir = glob.glob(os.path.join(self.base_dir, 'seleniumwire', 'storage-*'))
 
@@ -24,7 +20,7 @@ class RequestStorageTest(TestCase):
 
         request_id = self.storage.save_request(mock_request)
 
-        request_file_path = self._get_full_path(request_id, 'request')
+        request_file_path = self._get_stored_path(request_id, 'request')
 
         with open(request_file_path[0], 'rb') as loaded:
             loaded_request = pickle.load(loaded)
@@ -44,7 +40,7 @@ class RequestStorageTest(TestCase):
 
         request_id = self.storage.save_request(mock_request, request_body)
 
-        request_body_path = self._get_full_path(request_id, 'requestbody')
+        request_body_path = self._get_stored_path(request_id, 'requestbody')
 
         with open(request_body_path[0], 'rb') as loaded:
             loaded_body = pickle.load(loaded)
@@ -58,7 +54,7 @@ class RequestStorageTest(TestCase):
 
         self.storage.save_response(request_id, mock_response)
 
-        response_file_path = self._get_full_path(request_id, 'response')
+        response_file_path = self._get_stored_path(request_id, 'response')
 
         with open(response_file_path[0], 'rb') as loaded:
             loaded_response = pickle.load(loaded)
@@ -78,14 +74,17 @@ class RequestStorageTest(TestCase):
 
         self.storage.save_response(request_id, mock_response, response_body)
 
-        response_body_path = self._get_full_path(request_id, 'responsebody')
+        response_body_path = self._get_stored_path(request_id, 'responsebody')
 
         with open(response_body_path[0], 'rb') as loaded:
             loaded_body = pickle.load(loaded)
 
         self.assertEqual(loaded_body, 'some response body')
 
-    def _get_full_path(self, request_id, filename):
+    def test_load_requests(self):
+        self.fail('Implement')
+
+    def _get_stored_path(self, request_id, filename):
         return glob.glob(os.path.join(self.base_dir, 'seleniumwire', 'storage-*',
                                       'request-{}'.format(request_id), filename))
 
@@ -108,6 +107,10 @@ class RequestStorageTest(TestCase):
             'Content-Length': 500
         }
         return mock_response
+
+    def setUp(self):
+        self.base_dir = os.path.join(os.path.dirname(__file__), 'data')
+        self.storage = RequestStorage(base_dir=self.base_dir)
 
     def tearDown(self):
         shutil.rmtree(os.path.join(self.base_dir), ignore_errors=True)
