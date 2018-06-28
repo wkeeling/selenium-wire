@@ -13,8 +13,10 @@ log = logging.getLogger(__name__)
 
 class RequestStorage:
 
-    def __init__(self):
-        self._storage_dir = os.path.join(tempfile.gettempdir(), 'seleniumwire', 'storage-{}'.format(str(uuid.uuid4())))
+    def __init__(self, base_dir=None):
+        if base_dir is None:
+            base_dir = tempfile.gettempdir()
+        self._storage_dir = os.path.join(base_dir, 'seleniumwire', 'storage-{}'.format(str(uuid.uuid4())))
         os.makedirs(self._storage_dir)
 
         self._index = []  # Index of requests received
@@ -25,7 +27,7 @@ class RequestStorage:
         signal.signal(signal.SIGTERM, self._cleanup)
         signal.signal(signal.SIGINT, self._cleanup)
 
-    def save_request(self, request, request_body):
+    def save_request(self, request, request_body=None):
         request_id = self._index_request(request)
         request_dir = self._get_request_dir(request_id)
         os.mkdir(request_dir)
@@ -42,6 +44,8 @@ class RequestStorage:
         if request_body is not None:
             self._save(request_body, request_dir, 'requestbody')
 
+        return request_id
+
     def _index_request(self, request):
         request_id = str(uuid.uuid4())
         request.id = request_id
@@ -57,7 +61,7 @@ class RequestStorage:
         with open(os.path.join(request_dir, filename), 'wb') as out:
             pickle.dump(obj, out)
 
-    def save_response(self, response, response_body, request_id):
+    def save_response(self, request_id, response, response_body=None):
         response_data = {
             'status_code': response.status,
             'reason': response.reason,
