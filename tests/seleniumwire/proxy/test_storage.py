@@ -116,7 +116,30 @@ class RequestStorageTest(TestCase):
         self.assertEqual(loaded_body, 'some response body')
 
     def test_load_requests(self):
-        self.fail('Implement')
+        mock_request_1 = self._create_mock_request()
+        mock_request_2 = self._create_mock_request()
+        storage = RequestStorage(base_dir=self.base_dir)
+        request_id1 = storage.save_request(mock_request_1)
+        request_id2 = storage.save_request(mock_request_2)
+
+        requests = storage.load_requests()
+
+        self.assertEqual(len(requests), 2)
+        self.assertEqual(requests[0]['id'], request_id1)
+        self.assertEqual(requests[1]['id'], request_id2)
+        self.assertIsNone(requests[0]['response'])
+        self.assertIsNone(requests[1]['response'])
+
+    def test_load_response(self):
+        mock_request = self._create_mock_request()
+        storage = RequestStorage(base_dir=self.base_dir)
+        request_id = storage.save_request(mock_request, request_body='test request body')
+        mock_response = self._create_mock_resonse()
+        storage.save_response(request_id, mock_response)
+
+        requests = storage.load_requests()
+
+        self.assertIsNotNone(requests[0]['response'])
 
     def _get_stored_path(self, request_id, filename):
         return glob.glob(os.path.join(self.base_dir, 'seleniumwire', 'storage-*',
