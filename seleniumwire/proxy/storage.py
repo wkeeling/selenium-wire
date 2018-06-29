@@ -96,7 +96,7 @@ class RequestStorage:
             request_dir = self._get_request_dir(guid)
             with open(os.path.join(request_dir, 'request'), 'rb') as req:
                 request = pickle.load(req)
-                if os.path.exists('response'):
+                if os.path.exists(os.path.join(request_dir, 'response')):
                     with open(os.path.join(request_dir, 'response'), 'rb') as res:
                         response = pickle.load(res)
                         request['response'] = response
