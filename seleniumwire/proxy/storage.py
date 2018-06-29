@@ -21,7 +21,7 @@ class RequestStorage:
     """
 
     def __init__(self, base_dir=None):
-        """Initialise a new RequestStorage using an optional base directory.
+        """Initialises a new RequestStorage using an optional base directory.
 
         The base directory is where request and response data is stored. If
         not specified, the system's temp folder is used.
@@ -42,6 +42,13 @@ class RequestStorage:
         signal.signal(signal.SIGINT, self._cleanup)
 
     def save_request(self, request, request_body=None):
+        """Saves the request (a BaseHTTPRequestHandler instance) to storage, and optionally
+        saves the request body data if supplied.
+
+        Args:
+            request: The BaseHTTPRequestHandler instance to save.
+            request_body: The request body data.
+        """
         request_id = self._index_request(request)
         request_dir = self._get_request_dir(request_id)
         os.mkdir(request_dir)
@@ -76,6 +83,15 @@ class RequestStorage:
             pickle.dump(obj, out)
 
     def save_response(self, request_id, response, response_body=None):
+        """Saves the response (a http.client.HTTPResponse instance) to storage, and optionally
+        saves the request body data if supplied.
+
+        Args:
+            request_id: The id of the original request.
+            response: The http.client.HTTPResponse instance to save.
+            response_body: The request body data.
+
+        """
         response_data = {
             'status_code': response.status,
             'reason': response.reason,
@@ -120,7 +136,7 @@ class RequestStorage:
             pass
 
     def _cleanup_old_dirs(self):
-        """Clean up and remove any old storage folders that were not previously
+        """Cleans up and removes any old storage folders that were not previously
         cleaned up properly.
         """
         parent_dir = os.path.dirname(self._storage_dir)

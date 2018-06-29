@@ -4,7 +4,7 @@ class InspectRequestsMixin:
 
     @property
     def requests(self):
-        """Retrieve the requests made between the browser and server.
+        """Retrieves the requests made between the browser and server.
 
         Captured requests can be cleared with 'del', e.g:
 
@@ -46,7 +46,7 @@ class Request:
     """An HTTP request made by the browser to the server."""
 
     def __init__(self, data, client):
-        """Initialise a new Request object with a dictionary of data and a
+        """Initialises a new Request object with a dictionary of data and a
         proxy AdminClient instance.
 
         The data takes the format:
@@ -88,7 +88,7 @@ class Request:
 
     @property
     def body(self):
-        """Lazily retrieve the request body when it is asked for.
+        """Lazily retrieves the request body when it is asked for.
 
         Returns:
             The response bytes.
@@ -137,7 +137,7 @@ class Response:
 
     @property
     def body(self):
-        """Lazily retrieve the response body when it is asked for.
+        """Lazily retrieves the response body when it is asked for.
 
         Returns:
             The response bytes.

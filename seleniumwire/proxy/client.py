@@ -19,7 +19,7 @@ class AdminClient:
         self._proxy_port = 0
 
     def create_proxy(self):
-        """Create a new proxy server and return the host and port number that the
+        """Creates a new proxy server and returns the host and port number that the
         server was started on.
 
         Returns:
@@ -40,12 +40,12 @@ class AdminClient:
         return self._proxy_host, self._proxy_port
 
     def destroy_proxy(self):
-        """Stop the proxy server and perform any clean up actions."""
+        """Stops the proxy server and performs any clean up actions."""
         # TODO: clear index
         self._proxy.shutdown()
 
     def requests(self):
-        """Return the requests currently captured by the proxy server.
+        """Returns the requests currently captured by the proxy server.
 
         The data is returned as a list of dictionaries in the format:
 
