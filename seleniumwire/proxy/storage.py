@@ -84,7 +84,8 @@ class RequestStorage:
 
         request_dir = self._get_request_dir(request_id)
         self._save(response_data, request_dir, 'response')
-        self._save(response_body, request_dir, 'responsebody')
+        if response_body is not None:
+            self._save(response_body, request_dir, 'responsebody')
 
     def load_requests(self):
         with self._lock:
