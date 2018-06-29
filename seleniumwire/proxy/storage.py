@@ -18,6 +18,11 @@ REMOVE_DATA_OLDER_THAN_DAYS = 1
 class RequestStorage:
 
     def __init__(self, base_dir=None):
+        """Initialise a new RequestStorage using an optional base directory.
+
+        The base directory is where request and response data is stored. If
+        not specified, the system's temp folder is used.
+        """
         if base_dir is None:
             base_dir = tempfile.gettempdir()
 
