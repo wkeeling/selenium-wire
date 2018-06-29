@@ -108,8 +108,8 @@ class RequestStorage:
             index = self._index[:]
 
         loaded = []
-        for _, guid in index:
-            request_dir = self._get_request_dir(guid)
+        for _, request_id in index:
+            request_dir = self._get_request_dir(request_id)
             with open(os.path.join(request_dir, 'request'), 'rb') as req:
                 request = pickle.load(req)
                 if os.path.exists(os.path.join(request_dir, 'response')):
@@ -121,11 +121,22 @@ class RequestStorage:
 
         return loaded
 
+    def load_request_body(self, request_id):
+        return self._load_body(request_id, 'requestbody')
+
+    def load_response_body(self, request_id):
+        return self._load_body(request_id, 'responsebody')
+
+    def _load_body(self, request_id, name):
+        request_dir = self._get_request_dir(request_id)
+        with open(os.path.join(request_dir, name), 'rb') as body:
+            return pickle.load(body)
+
     def _get_request_dir(self, request_id):
         return os.path.join(self._storage_dir, 'request-{}'.format(request_id))
 
     def _cleanup(self):
-        """Clean up and remove all saved requests associated with this storage."""
+        """Cleans up and removes all saved requests associated with this storage."""
         log.debug('Cleaning up {}'.format(self._storage_dir))
         shutil.rmtree(self._storage_dir, ignore_errors=True)
         try:
