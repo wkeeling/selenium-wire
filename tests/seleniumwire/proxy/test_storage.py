@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import glob
 import os
 import pickle
@@ -11,14 +12,32 @@ from seleniumwire.proxy.storage import RequestStorage
 class RequestStorageTest(TestCase):
 
     def test_initialise(self):
+        RequestStorage(base_dir=self.base_dir)
         storage_dir = glob.glob(os.path.join(self.base_dir, 'seleniumwire', 'storage-*'))
 
         self.assertEqual(len(storage_dir), 1)
 
+    def test_cleanup(self):
+        storage = RequestStorage(base_dir=self.base_dir)
+        storage._cleanup()
+
+        self.assertFalse(os.path.exists(os.path.join(self.base_dir, 'seleniumwire')))
+
+    def test_initialise_clears_old_folders(self):
+        test_dir = os.path.join(self.base_dir, 'seleniumwire', 'storage-test')
+        os.makedirs(test_dir)
+        two_days_ago = (datetime.now() - timedelta(days=2)).timestamp()
+        os.utime(test_dir, times=(two_days_ago, two_days_ago))
+
+        RequestStorage(base_dir=self.base_dir)
+
+        self.assertFalse(os.path.exists(test_dir))
+
     def test_save_request(self):
         mock_request = self._create_mock_request()
 
-        request_id = self.storage.save_request(mock_request)
+        storage = RequestStorage(base_dir=self.base_dir)
+        request_id = storage.save_request(mock_request)
 
         request_file_path = self._get_stored_path(request_id, 'request')
 
@@ -38,7 +57,8 @@ class RequestStorageTest(TestCase):
         mock_request = self._create_mock_request()
         request_body = 'test request body'
 
-        request_id = self.storage.save_request(mock_request, request_body)
+        storage = RequestStorage(base_dir=self.base_dir)
+        request_id = storage.save_request(mock_request, request_body)
 
         request_body_path = self._get_stored_path(request_id, 'requestbody')
 
@@ -49,10 +69,11 @@ class RequestStorageTest(TestCase):
 
     def test_save_response(self):
         mock_request = self._create_mock_request()
-        request_id = self.storage.save_request(mock_request)
+        storage = RequestStorage(base_dir=self.base_dir)
+        request_id = storage.save_request(mock_request)
         mock_response = self._create_mock_resonse()
 
-        self.storage.save_response(request_id, mock_response)
+        storage.save_response(request_id, mock_response)
 
         response_file_path = self._get_stored_path(request_id, 'response')
 
@@ -68,11 +89,12 @@ class RequestStorageTest(TestCase):
 
     def test_save_response_with_body(self):
         mock_request = self._create_mock_request()
-        request_id = self.storage.save_request(mock_request)
+        storage = RequestStorage(base_dir=self.base_dir)
+        request_id = storage.save_request(mock_request)
         mock_response = self._create_mock_resonse()
         response_body = 'some response body'
 
-        self.storage.save_response(request_id, mock_response, response_body)
+        storage.save_response(request_id, mock_response, response_body)
 
         response_body_path = self._get_stored_path(request_id, 'responsebody')
 
@@ -110,7 +132,6 @@ class RequestStorageTest(TestCase):
 
     def setUp(self):
         self.base_dir = os.path.join(os.path.dirname(__file__), 'data')
-        self.storage = RequestStorage(base_dir=self.base_dir)
 
     def tearDown(self):
         shutil.rmtree(os.path.join(self.base_dir), ignore_errors=True)

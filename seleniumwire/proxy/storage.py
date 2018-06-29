@@ -1,4 +1,5 @@
 import atexit
+from datetime import datetime, timedelta
 import logging
 import os
 import pickle
@@ -10,14 +11,19 @@ import uuid
 
 log = logging.getLogger(__name__)
 
+# Storage folders older than this are cleaned up.
+REMOVE_DATA_OLDER_THAN_DAYS = 1
+
 
 class RequestStorage:
 
     def __init__(self, base_dir=None):
         if base_dir is None:
             base_dir = tempfile.gettempdir()
+
         self._storage_dir = os.path.join(base_dir, 'seleniumwire', 'storage-{}'.format(str(uuid.uuid4())))
         os.makedirs(self._storage_dir)
+        self._cleanup_old_dirs()
 
         self._index = []  # Index of requests received
         self._lock = threading.Lock()
@@ -97,3 +103,20 @@ class RequestStorage:
         """Clean up and remove all saved requests associated with this storage."""
         log.debug('Cleaning up {}'.format(self._storage_dir))
         shutil.rmtree(self._storage_dir, ignore_errors=True)
+        try:
+            # Attempt to remove the parent folder if it is empty
+            os.rmdir(os.path.dirname(self._storage_dir))
+        except OSError:
+            # Parent folder not empty
+            pass
+
+    def _cleanup_old_dirs(self):
+        """Clean up and remove any old storage folders that were not previously
+        cleaned up properly.
+        """
+        parent_dir = os.path.dirname(self._storage_dir)
+        for storage_dir in os.listdir(parent_dir):
+            storage_dir = os.path.join(parent_dir, storage_dir)
+            if (os.path.getmtime(storage_dir) <
+                    (datetime.now() - timedelta(days=REMOVE_DATA_OLDER_THAN_DAYS)).timestamp()):
+                shutil.rmtree(storage_dir, ignore_errors=True)
