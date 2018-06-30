@@ -18,6 +18,9 @@ REMOVE_DATA_OLDER_THAN_DAYS = 1
 class RequestStorage:
     """Responsible for saving request and response data that passes through the proxy server,
     and provding an API to retrieve that data.
+
+    This implementation writes the request and response data to disk, but keeps an in-memory
+    index of what is on disk for fast retrieval.
     """
 
     def __init__(self, base_dir=None):
@@ -72,7 +75,7 @@ class RequestStorage:
         request.id = request_id
 
         with self._lock:
-            self._index.append((request.path, request_id))
+            self._index.append(request_id)
 
         return request_id
 
@@ -104,33 +107,87 @@ class RequestStorage:
             self._save(response_body, request_dir, 'responsebody')
 
     def load_requests(self):
+        """Load all previously saved requests known to the storage (known to its index).
+
+        The requests are returned as dictionaries, in the format:
+
+        {
+            'id': 'request id',
+            'method': 'GET',
+            'path': 'http://www.example.com/some/path',
+            'headers': {
+                'Accept': '*/*',
+                'Host': 'www.example.com'
+            }
+            'response': {
+                'status_code': 200,
+                'reason': 'OK',
+                'headers': {
+                    'Content-Type': 'text/plain',
+                    'Content-Length': 15012
+                }
+            }
+        }
+
+        Where a request does not have a corresponding response, a 'response' key will
+        still exist in the dictionary, but its value will be None.
+
+        Returns:
+            A list of dictionaries representing previously saved requests.
+        """
         with self._lock:
             index = self._index[:]
 
         loaded = []
-        for _, request_id in index:
-            request_dir = self._get_request_dir(request_id)
-            with open(os.path.join(request_dir, 'request'), 'rb') as req:
-                request = pickle.load(req)
-                if os.path.exists(os.path.join(request_dir, 'response')):
-                    with open(os.path.join(request_dir, 'response'), 'rb') as res:
-                        response = pickle.load(res)
-                        request['response'] = response
 
+        for request_id in index:
+            request = self._load_request(request_id)
             loaded.append(request)
 
         return loaded
 
+    def _load_request(self, request_id):
+        request_dir = self._get_request_dir(request_id)
+
+        with open(os.path.join(request_dir, 'request'), 'rb') as req:
+            request = pickle.load(req)
+
+            if os.path.exists(os.path.join(request_dir, 'response')):
+                with open(os.path.join(request_dir, 'response'), 'rb') as res:
+                    response = pickle.load(res)
+                    request['response'] = response
+
+        return request
+
     def load_request_body(self, request_id):
+        """Load the body of the request with the specified id.
+
+        Args:
+            request_id: The id of the request.
+        Returns:
+            The binary data request body.
+        """
         return self._load_body(request_id, 'requestbody')
 
     def load_response_body(self, request_id):
+        """Load the body of the response corresponding to the request with the specified id.
+
+        Args:
+            request_id: The id of the request.
+        Returns:
+            The binary data response body.
+        """
         return self._load_body(request_id, 'responsebody')
 
     def _load_body(self, request_id, name):
         request_dir = self._get_request_dir(request_id)
         with open(os.path.join(request_dir, name), 'rb') as body:
             return pickle.load(body)
+
+    def load_last_request(self):
+        with self._lock:
+            request_id = self._index[-1]
+        return self._load_request(request_id)
 
     def _get_request_dir(self, request_id):
         return os.path.join(self._storage_dir, 'request-{}'.format(request_id))
@@ -148,7 +205,7 @@ class RequestStorage:
 
     def _cleanup_old_dirs(self):
         """Cleans up and removes any old storage folders that were not previously
-        cleaned up properly.
+        cleaned up properly by _cleanup().
         """
         parent_dir = os.path.dirname(self._storage_dir)
         for storage_dir in os.listdir(parent_dir):
