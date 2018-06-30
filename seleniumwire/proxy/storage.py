@@ -185,6 +185,11 @@ class RequestStorage:
             return pickle.load(body)
 
     def load_last_request(self):
+        """Load the last saved request.
+
+        Returns:
+            The last saved request dictionary (see load_requests() for dict structure).
+        """
         with self._lock:
             request_id = self._index[-1]
         return self._load_request(request_id)
