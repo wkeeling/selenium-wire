@@ -56,34 +56,16 @@ class Request:
 
     def __init__(self, data, client):
         """Initialises a new Request object with a dictionary of data and a
-        proxy AdminClient instance.
+        proxy client instance.
 
-        The data takes the format:
+        See the proxy client doc for the dictionary structure.
 
-        data = {
-            'id': 'request id',
-            'method': 'GET',
-            'path': 'http://www.example.com/some/path',
-            'headers': {
-                'Accept': '*/*',
-                'Host': 'www.example.com'
-            }
-            'response': {
-                'status_code': 200,
-                'reason': 'OK',
-                'headers': {
-                    'Content-Type': 'text/plain',
-                    'Content-Length': 15012
-                }
-            }
-        }
-
-        Note that the value of the 'response' key may be None where no response
-        is associated with a given request.
+        Note that the response attribute may be None where no response is associated
+        with a given request.
 
         Args:
             data: The dictionary of data.
-            client: The AdminClient instance.
+            client: The proxy client instance.
         """
         self._data = data
         self._client = client
@@ -119,23 +101,14 @@ class Response:
 
     def __init__(self, request_id, data, client):
         """Initialise a new Response object with a request id, a dictionary
-        of data and a proxy AdminClient instance.
+        of data and a proxy client instance.
 
-        The data takes the format:
-
-        data = {
-            'status_code': 200,
-            'reason': 'OK',
-            'headers': {
-                'Content-Type': 'text/plain',
-                'Content-Length': 15012
-            }
-        }
+        See the proxy client doc for the dictionary structure.
 
         Args:
             request_id: The request id.
             data: The dictionary of data.
-            client: The AdminClient instance.
+            client: The proxy client instance.
         """
         self._request_id = request_id
         self._client = client

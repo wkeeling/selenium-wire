@@ -61,10 +61,13 @@ class AdminClient:
                 'reason': 'OK',
                 'headers': {
                     'Content-Type': 'text/plain',
-                    'Content-Length': 15012
+                    'Content-Length': '15012'
                 }
             }
         }, ...]
+
+        Note that the value of the 'response' key may be None where no response
+        is associated with a given request.
 
         Returns:
             A list of request dictionaries.
