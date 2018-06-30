@@ -41,7 +41,6 @@ class AdminClient:
 
     def destroy_proxy(self):
         """Stops the proxy server and performs any clean up actions."""
-        # TODO: clear index
         self._proxy.shutdown()
 
     def requests(self):
@@ -77,7 +76,8 @@ class AdminClient:
             response = conn.getresponse()
             if response.status != 200:
                 raise ProxyException('Proxy returned status code {} for {}'.format(response.status, url))
-            return json.load(response)
+            data = response.read()
+            return json.loads(data.decode(encoding='utf-8'))
         except ProxyException:
             raise
         except Exception as e:
