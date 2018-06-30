@@ -194,6 +194,15 @@ class RequestStorage:
             request_id = self._index[-1]
         return self._load_request(request_id)
 
+    def clear_requests(self):
+        """Clear all requests currently known to this storage.
+
+        This clears the index but does not remove the request data from disk. That
+        is left to the cleanup actions.
+        """
+        with self._lock:
+            self._index.clear()
+
     def _get_request_dir(self, request_id):
         return os.path.join(self._storage_dir, 'request-{}'.format(request_id))
 
