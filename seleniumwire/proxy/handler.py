@@ -61,6 +61,7 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
         """
         log.info('Capturing response: {} {} {}'.format(req.path, res.status, res.reason))
         self.server.storage.save_response(req.id, res, res_body)
+
         # Although we didn't modify the response body, we return it here to trigger
         # proxy2 to re-encode it. Otherwise it seems that that browser (Firefox/Chrome)
         # takes a lot longer to decode the body, for reasons unknown.

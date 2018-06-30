@@ -98,7 +98,7 @@ class RequestStorage:
         response_data = {
             'status_code': response.status,
             'reason': response.reason,
-            'headers': response.headers
+            'headers': dict(response.headers)
         }
 
         request_dir = self._get_request_dir(request_id)

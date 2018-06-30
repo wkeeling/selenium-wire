@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import glob
+from http.client import HTTPMessage
 import os
 import pickle
 import shutil
@@ -96,7 +97,7 @@ class RequestStorageTest(TestCase):
         self.assertEqual(loaded_response['reason'], 'OK')
         self.assertEqual(loaded_response['headers'], {
             'Content-Type': 'application/json',
-            'Content-Length': 500
+            'Content-Length': '500'
         })
 
     def test_save_response_with_body(self):
@@ -192,20 +193,20 @@ class RequestStorageTest(TestCase):
         mock_request = Mock()
         mock_request.path = 'http://www.example.com/test/path/'
         mock_request.command = 'GET'
-        mock_request.headers = {
-            'Host': 'www.example.com',
-            'Accept': '*/*'
-        }
+        headers = HTTPMessage()
+        headers.add_header('Host', 'www.example.com')
+        headers.add_header('Accept', '*/*')
+        mock_request.headers = headers
         return mock_request
 
     def _create_mock_resonse(self):
         mock_response = Mock()
         mock_response.status = 200
         mock_response.reason = 'OK'
-        mock_response.headers = {
-            'Content-Type': 'application/json',
-            'Content-Length': 500
-        }
+        headers = HTTPMessage()
+        headers.add_header('Content-Type', 'application/json')
+        headers.add_header('Content-Length', '500')
+        mock_response.headers = headers
         return mock_response
 
     def setUp(self):
