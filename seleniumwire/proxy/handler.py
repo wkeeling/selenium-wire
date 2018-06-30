@@ -36,17 +36,45 @@ class AdminMixin:
 
 
 class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
+    """Specialisation of ProxyRequestHandler that captures requests and responses
+    that pass through the proxy server and allows clients to access that data.
+    """
 
     def request_handler(self, req, req_body):
+        """Capture a request and its body.
+
+        Args:
+            req: The request (an instance of CaptureRequestHandler).
+            req_body: The binary request body.
+        """
         log.info('Capturing request: {}'.format(req.path))
         self.server.storage.save_request(req, req_body)
 
+    def response_handler(self, req, req_body, res, res_body):
+        """Capture a response and its body that relate to a previous request.
+
+        Args:
+            req: The original request (an instance of CaptureRequestHandler).
+            req_body: The body of the original request.
+            res: The response (a http.client.HTTPResponse instance) that corresponds to the request.
+            res_body: The binary response body.
+        """
+        log.info('Capturing response: {} {} {}'.format(req.path, res.status, res.reason))
+        self.server.storage.save_response(req.id, res, res_body)
+        # Although we didn't modify the response body, we return it here to trigger
+        # proxy2 to re-encode it. Otherwise it seems that that browser (Firefox/Chrome)
+        # takes a lot longer to decode the body, for reasons unknown.
+        return res_body
+
     def save_handler(self, req, req_body, res, res_body):
+        # Override this to prevent our superclass from pumping out logging info.
         pass
 
     def log_request(self, code='-', size='-'):
+        # Send server log messages through our own logging config.
         log.debug('{} {}'.format(self.path, code))
 
     def log_error(self, format_, *args):
+        # Send server error messages through our own logging config.
         log.debug(format_ % args)
 

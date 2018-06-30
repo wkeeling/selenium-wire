@@ -20,6 +20,15 @@ class InspectRequestsMixin:
         self._client.clear_requests()
 
     @property
+    def last_request(self):
+        """Retrieve the last request made between the browser and server.
+
+        Returns:
+            The last request.
+        """
+        self._client.last_request()
+
+    @property
     def header_overrides(self):
         # Support del firefox.header_overrides to clear all overrides?
         pass

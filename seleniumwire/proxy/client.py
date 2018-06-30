@@ -88,6 +88,9 @@ class AdminClient:
             except ConnectionError:
                 pass
 
+    def last_request(self):
+        pass
+
     def clear_requests(self):
         pass
 
