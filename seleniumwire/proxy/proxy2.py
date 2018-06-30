@@ -152,7 +152,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             return
         elif req_body_modified is not None:
             req_body = req_body_modified
-            req.headers['Content-length'] = bytes(len(req_body))
+            req.headers['Content-length'] = str(len(req_body))
 
         u = urllib.parse.urlsplit(req.path)
         scheme, netloc, path = u.scheme, u.netloc, (u.path + '?' + u.query if u.query else u.path)
@@ -202,7 +202,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         elif res_body_modified is not None:
             res_body_plain = res_body_modified
             res_body = self.encode_content_body(res_body_plain, content_encoding)
-            res.headers['Content-Length'] = bytes(len(res_body))
+            res.headers['Content-Length'] = str(len(res_body))
 
         setattr(res, 'headers', self.filter_headers(res.headers))
 
