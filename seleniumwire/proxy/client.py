@@ -61,7 +61,7 @@ class AdminClient:
                 'reason': 'OK',
                 'headers': {
                     'Content-Type': 'text/plain',
-                    'Content-Length': 15012
+                    'Content-Length': '15012'
                 }
             }
         }, ...]
