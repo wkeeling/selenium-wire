@@ -208,7 +208,7 @@ class RequestStorage:
 
     def _cleanup(self):
         """Cleans up and removes all saved requests associated with this storage."""
-        log.debug('Cleaning up {}'.format(self._storage_dir))
+        log.debug('Cleaning up %s', self._storage_dir)
         shutil.rmtree(self._storage_dir, ignore_errors=True)
         try:
             # Attempt to remove the parent folder if it is empty
