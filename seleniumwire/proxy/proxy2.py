@@ -191,6 +191,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 del self.tls.conns[origin]
             self.send_error(502)
             return
+        finally:
+            conn.close()
 
         content_encoding = res.headers.get('Content-Encoding', 'identity')
         res_body_plain = self.decode_content_body(res_body, content_encoding)
