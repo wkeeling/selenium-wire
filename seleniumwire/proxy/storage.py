@@ -206,7 +206,7 @@ class RequestStorage:
     def _get_request_dir(self, request_id):
         return os.path.join(self._storage_dir, 'request-{}'.format(request_id))
 
-    def _cleanup(self):
+    def _cleanup(self, *_):
         """Cleans up and removes all saved requests associated with this storage."""
         log.debug('Cleaning up %s', self._storage_dir)
         shutil.rmtree(self._storage_dir, ignore_errors=True)
