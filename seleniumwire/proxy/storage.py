@@ -109,9 +109,9 @@ class RequestStorage:
     def load_requests(self):
         """Load all previously saved requests known to the storage (known to its index).
 
-        The requests are returned as dictionaries, in the format:
+        The requests are returned as a list of dictionaries, in the format:
 
-        {
+        [{
             'id': 'request id',
             'method': 'GET',
             'path': 'http://www.example.com/some/path',
@@ -124,16 +124,16 @@ class RequestStorage:
                 'reason': 'OK',
                 'headers': {
                     'Content-Type': 'text/plain',
-                    'Content-Length': 15012
+                    'Content-Length': '15012'
                 }
             }
-        }
+        }, ...]
 
         Where a request does not have a corresponding response, a 'response' key will
         still exist in the dictionary, but its value will be None.
 
         Returns:
-            A list of dictionaries representing previously saved requests.
+            A list of dictionaries of previously saved requests.
         """
         with self._lock:
             index = self._index[:]
