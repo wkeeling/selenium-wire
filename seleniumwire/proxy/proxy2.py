@@ -53,7 +53,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
     cakey = join_with_script_dir('ca.key')
     cacert = join_with_script_dir('ca.crt')
     certkey = join_with_script_dir('cert.key')
-    certdir = join_with_script_dir('certs/')
     timeout = 5
     lock = threading.Lock()
     admin_path = 'http://proxy2'
@@ -71,18 +70,22 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         self.log_message(format_, *args)
 
+    def get_cert_dir(self):
+        return join_with_script_dir('certs/')
+
     def do_CONNECT(self):
-        if os.path.isfile(self.cakey) and os.path.isfile(self.cacert) and os.path.isfile(self.certkey) \
-                and os.path.isdir(self.certdir):
+        if os.path.isfile(self.cakey) and os.path.isfile(self.cacert) and os.path.isfile(self.certkey):
             self.connect_intercept()
         else:
             self.connect_relay()
 
     def connect_intercept(self):
         hostname = self.path.split(':')[0]
-        certpath = "%s/%s.crt" % (self.certdir.rstrip('/'), hostname)
+        certdir = self.get_cert_dir()
+        certpath = "%s/%s.crt" % (certdir.rstrip('/'), hostname)
 
         with self.lock:
+            os.makedirs(certdir, exist_ok=True)
             if not os.path.isfile(certpath):
                 epoch = "%d" % (time.time() * 1000)
                 p1 = Popen(["openssl", "req", "-new", "-key", self.certkey, "-subj", "/CN=%s" % hostname], stdout=PIPE)
@@ -191,6 +194,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 del self.tls.conns[origin]
             self.send_error(502)
             return
+        finally:
+            conn.close()
 
         content_encoding = res.headers.get('Content-Encoding', 'identity')
         res_body_plain = self.decode_content_body(res_body, content_encoding)

@@ -47,7 +47,7 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
             req: The request (an instance of CaptureRequestHandler).
             req_body: The binary request body.
         """
-        log.info('Capturing request: {}'.format(req.path))
+        log.info('Capturing request: %s', req.path)
         self.server.storage.save_request(req, req_body)
 
     def response_handler(self, req, req_body, res, res_body):
@@ -59,7 +59,7 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
             res: The response (a http.client.HTTPResponse instance) that corresponds to the request.
             res_body: The binary response body.
         """
-        log.info('Capturing response: {} {} {}'.format(req.path, res.status, res.reason))
+        log.info('Capturing response: %s %s %s', req.path, res.status, res.reason)
         self.server.storage.save_response(req.id, res, res_body)
 
         # Although we didn't modify the response body, we return it here to trigger
@@ -71,11 +71,15 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
         # Override this to prevent our superclass from pumping out logging info.
         pass
 
+    def get_cert_dir(self):
+        """Overridden to retrieve the storage-specific certificate directory."""
+        return self.server.storage.get_cert_dir()
+
     def log_request(self, code='-', size='-'):
         # Send server log messages through our own logging config.
-        log.debug('{} {}'.format(self.path, code))
+        log.debug('%s %s', self.path, code)
 
     def log_error(self, format_, *args):
         # Send server error messages through our own logging config.
-        log.debug(format_ % args)
+        log.debug(format_, *args)
 

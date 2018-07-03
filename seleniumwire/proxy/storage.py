@@ -109,9 +109,9 @@ class RequestStorage:
     def load_requests(self):
         """Load all previously saved requests known to the storage (known to its index).
 
-        The requests are returned as dictionaries, in the format:
+        The requests are returned as a list of dictionaries, in the format:
 
-        {
+        [{
             'id': 'request id',
             'method': 'GET',
             'path': 'http://www.example.com/some/path',
@@ -127,13 +127,13 @@ class RequestStorage:
                     'Content-Length': '15012'
                 }
             }
-        }
+        }, ...]
 
         Where a request does not have a corresponding response, a 'response' key will
         still exist in the dictionary, but its value will be None.
 
         Returns:
-            A list of dictionaries representing previously saved requests.
+            A list of dictionaries of previously saved requests.
         """
         with self._lock:
             index = self._index[:]
@@ -203,12 +203,22 @@ class RequestStorage:
         with self._lock:
             self._index.clear()
 
+    def get_cert_dir(self):
+        """Returns a storage-specific path to a directory where the SSL certificates are stored.
+
+        The directory does not have to exist.
+
+        Returns:
+            The path to the certificates directory in this storage.
+        """
+        return os.path.join(self._storage_dir, 'certs')
+
     def _get_request_dir(self, request_id):
         return os.path.join(self._storage_dir, 'request-{}'.format(request_id))
 
-    def _cleanup(self):
+    def _cleanup(self, *_):
         """Cleans up and removes all saved requests associated with this storage."""
-        log.debug('Cleaning up {}'.format(self._storage_dir))
+        log.debug('Cleaning up %s', self._storage_dir)
         shutil.rmtree(self._storage_dir, ignore_errors=True)
         try:
             # Attempt to remove the parent folder if it is empty
