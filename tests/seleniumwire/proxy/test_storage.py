@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from fnmatch import fnmatch
 import glob
 from http.client import HTTPMessage
 import os
@@ -184,6 +185,12 @@ class RequestStorageTest(TestCase):
         requests = storage.load_requests()
 
         self.assertFalse(requests)
+
+    def test_get_cert_dir(self):
+        storage = RequestStorage(base_dir=self.base_dir)
+
+        self.assertTrue(fnmatch(storage.get_cert_dir(),
+                                os.path.join(self.base_dir, 'seleniumwire', 'storage-*', 'certs')))
 
     def _get_stored_path(self, request_id, filename):
         return glob.glob(os.path.join(self.base_dir, 'seleniumwire', 'storage-*',

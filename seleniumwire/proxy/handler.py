@@ -71,6 +71,10 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
         # Override this to prevent our superclass from pumping out logging info.
         pass
 
+    def get_cert_dir(self):
+        """Overridden to retrieve the storage-specific certificate directory."""
+        return self.server.storage.get_cert_dir()
+
     def log_request(self, code='-', size='-'):
         # Send server log messages through our own logging config.
         log.debug('%s %s', self.path, code)

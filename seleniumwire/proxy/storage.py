@@ -203,6 +203,16 @@ class RequestStorage:
         with self._lock:
             self._index.clear()
 
+    def get_cert_dir(self):
+        """Returns a storage-specific path to a directory where the SSL certificates are stored.
+
+        The directory does not have to exist.
+
+        Returns:
+            The path to the certificates directory in this storage.
+        """
+        return os.path.join(self._storage_dir, 'certs')
+
     def _get_request_dir(self, request_id):
         return os.path.join(self._storage_dir, 'request-{}'.format(request_id))
 
