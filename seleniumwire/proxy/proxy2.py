@@ -90,7 +90,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                             "-set_serial", epoch, "-out", certpath], stdin=p1.stdout, stderr=PIPE)
                 p2.communicate()
 
-        self.wfile.write("%s %d %s\r\n" % (self.protocol_version, 200, 'Connection Established'))
+        identifier = "%s %d %s\r\n" % (self.protocol_version, 200, 'Connection Established')
+        self.wfile.write(identifier.encode('utf-8'))
         self.end_headers()
 
         self.connection = ssl.wrap_socket(self.connection, keyfile=self.certkey, certfile=certpath, server_side=True)
