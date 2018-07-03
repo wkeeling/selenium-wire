@@ -28,27 +28,49 @@ class AdminClientTest(TestCase):
 
     def test_requests_single(self):
         host, port = self.client.create_proxy()
-        # self._configure_proxy('localhost', 8080)
         self._configure_proxy(host, port)
-        # print(host, port)
 
-        self._make_request('http://fa-svr-ariaweb01')
+        self._make_request('http://python.org')
 
-        # requests = self.client.requests()
-        # print(requests)
+        requests = self.client.requests()
 
-        # self.assertEqual(len(requests), 1)
-        # request = requests[0]
-        # self.assertEqual(request['method'], 'GET')
-        # self.assertEqual(request['path'], 'http://fa-svr-ariaweb01')
-        # self.assertIn('headers', request)
-        # self.assertEqual(request['response']['status_code'], 200)
+        self.assertEqual(len(requests), 1)
+        request = requests[0]
+        self.assertEqual(request['method'], 'GET')
+        self.assertEqual(request['path'], 'http://python.org')
+        self.assertIn('headers', request)
+        self.assertEqual(request['response']['status_code'], 200)
 
     def test_requests_multiple(self):
-        self.fail('Implement')
+        host, port = self.client.create_proxy()
+        self._configure_proxy(host, port)
+
+        self._make_request('http://python.org')
+        self._make_request('http://python.org')
+
+        requests = self.client.requests()
+
+        self.assertEqual(len(requests), 1)
+        request = requests[0]
+        self.assertEqual(request['method'], 'GET')
+        self.assertEqual(request['path'], 'http://python.org')
+        self.assertIn('headers', request)
+        self.assertEqual(request['response']['status_code'], 200)
 
     def test_requests_https(self):
-        self.fail('Implement')
+        host, port = self.client.create_proxy()
+        self._configure_proxy(host, port)
+
+        self._make_request('https://www.wikipedia.org')
+
+        requests = self.client.requests()
+
+        self.assertEqual(len(requests), 1)
+        request = requests[0]
+        self.assertEqual(request['method'], 'GET')
+        self.assertEqual(request['path'], 'https://www.wikipedia.org')
+        self.assertIn('headers', request)
+        self.assertEqual(request['response']['status_code'], 200)
 
     def test_request_body(self):
         self.fail('Implement')
