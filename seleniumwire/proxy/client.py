@@ -1,7 +1,8 @@
 import http.client
 import json
+import threading
 
-from .handler import ADMIN_PATH
+from .handler import ADMIN_PATH, CaptureRequestHandler
 from .server import ProxyHTTPServer
 
 
@@ -24,8 +25,17 @@ class AdminClient:
         """
         # This at some point may interact with a remote service
         # to create the proxy and retrieve its address details.
-        # For the time being, we create a local proxy.
-        return ProxyHTTPServer.start()
+        CaptureRequestHandler.protocol_version = 'HTTP/1.1'
+        self._proxy = ProxyHTTPServer((self._proxy_host, self._proxy_port), CaptureRequestHandler)
+
+        t = threading.Thread(name='Selenium Wire Proxy Server', target=self._proxy.serve_forever)
+        t.daemon = True
+        t.start()
+
+        # self._proxy_host = self._proxy.socket.gethostname()
+        self._proxy_port = self._proxy.socket.getsockname()[1]
+
+        return self._proxy_host, self._proxy_port
 
     def destroy_proxy(self):
         """Stops the proxy server and performs any clean up actions."""
