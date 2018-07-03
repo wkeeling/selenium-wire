@@ -8,8 +8,6 @@ from .server import ProxyHTTPServer
 class AdminClient:
     """Provides the means to communicate with the proxy server and ask it for information
     and tell it to do certain things.
-
-    This implementation starts a proxy server instance in a separate thread.
     """
 
     def __init__(self):
