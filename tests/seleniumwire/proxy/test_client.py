@@ -39,7 +39,7 @@ class AdminClientTest(TestCase):
         self.assertEqual(request['method'], 'GET')
         self.assertEqual(request['path'], 'http://python.org')
         self.assertIn('headers', request)
-        self.assertEqual(request['response']['status_code'], 200)
+        self.assertEqual(request['response']['status_code'], 301)
 
     def test_requests_multiple(self):
         host, port = self.client.create_proxy()
@@ -50,12 +50,7 @@ class AdminClientTest(TestCase):
 
         requests = self.client.requests()
 
-        self.assertEqual(len(requests), 1)
-        request = requests[0]
-        self.assertEqual(request['method'], 'GET')
-        self.assertEqual(request['path'], 'http://python.org')
-        self.assertIn('headers', request)
-        self.assertEqual(request['response']['status_code'], 200)
+        self.assertEqual(len(requests), 2)
 
     def test_requests_https(self):
         host, port = self.client.create_proxy()
@@ -80,7 +75,8 @@ class AdminClientTest(TestCase):
 
     def _configure_proxy(self, host, port):
         handler = urllib.request.ProxyHandler({
-            'http': 'http://{}:{}'.format(host, port)
+            'http': 'http://{}:{}'.format(host, port),
+            'https': 'http://{}:{}'.format(host, port)
         })
         opener = urllib.request.build_opener(handler)
         urllib.request.install_opener(opener)
