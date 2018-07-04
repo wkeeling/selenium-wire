@@ -90,19 +90,18 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                             "-set_serial", epoch, "-out", certpath], stdin=p1.stdout, stderr=PIPE)
                 p2.communicate()
 
-        identifier = "%s %d %s\r\n" % (self.protocol_version, 200, 'Connection Established')
-        self.wfile.write(identifier.encode('utf-8'))
+        self.send_response(200, 'Connection Established')
         self.end_headers()
 
-        self.connection = ssl.wrap_socket(self.connection, keyfile=self.certkey, certfile=certpath, server_side=True)
-        self.rfile = self.connection.makefile("rb", self.rbufsize)
-        self.wfile = self.connection.makefile("wb", self.wbufsize)
+        with ssl.wrap_socket(self.connection, keyfile=self.certkey, certfile=certpath, server_side=True) as conn:
+            self.rfile = conn.makefile("rb", self.rbufsize)
+            self.wfile = conn.makefile("wb", self.wbufsize)
 
         conntype = self.headers.get('Proxy-Connection', '')
         if self.protocol_version == "HTTP/1.1" and conntype.lower() != 'close':
-            self.close_connection = 0
+            self.close_connection = False
         else:
-            self.close_connection = 1
+            self.close_connection = True
 
     def connect_relay(self):
         address = self.path.split(':', 1)
@@ -116,7 +115,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
         conns = [self.connection, s]
-        self.close_connection = 0
+        self.close_connection = False
         while not self.close_connection:
             rlist, wlist, xlist = select.select(conns, [], conns, self.timeout)
             if xlist or not rlist:
@@ -128,7 +127,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 except ConnectionError:
                     return
                 if not data:
-                    self.close_connection = 1
+                    self.close_connection = True
                     break
                 other.sendall(data)
 
@@ -136,7 +135,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         if self.path.startswith(self.admin_path):
             self.admin_handler()
             return
-
         req = self
         content_length = int(req.headers.get('Content-Length', 0))
         req_body = self.rfile.read(content_length) if content_length else None
@@ -163,6 +161,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         setattr(req, 'headers', self.filter_headers(req.headers))
 
         origin = (scheme, netloc)
+        conn = None
         try:
             if origin not in self.tls.conns:
                 if scheme == 'https':
@@ -209,21 +208,20 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         setattr(res, 'headers', self.filter_headers(res.headers))
 
-        identifier = "%s %d %s\r\n" % (self.protocol_version, res.status, res.reason)
-        self.wfile.write(identifier.encode('utf-8'))
+        self.send_response(res.status, res.reason)
 
         for header, val in res.headers.items():
             self.send_header(header, val)
         self.end_headers()
-        self.wfile.write(res_body)
+        if res_body:
+            self.wfile.write(res_body)
         self.wfile.flush()
 
         with self.lock:
             self.save_handler(req, req_body, res, res_body_plain)
 
     def relay_streaming(self, res):
-        identifier = "%s %d %s\r\n" % (self.protocol_version, res.status, res.reason)
-        self.wfile.write(identifier.encode('utf-8'))
+        self.send_response(res.status, res.reason)
         for header, val in res.headers.items():
             self.send_header(header, val)
         self.end_headers()

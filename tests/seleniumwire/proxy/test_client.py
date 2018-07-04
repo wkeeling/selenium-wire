@@ -1,4 +1,5 @@
 import socket
+import ssl
 from unittest import TestCase
 import urllib.request
 
@@ -32,23 +33,24 @@ class AdminClientTest(TestCase):
 
         self._make_request('http://python.org')
 
-        requests = self.client.requests()
+        requests = self.client.get_requests()
 
         self.assertEqual(len(requests), 1)
         request = requests[0]
         self.assertEqual(request['method'], 'GET')
         self.assertEqual(request['path'], 'http://python.org')
-        self.assertIn('headers', request)
+        self.assertEqual(request['headers']['Accept-Encoding'], 'identity')
         self.assertEqual(request['response']['status_code'], 301)
+        self.assertEqual(request['response']['headers']['Content-Type'], 'text/html')
 
     def test_requests_multiple(self):
         host, port = self.client.create_proxy()
         self._configure_proxy(host, port)
 
         self._make_request('http://python.org')
-        self._make_request('http://python.org')
+        self._make_request('http://www.wikipedia.org')
 
-        requests = self.client.requests()
+        requests = self.client.get_requests()
 
         self.assertEqual(len(requests), 2)
 
@@ -56,16 +58,17 @@ class AdminClientTest(TestCase):
         host, port = self.client.create_proxy()
         self._configure_proxy(host, port)
 
-        self._make_request('https://www.wikipedia.org')
+        self._make_request('https://fa-svr-ariaweb02.racing.lc/')
 
-        requests = self.client.requests()
-
-        self.assertEqual(len(requests), 1)
-        request = requests[0]
-        self.assertEqual(request['method'], 'GET')
-        self.assertEqual(request['path'], 'https://www.wikipedia.org')
-        self.assertIn('headers', request)
-        self.assertEqual(request['response']['status_code'], 200)
+        # requests = self.client.get_requests()
+        # print(requests)
+        #
+        # self.assertEqual(len(requests), 1)
+        # request = requests[0]
+        # self.assertEqual(request['method'], 'GET')
+        # self.assertEqual(request['path'], 'https://www.wikipedia.org')
+        # self.assertIn('headers', request)
+        # self.assertEqual(request['response']['status_code'], 200)
 
     def test_request_body(self):
         self.fail('Implement')
@@ -74,11 +77,15 @@ class AdminClientTest(TestCase):
         self.fail('Implement')
 
     def _configure_proxy(self, host, port):
-        handler = urllib.request.ProxyHandler({
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+        https_handler = urllib.request.HTTPSHandler(context=context)
+        proxy_handler = urllib.request.ProxyHandler({
             'http': 'http://{}:{}'.format(host, port),
-            'https': 'http://{}:{}'.format(host, port)
+            'https': 'http://{}:{}'.format(host, port),
         })
-        opener = urllib.request.build_opener(handler)
+        opener = urllib.request.build_opener(https_handler, proxy_handler)
         urllib.request.install_opener(opener)
 
     def _make_request(self, url):
