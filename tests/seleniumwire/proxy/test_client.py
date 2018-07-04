@@ -58,17 +58,16 @@ class AdminClientTest(TestCase):
         host, port = self.client.create_proxy()
         self._configure_proxy(host, port)
 
-        self._make_request('https://fa-svr-ariaweb02.racing.lc/')
+        self._make_request('https://www.wikipedia.org')
 
-        # requests = self.client.get_requests()
-        # print(requests)
-        #
-        # self.assertEqual(len(requests), 1)
-        # request = requests[0]
-        # self.assertEqual(request['method'], 'GET')
-        # self.assertEqual(request['path'], 'https://www.wikipedia.org')
-        # self.assertIn('headers', request)
-        # self.assertEqual(request['response']['status_code'], 200)
+        requests = self.client.get_requests()
+
+        self.assertEqual(len(requests), 1)
+        request = requests[0]
+        self.assertEqual(request['method'], 'GET')
+        self.assertEqual(request['path'], 'https://www.wikipedia.org')
+        self.assertIn('headers', request)
+        self.assertEqual(request['response']['status_code'], 200)
 
     def test_request_body(self):
         self.fail('Implement')
