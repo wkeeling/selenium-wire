@@ -13,7 +13,7 @@ class InspectRequestsMixin:
         Returns:
             The requests made between the browser and server.
         """
-        return self._client.requests()
+        return self._client.get_requests()
 
     @requests.deleter
     def requests(self):
@@ -26,7 +26,7 @@ class InspectRequestsMixin:
         Returns:
             The last request.
         """
-        self._client.last_request()
+        self._client.get_last_request()
 
     @property
     def header_overrides(self):
@@ -85,7 +85,7 @@ class Request:
             The response bytes.
         """
         if self._data.get('body') is None:
-            self._data['body'] = self._client.request_body(self._data['id'])
+            self._data['body'] = self._client.get_request_body(self._data['id'])
 
         return self._data['body']
 
@@ -125,7 +125,7 @@ class Response:
             The response bytes.
         """
         if self._data.get('body') is None:
-            self._data['body'] = self._client.response_body(self._request_id)
+            self._data['body'] = self._client.get_response_body(self._request_id)
 
         return self._data['body']
 

@@ -41,7 +41,7 @@ class AdminClient:
         """Stops the proxy server and performs any clean up actions."""
         self._proxy.shutdown()
 
-    def requests(self):
+    def get_requests(self):
         """Returns the requests currently captured by the proxy server.
 
         The data is returned as a list of dictionaries in the format:
@@ -89,16 +89,16 @@ class AdminClient:
             except ConnectionError:
                 pass
 
-    def last_request(self):
+    def get_last_request(self):
         pass
 
     def clear_requests(self):
         pass
 
-    def request_body(self, request_id):
+    def get_request_body(self, request_id):
         pass
 
-    def response_body(self, request_id):
+    def get_response_body(self, request_id):
         pass
 
 
