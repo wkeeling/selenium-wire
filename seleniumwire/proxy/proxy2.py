@@ -89,11 +89,13 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 p2 = Popen(["openssl", "x509", "-req", "-days", "3650", "-CA", self.cacert, "-CAkey", self.cakey,
                             "-set_serial", epoch, "-out", certpath], stdin=p1.stdout, stderr=PIPE)
                 p2.communicate()
+                p1.communicate()
 
         self.send_response(200, 'Connection Established')
         self.end_headers()
 
         with ssl.wrap_socket(self.connection, keyfile=self.certkey, certfile=certpath, server_side=True) as conn:
+            self.connection = conn
             self.rfile = conn.makefile("rb", self.rbufsize)
             self.wfile = conn.makefile("wb", self.wbufsize)
 
