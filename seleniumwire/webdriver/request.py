@@ -23,6 +23,8 @@ class InspectRequestsMixin:
     def last_request(self):
         """Retrieve the last request made between the browser and server.
 
+        Note that this is more efficient than running requests[-1]
+
         Returns:
             The last request.
         """

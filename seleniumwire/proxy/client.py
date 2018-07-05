@@ -70,7 +70,29 @@ class AdminClient:
         Returns:
             A list of request dictionaries.
         """
-        url = '{}/requests'.format(ADMIN_PATH)
+        return self._make_request('/requests')
+
+    def get_last_request(self):
+        """Returns the last request captured by the proxy server.
+
+        This is more efficient than running get_requests()[-1]
+
+        Returns:
+            The last request.
+        """
+        return self._make_request('/last_request')
+
+    def clear_requests(self):
+        pass
+
+    def get_request_body(self, request_id):
+        pass
+
+    def get_response_body(self, request_id):
+        pass
+
+    def _make_request(self, path):
+        url = '{}{}'.format(ADMIN_PATH, path)
         conn = http.client.HTTPConnection(self._proxy_host, self._proxy_port)
         conn.request('GET', url)
         try:
@@ -88,18 +110,6 @@ class AdminClient:
                 conn.close()
             except ConnectionError:
                 pass
-
-    def get_last_request(self):
-        pass
-
-    def clear_requests(self):
-        pass
-
-    def get_request_body(self, request_id):
-        pass
-
-    def get_response_body(self, request_id):
-        pass
 
 
 class ProxyException(Exception):

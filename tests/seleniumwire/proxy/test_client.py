@@ -27,7 +27,7 @@ class AdminClientTest(TestCase):
         with self.assertRaises(socket.timeout):
             self._make_request('http://python.org')
 
-    def test_requests_single(self):
+    def test_get_requests_single(self):
         host, port = self.client.create_proxy()
         self._configure_proxy(host, port)
 
@@ -43,7 +43,7 @@ class AdminClientTest(TestCase):
         self.assertEqual(request['response']['status_code'], 301)
         self.assertEqual(request['response']['headers']['Content-Type'], 'text/html')
 
-    def test_requests_multiple(self):
+    def test_get_requests_multiple(self):
         host, port = self.client.create_proxy()
         self._configure_proxy(host, port)
 
@@ -54,7 +54,7 @@ class AdminClientTest(TestCase):
 
         self.assertEqual(len(requests), 2)
 
-    def test_requests_https(self):
+    def test_get_requests_https(self):
         host, port = self.client.create_proxy()
         self._configure_proxy(host, port)
 
@@ -66,13 +66,25 @@ class AdminClientTest(TestCase):
         request = requests[0]
         self.assertEqual(request['method'], 'GET')
         self.assertEqual(request['path'], 'https://www.wikipedia.org')
-        self.assertIn('headers', request)
+        self.assertEqual(request['headers']['Accept-Encoding'], 'identity')
         self.assertEqual(request['response']['status_code'], 200)
+        self.assertEqual(request['response']['headers']['Content-Type'], 'text/html')
 
-    def test_request_body(self):
+    def test_get_last_request(self):
+        host, port = self.client.create_proxy()
+        self._configure_proxy(host, port)
+
+        self._make_request('https://python.org')
+        self._make_request('https://www.wikipedia.org')
+
+        last_request = self.client.get_last_request()
+
+        self.assertEqual(last_request['path'], 'https://www.wikipedia.org')
+
+    def test_get_request_body(self):
         self.fail('Implement')
 
-    def test_response_body(self):
+    def test_get_response_body(self):
         self.fail('Implement')
 
     def _configure_proxy(self, host, port):

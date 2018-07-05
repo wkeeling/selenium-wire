@@ -19,13 +19,18 @@ class AdminMixin:
 
     def admin_handler(self):
         if self._is_path('/requests'):
-            self._captured_requests()
+            self._get_requests()
+        elif self._is_path('/last_request'):
+            self._get_last_request()
 
     def _is_path(self, path):
         return self.path == '{}{}'.format(self.admin_path, path)
 
-    def _captured_requests(self):
+    def _get_requests(self):
         self._send_response(json.dumps(self.server.storage.load_requests()).encode('utf-8'), 'application/json')
+
+    def _get_last_request(self):
+        self._send_response(json.dumps(self.server.storage.load_last_request()).encode('utf-8'), 'application/json')
 
     def _send_response(self, body, content_type):
         self.send_response(200)
