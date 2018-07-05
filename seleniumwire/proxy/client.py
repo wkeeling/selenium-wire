@@ -40,6 +40,8 @@ class AdminClient:
     def destroy_proxy(self):
         """Stops the proxy server and performs any clean up actions."""
         self._proxy.shutdown()
+        # Necessary to warning about unclosed socket
+        self._proxy.server_close()
 
     def get_requests(self):
         """Returns the requests currently captured by the proxy server.
@@ -87,10 +89,17 @@ class AdminClient:
         self._make_request('/clear')
 
     def get_request_body(self, request_id):
-        pass
+        """Returns the body of the request with the specified request_id.
+
+        Args:
+            request_id: The request identifier.
+        Returns:
+            The binary request body, or None if the request has no body.
+        """
+        return self._make_request('/request_body?request_id={}'.format(request_id)) or None
 
     def get_response_body(self, request_id):
-        pass
+        return self._make_request('/response_body?request_id={}'.format(request_id)) or None
 
     def _make_request(self, path):
         url = '{}{}'.format(ADMIN_PATH, path)
@@ -101,7 +110,10 @@ class AdminClient:
             if response.status != 200:
                 raise ProxyException('Proxy returned status code {} for {}'.format(response.status, url))
             data = response.read()
-            return json.loads(data.decode(encoding='utf-8'))
+            try:
+                return json.loads(data.decode(encoding='utf-8'))
+            except json.JSONDecodeError:
+                return data
         except ProxyException:
             raise
         except Exception as e:
