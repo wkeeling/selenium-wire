@@ -44,11 +44,11 @@ class AdminMixin:
         self._send_response(json.dumps({'status': 'ok'}).encode('utf-8'), 'application/json')
 
     def _get_request_body(self, request_id):
-        body = self.server.storage.load_request_body(request_id)
+        body = self.server.storage.load_request_body(request_id[0])
         self._send_body(body)
 
     def _get_response_body(self, request_id):
-        body = self.server.storage.load_response_body(request_id)
+        body = self.server.storage.load_response_body(request_id[0])
         self._send_body(body)
 
     def _send_body(self, body):

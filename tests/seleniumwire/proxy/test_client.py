@@ -77,6 +77,15 @@ class AdminClientTest(TestCase):
 
         self.assertEqual(self.client.get_requests(), [])
 
+    def test_get_request_body(self):
+        self._make_request('https://www.wikipedia.org')
+        last_request = self.client.get_last_request()
+
+        body = self.client.get_request_body(last_request['id'])
+
+        self.assertIsInstance(body, bytes)
+        self.assertIn(b'html', body)
+
     def test_get_request_body_empty(self):
         self._make_request('https://www.wikipedia.org')
         last_request = self.client.get_last_request()
@@ -90,14 +99,25 @@ class AdminClientTest(TestCase):
         last_request = self.client.get_last_request()
 
         body = self.client.get_response_body(last_request['id'])
+
         self.assertIsInstance(body, bytes)
         self.assertIn(b'html', body)
 
     def test_get_response_body_binary(self):
-        self.fail('Implement')
+        self._make_request('https://www.python.org/static/img/python-logo@2x.png')
+        last_request = self.client.get_last_request()
+
+        body = self.client.get_response_body(last_request['id'])
+
+        self.assertIsInstance(body, bytes)
 
     def test_get_response_body_empty(self):
-        self.fail('Implement')
+        self._make_request('http://www.python.org')  # Redirects to https with empty body
+        redirect_request = self.client.get_requests()[0]
+
+        body = self.client.get_response_body(redirect_request['id'])
+
+        self.assertIsNone(body)
 
     def _configure_proxy(self, host, port):
         context = ssl.create_default_context()
