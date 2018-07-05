@@ -77,13 +77,26 @@ class AdminClientTest(TestCase):
 
         self.assertEqual(self.client.get_requests(), [])
 
-    def test_get_request_body(self):
-        host, port = self.client.create_proxy()
-        self._configure_proxy(host, port)
+    def test_get_request_body_empty(self):
+        self._make_request('https://www.wikipedia.org')
+        last_request = self.client.get_last_request()
 
-        body = self.client.get_request_body(self._make_request('https://fa-svr-ariaweb01')['id'])
+        body = self.client.get_request_body(last_request['id'])
+
+        self.assertIsNone(body)
 
     def test_get_response_body(self):
+        self._make_request('https://www.wikipedia.org')
+        last_request = self.client.get_last_request()
+
+        body = self.client.get_response_body(last_request['id'])
+        self.assertIsInstance(body, bytes)
+        self.assertIn(b'html', body)
+
+    def test_get_response_body_binary(self):
+        self.fail('Implement')
+
+    def test_get_response_body_empty(self):
         self.fail('Implement')
 
     def _configure_proxy(self, host, port):

@@ -169,7 +169,10 @@ class RequestStorage:
         Returns:
             The binary data request body.
         """
-        return self._load_body(request_id, 'requestbody')
+        try:
+            return self._load_body(request_id, 'requestbody')
+        except FileNotFoundError:
+            return None
 
     def load_response_body(self, request_id):
         """Load the body of the response corresponding to the request with the specified id.
@@ -179,7 +182,10 @@ class RequestStorage:
         Returns:
             The binary data response body.
         """
-        return self._load_body(request_id, 'responsebody')
+        try:
+            return self._load_body(request_id, 'responsebody')
+        except FileNotFoundError:
+            return None
 
     def _load_body(self, request_id, name):
         request_dir = self._get_request_dir(request_id)

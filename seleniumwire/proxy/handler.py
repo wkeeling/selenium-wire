@@ -1,5 +1,6 @@
 import json
 import logging
+from urllib.parse import parse_qs, urlparse
 
 from .proxy2 import ProxyRequestHandler
 
@@ -18,15 +19,19 @@ class AdminMixin:
     admin_path = ADMIN_PATH
 
     def admin_handler(self):
-        if self._is_path('/requests'):
-            self._get_requests()
-        elif self._is_path('/last_request'):
-            self._get_last_request()
-        elif self._is_path('/clear'):
-            self._clear_requests()
+        parse_result = urlparse(self.path)
+        path, params = parse_result.path, parse_qs(parse_result.query)
 
-    def _is_path(self, path):
-        return self.path == '{}{}'.format(self.admin_path, path)
+        if path == '/requests':
+            self._get_requests()
+        elif path == '/last_request':
+            self._get_last_request()
+        elif path == '/clear':
+            self._clear_requests()
+        elif path == '/request_body':
+            self._get_request_body(**params)
+        elif path == '/response_body':
+            self._get_response_body(**params)
 
     def _get_requests(self):
         self._send_response(json.dumps(self.server.storage.load_requests()).encode('utf-8'), 'application/json')
@@ -37,6 +42,19 @@ class AdminMixin:
     def _clear_requests(self):
         self.server.storage.clear_requests()
         self._send_response(json.dumps({'status': 'ok'}).encode('utf-8'), 'application/json')
+
+    def _get_request_body(self, request_id):
+        body = self.server.storage.load_request_body(request_id)
+        self._send_body(body)
+
+    def _get_response_body(self, request_id):
+        body = self.server.storage.load_response_body(request_id)
+        self._send_body(body)
+
+    def _send_body(self, body):
+        if body is None:
+            body = b''
+        self._send_response(body, 'application/octet-stream')
 
     def _send_response(self, body, content_type):
         self.send_response(200)
