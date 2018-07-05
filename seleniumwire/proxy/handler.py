@@ -66,7 +66,7 @@ class AdminMixin:
 
 class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
     """Specialisation of ProxyRequestHandler that captures requests and responses
-    that pass through the proxy server and allows clients to access that data.
+    that pass through the proxy server and allows admim clients to access that data.
     """
 
     def request_handler(self, req, req_body):
