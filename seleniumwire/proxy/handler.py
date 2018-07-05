@@ -52,7 +52,7 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
     """
 
     def request_handler(self, req, req_body):
-        """Capture a request and its body.
+        """Captures a request and its body.
 
         Args:
             req: The request (an instance of CaptureRequestHandler).
@@ -62,7 +62,7 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
         self.server.storage.save_request(req, req_body)
 
     def response_handler(self, req, req_body, res, res_body):
-        """Capture a response and its body that relate to a previous request.
+        """Captures a response and its body that relate to a previous request.
 
         Args:
             req: The original request (an instance of CaptureRequestHandler).
@@ -84,7 +84,7 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
 
     @property
     def certdir(self):
-        """Override this attribute to retrieve the storage-specific certificate directory."""
+        """Overrides the certdir attribute to retrieve the storage-specific certificate directory."""
         return self.server.storage.get_cert_dir()
 
     def log_request(self, code='-', size='-'):
