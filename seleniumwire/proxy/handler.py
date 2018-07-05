@@ -9,7 +9,7 @@ ADMIN_PATH = 'http://seleniumwire'
 
 
 class AdminMixin:
-    """Mixin class that allows remote clients to interact with the proxy server.
+    """Mixin class that allows remote admin clients to interact with the proxy server.
 
     This class intercepts administration requests and dispatches them to
     relevant handler methods.
@@ -22,6 +22,8 @@ class AdminMixin:
             self._get_requests()
         elif self._is_path('/last_request'):
             self._get_last_request()
+        elif self._is_path('/clear'):
+            self._clear_requests()
 
     def _is_path(self, path):
         return self.path == '{}{}'.format(self.admin_path, path)
@@ -31,6 +33,10 @@ class AdminMixin:
 
     def _get_last_request(self):
         self._send_response(json.dumps(self.server.storage.load_last_request()).encode('utf-8'), 'application/json')
+
+    def _clear_requests(self):
+        self.server.storage.clear_requests()
+        self._send_response(json.dumps({'status': 'ok'}).encode('utf-8'), 'application/json')
 
     def _send_response(self, body, content_type):
         self.send_response(200)

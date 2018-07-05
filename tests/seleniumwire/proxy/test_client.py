@@ -10,27 +10,24 @@ class AdminClientTest(TestCase):
 
     def setUp(self):
         self.client = AdminClient()
-
-    def test_create_proxy(self):
         host, port = self.client.create_proxy()
         self._configure_proxy(host, port)
 
+    def tearDown(self):
+        self.client.destroy_proxy()
+
+    def test_create_proxy(self):
         html = self._make_request('http://python.org')
 
         self.assertIn(b'Welcome to Python.org', html)
 
     def test_destroy_proxy(self):
-        host, port = self.client.create_proxy()
-        self._configure_proxy(host, port)
         self.client.destroy_proxy()
 
         with self.assertRaises(socket.timeout):
             self._make_request('http://python.org')
 
     def test_get_requests_single(self):
-        host, port = self.client.create_proxy()
-        self._configure_proxy(host, port)
-
         self._make_request('http://python.org')
 
         requests = self.client.get_requests()
@@ -44,9 +41,6 @@ class AdminClientTest(TestCase):
         self.assertEqual(request['response']['headers']['Content-Type'], 'text/html')
 
     def test_get_requests_multiple(self):
-        host, port = self.client.create_proxy()
-        self._configure_proxy(host, port)
-
         self._make_request('http://python.org')
         self._make_request('http://www.wikipedia.org')
 
@@ -55,9 +49,6 @@ class AdminClientTest(TestCase):
         self.assertEqual(len(requests), 2)
 
     def test_get_requests_https(self):
-        host, port = self.client.create_proxy()
-        self._configure_proxy(host, port)
-
         self._make_request('https://www.wikipedia.org')
 
         requests = self.client.get_requests()
@@ -71,9 +62,6 @@ class AdminClientTest(TestCase):
         self.assertEqual(request['response']['headers']['Content-Type'], 'text/html')
 
     def test_get_last_request(self):
-        host, port = self.client.create_proxy()
-        self._configure_proxy(host, port)
-
         self._make_request('https://python.org')
         self._make_request('https://www.wikipedia.org')
 
@@ -81,8 +69,19 @@ class AdminClientTest(TestCase):
 
         self.assertEqual(last_request['path'], 'https://www.wikipedia.org')
 
+    def test_clear_requests(self):
+        self._make_request('https://python.org')
+        self._make_request('https://www.wikipedia.org')
+
+        self.client.clear_requests()
+
+        self.assertEqual(self.client.get_requests(), [])
+
     def test_get_request_body(self):
-        self.fail('Implement')
+        host, port = self.client.create_proxy()
+        self._configure_proxy(host, port)
+
+        body = self.client.get_request_body(self._make_request('https://fa-svr-ariaweb01')['id'])
 
     def test_get_response_body(self):
         self.fail('Implement')

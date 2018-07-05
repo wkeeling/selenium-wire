@@ -83,7 +83,8 @@ class AdminClient:
         return self._make_request('/last_request')
 
     def clear_requests(self):
-        pass
+        """Clears any previously captured requests from the proxy server."""
+        self._make_request('/clear')
 
     def get_request_body(self, request_id):
         pass
