@@ -7,10 +7,9 @@ from .server import ProxyHTTPServer
 
 
 class AdminClient:
-    """Provides the means to communicate with the proxy server and ask it for information
-    and tell it to do certain things.
+    """Provides the means to communicate with the proxy server to retrieve captured
+    data and instruct the proxy to perform specific actions.
     """
-
     def __init__(self):
         self._proxy = None
         self._proxy_host = 'localhost'
@@ -72,7 +71,7 @@ class AdminClient:
         Returns:
             A list of request dictionaries.
         """
-        return self._make_request('/requests')
+        return self._make_request('GET', '/requests')
 
     def get_last_request(self):
         """Returns the last request captured by the proxy server.
@@ -82,11 +81,11 @@ class AdminClient:
         Returns:
             The last request.
         """
-        return self._make_request('/last_request')
+        return self._make_request('GET', '/last_request')
 
     def clear_requests(self):
         """Clears any previously captured requests from the proxy server."""
-        self._make_request('/clear')
+        self._make_request('DELETE', '/requests')
 
     def get_request_body(self, request_id):
         """Returns the body of the request with the specified request_id.
@@ -96,19 +95,44 @@ class AdminClient:
         Returns:
             The binary request body, or None if the request has no body.
         """
-        return self._make_request('/request_body?request_id={}'.format(request_id)) or None
+        return self._make_request('GET', '/request_body?request_id={}'.format(request_id)) or None
 
     def get_response_body(self, request_id):
-        return self._make_request('/response_body?request_id={}'.format(request_id)) or None
+        """Returns the body of the response associated with the request with the
+        specified request_id.
 
-    def _make_request(self, path):
+        Args:
+            request_id: The request identifier.
+        Returns:
+            The binary response body, or None if the response has no body.
+        """
+        return self._make_request('GET', '/response_body?request_id={}'.format(request_id)) or None
+
+    def set_header_overrides(self, headers):
+        """Set the header overrides.
+
+        Args:
+            headers: A dictionary of headers to be used as overrides. Where the value
+                of a header is set to None, this header will be filtered out.
+        """
+        self._make_request('POST', '/header_overrides', data=headers)
+
+    def _make_request(self, command, path, data=None):
         url = '{}{}'.format(ADMIN_PATH, path)
         conn = http.client.HTTPConnection(self._proxy_host, self._proxy_port)
-        conn.request('GET', url)
+
+        args = {}
+        if data is not None:
+            args['body'] = json.dumps(data).encode('utf-8')
+
+        conn.request(command, url, **args)
+
         try:
             response = conn.getresponse()
+
             if response.status != 200:
                 raise ProxyException('Proxy returned status code {} for {}'.format(response.status, url))
+
             data = response.read()
             try:
                 return json.loads(data.decode(encoding='utf-8'))

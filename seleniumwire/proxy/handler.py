@@ -23,15 +23,21 @@ class AdminMixin:
         path, params = parse_result.path, parse_qs(parse_result.query)
 
         if path == '/requests':
-            self._get_requests()
+            if self.command == 'GET':
+                self._get_requests()
+            elif self.command == 'DELETE':
+                self._clear_requests()
         elif path == '/last_request':
             self._get_last_request()
-        elif path == '/clear':
-            self._clear_requests()
         elif path == '/request_body':
             self._get_request_body(**params)
         elif path == '/response_body':
             self._get_response_body(**params)
+        elif path == '/header_overrides':
+            if self.command == 'POST':
+                self._set_header_overrides()
+
+        raise RuntimeError('No handler configured for: {} {}'.format(self.command, self.path))
 
     def _get_requests(self):
         self._send_response(json.dumps(self.server.storage.load_requests()).encode('utf-8'), 'application/json')
@@ -55,6 +61,12 @@ class AdminMixin:
         if body is None:
             body = b''
         self._send_response(body, 'application/octet-stream')
+
+    def _set_header_overrides(self):
+        content_length = int(self.headers.get('Content-Length', 0))
+        req_body = self.rfile.read(content_length)
+        headers = json.loads(req_body.decode('utf-8'))
+        self._send_response(json.dumps({'status': 'ok'}).encode('utf-8'), 'application/json')
 
     def _send_response(self, body, content_type):
         self.send_response(200)
@@ -112,4 +124,3 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
     def log_error(self, format_, *args):
         # Send server error messages through our own logging config.
         log.debug(format_, *args)
-
