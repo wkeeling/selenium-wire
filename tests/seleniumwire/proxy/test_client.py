@@ -77,15 +77,6 @@ class AdminClientTest(TestCase):
 
         self.assertEqual(self.client.get_requests(), [])
 
-    def test_get_request_body(self):
-        self._make_request('https://www.wikipedia.org')
-        last_request = self.client.get_last_request()
-
-        body = self.client.get_request_body(last_request['id'])
-
-        self.assertIsInstance(body, bytes)
-        self.assertIn(b'html', body)
-
     def test_get_request_body_empty(self):
         self._make_request('https://www.wikipedia.org')
         last_request = self.client.get_last_request()
@@ -118,6 +109,39 @@ class AdminClientTest(TestCase):
         body = self.client.get_response_body(redirect_request['id'])
 
         self.assertIsNone(body)
+
+    def test_set_header_overrides(self):
+        self.client.set_header_overrides({
+            'User-Agent': 'Test_User_Agent_String'
+        })
+        self._make_request('https://fa-svr-ariaweb02')
+
+        last_request = self.client.get_last_request()
+
+        self.assertEqual(last_request['headers']['User-Agent'], 'Test_User_Agent_String')
+
+    def test_set_header_overrides_case_insensitive(self):
+        self.client.set_header_overrides({
+            'user-agent': 'Test_User_Agent_String'  # Lowercase header name
+        })
+        self._make_request('https://fa-svr-ariaweb02')
+
+        last_request = self.client.get_last_request()
+
+        self.assertEqual(last_request['headers']['User-Agent'], 'Test_User_Agent_String')
+
+    def test_set_header_overrides_filters_out_header(self):
+        self.client.set_header_overrides({
+            'User-Agent': None
+        })
+        self._make_request('https://fa-svr-ariaweb02')
+
+        last_request = self.client.get_last_request()
+
+        self.assertNotIn('User-Agent', last_request['headers'])
+
+    def test_clear_header_overrides(self):
+        self.fail('Implement')
 
     def _configure_proxy(self, host, port):
         context = ssl.create_default_context()
