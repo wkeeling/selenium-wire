@@ -11,3 +11,7 @@ class ProxyHTTPServer(ThreadingHTTPServer):
         # Each server instance gets its own storage
         self.storage = RequestStorage()
         super().server_activate()
+
+    def shutdown(self):
+        super().shutdown()
+        self.storage.clear_requests()
