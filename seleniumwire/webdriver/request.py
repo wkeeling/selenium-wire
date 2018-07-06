@@ -43,7 +43,7 @@ class InspectRequestsMixin:
     def header_overrides(self):
         pass
 
-    def wait_for_pending_requests(self, wait, timeout):
+    def wait_for_request(self, path, timeout):
         pass
 
     def _create_proxy(self):
