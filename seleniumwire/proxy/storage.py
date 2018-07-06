@@ -20,14 +20,15 @@ class RequestStorage:
     and provding an API to retrieve that data.
 
     This implementation writes the request and response data to disk, but keeps an in-memory
-    index of what is on disk for fast retrieval.
+    index of what is on disk for fast retrieval. Instances are designed to be threadsafe.
     """
 
     def __init__(self, base_dir=None):
         """Initialises a new RequestStorage using an optional base directory.
 
-        The base directory is where request and response data is stored. If
-        not specified, the system's temp folder is used.
+        Args:
+            base_dir: The directory where request and response data is stored.
+                If not specified, the system's temp folder is used.
         """
         if base_dir is None:
             base_dir = tempfile.gettempdir()
@@ -50,7 +51,7 @@ class RequestStorage:
 
         Args:
             request: The BaseHTTPRequestHandler instance to save.
-            request_body: The request body data.
+            request_body: The request body binary data.
         """
         request_id = self._index_request(request)
         request_dir = self._get_request_dir(request_id)
@@ -92,7 +93,7 @@ class RequestStorage:
         Args:
             request_id: The id of the original request.
             response: The http.client.HTTPResponse instance to save.
-            response_body: The request body data.
+            response_body: The response body binary data.
 
         """
         response_data = {
@@ -107,7 +108,7 @@ class RequestStorage:
             self._save(response_body, request_dir, 'responsebody')
 
     def load_requests(self):
-        """Load all previously saved requests known to the storage (known to its index).
+        """Loads all previously saved requests known to the storage (known to its index).
 
         The requests are returned as a list of dictionaries, in the format:
 
@@ -162,7 +163,7 @@ class RequestStorage:
         return request
 
     def load_request_body(self, request_id):
-        """Load the body of the request with the specified id.
+        """Loads the body of the request with the specified id.
 
         Args:
             request_id: The id of the request.
@@ -175,7 +176,7 @@ class RequestStorage:
             return None
 
     def load_response_body(self, request_id):
-        """Load the body of the response corresponding to the request with the specified id.
+        """Loads the body of the response corresponding to the request with the specified id.
 
         Args:
             request_id: The id of the request.
@@ -193,7 +194,7 @@ class RequestStorage:
             return pickle.load(body)
 
     def load_last_request(self):
-        """Load the last saved request.
+        """Loads the last saved request.
 
         Returns:
             The last saved request dictionary (see load_requests() for dict structure).
@@ -203,7 +204,7 @@ class RequestStorage:
         return self._load_request(request_id)
 
     def clear_requests(self):
-        """Clear all requests currently known to this storage."""
+        """Clears all requests currently known to this storage."""
         with self._lock:
             index = self._index[:]
             self._index.clear()
