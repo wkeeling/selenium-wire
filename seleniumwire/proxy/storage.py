@@ -203,13 +203,13 @@ class RequestStorage:
         return self._load_request(request_id)
 
     def clear_requests(self):
-        """Clear all requests currently known to this storage.
-
-        This clears the index but does not remove the request data from disk. That
-        is left to the cleanup actions.
-        """
+        """Clear all requests currently known to this storage."""
         with self._lock:
+            index = self._index[:]
             self._index.clear()
+
+        for request_id in index:
+            shutil.rmtree(self._get_request_dir(request_id), ignore_errors=True)
 
     def get_cert_dir(self):
         """Returns a storage-specific path to a directory where the SSL certificates are stored.

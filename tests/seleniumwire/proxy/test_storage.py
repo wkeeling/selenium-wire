@@ -185,6 +185,7 @@ class RequestStorageTest(TestCase):
         requests = storage.load_requests()
 
         self.assertFalse(requests)
+        self.assertFalse(glob.glob(os.path.join(self.base_dir, 'seleniumwire', 'storage-*', '*')))
 
     def test_get_cert_dir(self):
         storage = RequestStorage(base_dir=self.base_dir)
