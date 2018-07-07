@@ -235,7 +235,7 @@ class RequestStorage:
         Requests are searched in chronological order.
 
         Args:
-            path: The request path which can be path-relative, server-relative
+            path: The request path which can be folder-relative, server-relative
                 or an absolute URL.
             check_response: Where a path matches a request, whether to check
                 that the request has a corresponding response. Where
