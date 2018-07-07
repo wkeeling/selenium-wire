@@ -1,4 +1,3 @@
-import socket
 import ssl
 from unittest import TestCase
 import urllib.error
