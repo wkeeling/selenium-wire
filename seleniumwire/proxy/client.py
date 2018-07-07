@@ -39,8 +39,7 @@ class AdminClient:
     def destroy_proxy(self):
         """Stops the proxy server and performs any clean up actions."""
         self._proxy.shutdown()
-        # Necessary to warning about unclosed socket
-        self._proxy.server_close()
+        self._proxy.server_close()  # Closes the server socket
 
     def get_requests(self):
         """Returns the requests currently captured by the proxy server.
