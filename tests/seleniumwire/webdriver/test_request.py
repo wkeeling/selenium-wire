@@ -19,6 +19,12 @@ class InspectRequestsMixinTest(TestCase):
 
         mock_client.requests.assert_called_once_with()
 
+    def test_set_requests(self):
+        driver = Driver(Mock())
+
+        with self.assertRaises(AttributeError):
+            driver.requests = ['some request']
+
     def test_delete_requests(self):
         mock_client = Mock()
         driver = Driver(mock_client)
@@ -26,11 +32,32 @@ class InspectRequestsMixinTest(TestCase):
 
         mock_client.clear_requests.assert_called_once_with()
 
-    def test_set_requests(self):
-        driver = Driver(Mock())
+    def test_set_header_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+        header_overrides = {
+            'User-Agent': 'Test_User_Agent_String'
+        }
 
-        with self.assertRaises(AttributeError):
-            driver.requests = ['some request']
+        driver.header_overrides = header_overrides
+
+        mock_client.set_header_overrides.assert_called_once_with(header_overrides)
+
+    def test_delete_header_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        del driver.header_overrides
+
+        mock_client.clear_header_overrides.assert_called_once_with()
+
+    def test_get_header_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        driver.header_overrides
+
+        mock_client.get_header_overrides.assert_called_once_with()
 
 
 class RequestTest(TestCase):

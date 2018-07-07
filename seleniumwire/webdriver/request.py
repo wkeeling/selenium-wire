@@ -32,16 +32,25 @@ class InspectRequestsMixin:
 
     @property
     def header_overrides(self):
-        # Support del firefox.header_overrides to clear all overrides?
-        pass
+        """The header overrides for outgoing browser requests.
+
+        The value of the header overrides should be a dictionary. Where a
+        header in the dictionary exists in the request, the value will be
+        used in preference to the one in the request. Where a header in the
+        dictionary does not exist in the request, it will be added to the
+        request as a new header. To filter out a header from the request,
+        set that header in the dictionary with a value of None. Header
+        names are case insensitive.
+        """
+        return self._client.get_header_overrides()
 
     @header_overrides.setter
     def header_overrides(self, headers):
-        pass
+        self._client.set_header_overrides(headers)
 
     @header_overrides.deleter
     def header_overrides(self):
-        pass
+        self._client.clear_header_overrides()
 
     def wait_for_request(self, path, timeout):
         pass
