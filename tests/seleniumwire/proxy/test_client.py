@@ -151,6 +151,15 @@ class AdminClientIntegrationTest(TestCase):
 
         self.assertNotEqual(last_request['headers']['User-Agent'], 'Test_User_Agent_String')
 
+    def test_get_header_overrides(self):
+        self.client.set_header_overrides({
+            'User-Agent': 'Test_User_Agent_String'
+        })
+
+        self.assertEqual(self.client.get_header_overrides(), {
+            'User-Agent': 'Test_User_Agent_String'
+        })
+
     def _configure_proxy(self, host, port):
         context = ssl.create_default_context()
         context.check_hostname = False

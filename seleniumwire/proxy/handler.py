@@ -38,6 +38,8 @@ class AdminMixin:
                 self._set_header_overrides()
             elif self.command == 'DELETE':
                 self._clear_header_overrides()
+            elif self.command == 'GET':
+                self._get_header_overrides()
         else:
             raise RuntimeError('No handler configured for: {} {}'.format(self.command, self.path))
 
@@ -68,12 +70,15 @@ class AdminMixin:
         content_length = int(self.headers.get('Content-Length', 0))
         req_body = self.rfile.read(content_length)
         headers = json.loads(req_body.decode('utf-8'))
-        self.server.modifier.set_headers(headers)
+        self.server.modifier.headers = headers
         self._send_response(json.dumps({'status': 'ok'}).encode('utf-8'), 'application/json')
 
     def _clear_header_overrides(self):
-        self.server.modifier.clear_headers()
+        del self.server.modifier.headers
         self._send_response(json.dumps({'status': 'ok'}).encode('utf-8'), 'application/json')
+
+    def _get_header_overrides(self):
+        self._send_response(json.dumps(self.server.modifier.headers).encode('utf-8'), 'application/json')
 
     def _send_response(self, body, content_type):
         self.send_response(200)

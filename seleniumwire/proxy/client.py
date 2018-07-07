@@ -121,6 +121,10 @@ class AdminClient:
         """Clears any previously set header overrides."""
         self._make_request('DELETE', '/header_overrides')
 
+    def get_header_overrides(self):
+        """Gets any previously set header overrides"""
+        return self._make_request('GET', '/header_overrides')
+
     def _make_request(self, command, path, data=None):
         url = '{}{}'.format(ADMIN_PATH, path)
         conn = http.client.HTTPConnection(self._proxy_host, self._proxy_port)
