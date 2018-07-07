@@ -1,3 +1,5 @@
+from selenium.common.exceptions import TimeoutException
+
 
 class InspectRequestsMixin:
     """Mixin class that provides functions to capture and inspect browser requests."""
@@ -52,8 +54,25 @@ class InspectRequestsMixin:
     def header_overrides(self):
         self._client.clear_header_overrides()
 
-    def wait_for_request(self, path, timeout):
-        pass
+    def wait_for_request(self, path, timeout=10):
+        """Wait up to the timeout period for a request with the specified
+        path to be seen.
+
+        The path can be can be folder-relative, server-relative or an
+        absolute URL. If a request is not seen before the timeout then
+        a TimeoutException is raised. Only requests with corresponding
+        responses are considered.
+
+        Args:
+            path: The path of the request to look for.
+            timeout: The maximum time to wait in seconds. Default 10s.
+
+        Returns:
+            The request.
+        Raises:
+            TimeoutException if a request is not seen within the timeout
+                period.
+        """
 
     def _create_proxy(self):
         return self._client.create_proxy()

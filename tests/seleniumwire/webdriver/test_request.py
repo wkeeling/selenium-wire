@@ -59,6 +59,9 @@ class InspectRequestsMixinTest(TestCase):
 
         mock_client.get_header_overrides.assert_called_once_with()
 
+    def test_wait_for_request(self):
+        self.fail('Implement')
+
 
 class RequestTest(TestCase):
 
