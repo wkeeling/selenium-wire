@@ -7,6 +7,7 @@ import shutil
 import signal
 import tempfile
 import threading
+from urllib.parse import urlparse
 import uuid
 
 log = logging.getLogger(__name__)
@@ -37,7 +38,9 @@ class RequestStorage:
         os.makedirs(self._storage_dir)
         self._cleanup_old_dirs()
 
-        self._index = []  # Index of requests received
+        # Index of requests received.
+        # A list of tuples: [(request id, request path, response received), ...]
+        self._index = []
         self._lock = threading.Lock()
 
         # Register shutdown hooks for cleaning up stored requests
@@ -76,7 +79,9 @@ class RequestStorage:
         request.id = request_id
 
         with self._lock:
-            self._index.append(request_id)
+            self._index.append(_IndexedRequest(id=request_id,
+                                               path=request.path,
+                                               has_response=False))
 
         return request_id
 
@@ -106,6 +111,14 @@ class RequestStorage:
         self._save(response_data, request_dir, 'response')
         if response_body is not None:
             self._save(response_body, request_dir, 'responsebody')
+
+        with self._lock:
+            index = self._index[:]
+
+        for indexed_request in index:
+            if indexed_request.id == request_id:
+                indexed_request.has_response = True
+                break
 
     def load_requests(self):
         """Loads all previously saved requests known to the storage (known to its index).
@@ -141,8 +154,8 @@ class RequestStorage:
 
         loaded = []
 
-        for request_id in index:
-            request = self._load_request(request_id)
+        for indexed_request in index:
+            request = self._load_request(indexed_request.id)
             loaded.append(request)
 
         return loaded
@@ -200,8 +213,12 @@ class RequestStorage:
             The last saved request dictionary (see load_requests() for dict structure).
         """
         with self._lock:
-            request_id = self._index[-1]
-        return self._load_request(request_id)
+            if self._index:
+                last_request = self._index[-1]
+            else:
+                return None
+
+        return self._load_request(last_request.id)
 
     def clear_requests(self):
         """Clears all requests currently known to this storage."""
@@ -209,8 +226,8 @@ class RequestStorage:
             index = self._index[:]
             self._index.clear()
 
-        for request_id in index:
-            shutil.rmtree(self._get_request_dir(request_id), ignore_errors=True)
+        for indexed_request in index:
+            shutil.rmtree(self._get_request_dir(indexed_request.id), ignore_errors=True)
 
     def get_cert_dir(self):
         """Returns a storage-specific path to a directory where the SSL certificates are stored.
@@ -221,6 +238,34 @@ class RequestStorage:
             The path to the certificates directory in this storage.
         """
         return os.path.join(self._storage_dir, 'certs')
+
+    def exists(self, path, check_response=True):
+        """Checks whether the specified path exists in the storage.
+
+        Args:
+            path: The request path which can be path-relative, server-relative
+                or an absolute URL.
+            check_response: Where a path matches a request, whether to check
+                that the request has a corresponding response. Where
+                check_response=True and no response has been received, exists()
+                will return False.
+
+        Returns:
+            True if a request matching the specified path is in the storage.
+            False otherwise.
+        """
+        with self._lock:
+            index = self._index[:]
+
+        for indexed_request in index:
+            match_url = urlparse(path).geturl()
+
+            if match_url in indexed_request.path:
+                if check_response:
+                    return indexed_request.has_response
+                return True
+
+        return False
 
     def _get_request_dir(self, request_id):
         return os.path.join(self._storage_dir, 'request-{}'.format(request_id))
@@ -246,3 +291,9 @@ class RequestStorage:
             if (os.path.getmtime(storage_dir) <
                     (datetime.now() - timedelta(days=REMOVE_DATA_OLDER_THAN_DAYS)).timestamp()):
                 shutil.rmtree(storage_dir, ignore_errors=True)
+
+
+class _IndexedRequest(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__dict__ = self

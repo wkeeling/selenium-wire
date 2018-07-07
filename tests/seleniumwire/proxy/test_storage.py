@@ -174,6 +174,13 @@ class RequestStorageTest(TestCase):
 
         self.assertEqual(last_request['id'], request_id2)
 
+    def test_load_last_request_none(self):
+        storage = RequestStorage(base_dir=self.base_dir)
+
+        last_request = storage.load_last_request()
+
+        self.assertIsNone(last_request)
+
     def test_clear_requests(self):
         mock_request_1 = self._create_mock_request()
         mock_request_2 = self._create_mock_request()
@@ -193,13 +200,31 @@ class RequestStorageTest(TestCase):
         self.assertTrue(fnmatch(storage.get_cert_dir(),
                                 os.path.join(self.base_dir, 'seleniumwire', 'storage-*', 'certs')))
 
+    def test_exists(self):
+        mock_request = self._create_mock_request('http://www.example.com/test/path/?foo=bar')
+        mock_response = self._create_mock_resonse()
+        storage = RequestStorage(base_dir=self.base_dir)
+        request_id = storage.save_request(mock_request)
+        storage.save_response(request_id, mock_response)
+
+        self.assertTrue(storage.exists('/test/path/'))
+        self.assertTrue(storage.exists('/test/path/?foo=bar'))
+        self.assertTrue(storage.exists('http://www.example.com/test/path/?foo=bar'))
+        self.assertTrue(storage.exists('http://www.example.com/test/path/'))
+
+        self.assertFalse(storage.exists('/different/path'))
+        self.assertFalse(storage.exists('/test/path/?x=y'))
+        self.assertFalse(storage.exists('http://www.example.com/different/path/?foo=bar'))
+        self.assertFalse(storage.exists('http://www.different.com/test/path/?foo=bar'))
+        self.assertFalse(storage.exists('http://www.example.com/test/path/?x=y'))
+
     def _get_stored_path(self, request_id, filename):
         return glob.glob(os.path.join(self.base_dir, 'seleniumwire', 'storage-*',
                                       'request-{}'.format(request_id), filename))
 
-    def _create_mock_request(self):
+    def _create_mock_request(self, path='http://www.example.com/test/path/'):
         mock_request = Mock()
-        mock_request.path = 'http://www.example.com/test/path/'
+        mock_request.path = path
         mock_request.command = 'GET'
         headers = HTTPMessage()
         headers.add_header('Host', 'www.example.com')

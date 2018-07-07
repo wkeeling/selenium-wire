@@ -69,6 +69,11 @@ class AdminClientIntegrationTest(TestCase):
 
         self.assertEqual(last_request['path'], 'https://www.wikipedia.org')
 
+    def test_get_last_request_none(self):
+        last_request = self.client.get_last_request()
+
+        self.assertIsNone(last_request)
+
     def test_clear_requests(self):
         self._make_request('https://python.org')
         self._make_request('https://www.wikipedia.org')
