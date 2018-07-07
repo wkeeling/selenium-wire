@@ -125,6 +125,14 @@ class AdminClient:
         """Gets any previously set header overrides"""
         return self._make_request('GET', '/header_overrides')
 
+    def find(self, path):
+        """Whether a request with the specified path has been captured by the proxy.
+
+        Args:
+            path: The path of a request to check existence for.
+        """
+        return self._make_request('GET', '/find?path={}'.format(path))
+
     def _make_request(self, command, path, data=None):
         url = '{}{}'.format(ADMIN_PATH, path)
         conn = http.client.HTTPConnection(self._proxy_host, self._proxy_port)

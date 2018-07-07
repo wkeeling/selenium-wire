@@ -33,6 +33,8 @@ class AdminMixin:
             self._get_request_body(**params)
         elif path == '/response_body':
             self._get_response_body(**params)
+        elif path == '/find':
+            self._find_request(**params)
         elif path == '/header_overrides':
             if self.command == 'POST':
                 self._set_header_overrides()
@@ -65,6 +67,9 @@ class AdminMixin:
         if body is None:
             body = b''
         self._send_response(body, 'application/octet-stream')
+
+    def _find_request(self, path):
+        self._send_response(json.dumps(self.server.storage.find(path[0])).encode('utf-8'), 'application/json')
 
     def _set_header_overrides(self):
         content_length = int(self.headers.get('Content-Length', 0))

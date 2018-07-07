@@ -8,14 +8,6 @@ from seleniumwire.proxy.client import AdminClient
 
 class AdminClientIntegrationTest(TestCase):
 
-    def setUp(self):
-        self.client = AdminClient()
-        host, port = self.client.create_proxy()
-        self._configure_proxy(host, port)
-
-    def tearDown(self):
-        self.client.destroy_proxy()
-
     def test_create_proxy(self):
         html = self._make_request('http://python.org')
 
@@ -25,7 +17,7 @@ class AdminClientIntegrationTest(TestCase):
         self.client.destroy_proxy()
 
         with self.assertRaises(socket.timeout):
-            self._make_request('http://python.org')
+            self._make_request('http://github.com')
 
     def test_get_requests_single(self):
         self._make_request('http://python.org')
@@ -41,7 +33,7 @@ class AdminClientIntegrationTest(TestCase):
         self.assertEqual(request['response']['headers']['Content-Type'], 'text/html')
 
     def test_get_requests_multiple(self):
-        self._make_request('http://python.org')
+        self._make_request('http://github.com')
         self._make_request('http://www.wikipedia.org')
 
         requests = self.client.get_requests()
@@ -49,25 +41,25 @@ class AdminClientIntegrationTest(TestCase):
         self.assertEqual(len(requests), 2)
 
     def test_get_requests_https(self):
-        self._make_request('https://www.wikipedia.org')
+        self._make_request('https://www.stackoverflow.com')
 
         requests = self.client.get_requests()
 
         self.assertEqual(len(requests), 1)
         request = requests[0]
         self.assertEqual(request['method'], 'GET')
-        self.assertEqual(request['path'], 'https://www.wikipedia.org')
+        self.assertEqual(request['path'], 'https://www.stackoverflow.com')
         self.assertEqual(request['headers']['Accept-Encoding'], 'identity')
         self.assertEqual(request['response']['status_code'], 200)
         self.assertEqual(request['response']['headers']['Content-Type'], 'text/html')
 
     def test_get_last_request(self):
         self._make_request('https://python.org')
-        self._make_request('https://www.wikipedia.org')
+        self._make_request('https://www.bbc.co.uk')
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual(last_request['path'], 'https://www.wikipedia.org')
+        self.assertEqual(last_request['path'], 'https://www.bbc.co.uk')
 
     def test_get_last_request_none(self):
         last_request = self.client.get_last_request()
@@ -83,7 +75,7 @@ class AdminClientIntegrationTest(TestCase):
         self.assertEqual(self.client.get_requests(), [])
 
     def test_get_request_body_empty(self):
-        self._make_request('https://www.wikipedia.org')
+        self._make_request('https://www.amazon.com')
         last_request = self.client.get_last_request()
 
         body = self.client.get_request_body(last_request['id'])
@@ -119,7 +111,7 @@ class AdminClientIntegrationTest(TestCase):
         self.client.set_header_overrides({
             'User-Agent': 'Test_User_Agent_String'
         })
-        self._make_request('https://www.python.org')
+        self._make_request('https://www.github.com')
 
         last_request = self.client.get_last_request()
 
@@ -129,7 +121,7 @@ class AdminClientIntegrationTest(TestCase):
         self.client.set_header_overrides({
             'user-agent': 'Test_User_Agent_String'  # Lowercase header name
         })
-        self._make_request('https://www.python.org')
+        self._make_request('https://www.bbc.co.uk')
 
         last_request = self.client.get_last_request()
 
@@ -139,7 +131,7 @@ class AdminClientIntegrationTest(TestCase):
         self.client.set_header_overrides({
             'User-Agent': None
         })
-        self._make_request('https://www.python.org')
+        self._make_request('https://www.wikipedia.org')
 
         last_request = self.client.get_last_request()
 
@@ -150,7 +142,7 @@ class AdminClientIntegrationTest(TestCase):
             'User-Agent': 'Test_User_Agent_String'
         })
         self.client.clear_header_overrides()
-        self._make_request('https://www.python.org')
+        self._make_request('https://www.stackoverflow.com')
 
         last_request = self.client.get_last_request()
 
@@ -164,6 +156,23 @@ class AdminClientIntegrationTest(TestCase):
         self.assertEqual(self.client.get_header_overrides(), {
             'User-Agent': 'Test_User_Agent_String'
         })
+
+    def test_find(self):
+        self._make_request('https://stackoverflow.com/questions/tagged/django?page=2&sort=newest&pagesize=15')
+        self._make_request('https://docs.python.org/3.4/library/http.client.html')
+
+        self.assertEqual(self.client.find('/questions/tagged/django')['path'],
+                         'https://stackoverflow.com/questions/tagged/django?page=2&sort=newest&pagesize=15')
+        self.assertEqual(self.client.find('/3.4/library/http.client.html')['path'],
+                         'https://docs.python.org/3.4/library/http.client.html')
+
+    def setUp(self):
+        self.client = AdminClient()
+        host, port = self.client.create_proxy()
+        self._configure_proxy(host, port)
+
+    def tearDown(self):
+        self.client.destroy_proxy()
 
     def _configure_proxy(self, host, port):
         context = ssl.create_default_context()
