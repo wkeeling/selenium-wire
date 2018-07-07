@@ -6,7 +6,7 @@ import urllib.request
 from seleniumwire.proxy.client import AdminClient
 
 
-class AdminClientTest(TestCase):
+class AdminClientIntegrationTest(TestCase):
 
     def setUp(self):
         self.client = AdminClient()
