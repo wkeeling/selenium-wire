@@ -1,3 +1,5 @@
+import time
+
 from selenium.common.exceptions import TimeoutException
 
 
@@ -58,10 +60,9 @@ class InspectRequestsMixin:
         """Wait up to the timeout period for a request with the specified
         path to be seen.
 
-        The path can be can be folder-relative, server-relative or an
-        absolute URL. If a request is not seen before the timeout then
-        a TimeoutException is raised. Only requests with corresponding
-        responses are considered.
+        The path can be can be any substring of the full request URL.
+        If a request is not seen before the timeout then a TimeoutException
+        is raised. Only requests with corresponding responses are considered.
 
         Args:
             path: The path of the request to look for.
@@ -73,6 +74,17 @@ class InspectRequestsMixin:
             TimeoutException if a request is not seen within the timeout
                 period.
         """
+        start = time.time()
+
+        while time.time() - start < timeout:
+            request = self._client.find(path)
+
+            if request is not None:
+                return request
+            else:
+                time.sleep(0.2)
+
+        raise TimeoutException('Timed out after {}s waiting for request {}'.format(timeout, path))
 
     def _create_proxy(self):
         return self._client.create_proxy()

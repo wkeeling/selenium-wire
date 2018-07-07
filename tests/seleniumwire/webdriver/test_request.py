@@ -1,8 +1,8 @@
 import uuid
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import call, Mock
 
-from seleniumwire.webdriver.request import InspectRequestsMixin, Request, Response
+from seleniumwire.webdriver.request import InspectRequestsMixin, Request, Response, TimeoutException
 
 
 class Driver(InspectRequestsMixin):
@@ -60,7 +60,23 @@ class InspectRequestsMixinTest(TestCase):
         mock_client.get_header_overrides.assert_called_once_with()
 
     def test_wait_for_request(self):
-        self.fail('Implement')
+        mock_client = Mock()
+        mock_client.find.return_value = Mock()
+        driver = Driver(mock_client)
+
+        driver.wait_for_request('/some/path')
+
+        mock_client.find.assert_called_once_with('/some/path')
+
+    def test_wait_for_request_timeout(self):
+        mock_client = Mock()
+        mock_client.find.return_value = None
+        driver = Driver(mock_client)
+
+        with self.assertRaises(TimeoutException):
+            driver.wait_for_request('/some/path', timeout=1)
+
+        mock_client.find.assert_has_calls([call('/some/path')] * 5)
 
 
 class RequestTest(TestCase):
