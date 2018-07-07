@@ -51,6 +51,15 @@ class RequestModifierTest(TestCase):
         self.assertEqual(mock_request.headers['User-Agent'],
                          'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0')
 
+    def test_get_header_overrides(self):
+        self.modifier.headers = {
+            'User-Agent': 'Test_User_Agent_String'
+        }
+
+        self.assertEqual(self.modifier.headers, {
+            'User-Agent': 'Test_User_Agent_String'
+        })
+
     def _create_mock_request(self):
         mock_request = Mock()
         mock_request.headers = {

@@ -25,7 +25,7 @@ class RequestModifier:
         names are case insensitive.
         """
         with self._lock:
-            return self._headers[:]
+            return dict(self._headers)
 
     @headers.setter
     def headers(self, headers):
