@@ -12,23 +12,33 @@ class RequestModifier:
         self._lock = threading.Lock()
         self._headers = {}
 
-    def set_headers(self, headers):
-        """Sets the headers that should be used to override the request headers.
+    @property
+    def headers(self):
+        """The headers that should be used to override the request headers.
 
-        Where a header in the supplied dictionary exists in the request, the
-        value will be used in preference to the one in the request. Where a
-        header in the supplied dictionary does not exist in the request, it
-        will be added to the request as a new header. To filter out a header
-        from the request, set that header in the headers dictionary with a
-        value of None. Header names are case insensitive.
+        The value of the headers should be a dictionary. Where a header in
+        the dictionary exists in the request, the value will be used in
+        preference to the one in the request. Where a header in the
+        dictionary does not exist in the request, it will be added to the
+        request as a new header. To filter out a header from the request,
+        set that header in the dictionary with a value of None. Header
+        names are case insensitive.
+        """
+        with self._lock:
+            return self._headers[:]
+
+    @headers.setter
+    def headers(self, headers):
+        """Sets the headers to override request headers.
 
         Args:
-            headers: A dictionary of headers to override the request headers with.
+            headers: The dictionary of headers to set.
         """
         with self._lock:
             self._headers = headers
 
-    def clear_headers(self):
+    @headers.deleter
+    def headers(self):
         """Clears the headers being used to override request headers.
 
         After this is called, request headers will pass through unmodified.

@@ -10,9 +10,9 @@ class RequestModifierTest(TestCase):
         self.modifier = RequestModifier()
 
     def test_override_header(self):
-        self.modifier.set_headers({
+        self.modifier.headers = {
             'User-Agent': 'Test_User_Agent_String'
-        })
+        }
         mock_request = self._create_mock_request()
 
         self.modifier.modify(mock_request)
@@ -20,9 +20,9 @@ class RequestModifierTest(TestCase):
         self.assertEqual(mock_request.headers['User-Agent'], 'Test_User_Agent_String')
 
     def test_override_header_case_insensitive(self):
-        self.modifier.set_headers({
+        self.modifier.headers ={
             'user-agent': 'Test_User_Agent_String'
-        })
+        }
         mock_request = self._create_mock_request()
 
         self.modifier.modify(mock_request)
@@ -30,9 +30,9 @@ class RequestModifierTest(TestCase):
         self.assertEqual(mock_request.headers['User-Agent'], 'Test_User_Agent_String')
 
     def test_filter_out_header(self):
-        self.modifier.set_headers({
+        self.modifier.headers = {
             'User-Agent': None
-        })
+        }
         mock_request = self._create_mock_request()
 
         self.modifier.modify(mock_request)
@@ -40,12 +40,12 @@ class RequestModifierTest(TestCase):
         self.assertNotIn('User-Agent', mock_request.headers)
 
     def test_clear_header_overrides(self):
-        self.modifier.set_headers({
+        self.modifier.headers = {
             'User-Agent': 'Test_User_Agent_String'
-        })
+        }
         mock_request = self._create_mock_request()
 
-        self.modifier.clear_headers()
+        del self.modifier.headers
         self.modifier.modify(mock_request)
 
         self.assertEqual(mock_request.headers['User-Agent'],
