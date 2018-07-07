@@ -36,8 +36,10 @@ class AdminMixin:
         elif path == '/header_overrides':
             if self.command == 'POST':
                 self._set_header_overrides()
-
-        raise RuntimeError('No handler configured for: {} {}'.format(self.command, self.path))
+            elif self.command == 'DELETE':
+                self._clear_header_overrides()
+        else:
+            raise RuntimeError('No handler configured for: {} {}'.format(self.command, self.path))
 
     def _get_requests(self):
         self._send_response(json.dumps(self.server.storage.load_requests()).encode('utf-8'), 'application/json')
@@ -66,6 +68,11 @@ class AdminMixin:
         content_length = int(self.headers.get('Content-Length', 0))
         req_body = self.rfile.read(content_length)
         headers = json.loads(req_body.decode('utf-8'))
+        self.server.modifier.set_headers(headers)
+        self._send_response(json.dumps({'status': 'ok'}).encode('utf-8'), 'application/json')
+
+    def _clear_header_overrides(self):
+        self.server.modifier.clear_headers()
         self._send_response(json.dumps({'status': 'ok'}).encode('utf-8'), 'application/json')
 
     def _send_response(self, body, content_type):
@@ -89,6 +96,11 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
             req_body: The binary request body.
         """
         log.info('Capturing request: %s', req.path)
+
+        # First make any modifications to the request
+        self.server.modifier.modify(req)
+
+        # Save the request to our storage
         self.server.storage.save_request(req, req_body)
 
     def response_handler(self, req, req_body, res, res_body):

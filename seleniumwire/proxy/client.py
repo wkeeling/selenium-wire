@@ -109,13 +109,17 @@ class AdminClient:
         return self._make_request('GET', '/response_body?request_id={}'.format(request_id)) or None
 
     def set_header_overrides(self, headers):
-        """Set the header overrides.
+        """Sets the header overrides.
 
         Args:
             headers: A dictionary of headers to be used as overrides. Where the value
                 of a header is set to None, this header will be filtered out.
         """
         self._make_request('POST', '/header_overrides', data=headers)
+
+    def clear_header_overrides(self):
+        """Clears any previously set header overrides."""
+        self._make_request('DELETE', '/header_overrides')
 
     def _make_request(self, command, path, data=None):
         url = '{}{}'.format(ADMIN_PATH, path)

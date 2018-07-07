@@ -114,7 +114,7 @@ class AdminClientIntegrationTest(TestCase):
         self.client.set_header_overrides({
             'User-Agent': 'Test_User_Agent_String'
         })
-        self._make_request('https://fa-svr-ariaweb02')
+        self._make_request('https://www.python.org')
 
         last_request = self.client.get_last_request()
 
@@ -124,7 +124,7 @@ class AdminClientIntegrationTest(TestCase):
         self.client.set_header_overrides({
             'user-agent': 'Test_User_Agent_String'  # Lowercase header name
         })
-        self._make_request('https://fa-svr-ariaweb02')
+        self._make_request('https://www.python.org')
 
         last_request = self.client.get_last_request()
 
@@ -134,14 +134,22 @@ class AdminClientIntegrationTest(TestCase):
         self.client.set_header_overrides({
             'User-Agent': None
         })
-        self._make_request('https://fa-svr-ariaweb02')
+        self._make_request('https://www.python.org')
 
         last_request = self.client.get_last_request()
 
         self.assertNotIn('User-Agent', last_request['headers'])
 
     def test_clear_header_overrides(self):
-        self.fail('Implement')
+        self.client.set_header_overrides({
+            'User-Agent': 'Test_User_Agent_String'
+        })
+        self.client.clear_header_overrides()
+        self._make_request('https://www.python.org')
+
+        last_request = self.client.get_last_request()
+
+        self.assertNotEqual(last_request['headers']['User-Agent'], 'Test_User_Agent_String')
 
     def _configure_proxy(self, host, port):
         context = ssl.create_default_context()
