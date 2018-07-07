@@ -1,6 +1,7 @@
 import socket
 import ssl
 from unittest import TestCase
+import urllib.error
 import urllib.request
 
 from seleniumwire.proxy.client import AdminClient
@@ -16,50 +17,37 @@ class AdminClientIntegrationTest(TestCase):
     def test_destroy_proxy(self):
         self.client.destroy_proxy()
 
-        with self.assertRaises(socket.timeout):
+        with self.assertRaises(urllib.error.URLError):
             self._make_request('http://github.com')
 
     def test_get_requests_single(self):
-        self._make_request('http://python.org')
+        self._make_request('https://www.python.org/')
 
         requests = self.client.get_requests()
 
         self.assertEqual(len(requests), 1)
         request = requests[0]
         self.assertEqual(request['method'], 'GET')
-        self.assertEqual(request['path'], 'http://python.org')
+        self.assertEqual(request['path'], 'https://www.python.org/')
         self.assertEqual(request['headers']['Accept-Encoding'], 'identity')
-        self.assertEqual(request['response']['status_code'], 301)
-        self.assertEqual(request['response']['headers']['Content-Type'], 'text/html')
+        self.assertEqual(request['response']['status_code'], 200)
+        self.assertEqual(request['response']['headers']['Content-Type'], 'text/html; charset=utf-8')
 
     def test_get_requests_multiple(self):
-        self._make_request('http://github.com')
-        self._make_request('http://www.wikipedia.org')
+        self._make_request('https://github.com/')
+        self._make_request('https://www.wikipedia.org/')
 
         requests = self.client.get_requests()
 
         self.assertEqual(len(requests), 2)
 
-    def test_get_requests_https(self):
-        self._make_request('https://www.stackoverflow.com')
-
-        requests = self.client.get_requests()
-
-        self.assertEqual(len(requests), 1)
-        request = requests[0]
-        self.assertEqual(request['method'], 'GET')
-        self.assertEqual(request['path'], 'https://www.stackoverflow.com')
-        self.assertEqual(request['headers']['Accept-Encoding'], 'identity')
-        self.assertEqual(request['response']['status_code'], 200)
-        self.assertEqual(request['response']['headers']['Content-Type'], 'text/html')
-
     def test_get_last_request(self):
         self._make_request('https://python.org')
-        self._make_request('https://www.bbc.co.uk')
+        self._make_request('https://www.bbc.co.uk/')
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual(last_request['path'], 'https://www.bbc.co.uk')
+        self.assertEqual(last_request['path'], 'https://www.bbc.co.uk/')
 
     def test_get_last_request_none(self):
         last_request = self.client.get_last_request()
