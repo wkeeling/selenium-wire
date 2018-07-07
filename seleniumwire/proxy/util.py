@@ -51,7 +51,6 @@ class RequestModifier:
             except KeyError:
                 pass
             else:
+                del request.headers[header]
                 if value is not None:
                     request.headers[header] = value
-                else:
-                    del request.headers[header]
