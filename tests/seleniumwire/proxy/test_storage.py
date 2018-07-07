@@ -200,23 +200,25 @@ class RequestStorageTest(TestCase):
         self.assertTrue(fnmatch(storage.get_cert_dir(),
                                 os.path.join(self.base_dir, 'seleniumwire', 'storage-*', 'certs')))
 
-    def test_exists(self):
-        mock_request = self._create_mock_request('http://www.example.com/test/path/?foo=bar')
+    def test_find(self):
+        mock_request_1 = self._create_mock_request('http://www.example.com/test/path/?foo=bar')
+        mock_request_2 = self._create_mock_request('http://www.stackoverflow.com/other/path/?x=y')
         mock_response = self._create_mock_resonse()
         storage = RequestStorage(base_dir=self.base_dir)
-        request_id = storage.save_request(mock_request)
+        request_id = storage.save_request(mock_request_1)
         storage.save_response(request_id, mock_response)
+        storage.save_request(mock_request_2)
 
-        self.assertTrue(storage.exists('/test/path/'))
-        self.assertTrue(storage.exists('/test/path/?foo=bar'))
-        self.assertTrue(storage.exists('http://www.example.com/test/path/?foo=bar'))
-        self.assertTrue(storage.exists('http://www.example.com/test/path/'))
+        self.assertEqual(storage.find('/test/path/')['id'], request_id)
+        self.assertEqual(storage.find('/test/path/?foo=bar')['id'], request_id)
+        self.assertEqual(storage.find('http://www.example.com/test/path/?foo=bar')['id'], request_id)
+        self.assertEqual(storage.find('http://www.example.com/test/path/')['id'], request_id)
 
-        self.assertFalse(storage.exists('/different/path'))
-        self.assertFalse(storage.exists('/test/path/?x=y'))
-        self.assertFalse(storage.exists('http://www.example.com/different/path/?foo=bar'))
-        self.assertFalse(storage.exists('http://www.different.com/test/path/?foo=bar'))
-        self.assertFalse(storage.exists('http://www.example.com/test/path/?x=y'))
+        self.assertIsNone(storage.find('/different/path'))
+        self.assertIsNone(storage.find('/test/path/?x=y'))
+        self.assertIsNone(storage.find('http://www.example.com/different/path/?foo=bar'))
+        self.assertIsNone(storage.find('http://www.different.com/test/path/?foo=bar'))
+        self.assertIsNone(storage.find('http://www.example.com/test/path/?x=y'))
 
     def _get_stored_path(self, request_id, filename):
         return glob.glob(os.path.join(self.base_dir, 'seleniumwire', 'storage-*',

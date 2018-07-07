@@ -229,6 +229,35 @@ class RequestStorage:
         for indexed_request in index:
             shutil.rmtree(self._get_request_dir(indexed_request.id), ignore_errors=True)
 
+    def find(self, path, check_response=True):
+        """Find the first request that matches the specified path.
+
+        Requests are searched in chronological order.
+
+        Args:
+            path: The request path which can be path-relative, server-relative
+                or an absolute URL.
+            check_response: Where a path matches a request, whether to check
+                that the request has a corresponding response. Where
+                check_response=True and no response has been received, this
+                method will skip the request and continue searching.
+
+        Returns:
+            The first request in the storage that matches the path, or None
+            if no requests match.
+        """
+        with self._lock:
+            index = self._index[:]
+
+        for indexed_request in index:
+            match_url = urlparse(path).geturl()
+
+            if match_url in indexed_request.path:
+                if (check_response and indexed_request.has_response) or not check_response:
+                    return self._load_request(indexed_request.id)
+
+        return None
+
     def get_cert_dir(self):
         """Returns a storage-specific path to a directory where the SSL certificates are stored.
 
@@ -238,34 +267,6 @@ class RequestStorage:
             The path to the certificates directory in this storage.
         """
         return os.path.join(self._storage_dir, 'certs')
-
-    def exists(self, path, check_response=True):
-        """Checks whether the specified path exists in the storage.
-
-        Args:
-            path: The request path which can be path-relative, server-relative
-                or an absolute URL.
-            check_response: Where a path matches a request, whether to check
-                that the request has a corresponding response. Where
-                check_response=True and no response has been received, exists()
-                will return False.
-
-        Returns:
-            True if a request matching the specified path is in the storage.
-            False otherwise.
-        """
-        with self._lock:
-            index = self._index[:]
-
-        for indexed_request in index:
-            match_url = urlparse(path).geturl()
-
-            if match_url in indexed_request.path:
-                if check_response:
-                    return indexed_request.has_response
-                return True
-
-        return False
 
     def _get_request_dir(self, request_id):
         return os.path.join(self._storage_dir, 'request-{}'.format(request_id))
