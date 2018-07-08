@@ -15,9 +15,10 @@ class InspectRequestsMixin:
             del firefox.requests
 
         Returns:
-            The requests made between the browser and server.
+            A list of Request instances representing the requests made
+            between the browser and server.
         """
-        return self._client.get_requests()
+        return [Request(r, self._client) for r in self._client.get_requests()]
 
     @requests.deleter
     def requests(self):
@@ -30,9 +31,15 @@ class InspectRequestsMixin:
         Note that this is more efficient than running requests[-1]
 
         Returns:
-            The last request.
+            A Request instance representing the last request made, or
+            None if no requests have been made.
         """
-        return self._client.get_last_request()
+        data = self._client.get_last_request()
+
+        if data is not None:
+            return Request(data, self._client)
+
+        return None
 
     @property
     def header_overrides(self):

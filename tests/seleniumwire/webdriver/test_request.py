@@ -12,12 +12,34 @@ class Driver(InspectRequestsMixin):
 
 class InspectRequestsMixinTest(TestCase):
 
-    def test_get_requests(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
-        driver.requests
+    def setUp(self):
+        self.mock_client = Mock()
+        self.driver = Driver(self.mock_client)
 
-        mock_client.requests.assert_called_once_with()
+    def test_get_requests(self):
+        self.mock_client.get_requests.return_value = [{
+            'id': '12345',
+            'method': 'GET',
+            'path': 'http://www.example.com/some/path',
+            'headers': {
+                'Accept': '*/*',
+                'Host': 'www.example.com'
+            },
+            'response': {
+                'status_code': 200,
+                'reason': 'OK',
+                'headers': {
+                    'Content-Type': 'text/plain',
+                    'Content-Length': '15012'
+                }
+            }
+        }]
+
+        requests = self.driver.requests
+
+        self.mock_client.get_requests.assert_called_once_with()
+        self.assertEqual(requests[0].path, 'http://www.example.com/some/path')
+        self.assertEqual(requests[0].response.headers['Content-Type'], 'text/plain')
 
     def test_set_requests(self):
         driver = Driver(Mock())
@@ -31,6 +53,39 @@ class InspectRequestsMixinTest(TestCase):
         del driver.requests
 
         mock_client.clear_requests.assert_called_once_with()
+
+    def test_last_request(self):
+        self.mock_client.get_last_request.return_value = {
+            'id': '98765',
+            'method': 'GET',
+            'path': 'http://www.example.com/different/path?foo=bar',
+            'headers': {
+                'Accept': '*/*',
+                'Host': 'www.example.com'
+            },
+            'response': {
+                'status_code': 200,
+                'reason': 'OK',
+                'headers': {
+                    'Content-Type': 'text/plain',
+                    'Content-Length': '98425'
+                }
+            }
+        }
+
+        last_request = self.driver.last_request
+
+        self.mock_client.get_last_request.assert_called_once_with()
+        self.assertEqual(last_request.path, 'http://www.example.com/different/path?foo=bar')
+        self.assertEqual(last_request.response.headers['Content-Length'], '98425')
+
+    def test_last_request_none(self):
+        self.mock_client.get_last_request.return_value = None
+
+        last_request = self.driver.last_request
+
+        self.mock_client.get_last_request.assert_called_once_with()
+        self.assertIsNone(last_request)
 
     def test_set_header_overrides(self):
         mock_client = Mock()
