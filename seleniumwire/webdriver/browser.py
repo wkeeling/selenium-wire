@@ -2,14 +2,20 @@ from selenium.webdriver import Firefox as _Firefox
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from .request import InspectRequestsMixin
+from seleniumwire.proxy.client import AdminClient
 
 
 class Firefox(InspectRequestsMixin, _Firefox):
 
     def __init__(self, *args, **kwargs):
+        self._client = AdminClient()
         addr, port = self._create_proxy()
 
-        capabilities = DesiredCapabilities.FIREFOX.copy()
+        try:
+            capabilities = kwargs.pop('capabilities')
+        except KeyError:
+            capabilities = DesiredCapabilities.FIREFOX.copy()
+
         capabilities['proxy'] = {
             'proxyType': 'manual',
             'httpProxy': '{}:{}'.format(addr, port),
