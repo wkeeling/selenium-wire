@@ -211,6 +211,7 @@ class RequestStorage:
 
         Returns:
             The last saved request dictionary (see load_requests() for dict structure).
+            If no requests have yet been stored, None is returned.
         """
         with self._lock:
             if self._index:

@@ -53,7 +53,7 @@ class AdminClient:
             'headers': {
                 'Accept': '*/*',
                 'Host': 'www.example.com'
-            }
+            },
             'response': {
                 'status_code': 200,
                 'reason': 'OK',
@@ -78,7 +78,8 @@ class AdminClient:
         This is more efficient than running get_requests()[-1]
 
         Returns:
-            The last request.
+            The last request as a dictionary or None if no requests have been
+            made.
         """
         return self._make_request('GET', '/last_request')
 
