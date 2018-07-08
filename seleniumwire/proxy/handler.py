@@ -1,5 +1,6 @@
 import json
 import logging
+import socket
 from urllib.parse import parse_qs, urlparse
 
 from .proxy2 import ProxyRequestHandler
@@ -101,10 +102,10 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
     def do_GET(self):
         try:
             super().do_GET()
-        except BrokenPipeError as e:
-            # Can happen when the browser is shutdown before
-            # pending requests have completed.
-            log.debug(e)
+        except (socket.timeout, BrokenPipeError) as e:
+            # Log tracebacks at debug level to prevent these often harmless
+            # exceptions from alarming users.
+            log.debug(e, exc_info=True)
 
     def request_handler(self, req, req_body):
         """Captures a request and its body.
@@ -156,4 +157,4 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
 
     def log_error(self, format_, *args):
         # Send server error messages through our own logging config.
-        log.debug(format_, *args)
+        log.debug(format_, *args, exc_info=True)
