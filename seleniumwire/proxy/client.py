@@ -1,10 +1,13 @@
 import http.client
 import json
+import logging
 import threading
 from urllib.parse import quote_plus
 
 from .handler import ADMIN_PATH, CaptureRequestHandler
 from .server import ProxyHTTPServer
+
+log = logging.getLogger(__name__)
 
 
 class AdminClient:
@@ -35,10 +38,12 @@ class AdminClient:
         # self._proxy_host = self._proxy.socket.gethostname()
         self._proxy_port = self._proxy.socket.getsockname()[1]
 
+        log.info('Created proxy listening on {}:{}'.format(self._proxy_host, self._proxy_port))
         return self._proxy_host, self._proxy_port
 
     def destroy_proxy(self):
         """Stops the proxy server and performs any clean up actions."""
+        log.info('Destroying proxy')
         self._proxy.shutdown()
         self._proxy.server_close()  # Closes the server socket
 
