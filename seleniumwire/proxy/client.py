@@ -1,6 +1,7 @@
 import http.client
 import json
 import threading
+from urllib.parse import quote_plus
 
 from .handler import ADMIN_PATH, CaptureRequestHandler
 from .server import ProxyHTTPServer
@@ -131,7 +132,7 @@ class AdminClient:
         Args:
             path: The path of a request to check existence for.
         """
-        return self._make_request('GET', '/find?path={}'.format(path))
+        return self._make_request('GET', '/find?path={}'.format(quote_plus(str(path))))
 
     def _make_request(self, command, path, data=None):
         url = '{}{}'.format(ADMIN_PATH, path)
