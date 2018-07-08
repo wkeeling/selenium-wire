@@ -87,7 +87,7 @@ class InspectRequestsMixin:
             request = self._client.find(path)
 
             if request is not None:
-                return request
+                return Request(request, self._client)
             else:
                 time.sleep(0.2)
 

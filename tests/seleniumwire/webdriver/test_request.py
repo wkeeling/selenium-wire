@@ -116,12 +116,29 @@ class InspectRequestsMixinTest(TestCase):
 
     def test_wait_for_request(self):
         mock_client = Mock()
-        mock_client.find.return_value = Mock()
+        mock_client.find.return_value = {
+            'id': '98765',
+            'method': 'GET',
+            'path': 'http://www.example.com/different/path?foo=bar',
+            'headers': {
+                'Accept': '*/*',
+                'Host': 'www.example.com'
+            },
+            'response': {
+                'status_code': 200,
+                'reason': 'OK',
+                'headers': {
+                    'Content-Type': 'text/plain',
+                    'Content-Length': '98425'
+                }
+            }
+        }
         driver = Driver(mock_client)
 
-        driver.wait_for_request('/some/path')
+        request = driver.wait_for_request('/some/path')
 
         mock_client.find.assert_called_once_with('/some/path')
+        self.assertEqual(request.path, 'http://www.example.com/different/path?foo=bar')
 
     def test_wait_for_request_timeout(self):
         mock_client = Mock()
