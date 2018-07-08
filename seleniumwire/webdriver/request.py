@@ -41,28 +41,6 @@ class InspectRequestsMixin:
 
         return None
 
-    @property
-    def header_overrides(self):
-        """The header overrides for outgoing browser requests.
-
-        The value of the header overrides should be a dictionary. Where a
-        header in the dictionary exists in the request, the value will be
-        used in preference to the one in the request. Where a header in the
-        dictionary does not exist in the request, it will be added to the
-        request as a new header. To filter out a header from the request,
-        set that header in the dictionary with a value of None. Header
-        names are case insensitive.
-        """
-        return self._client.get_header_overrides()
-
-    @header_overrides.setter
-    def header_overrides(self, headers):
-        self._client.set_header_overrides(headers)
-
-    @header_overrides.deleter
-    def header_overrides(self):
-        self._client.clear_header_overrides()
-
     def wait_for_request(self, path, timeout=10):
         """Wait up to the timeout period for a request with the specified
         path to be seen.
@@ -92,6 +70,28 @@ class InspectRequestsMixin:
                 time.sleep(0.2)
 
         raise TimeoutException('Timed out after {}s waiting for request {}'.format(timeout, path))
+
+    @property
+    def header_overrides(self):
+        """The header overrides for outgoing browser requests.
+
+        The value of the header overrides should be a dictionary. Where a
+        header in the dictionary exists in the request, the value will be
+        used in preference to the one in the request. Where a header in the
+        dictionary does not exist in the request, it will be added to the
+        request as a new header. To filter out a header from the request,
+        set that header in the dictionary with a value of None. Header
+        names are case insensitive.
+        """
+        return self._client.get_header_overrides()
+
+    @header_overrides.setter
+    def header_overrides(self, headers):
+        self._client.set_header_overrides(headers)
+
+    @header_overrides.deleter
+    def header_overrides(self):
+        self._client.clear_header_overrides()
 
     def _create_proxy(self):
         return self._client.create_proxy()
