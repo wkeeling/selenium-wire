@@ -188,18 +188,18 @@ class RequestTest(TestCase):
 
     def test_load_request_body(self):
         mock_client = Mock()
-        mock_client.request_body.return_value = b'the body'
+        mock_client.get_request_body.return_value = b'the body'
         data = self._request_data()
 
         request = Request(data, mock_client)
         body = request.body
 
         self.assertEqual(body, b'the body')
-        mock_client.request_body.assert_called_once_with(data['id'])
+        mock_client.get_request_body.assert_called_once_with(data['id'])
 
     def test_load_request_body_uses_cached_data(self):
         mock_client = Mock()
-        mock_client.request_body.return_value = b'the body'
+        mock_client.get_request_body.return_value = b'the body'
         data = self._request_data()
 
         request = Request(data, mock_client)
@@ -207,7 +207,7 @@ class RequestTest(TestCase):
         body = request.body  # Uses the previously retrieved body
 
         self.assertEqual(body, b'the body')
-        mock_client.request_body.assert_called_once_with(data['id'])
+        mock_client.get_request_body.assert_called_once_with(data['id'])
 
     def _request_data(self):
         data = {
@@ -266,7 +266,7 @@ class ResponseTest(TestCase):
 
     def test_load_response_body(self):
         mock_client = Mock()
-        mock_client.response_body.return_value = b'the body'
+        mock_client.get_response_body.return_value = b'the body'
         data = self._response_data()
         request_id = uuid.uuid4()
 
@@ -274,11 +274,11 @@ class ResponseTest(TestCase):
         body = response.body
 
         self.assertEqual(body, b'the body')
-        mock_client.response_body.assert_called_once_with(request_id)
+        mock_client.get_response_body.assert_called_once_with(request_id)
 
     def test_load_response_body_uses_cached_data(self):
         mock_client = Mock()
-        mock_client.response_body.return_value = b'the body'
+        mock_client.get_response_body.return_value = b'the body'
         data = self._response_data()
         request_id = uuid.uuid4()
 
@@ -287,7 +287,7 @@ class ResponseTest(TestCase):
         body = response.body  # Uses the previously retrieved body
 
         self.assertEqual(body, b'the body')
-        mock_client.response_body.assert_called_once_with(request_id)
+        mock_client.get_response_body.assert_called_once_with(request_id)
 
     def _response_data(self):
         data = {
