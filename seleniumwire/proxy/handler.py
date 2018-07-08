@@ -98,6 +98,14 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
     that pass through the proxy server and allows admin clients to access that data.
     """
 
+    def do_GET(self):
+        try:
+            super().do_GET()
+        except BrokenPipeError as e:
+            # Can happen when the browser is shutdown before
+            # pending requests have completed.
+            log.debug(e)
+
     def request_handler(self, req, req_body):
         """Captures a request and its body.
 
