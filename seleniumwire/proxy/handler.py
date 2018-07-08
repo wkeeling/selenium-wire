@@ -141,7 +141,10 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
 
     def log_request(self, code='-', size='-'):
         # Send server log messages through our own logging config.
-        log.debug('%s %s', self.path, code)
+        try:
+            log.debug('%s %s', self.path, code)
+        except AttributeError:
+            pass
 
     def log_error(self, format_, *args):
         # Send server error messages through our own logging config.
