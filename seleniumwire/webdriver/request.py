@@ -32,7 +32,7 @@ class InspectRequestsMixin:
         Returns:
             The last request.
         """
-        self._client.get_last_request()
+        return self._client.get_last_request()
 
     @property
     def header_overrides(self):
