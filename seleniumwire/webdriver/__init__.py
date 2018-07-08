@@ -1,2 +1,2 @@
-from .browser import Firefox
+from .browser import Chrome, Firefox
 
