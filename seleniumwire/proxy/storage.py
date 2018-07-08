@@ -101,6 +101,14 @@ class RequestStorage:
             response_body: The response body binary data.
 
         """
+        indexed_request = self._get_indexed_request(request_id)
+
+        if indexed_request is None:
+            # Request has been cleared from storage before
+            # the response arrived back
+            log.debug('Cannot save response as request {} is no longer stored'.format(request_id))
+            return
+
         response_data = {
             'status_code': response.status,
             'reason': response.reason,
@@ -109,16 +117,21 @@ class RequestStorage:
 
         request_dir = self._get_request_dir(request_id)
         self._save(response_data, request_dir, 'response')
+
         if response_body is not None:
             self._save(response_body, request_dir, 'responsebody')
 
+        indexed_request.has_response = True
+
+    def _get_indexed_request(self, request_id):
         with self._lock:
             index = self._index[:]
 
         for indexed_request in index:
             if indexed_request.id == request_id:
-                indexed_request.has_response = True
-                break
+                return indexed_request
+
+        return None
 
     def load_requests(self):
         """Loads all previously saved requests known to the storage (known to its index).

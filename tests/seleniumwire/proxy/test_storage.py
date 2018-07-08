@@ -117,6 +117,19 @@ class RequestStorageTest(TestCase):
 
         self.assertEqual(loaded_body, b'some response body')
 
+    def test_save_response_no_request(self):
+        mock_request = self._create_mock_request()
+        storage = RequestStorage(base_dir=self.base_dir)
+        request_id = storage.save_request(mock_request)
+        mock_response = self._create_mock_resonse()
+        storage.clear_requests()
+
+        storage.save_response(request_id, mock_response)
+
+        response_file_path = self._get_stored_path(request_id, 'response')
+
+        self.assertFalse(response_file_path)
+
     def test_load_requests(self):
         mock_request_1 = self._create_mock_request()
         mock_request_2 = self._create_mock_request()
