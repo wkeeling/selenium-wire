@@ -19,7 +19,8 @@ class SeleniumIntegrationTest(TestCase):
 
     driver_config = [
         # (webdriver.Firefox, 'https://www.python.org/', 'Python'),
-        (webdriver.Chrome, 'https://www.wikipedia.org/', 'Wikipedia')
+        # (webdriver.Chrome, 'https://www.wikipedia.org/', 'Wikipedia'),
+        (webdriver.Safari, 'https://github.com/', 'GitHub')
     ]
 
     def test_can_access_requests(self):
@@ -33,3 +34,4 @@ class SeleniumIntegrationTest(TestCase):
             self.assertIn('text/html', request.response.headers['Content-Type'])
 
             driver.quit()
+

@@ -1,5 +1,6 @@
 from selenium.webdriver import Chrome as _Chrome
 from selenium.webdriver import Firefox as _Firefox
+from selenium.webdriver import Safari as _Safari
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from .request import InspectRequestsMixin
@@ -22,8 +23,9 @@ class Firefox(InspectRequestsMixin, _Firefox):
             'proxyType': 'manual',
             'httpProxy': '{}:{}'.format(host, port),
             'sslProxy': '{}:{}'.format(host, port),
-            'noProxy': []
+            'noProxy': [],
         }
+        capabilities['acceptInsecureCerts'] = True
 
         super().__init__(*args, capabilities=capabilities, **kwargs)
 
@@ -50,9 +52,33 @@ class Chrome(InspectRequestsMixin, _Chrome):
             'sslProxy': '{}:{}'.format(host, port),
             'noProxy': ''
         }
+        capabilities['acceptInsecureCerts'] = True
 
         super().__init__(*args, desired_capabilities=capabilities, **kwargs)
 
     def quit(self):
         self._destroy_proxy()
         super().quit()
+
+
+class Safari(InspectRequestsMixin, _Safari):
+    """Wraps the Safari webdriver to provide additional methods for inspecting requests."""
+
+    def __init__(self, *args, **kwargs):
+        self._client = AdminClient()
+        host, port = self._create_proxy()
+
+        try:
+            capabilities = kwargs.pop('capabilities')
+        except KeyError:
+            capabilities = DesiredCapabilities.SAFARI.copy()
+
+        capabilities['proxy'] = {
+            'proxyType': 'manual',
+            'httpProxy': '{}:{}'.format(host, port),
+            'sslProxy': '{}:{}'.format(host, port),
+            'noProxy': ''
+        }
+        capabilities['acceptInsecureCerts'] = True
+
+        super().__init__(*args, desired_capabilities=capabilities, **kwargs)
