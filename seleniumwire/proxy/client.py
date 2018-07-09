@@ -11,9 +11,8 @@ log = logging.getLogger(__name__)
 
 
 class AdminClient:
-    """Provides the means to communicate with the proxy server to retrieve captured
-    data and instruct the proxy to perform specific actions.
-    """
+    """Provides an API for sending commands to a remote proxy server."""
+
     def __init__(self):
         self._proxy = None
         self._proxy_host = 'localhost'
