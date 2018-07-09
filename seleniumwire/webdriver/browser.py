@@ -1,5 +1,4 @@
 from selenium.webdriver import Chrome as _Chrome
-from selenium.webdriver import ChromeOptions
 from selenium.webdriver import Firefox as _Firefox
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
@@ -12,7 +11,7 @@ class Firefox(InspectRequestsMixin, _Firefox):
 
     def __init__(self, *args, **kwargs):
         self._client = AdminClient()
-        addr, port = self._create_proxy()
+        host, port = self._create_proxy()
 
         try:
             capabilities = kwargs.pop('capabilities')
@@ -21,8 +20,8 @@ class Firefox(InspectRequestsMixin, _Firefox):
 
         capabilities['proxy'] = {
             'proxyType': 'manual',
-            'httpProxy': '{}:{}'.format(addr, port),
-            'sslProxy': '{}:{}'.format(addr, port),
+            'httpProxy': '{}:{}'.format(host, port),
+            'sslProxy': '{}:{}'.format(host, port),
             'noProxy': []
         }
 
@@ -38,23 +37,21 @@ class Chrome(InspectRequestsMixin, _Chrome):
 
     def __init__(self, *args, **kwargs):
         self._client = AdminClient()
-        addr, port = self._create_proxy()
+        host, port = self._create_proxy()
 
         try:
-            chrome_options = kwargs.pop('chrome_options')
+            capabilities = kwargs.pop('capabilities')
         except KeyError:
-            chrome_options = ChromeOptions()
-
-        chrome_options.add_argument('--proxy-server={}:{}'.format(addr, port))
+            capabilities = DesiredCapabilities.CHROME.copy()
 
         capabilities['proxy'] = {
             'proxyType': 'manual',
-            'httpProxy': '{}:{}'.format(addr, port),
-            'sslProxy': '{}:{}'.format(addr, port),
-            'noProxy': []
+            'httpProxy': '{}:{}'.format(host, port),
+            'sslProxy': '{}:{}'.format(host, port),
+            'noProxy': ''
         }
 
-        super().__init__(*args, capabilities=capabilities, **kwargs)
+        super().__init__(*args, desired_capabilities=capabilities, **kwargs)
 
     def quit(self):
         self._destroy_proxy()
