@@ -4,15 +4,18 @@ from selenium.webdriver import Safari as _Safari
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from .request import InspectRequestsMixin
-from seleniumwire.proxy.client import AdminClient
 
 
 class Firefox(InspectRequestsMixin, _Firefox):
     """Wraps the Firefox webdriver to provide additional methods for inspecting requests."""
 
     def __init__(self, *args, **kwargs):
-        self._client = AdminClient()
-        host, port = self._create_proxy()
+        try:
+            port = kwargs.pop('seleniumwire_port')
+        except KeyError:
+            port = 0
+
+        host, port = self._client.create_proxy(port)
 
         try:
             capabilities = kwargs.pop('capabilities')
@@ -38,8 +41,12 @@ class Chrome(InspectRequestsMixin, _Chrome):
     """Wraps the Chrome webdriver to provide additional methods for inspecting requests."""
 
     def __init__(self, *args, **kwargs):
-        self._client = AdminClient()
-        host, port = self._create_proxy()
+        try:
+            port = kwargs.pop('seleniumwire_port')
+        except KeyError:
+            port = 0
+
+        host, port = self._client.create_proxy(port)
 
         try:
             capabilities = kwargs.pop('capabilities')
@@ -64,21 +71,24 @@ class Chrome(InspectRequestsMixin, _Chrome):
 class Safari(InspectRequestsMixin, _Safari):
     """Wraps the Safari webdriver to provide additional methods for inspecting requests."""
 
-    def __init__(self, *args, **kwargs):
-        self._client = AdminClient()
-        host, port = self._create_proxy()
+    def __init__(self, seleniumwire_port, *args, **kwargs):
+        """Initialise a new Safari WebDriver instance with the port number to use
+        for the selenium wire proxy server.
 
-        try:
-            capabilities = kwargs.pop('capabilities')
-        except KeyError:
-            capabilities = DesiredCapabilities.SAFARI.copy()
+        Safari does not support automatic proxy configuration through the
+        DesiredCapabilities API, and thus it is necessary to do this manually
+        with a specific port number. Whatever port number was chosen is then
+        passed in here.
 
-        capabilities['proxy'] = {
-            'proxyType': 'manual',
-            'httpProxy': '{}:{}'.format(host, port),
-            'sslProxy': '{}:{}'.format(host, port),
-            'noProxy': ''
-        }
-        capabilities['acceptInsecureCerts'] = True
+        Args:
+            seleniumwire_port: The port number that selenium wire should use.
+                Safari must have its proxy configured manually using this
+                same port number.
+        """
+        self._client.create_proxy(seleniumwire_port)
 
-        super().__init__(*args, desired_capabilities=capabilities, **kwargs)
+        super().__init__(*args, **kwargs)
+
+    def quit(self):
+        self._destroy_proxy()
+        super().quit()

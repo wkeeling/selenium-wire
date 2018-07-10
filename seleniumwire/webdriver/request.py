@@ -2,9 +2,15 @@ import time
 
 from selenium.common.exceptions import TimeoutException
 
+from seleniumwire.proxy.client import AdminClient
+
 
 class InspectRequestsMixin:
     """Mixin class that provides functions to capture and inspect browser requests."""
+
+    def __init__(self, *args, **kwargs):
+        self._client = AdminClient()
+        super().__init__(*args, **kwargs)
 
     @property
     def requests(self):
@@ -92,12 +98,6 @@ class InspectRequestsMixin:
     @header_overrides.deleter
     def header_overrides(self):
         self._client.clear_header_overrides()
-
-    def _create_proxy(self):
-        return self._client.create_proxy()
-
-    def _destroy_proxy(self):
-        self._client.destroy_proxy()
 
 
 class Request:

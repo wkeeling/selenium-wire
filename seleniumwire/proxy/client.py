@@ -18,9 +18,13 @@ class AdminClient:
         self._proxy_host = 'localhost'
         self._proxy_port = 0
 
-    def create_proxy(self):
+    def create_proxy(self, port=0):
         """Creates a new proxy server and returns the host and port number that the
         server was started on.
+
+        Args:
+            port: The port number. Defaults to 0, which means that the first
+                available port found will be used.
 
         Returns:
             A tuple of the host and port number of the created proxy server.
@@ -28,7 +32,7 @@ class AdminClient:
         # This at some point may interact with a remote service
         # to create the proxy and retrieve its address details.
         CaptureRequestHandler.protocol_version = 'HTTP/1.1'
-        self._proxy = ProxyHTTPServer((self._proxy_host, self._proxy_port), CaptureRequestHandler)
+        self._proxy = ProxyHTTPServer((self._proxy_host, port), CaptureRequestHandler)
 
         t = threading.Thread(name='Selenium Wire Proxy Server', target=self._proxy.serve_forever)
         t.daemon = True
