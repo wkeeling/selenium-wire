@@ -1,3 +1,5 @@
+import os
+import pkgutil
 import threading
 
 
@@ -64,3 +66,14 @@ class RequestModifier:
                 del request.headers[header]
                 if value is not None:
                     request.headers[header] = value
+
+
+def extract_cert():
+    """Extracts the root certificate to the current working directory."""
+    cert_name = 'ca.crt'
+    cert = pkgutil.get_data(__package__, cert_name)
+
+    with open(os.path.join(os.getcwd(), cert_name), 'wb') as out:
+        out.write(cert)
+
+    print('{} extracted. You can now import this into a browser.'.format(cert_name))
