@@ -11,6 +11,7 @@ class ProxyHTTPServer(ThreadingHTTPServer):
     def __init__(self, options, *args, **kwargs):
         # The seleniumwire options
         self.options = options
+
         # Check for upstream proxy configuration
         for proxy_type in ('http', 'https'):
             try:
@@ -24,6 +25,7 @@ class ProxyHTTPServer(ThreadingHTTPServer):
 
         # Each server instance gets its own storage
         self.storage = RequestStorage()
+
         # Each server instance gets a request modifier
         self.modifier = RequestModifier()
 
