@@ -7,6 +7,7 @@
 #
 #
 
+import base64
 import gzip
 import html
 import http.client
@@ -165,12 +166,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         origin = (scheme, netloc)
         conn = None
         try:
-            if origin not in self.tls.conns:
-                if scheme == 'https':
-                    self.tls.conns[origin] = http.client.HTTPSConnection(netloc, timeout=self.timeout)
-                else:
-                    self.tls.conns[origin] = http.client.HTTPConnection(netloc, timeout=self.timeout)
-            conn = self.tls.conns[origin]
+            conn = self.create_connection(origin)
             conn.request(self.command, path, req_body, dict(req.headers))
             res = conn.getresponse()
 
@@ -194,7 +190,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             self.send_error(502)
             return
         finally:
-            conn.close()
+            if conn:
+                conn.close()
 
         content_encoding = res.headers.get('Content-Encoding', 'identity')
         res_body_plain = self.decode_content_body(res_body, content_encoding)
@@ -221,6 +218,31 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         with self.lock:
             self.save_handler(req, req_body, res, res_body_plain)
+
+    def create_connection(self, origin):
+        scheme, netloc = origin
+
+        if origin not in self.tls.conns:
+            if 'proxy' in self.server.options:
+                # Attempt to connect to upstream proxy server
+                proxy_config = self.server.options['proxy'].get(scheme)
+                if proxy_config:
+                    proxy_type, username, password, hostport, conn_class = proxy_config
+                    conn = conn_class(hostport, timeout=self.timeout)
+                    headers = {}
+                    if username and password:
+                        auth = '%s:%s' % (username, password)
+                        headers['Proxy-Authorization'] = b'Basic ' + base64.b64encode(auth.encode('latin-1'))
+                    conn.set_tunnel(netloc, headers=headers)
+                    self.tls.conns[origin] = conn
+
+        if origin not in self.tls.conns:
+            if scheme == 'https':
+                self.tls.conns[origin] = http.client.HTTPSConnection(netloc, timeout=self.timeout)
+            else:
+                self.tls.conns[origin] = http.client.HTTPConnection(netloc, timeout=self.timeout)
+
+        return self.tls.conns[origin]
 
     def relay_streaming(self, res):
         self.send_response(res.status, res.reason)

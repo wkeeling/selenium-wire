@@ -40,7 +40,7 @@ class Firefox(InspectRequestsMixin, _Firefox):
             }
             capabilities['acceptInsecureCerts'] = True
 
-            kwargs['desired_capabilities'] = capabilities
+            kwargs['capabilities'] = capabilities
 
         super().__init__(*args, **kwargs)
 
@@ -130,7 +130,7 @@ class Edge(InspectRequestsMixin, _Edge):
         if seleniumwire_options is None:
             seleniumwire_options = {}
 
-        # Safari does not support automatic proxy configuration through the
+        # Edge does not support automatic proxy configuration through the
         # DesiredCapabilities API, and thus has to be configured manually.
         # Whatever port number is chosen for that manual configuration has to
         # be passed in the options.
