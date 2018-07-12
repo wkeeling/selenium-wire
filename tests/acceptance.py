@@ -18,20 +18,27 @@ from seleniumwire import webdriver
 class SeleniumIntegrationTest(TestCase):
 
     driver_config = [
-        # (webdriver.Firefox, 'https://www.python.org/', 'Python'),
-        # (webdriver.Chrome, 'https://www.wikipedia.org/', 'Wikipedia'),
-        (webdriver.Safari, 'https://github.com/', 'GitHub')
+        ('https://www.wikipedia.org/', 'Wikipedia'),
+        ('https://github.com/', 'GitHub')
     ]
 
-    def test_can_access_requests(self):
-        for driver_cls, url, title in self.driver_config:
-            driver = driver_cls()
-            driver.get(url)
+    options = {
+            'proxy': {
+                'http': 'http://167.99.193.171:8000',
+                'https': 'https://167.99.193.171:8000'
+            }
+    }
 
-            self.assertTrue(title in driver.title)
-            request = driver.wait_for_request(url)
-            self.assertEqual(request.response.status_code, 200)
-            self.assertIn('text/html', request.response.headers['Content-Type'])
+    def test_firefox_can_access_requests(self):
+        url = 'https://www.python.org/'
+        title = 'Python'
+        driver = webdriver.Firefox(seleniumwire_options=self.options)
+        driver.get(url)
 
-            driver.quit()
+        self.assertTrue(title in driver.title)
+        request = driver.wait_for_request(url)
+        self.assertEqual(request.response.status_code, 200)
+        self.assertIn('text/html', request.response.headers['Content-Type'])
+
+        driver.quit()
 
