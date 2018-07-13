@@ -155,6 +155,10 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
         except AttributeError:
             pass
 
+    def log_message(self, format_, *args):
+        # Send messages through our own logging config.
+        log.debug(format_, *args)
+
     def log_error(self, format_, *args):
         # Send server error messages through our own logging config.
         log.debug(format_, *args, exc_info=True)
