@@ -282,34 +282,32 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         return headers
 
     def encode_content_body(self, text, encoding):
-        if encoding == 'identity':
-            data = text
-        elif encoding in ('gzip', 'x-gzip'):
-            io = BytesIO()
-            with gzip.GzipFile(fileobj=io, mode='wb') as f:
-                f.write(text)
-            data = io.getvalue()
-        elif encoding == 'deflate':
-            data = zlib.compress(text)
-        else:
-            raise Exception("Unknown Content-Encoding: %s" % encoding)
-        return data
+        if encoding != 'identity':
+            if encoding in ('gzip', 'x-gzip'):
+                io = BytesIO()
+                with gzip.GzipFile(fileobj=io, mode='wb') as f:
+                    f.write(text)
+                text = io.getvalue()
+            elif encoding == 'deflate':
+                text = zlib.compress(text)
+            else:
+                self.log_error("Unknown Content-Encoding: %s", encoding)
+        return text
 
     def decode_content_body(self, data, encoding):
-        if encoding == 'identity':
-            text = data
-        elif encoding in ('gzip', 'x-gzip'):
-            io = BytesIO(data)
-            with gzip.GzipFile(fileobj=io) as f:
-                text = f.read()
-        elif encoding == 'deflate':
-            try:
-                text = zlib.decompress(data)
-            except zlib.error:
-                text = zlib.decompress(data, -zlib.MAX_WBITS)
-        else:
-            raise Exception("Unknown Content-Encoding: %s" % encoding)
-        return text
+        if encoding != 'identity':
+            if encoding in ('gzip', 'x-gzip'):
+                io = BytesIO(data)
+                with gzip.GzipFile(fileobj=io) as f:
+                    data = f.read()
+            elif encoding == 'deflate':
+                try:
+                    data = zlib.decompress(data)
+                except zlib.error:
+                    data = zlib.decompress(data, -zlib.MAX_WBITS)
+            else:
+                self.log_error("Unknown Content-Encoding: %s", encoding)
+        return data
 
     def send_cacert(self):
         with open(self.cacert, 'rb') as f:
