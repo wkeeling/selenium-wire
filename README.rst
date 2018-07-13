@@ -1,15 +1,32 @@
+
+
 Selenium Wire
 =============
 
 
-Selenium Wire extends the Selenium Python bindings giving you the ability to inspect requests made by the browser. With Selenium Wire you get a user-friendly API for accessing things such as the request and response headers, status code and body content.
+Selenium Wire extends Selenium's Python bindings to give your tests access to the underlying requests made by the browser. With Selenium Wire you get a user-friendly API for accessing things such as the request/response headers, status code and body content.
 
-Whilst Selenium itself gives you a rich API for automating your browser based tests, it doesn't give access to the underlying HTTP requests as that falls outside of its current scope, which is to emulate user actions. Selenium Wire aims to fill this gap.
+## Simple Example
 
+```
+from seleniumwire import webdriver
+
+driver = webdriver.Firefox()
+driver.get("http://www.google.com")
+
+for request in driver.requests:
+    print()
+
+
+
+```
+
+Other than the minor change to the `webdriver` import, you use the webdriver in just the same way as if you were using Selenium itself.
 
 
 
 .. image:: https://img.shields.io/pypi/v/selenium-wire.svg
+
         :target: https://pypi.python.org/pypi/selenium-wire
 
 .. image:: https://travis-ci.org/wkeeling/selenium-wire.svg?branch=master
@@ -24,6 +41,7 @@ Features
 --------
 
 * TODO
+
 
 
 License
