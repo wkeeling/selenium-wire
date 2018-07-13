@@ -291,7 +291,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             elif encoding == 'deflate':
                 text = zlib.compress(text)
             else:
-                self.log_error("Unknown Content-Encoding: %s", encoding)
+                self.log_message("Unknown Content-Encoding: %s", encoding)
         return text
 
     def decode_content_body(self, data, encoding):
@@ -306,7 +306,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 except zlib.error:
                     data = zlib.decompress(data, -zlib.MAX_WBITS)
             else:
-                self.log_error("Unknown Content-Encoding: %s", encoding)
+                self.log_message("Unknown Content-Encoding: %s", encoding)
         return data
 
     def send_cacert(self):
