@@ -100,7 +100,7 @@ You can retrieve all requests with the ``driver.requests`` attribute.
 
     all_requests = driver.requests
 
-The requests are just a list and can be iterated (as in the opening example) and indexed normally:
+The requests are just a list and can be iterated - as in the opening example - and indexed normally:
 
 .. code:: python
 
@@ -123,14 +123,29 @@ To clear previously captured requests, just use ``del``:
 
     del driver.requests
 
-This can be useful if you're only interested in capturing the requests that occur when a specific action is performed, for example, the AJAX requests associated with a button click. In this case, you can clear out any previous requests with ``del`` before you perform the action.
+This can be useful if you're only interested in capturing requests that occur when a specific action is performed, for example, the AJAX requests associated with a button click. In this case, you can clear out any previous requests with ``del`` before you perform the action.
 
 Waiting
 -------
 
 When you ask for captured requests using ``driver.requests`` or ``driver.last_request`` you have to be sure that the requests you're interested in have actually been captured. If you ask too soon, then you may find that the request is not yet present, or it is present but it has no associated response.
 
-Selenium Wire provides ``driver.wait_for_request()`` for this purpose. This method takes a path (actually any part of the full URL) and will wait for a request with this path before continuing. For example, to wait for an AJAX request to return after a button is clicked:
+For this you can use Selenium's existing `implicit or explicit waits`_ to wait for the DOM to change. For example:
+
+.. code:: python
+
+    # Click a button that triggers a background request
+    button_element.click()
+
+    # Wait for an element to appear, implying request complete
+    element = WebDriverWait(ff, 10).until(EC.presence_of_element_located((By.ID, "some-element")))
+
+    # Now check the request
+    last_request = driver.last_request
+
+Alternatively, Selenium Wire provides ``driver.wait_for_request()``. This method takes a path (actually any part of the full URL) and will wait for a request with this path before continuing.
+
+For example, to wait for an AJAX request to return after a button is clicked:
 
 .. code:: python
 
@@ -147,34 +162,21 @@ The ``wait_for_request()`` method will return the first *fully completed* reques
     # Wait up to 30 seconds for a request/response
     request = driver.wait_for_request('/api/products/12345/', timeout=30)
 
-If a fully completed request is not seen within the timeout period, then a ``TimeoutException`` is raised.
+If a fully completed request is not seen within the timeout period, a ``TimeoutException`` is raised.
 
-The ``wait_for_request()`` method does a substring match on the path that is passed, so you can pass just the part of the path that uniquely identifies the request.
+The ``wait_for_request()`` method does a substring match on the path, so you can pass just the part that uniquely identifies the request:
 
 .. code:: python
 
     # Pass just the unique part of the path
     request = driver.wait_for_request('/12345/')
 
-or the full URL itself:
+Or alternatively you can pass the full URL itself:
 
 .. code:: python
 
     # Match the full URL
     request = driver.wait_for_request('https://server/api/products/12345/')
-
-Of course you could also just rely on Selenium's existing `implicit or explicit waits`_ to wait for the DOM to change. For example:
-
-.. code:: python
-
-    # Click a button that triggers a background request
-    button_element.click()
-
-    # Wait for an element to appear
-    element = WebDriverWait(ff, 10).until(EC.presence_of_element_located((By.ID, "some-element")))
-
-    # Now check the request
-    last_request = driver.last_request
 
 .. _`implicit or explicit waits`: https://www.seleniumhq.org/docs/04_webdriver_advanced.jsp
 
