@@ -4,7 +4,7 @@ Selenium Wire
 =============
 
 
-Selenium Wire extends Selenium's Python bindings to give your tests access to the underlying requests made by the browser. Selenium Wire is a lightweight, *pure Python* library with *no external dependencies* other than on Selenium itself.
+Selenium Wire extends Selenium's Python bindings to give your tests access to the underlying requests made by the browser. Selenium Wire is a lightweight, *pure Python* library with *no external dependencies* other than Selenium itself.
 
 With Selenium Wire, you author your tests in just the same way as you do with Selenium, but you get an additional user-friendly API for accessing things such as the request/response headers, status code and body content.
 
@@ -91,6 +91,9 @@ Accessing requests
 ~~~~~~~~~~~~~~~~~~
 Selenium Wire provides a number of ways to access captured browser requests.
 
+Retrieving
+----------
+
 You can retrieve all requests with the ``driver.requests`` attribute.
 
 .. code:: python
@@ -111,6 +114,9 @@ If you want to access just the most recent request, then you can use the dedicat
 
 This is more efficient than using ``driver.requests[-1]``.
 
+Clearing
+--------
+
 To clear previously captured requests, just use ``del``:
 
 .. code:: python
@@ -119,10 +125,46 @@ To clear previously captured requests, just use ``del``:
 
 This can be useful if you're only interested in capturing the requests that occur when a specific action is performed, for example, the AJAX requests associated with a button click. In this case, you can clear out any previous requests with ``del`` before you perform the action.
 
+Waiting
+-------
+
 When you ask for captured requests using ``driver.requests`` or ``driver.last_request`` you have to be sure that the requests you're interested in have actually been captured. If your test asks too soon, then you may find that the request is not yet present, or it is present but it has no associated response.
 
-One way aroun
-To help with this, Selenium Wire provides
+Selenium Wire provides ``driver.wait_for_request()`` for this purpose. This method takes the path (or part of the path) and will wait for a request with that path to fully complete. For example, to wait for an AJAX request to return after a button is clicked:
+
+.. code:: python
+
+    # Click a button that triggers a background request
+    button_element.click()
+
+    # Wait for the request/response to complete
+    request = driver.wait_for_request('/some/request/path')
+
+The ``wait_for_request()`` method will return the first *fully completed* request it finds that matches the supplied path. By fully completed we mean that the response for the request must have returned. The ``wait_for_request`` method will wait for up to 10 seconds by default, but you can vary that with the ``timeout`` argument:
+
+.. code:: python
+
+    # Wait up to 30 seconds for a request/response
+    request = driver.wait_for_request('/some/request/path', timeout=30)
+
+If a fully completed request is not seen within the timeout period, then a ``TimeoutException`` is raised.
+
+
+Of course you could also just rely on Selenium's existing `implicit or explicit waits`_ to wait for the DOM to change. For example:
+
+.. code:: python
+
+    # Click a button that triggers a background request
+    button_element.click()
+
+    # Wait for an element to appear
+    element = WebDriverWait(ff, 10).until(EC.presence_of_element_located((By.ID, "some-element")))
+
+    # Now check the request
+    print(driver.last_request.response.status_code)
+
+.. _`implicit or explicit waits`: https://www.seleniumhq.org/docs/04_webdriver_advanced.jsp
+
 
 
 HTTPS
