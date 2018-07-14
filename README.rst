@@ -4,26 +4,9 @@ Selenium Wire
 =============
 
 
-Selenium Wire extends Selenium's Python bindings to give your tests access to the underlying requests made by the browser. With Selenium Wire you get a user-friendly API for accessing things such as the request/response headers, status code and body content.
+Selenium Wire extends Selenium's Python bindings giving your tests access to the underlying requests made by the browser. Seleniumwire is a lightweight, *pure Python* library with *no external dependencies* other than on Selenium itself.
 
-## Simple Example
-
-```
-from seleniumwire import webdriver
-
-driver = webdriver.Firefox()
-driver.get("http://www.google.com")
-
-for request in driver.requests:
-    print()
-
-
-
-```
-
-Other than the minor change to the `webdriver` import, you use the webdriver in just the same way as if you were using Selenium itself.
-
-
+With Selenium Wire you get a user-friendly API for accessing things such as the request/response headers, status code and body content.
 
 .. image:: https://img.shields.io/pypi/v/selenium-wire.svg
 
@@ -36,12 +19,54 @@ Other than the minor change to the `webdriver` import, you use the webdriver in 
         :target: https://selenium-wire.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
+Simple Example
+~~~~~~~~~~~~~~
+
+.. code:: python
+
+    from seleniumwire import webdriver  # Import from seleniumwire
+
+    # Create a new instance of the Firefox driver
+    driver = webdriver.Firefox()
+
+    # Go to the Google home page
+    driver.get("https://www.google.com")
+
+    # Access the requests via the `requests` attribute
+    for request in driver.requests:
+        print(
+            request.path,
+            request.response.status_code,
+            request.response.headers['Content-Type']
+        )
+
+Prints:
+
+.. code:: bash
+
+    https://www.google.com/ 200 text/html; charset=UTF-8
+    https://shavar.services.mozilla.com/downloads?client=navclient-auto-ffox&appver=61.0&pver=2.2 200 application/octet-stream
+    https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_120x44dp.png 200 image/png
+    https://consent.google.com/status?continue=https://www.google.com&pc=s&timestamp=1531511954&gl=GB 204 text/html; charset=utf-8
+    https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png 200 image/png
+    https://ssl.gstatic.com/gb/images/i2_2ec824b0.png 200 image/png
+    https://www.google.com/gen_204?s=webaft&t=aft&atyp=csi&ei=kgRJW7DBONKTlwTK77wQ&rt=wsrt.366,aft.58,prt.58 204 text/html; charset=UTF-8
+    ...
+
+
+Because Selenium Wire extends Selenium, the API is exactly the same, but with some additional attributes for accessing requests.
 
 Features
---------
+~~~~~~~~
 
-* TODO
-
+* Lightweight
+* No external dependencies, just the library itself
+* Simple, user-friendly API
+* HTTPS support
+* Access request/response bodies
+* Header injection/overrides
+* URL rewriting
+* Corporate proxy support
 
 
 License
