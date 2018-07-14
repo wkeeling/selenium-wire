@@ -65,7 +65,7 @@ Features
 ~~~~~~~~
 
 * No external dependencies, just the library itself
-* Straightforward, user-friendly API
+* Straightforward user-friendly API
 * HTTPS support
 * Access request/response bodies
 * Header injection/overrides
@@ -98,7 +98,7 @@ You can retrieve all requests with the ``driver.requests`` attribute.
 
 .. code:: python
 
-    all_requests = driver.requests:
+    all_requests = driver.requests
 
 The requests are just a list and can be iterated (as in the opening example) and indexed normally:
 
@@ -128,9 +128,9 @@ This can be useful if you're only interested in capturing the requests that occu
 Waiting
 -------
 
-When you ask for captured requests using ``driver.requests`` or ``driver.last_request`` you have to be sure that the requests you're interested in have actually been captured. If your test asks too soon, then you may find that the request is not yet present, or it is present but it has no associated response.
+When you ask for captured requests using ``driver.requests`` or ``driver.last_request`` you have to be sure that the requests you're interested in have actually been captured. If you ask too soon, then you may find that the request is not yet present, or it is present but it has no associated response.
 
-Selenium Wire provides ``driver.wait_for_request()`` for this purpose. This method takes the path (or part of the path) and will wait for a request with that path to fully complete. For example, to wait for an AJAX request to return after a button is clicked:
+Selenium Wire provides ``driver.wait_for_request()`` for this purpose. This method takes a path (actually any part of the full URL) and will wait for a request with this path before continuing. For example, to wait for an AJAX request to return after a button is clicked:
 
 .. code:: python
 
@@ -138,17 +138,30 @@ Selenium Wire provides ``driver.wait_for_request()`` for this purpose. This meth
     button_element.click()
 
     # Wait for the request/response to complete
-    request = driver.wait_for_request('/some/request/path')
+    request = driver.wait_for_request('/api/products/12345/')
 
-The ``wait_for_request()`` method will return the first *fully completed* request it finds that matches the supplied path. By fully completed we mean that the response for the request must have returned. The ``wait_for_request`` method will wait for up to 10 seconds by default, but you can vary that with the ``timeout`` argument:
+The ``wait_for_request()`` method will return the first *fully completed* request it finds that matches the supplied path. Fully completed meaning that the response must have returned. The method will wait up to 10 seconds by default, but you can vary that with the ``timeout`` argument:
 
 .. code:: python
 
     # Wait up to 30 seconds for a request/response
-    request = driver.wait_for_request('/some/request/path', timeout=30)
+    request = driver.wait_for_request('/api/products/12345/', timeout=30)
 
 If a fully completed request is not seen within the timeout period, then a ``TimeoutException`` is raised.
 
+The ``wait_for_request()`` method does a substring match on the path that is passed, so you can pass just the part of the path that uniquely identifies the request.
+
+.. code:: python
+
+    # Pass just the unique part of the path
+    request = driver.wait_for_request('/12345/')
+
+or the full URL itself:
+
+.. code:: python
+
+    # Match the full URL
+    request = driver.wait_for_request('https://server/api/products/12345/')
 
 Of course you could also just rely on Selenium's existing `implicit or explicit waits`_ to wait for the DOM to change. For example:
 
@@ -161,7 +174,7 @@ Of course you could also just rely on Selenium's existing `implicit or explicit 
     element = WebDriverWait(ff, 10).until(EC.presence_of_element_located((By.ID, "some-element")))
 
     # Now check the request
-    print(driver.last_request.response.status_code)
+    last_request = driver.last_request
 
 .. _`implicit or explicit waits`: https://www.seleniumhq.org/docs/04_webdriver_advanced.jsp
 
