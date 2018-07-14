@@ -8,8 +8,10 @@ Selenium Wire extends Selenium's Python bindings giving your tests access to the
 
 With Selenium Wire you get a user-friendly API for accessing things such as the request/response headers, status code and body content.
 
-.. image:: https://img.shields.io/pypi/v/selenium-wire.svg
+.. image:: https://img.shields.io/badge/python-3.5%2C%203.6%2C%203.7-blue.svg
+    :target: https://pypi.python.org/pypi/selenium-wire
 
+.. image:: https://img.shields.io/pypi/v/selenium-wire.svg
         :target: https://pypi.python.org/pypi/selenium-wire
 
 .. image:: https://travis-ci.org/wkeeling/selenium-wire.svg?branch=master
@@ -30,7 +32,7 @@ Simple Example
     driver = webdriver.Firefox()
 
     # Go to the Google home page
-    driver.get("https://www.google.com")
+    driver.get('https://www.google.com')
 
     # Access the requests via the `requests` attribute
     for request in driver.requests:
@@ -59,14 +61,48 @@ Because Selenium Wire extends Selenium, the API is exactly the same, but with so
 Features
 ~~~~~~~~
 
-* Lightweight
 * No external dependencies, just the library itself
-* Simple, user-friendly API
+* Straightforward, user-friendly API
 * HTTPS support
 * Access request/response bodies
 * Header injection/overrides
 * URL rewriting
 * Corporate proxy support
+
+Compatibilty
+~~~~~~~~~~~~
+
+* Selenium Wire requires Python 3 and Selenium 3.0.0
+
+Installation
+~~~~~~~~~~~~
+
+* TODO
+
+Browser Setup
+-------------
+
+* TODO
+
+Request API
+~~~~~~~~~~~
+
+* TODO
+
+HTTPS
+~~~~~
+
+* TODO
+
+Modifying Requests
+~~~~~~~~~~~~~~~~~~
+
+* TODO
+
+Proxies
+~~~~~~~
+
+* TODO
 
 
 License
