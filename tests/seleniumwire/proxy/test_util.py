@@ -20,7 +20,7 @@ class RequestModifierTest(TestCase):
         self.assertEqual(mock_request.headers['User-Agent'], 'Test_User_Agent_String')
 
     def test_override_header_case_insensitive(self):
-        self.modifier.headers ={
+        self.modifier.headers = {
             'user-agent': 'Test_User_Agent_String'
         }
         mock_request = self._create_mock_request()
