@@ -8,20 +8,20 @@ from .util import RequestModifier
 
 class ProxyHTTPServer(ThreadingHTTPServer):
 
-    def __init__(self, options, *args, **kwargs):
-        # The seleniumwire options
-        self.options = options
+    def __init__(self, *args, proxy_config=None, **kwargs):
+        self.proxy_config = proxy_config or {}
 
-        # Check for upstream proxy configuration
-        for proxy_type in ('http', 'https'):
-            try:
-                # Parse the upstream proxy URL into (scheme, user, password, hostport)
-                # for ease of access.
-                proxy = _parse_proxy(options['proxy'][proxy_type])
-                proxy += (HTTPConnection,) if proxy[0] == 'http' else (HTTPSConnection,)
-                self.options['proxy'][proxy_type] = proxy
-            except KeyError:
-                pass
+        if proxy_config:
+            # Check for upstream proxy configuration
+            for proxy_type in ('http', 'https'):
+                try:
+                    # Parse the upstream proxy URL into (scheme, user, password, hostport)
+                    # for ease of access.
+                    parsed = _parse_proxy(proxy_config[proxy_type])
+                    parsed += (HTTPConnection,) if parsed[0] == 'http' else (HTTPSConnection,)
+                    self.proxy_config[proxy_type] = parsed
+                except KeyError:
+                    pass
 
         # Each server instance gets its own storage
         self.storage = RequestStorage()

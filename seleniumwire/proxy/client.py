@@ -16,15 +16,20 @@ class AdminClient:
 
     def __init__(self):
         self._proxy = None
-        self._proxy_addr = 'localhost'
-        self._proxy_port = 0
+        self._proxy_addr = None
+        self._proxy_port = None
 
-    def create_proxy(self, options):
+    def create_proxy(self, addr='localhost', port=0, proxy_config=None, standalone=False):
         """Creates a new proxy server and returns the address and port number that the
         server was started on.
 
         Args:
-            options: The seleniumwire options.
+            addr: The address the proxy server will listen on. Default localhost.
+            port: The port the proxy server will listen on. Default 0 - which means
+                use the first available port.
+            proxy_config: The configuration for any upstream proxy server. Default
+                is None.
+            standalone: When True the proxy server will block the main process from exiting.
 
         Returns:
             A tuple of the address and port number of the created proxy server.
@@ -32,19 +37,17 @@ class AdminClient:
         # This at some point may interact with a remote service
         # to create the proxy and retrieve its address details.
         CaptureRequestHandler.protocol_version = 'HTTP/1.1'
-        self._proxy = ProxyHTTPServer(options,
-                                      (options.get('addr', self._proxy_addr),
-                                       options.get('port', self._proxy_port)),
-                                      CaptureRequestHandler)
+        self._proxy = ProxyHTTPServer((addr, port), CaptureRequestHandler, proxy_config=proxy_config)
 
         t = threading.Thread(name='Selenium Wire Proxy Server', target=self._proxy.serve_forever)
-        t.daemon = not options.get('standalone')
+        t.daemon = not standalone
         t.start()
 
         # Configure shutdown handlers
         signal.signal(signal.SIGTERM, lambda *_: self.destroy_proxy())
         signal.signal(signal.SIGINT, lambda *_: self.destroy_proxy())
 
+        self._proxy_addr = addr
         self._proxy_port = self._proxy.socket.getsockname()[1]
 
         log.info('Created proxy listening on {}:{}'.format(self._proxy_addr, self._proxy_port))

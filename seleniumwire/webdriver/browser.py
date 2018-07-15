@@ -21,7 +21,10 @@ class Firefox(InspectRequestsMixin, _Firefox):
             seleniumwire_options = {}
 
         self._client = AdminClient()
-        addr, port = self._client.create_proxy(seleniumwire_options)
+        addr, port = self._client.create_proxy(
+            port=seleniumwire_options.get('port', 0),
+            proxy_config=seleniumwire_options.get('proxy')
+        )
 
         if 'port' not in seleniumwire_options:  # Auto config mode
             try:
@@ -59,7 +62,10 @@ class Chrome(InspectRequestsMixin, _Chrome):
             seleniumwire_options = {}
 
         self._client = AdminClient()
-        addr, port = self._client.create_proxy(seleniumwire_options)
+        addr, port = self._client.create_proxy(
+            port=seleniumwire_options.get('port', 0),
+            proxy_config=seleniumwire_options.get('proxy')
+        )
 
         if 'port' not in seleniumwire_options:  # Auto config mode
             try:
