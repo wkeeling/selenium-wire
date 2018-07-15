@@ -15,33 +15,37 @@ class AdminClient:
 
     def __init__(self):
         self._proxy = None
-        self._proxy_host = 'localhost'
+        self._proxy_addr = 'localhost'
         self._proxy_port = 0
 
-    def create_proxy(self, options=None):
-        """Creates a new proxy server and returns the host and port number that the
+    def create_proxy(self, options):
+        """Creates a new proxy server and returns the address and port number that the
         server was started on.
 
         Args:
             options: The seleniumwire options.
 
         Returns:
-            A tuple of the host and port number of the created proxy server.
+            A tuple of the address and port number of the created proxy server.
         """
+        if 'addr' not in options:
+            options['addr'] = self._proxy_addr
+        if 'port' not in options:
+            options['port'] = self._proxy_port
+
         # This at some point may interact with a remote service
         # to create the proxy and retrieve its address details.
         CaptureRequestHandler.protocol_version = 'HTTP/1.1'
-        self._proxy = ProxyHTTPServer(options, (self._proxy_host, options['port']), CaptureRequestHandler)
+        self._proxy = ProxyHTTPServer(options, (options['addr'], options['port']), CaptureRequestHandler)
 
         t = threading.Thread(name='Selenium Wire Proxy Server', target=self._proxy.serve_forever)
         t.daemon = True
         t.start()
 
-        # self._proxy_host = self._proxy.socket.gethostname()
         self._proxy_port = self._proxy.socket.getsockname()[1]
 
-        log.info('Created proxy listening on {}:{}'.format(self._proxy_host, self._proxy_port))
-        return self._proxy_host, self._proxy_port
+        log.info('Created proxy listening on {}:{}'.format(self._proxy_addr, self._proxy_port))
+        return self._proxy_addr, self._proxy_port
 
     def destroy_proxy(self):
         """Stops the proxy server and performs any clean up actions."""
@@ -143,7 +147,7 @@ class AdminClient:
 
     def _make_request(self, command, path, data=None):
         url = '{}{}'.format(ADMIN_PATH, path)
-        conn = http.client.HTTPConnection(self._proxy_host, self._proxy_port)
+        conn = http.client.HTTPConnection(self._proxy_addr, self._proxy_port)
 
         args = {}
         if data is not None:

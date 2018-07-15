@@ -24,7 +24,7 @@ class Firefox(InspectRequestsMixin, _Firefox):
             seleniumwire_options['port'] = 0
 
         self._client = AdminClient()
-        host, port = self._client.create_proxy(seleniumwire_options)
+        addr, port = self._client.create_proxy(seleniumwire_options)
 
         if not seleniumwire_options['port']:  # Auto config mode
             try:
@@ -34,8 +34,8 @@ class Firefox(InspectRequestsMixin, _Firefox):
 
             capabilities['proxy'] = {
                 'proxyType': 'manual',
-                'httpProxy': '{}:{}'.format(host, port),
-                'sslProxy': '{}:{}'.format(host, port),
+                'httpProxy': '{}:{}'.format(addr, port),
+                'sslProxy': '{}:{}'.format(addr, port),
                 'noProxy': [],
             }
             capabilities['acceptInsecureCerts'] = True
@@ -65,7 +65,7 @@ class Chrome(InspectRequestsMixin, _Chrome):
             seleniumwire_options['port'] = 0
 
         self._client = AdminClient()
-        host, port = self._client.create_proxy(seleniumwire_options)
+        addr, port = self._client.create_proxy(seleniumwire_options)
 
         if not seleniumwire_options['port']:  # Auto config mode
             try:
@@ -75,8 +75,8 @@ class Chrome(InspectRequestsMixin, _Chrome):
 
             capabilities['proxy'] = {
                 'proxyType': 'manual',
-                'httpProxy': '{}:{}'.format(host, port),
-                'sslProxy': '{}:{}'.format(host, port),
+                'httpProxy': '{}:{}'.format(addr, port),
+                'sslProxy': '{}:{}'.format(addr, port),
                 'noProxy': ''
             }
             capabilities['acceptInsecureCerts'] = True
