@@ -1,10 +1,29 @@
 import argparse
 from argparse import RawDescriptionHelpFormatter
 import logging
+import os
 
 from seleniumwire.proxy import client, util
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
+
+
+def standalone():
+    http_proxy = os.environ.get('http_proxy')
+    https_proxy = os.environ.get('https_proxy')
+    no_proxy = os.environ.get('no_proxy')
+
+    proxy_config = {}
+
+    if http_proxy:
+        proxy_config['http'] = http_proxy
+    if https_proxy:
+        proxy_config['https'] = https_proxy
+    if no_proxy:
+        proxy_config['no_proxy'] = no_proxy
+
+    c = client.AdminClient()
+    c.create_proxy(proxy_config=proxy_config, standalone=True)
 
 
 if __name__ == '__main__':
@@ -12,7 +31,7 @@ if __name__ == '__main__':
         'extractcert': util.extract_cert,
         # Note that standalone will ultimately start a ProxyManager instance
         # The 'standalone' attribute could be dropped from create_proxy()
-        'standalone': lambda: client.AdminClient().create_proxy(standalone=True)
+        'standalone': standalone
     }
     parser = argparse.ArgumentParser(description='\n\nsupported commands: \n  %s'
                                                  % '\n  '.join(sorted(commands)),
