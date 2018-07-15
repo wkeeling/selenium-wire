@@ -39,8 +39,10 @@ class AdminClient:
         Returns:
             A tuple of the address and port number of the created proxy server.
         """
-        # This at some point may interact with a proxy manager
-        # to create the proxy and retrieve its address details.
+        if self._proxy_mgr_addr is not None and self._proxy_mgr_port is not None:
+            # TODO: ask the proxy manager to create a proxy and return that
+            pass
+        
         CaptureRequestHandler.protocol_version = 'HTTP/1.1'
         self._proxy = ProxyHTTPServer((addr, port), CaptureRequestHandler, proxy_config=proxy_config)
 
