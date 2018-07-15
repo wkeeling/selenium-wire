@@ -128,7 +128,7 @@ This can be useful if you're only interested in capturing requests that occur wh
 Waiting
 -------
 
-When you ask for captured requests using ``driver.requests`` or ``driver.last_request`` you have to be sure that the requests you're interested in have actually been captured. If you ask too soon, then you may find that the request is not yet present, or it is present but it has no associated response.
+When you ask for captured requests using ``driver.requests`` or ``driver.last_request`` you have to be sure that the requests you're interested in have actually been captured. If you ask too soon, then you may find that the request is not yet present, or is present but has no associated response.
 
 For this you can use Selenium's existing `implicit or explicit waits`_ to wait for the DOM to change. For example:
 
