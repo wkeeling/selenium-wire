@@ -14,7 +14,12 @@ log = logging.getLogger(__name__)
 class AdminClient:
     """Provides an API for sending commands to a remote proxy server."""
 
-    def __init__(self):
+    def __init__(self, proxy_mgr_addr=None, proxy_mgr_port=None):
+        # The address of the proxy manager if set
+        self._proxy_mgr_addr = proxy_mgr_addr
+        self._proxy_mgr_port = proxy_mgr_port
+
+        # Reference to a created proxy instance and its address/port
         self._proxy = None
         self._proxy_addr = None
         self._proxy_port = None
@@ -34,7 +39,7 @@ class AdminClient:
         Returns:
             A tuple of the address and port number of the created proxy server.
         """
-        # This at some point may interact with a remote service
+        # This at some point may interact with a proxy manager
         # to create the proxy and retrieve its address details.
         CaptureRequestHandler.protocol_version = 'HTTP/1.1'
         self._proxy = ProxyHTTPServer((addr, port), CaptureRequestHandler, proxy_config=proxy_config)
@@ -56,6 +61,7 @@ class AdminClient:
     def destroy_proxy(self):
         """Stops the proxy server and performs any clean up actions."""
         log.info('Destroying proxy')
+        # If proxy manager set, we would ask it to do this
         self._proxy.shutdown()
         self._proxy.server_close()  # Closes the server socket
 
