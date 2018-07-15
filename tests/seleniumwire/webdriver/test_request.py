@@ -164,6 +164,13 @@ class RequestTest(TestCase):
         self.assertEqual(request.headers['Host'], 'www.example.com')
         self.assertIsNone(request.response)
 
+    def test_get_header_case_insensitive(self):
+        data = self._request_data()
+
+        request = Request(data, Mock())
+
+        self.assertEqual(request.headers['host'], 'www.example.com')
+
     def test_request_repr(self):
         data = self._request_data()
 
@@ -248,6 +255,13 @@ class ResponseTest(TestCase):
         self.assertEqual(response.reason, 'OK')
         self.assertEqual(len(response.headers), 2)
         self.assertEqual(response.headers['Content-Type'], 'application/json')
+
+    def test_get_header_case_insensitive(self):
+        data = self._response_data()
+
+        response = Response(uuid.uuid4(), data, Mock())
+
+        self.assertEqual(response.headers['content-type'], 'application/json')
 
     def test_response_repr(self):
         request_id = uuid.uuid4()
