@@ -20,13 +20,10 @@ class Firefox(InspectRequestsMixin, _Firefox):
         if seleniumwire_options is None:
             seleniumwire_options = {}
 
-        if 'port' not in seleniumwire_options:
-            seleniumwire_options['port'] = 0
-
         self._client = AdminClient()
         addr, port = self._client.create_proxy(seleniumwire_options)
 
-        if not seleniumwire_options['port']:  # Auto config mode
+        if 'port' not in seleniumwire_options:  # Auto config mode
             try:
                 capabilities = kwargs.pop('desired_capabilities')
             except KeyError:
@@ -61,13 +58,10 @@ class Chrome(InspectRequestsMixin, _Chrome):
         if seleniumwire_options is None:
             seleniumwire_options = {}
 
-        if 'port' not in seleniumwire_options:
-            seleniumwire_options['port'] = 0
-
         self._client = AdminClient()
         addr, port = self._client.create_proxy(seleniumwire_options)
 
-        if not seleniumwire_options['port']:  # Auto config mode
+        if 'port' not in seleniumwire_options:  # Auto config mode
             try:
                 capabilities = kwargs.pop('desired_capabilities')
             except KeyError:

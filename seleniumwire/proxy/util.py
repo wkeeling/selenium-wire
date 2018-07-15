@@ -1,6 +1,9 @@
+import logging
 import os
 import pkgutil
 import threading
+
+log = logging.getLogger(__name__)
 
 
 class RequestModifier:
@@ -76,4 +79,4 @@ def extract_cert():
     with open(os.path.join(os.getcwd(), cert_name), 'wb') as out:
         out.write(cert)
 
-    print('{} extracted. You can now import this into a browser.'.format(cert_name))
+    log.info('{} extracted. You can now import this into a browser.'.format(cert_name))

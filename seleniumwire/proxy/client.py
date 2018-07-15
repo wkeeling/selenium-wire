@@ -1,6 +1,7 @@
 import http.client
 import json
 import logging
+import signal
 import threading
 from urllib.parse import quote_plus
 
@@ -28,19 +29,21 @@ class AdminClient:
         Returns:
             A tuple of the address and port number of the created proxy server.
         """
-        if 'addr' not in options:
-            options['addr'] = self._proxy_addr
-        if 'port' not in options:
-            options['port'] = self._proxy_port
-
         # This at some point may interact with a remote service
         # to create the proxy and retrieve its address details.
         CaptureRequestHandler.protocol_version = 'HTTP/1.1'
-        self._proxy = ProxyHTTPServer(options, (options['addr'], options['port']), CaptureRequestHandler)
+        self._proxy = ProxyHTTPServer(options,
+                                      (options.get('addr', self._proxy_addr),
+                                       options.get('port', self._proxy_port)),
+                                      CaptureRequestHandler)
 
         t = threading.Thread(name='Selenium Wire Proxy Server', target=self._proxy.serve_forever)
-        t.daemon = True
+        t.daemon = not options.get('standalone')
         t.start()
+
+        # Configure shutdown handlers
+        signal.signal(signal.SIGTERM, lambda *_: self.destroy_proxy())
+        signal.signal(signal.SIGINT, lambda *_: self.destroy_proxy())
 
         self._proxy_port = self._proxy.socket.getsockname()[1]
 

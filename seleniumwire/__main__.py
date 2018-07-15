@@ -1,11 +1,16 @@
 import argparse
 from argparse import RawDescriptionHelpFormatter
-from seleniumwire.proxy import util
+import logging
+
+from seleniumwire.proxy import client, util
+
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 
 if __name__ == '__main__':
     commands = {
-        'extractcert': util.extract_cert
+        'extractcert': util.extract_cert,
+        'standalone': lambda: client.AdminClient().create_proxy({'standalone': True})
     }
     parser = argparse.ArgumentParser(description='\n\nsupported commands: \n  %s'
                                                  % '\n  '.join(sorted(commands)),
