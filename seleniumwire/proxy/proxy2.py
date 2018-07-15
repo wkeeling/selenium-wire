@@ -293,8 +293,11 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             elif encoding == 'br':
                 try:
                     import brotli
-                    text = brotli.compress(text)
                 except ImportError:
+                    brotli = None
+                if brotli:
+                    text = brotli.compress(text)
+                else:
                     self.log_message('For br content encoding you need to install brotli with "pip install brotli"')
             else:
                 self.log_message("Unknown Content-Encoding: %s", encoding)
@@ -314,8 +317,11 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             elif encoding == 'br':
                 try:
                     import brotli
-                    data = brotli.decompress(data)
                 except ImportError:
+                    brotli = None
+                if brotli:
+                    data = brotli.decompress(data)
+                else:
                     self.log_message('For br content encoding you need to install brotli with "pip install brotli"')
             else:
                 self.log_message("Unknown Content-Encoding: %s", encoding)
