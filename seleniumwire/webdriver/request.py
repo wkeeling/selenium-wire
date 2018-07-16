@@ -6,7 +6,7 @@ from selenium.common.exceptions import TimeoutException
 
 
 class InspectRequestsMixin:
-    """Mixin class that provides functions to capture and inspect browser requests."""
+    """Mixin class that provides functions to inspect and modify browser requests."""
 
     @property
     def requests(self):
