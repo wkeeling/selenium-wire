@@ -226,13 +226,17 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             # Attempt to connect to upstream proxy server
             proxy_config = self.server.proxy_config.get(scheme)
             if proxy_config:
-                proxy_type, username, password, hostport, conn_class = proxy_config
-                conn = conn_class(hostport, timeout=self.timeout)
+                proxy_type, username, password, hostport = proxy_config
                 headers = {}
-                if username and password:
-                    auth = '%s:%s' % (username, password)
-                    headers['Proxy-Authorization'] = b'Basic ' + base64.b64encode(auth.encode('latin-1'))
-                conn.set_tunnel(netloc, headers=headers)
+                # if username and password:
+                #     auth = '%s:%s' % (username, password)
+                #     headers['Proxy-Authorization'] = b'Basic ' + base64.b64encode(auth.encode('latin-1'))
+                if proxy_type == 'https':
+                    conn = http.client.HTTPSConnection(hostport, timeout=self.timeout)
+                    conn.set_tunnel(netloc, headers=headers)
+                else:
+                    conn = http.client.HTTPConnection(hostport, timeout=self.timeout)
+
                 self.tls.conns[origin] = conn
 
         if origin not in self.tls.conns:
