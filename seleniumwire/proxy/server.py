@@ -1,4 +1,3 @@
-from http.client import HTTPConnection, HTTPSConnection
 from urllib.request import _parse_proxy
 
 from .proxy2 import ThreadingHTTPServer
@@ -18,7 +17,6 @@ class ProxyHTTPServer(ThreadingHTTPServer):
                     # Parse the upstream proxy URL into (scheme, user, password, hostport)
                     # for ease of access.
                     parsed = _parse_proxy(proxy_config[proxy_type])
-                    parsed += (HTTPConnection,) if parsed[0] == 'http' else (HTTPSConnection,)
                     self.proxy_config[proxy_type] = parsed
                 except KeyError:
                     pass
