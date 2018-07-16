@@ -5,10 +5,10 @@ import os
 
 from seleniumwire.proxy import client, util
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 
 
-def standalone():
+def standalone_proxy():
     http_proxy = os.environ.get('http_proxy')
     https_proxy = os.environ.get('https_proxy')
     no_proxy = os.environ.get('no_proxy')
@@ -29,9 +29,7 @@ def standalone():
 if __name__ == '__main__':
     commands = {
         'extractcert': util.extract_cert,
-        # Note that standalone will ultimately start a ProxyManager instance
-        # The 'standalone' attribute could be dropped from create_proxy()
-        'standalone': standalone
+        'standaloneproxy': standalone_proxy
     }
     parser = argparse.ArgumentParser(description='\n\nsupported commands: \n  %s'
                                                  % '\n  '.join(sorted(commands)),
