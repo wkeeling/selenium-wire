@@ -103,7 +103,7 @@ The requests are just a list and can be iterated (like in the opening example) a
 
     first_request = driver.requests[0]
 
-If you want to access just the most recent request, then use the dedicated ``driver.last_request`` attribute:
+If you want to access just the most recent request, use the dedicated ``driver.last_request`` attribute:
 
 .. code:: python
 
@@ -175,7 +175,7 @@ To clear previously captured requests, just use ``del``:
 
     del driver.requests
 
-This can be useful if you're only interested in capturing requests that occur when a specific action is performed, for example, the AJAX requests associated with a button click. In this case, you can clear out any previous requests with ``del`` before you perform the action.
+This can be useful if you're only interested in capturing requests that occur when a specific action is performed, for example, the AJAX requests associated with a button click. In this case, you can clear out any previous requests with ``del`` before you click the button.
 
 Request attributes
 ~~~~~~~~~~~~~~~~~~
