@@ -89,10 +89,7 @@ Browser Setup
 
 Accessing requests
 ~~~~~~~~~~~~~~~~~~
-Selenium Wire provides a number of ways to access captured browser requests.
-
-Retrieving
-----------
+Accessing captured requests with Selenium Wire is straightforward.
 
 You can retrieve all requests with the ``driver.requests`` attribute.
 
@@ -100,13 +97,13 @@ You can retrieve all requests with the ``driver.requests`` attribute.
 
     all_requests = driver.requests
 
-The requests are just a list and can be iterated - as in the opening example - and indexed normally:
+The requests are just a list and can be iterated (like in the opening example) and indexed:
 
 .. code:: python
 
     first_request = driver.requests[0]
 
-If you want to access just the most recent request, then you can use the dedicated ``driver.last_request`` attribute:
+If you want to access just the most recent request, then use the dedicated ``driver.last_request`` attribute:
 
 .. code:: python
 
@@ -114,21 +111,10 @@ If you want to access just the most recent request, then you can use the dedicat
 
 This is more efficient than using ``driver.requests[-1]``.
 
-Clearing
---------
+Waiting for a request
+---------------------
 
-To clear previously captured requests, just use ``del``:
-
-.. code:: python
-
-    del driver.requests
-
-This can be useful if you're only interested in capturing requests that occur when a specific action is performed, for example, the AJAX requests associated with a button click. In this case, you can clear out any previous requests with ``del`` before you perform the action.
-
-Waiting
--------
-
-When you ask for captured requests using ``driver.requests`` or ``driver.last_request`` you have to be sure that the requests you're interested in have actually been captured. If you ask too soon, then you may find that the request is not yet present, or is present but has no associated response.
+When you ask for captured requests using ``driver.requests`` or ``driver.last_request`` you have to be sure that the requests you're interested in have actually been captured. If you ask too soon, then you may find that a request is not yet present, or is present but has no associated response.
 
 For this you can use Selenium's existing `implicit or explicit waits`_ to wait for the DOM to change. For example:
 
@@ -140,8 +126,8 @@ For this you can use Selenium's existing `implicit or explicit waits`_ to wait f
     # Wait for an element to appear, implying request complete
     element = WebDriverWait(ff, 10).until(EC.presence_of_element_located((By.ID, "some-element")))
 
-    # Now check the request
-    last_request = driver.last_request
+    # Now check the completed request
+    self.assertEqual(driver.last_request.response.status_code, 200)
 
 Alternatively, Selenium Wire provides ``driver.wait_for_request()``. This method takes a path (actually any part of the full URL) and will wait for a request with this path before continuing.
 
@@ -180,7 +166,53 @@ Or alternatively you can pass the full URL itself:
 
 .. _`implicit or explicit waits`: https://www.seleniumhq.org/docs/04_webdriver_advanced.jsp
 
+Clearing requests
+-----------------
 
+To clear previously captured requests, just use ``del``:
+
+.. code:: python
+
+    del driver.requests
+
+This can be useful if you're only interested in capturing requests that occur when a specific action is performed, for example, the AJAX requests associated with a button click. In this case, you can clear out any previous requests with ``del`` before you perform the action.
+
+Request attributes
+~~~~~~~~~~~~~~~~~~
+
+Requests that you retrieve from Selenium Wire using ``driver.requests`` or one of the other mechanisms have the following attributes.
+
+* ``method``
+    The HTTP method type such as ``GET`` or ``POST``.
+
+* ``path``
+    The request path.
+
+* ``headers``
+    A case-insensitive dictionary of request headers. Asking for ``request.headers['user-agent']`` will return the value of the ``'User-Agent'`` header.
+
+* ``body``
+    The request body as ``bytes``. This is lazily evaluated and the binary data will be retrieved the first time this attribute is accessed. If the request has no body, the value of ``body`` will be ``None``.
+
+* ``response``
+   The response associated with the request. This will be ``None`` if the request has no response.
+
+Response attributes
+~~~~~~~~~~~~~~~~~~~
+
+The response can be retrieved from a request via the ``response`` attribute. A response may be ``None`` if it was never captured. A response has the following attributes.
+
+* ``status_code``
+    The status code of the response such as ``200`` or ``404``.
+
+* ``reason``
+    The reason phrase such as ``OK`` or ``Not Found``.
+
+* ``headers``
+     A case-insensitive dictionary of response headers. Asking for ``response.headers['content-length']`` will return the value of the ``'Content-Length'`` header.
+
+* ``body``
+    The response body as ``bytes``. This is lazily evaluated and the binary data will be retrieved the first time this attribute is accessed. If the response has no body, the value of ``body`` will be ``None``.
 
 HTTPS
 ~~~~~
