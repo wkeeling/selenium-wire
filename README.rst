@@ -64,7 +64,6 @@ Because Selenium Wire extends Selenium it can be used as a drop-in replacement. 
 Features
 ~~~~~~~~
 
-* No external dependencies, just the library itself
 * Straightforward user-friendly API
 * HTTPS support
 * Access request/response bodies
