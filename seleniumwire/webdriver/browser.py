@@ -109,7 +109,10 @@ class Safari(InspectRequestsMixin, _Safari):
         assert 'port' in seleniumwire_options, 'You must set a port number in the seleniumwire_options'
 
         self._client = AdminClient()
-        self._client.create_proxy(seleniumwire_options)
+        self._client.create_proxy(
+            port=seleniumwire_options.get('port', 0),
+            proxy_config=seleniumwire_options.get('proxy')
+        )
 
         super().__init__(*args, **kwargs)
 
