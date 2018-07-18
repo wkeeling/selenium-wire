@@ -1,6 +1,7 @@
 import logging
 import os
 import pkgutil
+import re
 import threading
 
 log = logging.getLogger(__name__)
@@ -77,8 +78,12 @@ class RequestModifier:
                 be a list of sublists, with each sublist having two
                 elements - the pattern and replacement.
         """
+        compiled = []
+        for pattern, replacement in rewrite_rules:
+            compiled.append((re.compile(pattern), replacement))
+
         with self._lock:
-            self._rewrite_rules = rewrite_rules
+            self._rewrite_rules = compiled
 
     @rewrite_rules.deleter
     def rewrite_rules(self):

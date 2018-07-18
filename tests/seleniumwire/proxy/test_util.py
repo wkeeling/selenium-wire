@@ -61,7 +61,9 @@ class RequestModifierTest(TestCase):
         })
 
     def test_rewrite_url(self):
-        self.fail('Implement')
+        self.modifier.rewrite_rules = [
+            ()
+        ]
 
     def test_rewrite_url_mangled(self):
         self.fail('Implement')
