@@ -117,7 +117,7 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
         log.info('Capturing request: %s', req.path)
 
         # First make any modifications to the request
-        self.server.modify_request(req)
+        self.server.modifier.modify(req)
 
         # Save the request to our storage
         self.server.storage.save_request(req, req_body)

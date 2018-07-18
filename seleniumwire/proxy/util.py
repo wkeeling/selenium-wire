@@ -89,7 +89,7 @@ class RequestModifier:
         with self._lock:
             self._rewrite_rules.clear()
 
-    def __call__(self, request):
+    def modify(self, request):
         """Performs modifications to the request.
 
         Args:
