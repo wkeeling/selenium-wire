@@ -56,8 +56,8 @@ class RequestModifier:
     def rewrite_rules(self):
         """The rules used to rewrite request URLs.
 
-        The value of the rewrite rules should be a list of 2-tuples,
-        with each tuple containing the pattern and replacement.
+        The value of the rewrite rules should be a list of sublists (or tuples)
+        with each sublist containing the pattern and replacement.
 
         For example:
             rewrite_rules = [
@@ -74,8 +74,8 @@ class RequestModifier:
 
         Args:
             rewrite_rules: The list of rewrite rules, which should
-                be a list of 2-tuples containing the pattern and
-                replacement.
+                be a list of sublists, with each sublist having two
+                elements - the pattern and replacement.
         """
         with self._lock:
             self._rewrite_rules = rewrite_rules

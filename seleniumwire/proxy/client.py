@@ -113,6 +113,14 @@ class AdminClient:
         """Clears any previously captured requests from the proxy server."""
         self._make_request('DELETE', '/requests')
 
+    def find(self, path):
+        """Whether a request with the specified path has been captured by the proxy.
+
+        Args:
+            path: The path of a request to check existence for.
+        """
+        return self._make_request('GET', '/find?path={}'.format(quote_plus(str(path))))
+
     def get_request_body(self, request_id):
         """Returns the body of the request with the specified request_id.
 
@@ -151,13 +159,22 @@ class AdminClient:
         """Gets any previously set header overrides"""
         return self._make_request('GET', '/header_overrides')
 
-    def find(self, path):
-        """Whether a request with the specified path has been captured by the proxy.
+    def set_rewrite_rules(self, rewrite_rules):
+        """Sets the rewrite rules.
 
         Args:
-            path: The path of a request to check existence for.
+            rewrite_rules: A list of rewrite rules. Each rule is a sublist (or 2-tuple)
+                containing the pattern and replacement.
         """
-        return self._make_request('GET', '/find?path={}'.format(quote_plus(str(path))))
+        self._make_request('POST', '/rewrite_rules', data=rewrite_rules)
+
+    def clear_rewrite_rules(self):
+        """Clears any previously set rewrite rules."""
+        self._make_request('DELETE', '/rewrite_rules')
+
+    def get_rewrite_rules(self):
+        """Gets any previously set rewrite rules"""
+        return self._make_request('GET', '/rewrite_rules')
 
     def _make_request(self, command, path, data=None):
         url = '{}{}'.format(ADMIN_PATH, path)

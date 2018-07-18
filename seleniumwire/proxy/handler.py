@@ -43,6 +43,13 @@ class AdminMixin:
                 self._clear_header_overrides()
             elif self.command == 'GET':
                 self._get_header_overrides()
+        elif path == '/rewrite_rules':
+            if self.command == 'POST':
+                self._set_rewrite_rules()
+            elif self.command == 'DELETE':
+                self._clear_rewrite_rules()
+            elif self.command == 'GET':
+                self._get_rewrite_rules()
         else:
             raise RuntimeError('No handler configured for: {} {}'.format(self.command, self.path))
 
@@ -85,6 +92,20 @@ class AdminMixin:
 
     def _get_header_overrides(self):
         self._send_response(json.dumps(self.server.modifier.headers).encode('utf-8'), 'application/json')
+
+    def _set_rewrite_rules(self):
+        content_length = int(self.headers.get('Content-Length', 0))
+        req_body = self.rfile.read(content_length)
+        rewrite_rules = json.loads(req_body.decode('utf-8'))
+        self.server.modifier.rewrite_rules = rewrite_rules
+        self._send_response(json.dumps({'status': 'ok'}).encode('utf-8'), 'application/json')
+
+    def _clear_rewrite_rules(self):
+        del self.server.modifier.rewrite_rules
+        self._send_response(json.dumps({'status': 'ok'}).encode('utf-8'), 'application/json')
+
+    def _get_rewrite_rules(self):
+        self._send_response(json.dumps(self.server.modifier.rewrite_rules).encode('utf-8'), 'application/json')
 
     def _send_response(self, body, content_type):
         self.send_response(200)
