@@ -88,7 +88,7 @@ Browser Setup
 
 Accessing Requests
 ~~~~~~~~~~~~~~~~~~
-Selenium Wire captures all HTTP requests a browser makes as a test runs. Accessing captured requests is straightforward.
+Selenium Wire captures all HTTP/HTTPS requests a browser makes as a test runs. Accessing captured requests is straightforward.
 
 You can retrieve all requests with the ``driver.requests`` attribute.
 
