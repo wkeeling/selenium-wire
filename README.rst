@@ -88,7 +88,7 @@ Browser Setup
 
 Accessing Requests
 ~~~~~~~~~~~~~~~~~~
-Accessing captured requests is straightforward.
+Selenium Wire captures all HTTP requests a browser makes as a test runs. Accessing captured requests is straightforward.
 
 You can retrieve all requests with the ``driver.requests`` attribute.
 
@@ -128,7 +128,7 @@ For this you can use Selenium's existing `implicit or explicit waits`_ to wait f
     # Now check the completed request
     self.assertEqual(driver.last_request.response.status_code, 200)
 
-Alternatively, Selenium Wire provides ``driver.wait_for_request()``. This method takes a path (actually any part of the full URL) and will wait for a request with this path before continuing.
+Alternatively, Selenium Wire provides ``driver.wait_for_request()``. This method takes a path (actually any part of the full URL) and will wait for a request with this path to complete before continuing.
 
 For example, to wait for an AJAX request to return after a button is clicked:
 
@@ -199,7 +199,7 @@ Requests that you retrieve using ``driver.requests`` or one of the other mechani
 Response attributes
 ~~~~~~~~~~~~~~~~~~~
 
-The response can be retrieved from a request via the ``response`` attribute. A response may be ``None`` if it was never captured, for example if the server timed out or unexpectedly disconnected. A response has the following attributes.
+The response can be retrieved from a request via the ``response`` attribute. A response may be ``None`` if it was never captured, which may happen if you asked for it before it returned, or if the server timed out etc. A response has the following attributes.
 
 * ``status_code``
     The status code of the response such as ``200`` or ``404``.
