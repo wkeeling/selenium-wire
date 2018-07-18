@@ -176,7 +176,7 @@ To clear previously captured requests, just use ``del``:
 
 This can be useful if you're only interested in capturing requests that occur when a specific action is performed, for example, the AJAX requests associated with a button click. In this case, you can clear out any previous requests with ``del`` before you click the button.
 
-Request attributes
+Request Attributes
 ~~~~~~~~~~~~~~~~~~
 
 Requests that you retrieve using ``driver.requests`` or one of the other mechanisms have the following attributes.
@@ -196,7 +196,7 @@ Requests that you retrieve using ``driver.requests`` or one of the other mechani
 * ``response``
    The response associated with the request. This will be ``None`` if the request has no response.
 
-Response attributes
+Response Attributes
 ~~~~~~~~~~~~~~~~~~~
 
 The response can be retrieved from a request via the ``response`` attribute. A response may be ``None`` if it was never captured, which may happen if you asked for it before it returned, or if the server timed out etc. A response has the following attributes.
