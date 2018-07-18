@@ -64,7 +64,7 @@ Because Selenium Wire extends Selenium it can be used as a drop-in replacement. 
 Features
 ~~~~~~~~
 
-* Straightforward user-friendly API
+* Straightforward, user-friendly API
 * HTTPS support
 * Access request/response bodies
 * Header injection/overrides
@@ -86,9 +86,9 @@ Browser Setup
 
 * TODO
 
-Accessing requests
+Accessing Requests
 ~~~~~~~~~~~~~~~~~~
-Accessing captured requests with Selenium Wire is straightforward.
+Accessing captured requests is straightforward.
 
 You can retrieve all requests with the ``driver.requests`` attribute.
 
@@ -102,7 +102,7 @@ The requests are just a list and can be iterated (like in the opening example) a
 
     first_request = driver.requests[0]
 
-If you want to access just the most recent request, use the dedicated ``driver.last_request`` attribute:
+If you want to access the most recent request, use the dedicated ``driver.last_request`` attribute:
 
 .. code:: python
 
@@ -179,7 +179,7 @@ This can be useful if you're only interested in capturing requests that occur wh
 Request attributes
 ~~~~~~~~~~~~~~~~~~
 
-Requests that you retrieve from Selenium Wire using ``driver.requests`` or one of the other mechanisms have the following attributes.
+Requests that you retrieve using ``driver.requests`` or one of the other mechanisms have the following attributes.
 
 * ``method``
     The HTTP method type such as ``GET`` or ``POST``.
@@ -199,7 +199,7 @@ Requests that you retrieve from Selenium Wire using ``driver.requests`` or one o
 Response attributes
 ~~~~~~~~~~~~~~~~~~~
 
-The response can be retrieved from a request via the ``response`` attribute. A response may be ``None`` if it was never captured. A response has the following attributes.
+The response can be retrieved from a request via the ``response`` attribute. A response may be ``None`` if it was never captured, for example if the server timed out or unexpectedly disconnected. A response has the following attributes.
 
 * ``status_code``
     The status code of the response such as ``200`` or ``404``.
