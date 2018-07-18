@@ -25,7 +25,7 @@ class ProxyHTTPServer(ThreadingHTTPServer):
         self.storage = RequestStorage()
 
         # Each server instance gets a request modifier
-        self.modifier = RequestModifier()
+        self.modify_request = RequestModifier()
 
         super().__init__(*args, **kwargs)
 

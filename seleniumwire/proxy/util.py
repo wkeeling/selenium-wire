@@ -16,6 +16,7 @@ class RequestModifier:
         """Initialise a new RequestModifier."""
         self._lock = threading.Lock()
         self._headers = {}
+        self._rewrite_rules = []
 
     @property
     def headers(self):
@@ -51,12 +52,53 @@ class RequestModifier:
         with self._lock:
             self._headers.clear()
 
-    def modify(self, request):
+    @property
+    def rewrite_rules(self):
+        """The rules used to rewrite request URLs.
+
+        The value of the rewrite rules should be a list of 2-tuples,
+        with each tuple containing the pattern and replacement.
+
+        For example:
+            rewrite_rules = [
+                ('pattern', 'replacement'),
+                ('pattern', 'replacement'),
+            ]
+        """
+        with self._lock:
+            return list(self._rewrite_rules)
+
+    @rewrite_rules.setter
+    def rewrite_rules(self, rewrite_rules):
+        """Sets the rewrite rules used to modify request URLs.
+
+        Args:
+            rewrite_rules: The list of rewrite rules, which should
+                be a list of 2-tuples containing the pattern and
+                replacement.
+        """
+        with self._lock:
+            self._rewrite_rules = rewrite_rules
+
+    @rewrite_rules.deleter
+    def rewrite_rules(self):
+        """Clears the rewrite rules being used to modify request URLs.
+
+        After this is called, request URLs will no longer be modified.
+        """
+        with self._lock:
+            self._rewrite_rules.clear()
+
+    def __call__(self, request):
         """Performs modifications to the request.
 
         Args:
             request: The request (a BaseHTTPHandler instance) to modify.
         """
+        self._modify_headers(request)
+        self._rewrite_url(request)
+
+    def _modify_headers(self, request):
         with self._lock:
             headers_lc = {h.lower(): v for h, v in self._headers.items()}
 
@@ -69,6 +111,9 @@ class RequestModifier:
                 del request.headers[header]
                 if value is not None:
                     request.headers[header] = value
+
+    def _rewrite_url(self, request):
+        pass
 
 
 def extract_cert():
