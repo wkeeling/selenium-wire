@@ -88,7 +88,7 @@ Browser Setup
 
 Accessing Requests
 ~~~~~~~~~~~~~~~~~~
-Selenium Wire captures all HTTP/HTTPS requests a browser makes as a test runs. Accessing captured requests is straightforward.
+Selenium Wire captures all HTTP/HTTPS traffic made by the browser during a test. Accessing captured requests is straightforward.
 
 You can retrieve all requests with the ``driver.requests`` attribute.
 
@@ -126,7 +126,7 @@ For this you can use Selenium's existing `implicit or explicit waits`_ to wait f
     element = WebDriverWait(ff, 10).until(EC.presence_of_element_located((By.ID, "some-element")))
 
     # Now check the completed request
-    self.assertEqual(driver.last_request.response.status_code, 200)
+    assert driver.last_request.response.status_code == 200
 
 Alternatively, Selenium Wire provides ``driver.wait_for_request()``. This method takes a path (actually any part of the full URL) and will wait for a request with this path to complete before continuing.
 
