@@ -4,7 +4,7 @@ Selenium Wire
 =============
 
 
-Selenium Wire extends Selenium's Python bindings to give you access to the underlying requests made by the browser. It is a lightweight library designed for ease of use with minimal external dependencies.
+Selenium Wire extends Selenium's Python bindings to give your tests access to the underlying requests made by the browser. It is a lightweight library designed for ease of use with minimal external dependencies.
 
 With Selenium Wire, you author your tests in just the same way as you do with Selenium, but you get an additional user-friendly API for accessing things such as the request/response headers, status code and body content.
 
