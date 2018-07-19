@@ -62,21 +62,61 @@ class RequestModifierTest(TestCase):
 
     def test_rewrite_url(self):
         self.modifier.rewrite_rules = [
-            ()
+            (r'(https?://)prod1.server.com(.*)', r'\1prod2.server.com\2/foo/'),
         ]
+        mock_request = self._create_mock_request()
 
-    def test_rewrite_url_mangled(self):
-        self.fail('Implement')
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(mock_request.path, 'https://prod2.server.com/some/path/12345/foo/')
+
+    def test_rewrite_url_first_match(self):
+        self.modifier.rewrite_rules = [
+            (r'(https?://)prod1.server.com(.*)', r'\1prod2.server.com\2/foo/'),
+            (r'(https?://)prod1.server.com(.*)', r'\1prod2.server.com\2/bar/'),
+        ]
+        mock_request = self._create_mock_request()
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(mock_request.path, 'https://prod2.server.com/some/path/12345/foo/')
+
+    def test_does_not_rewrite_url(self):
+        self.modifier.rewrite_rules = [
+            (r'(https?://)prod1.server.com(.*)', r'\1prod2.server.com\2/foo/'),
+        ]
+        mock_request = self._create_mock_request()
+        mock_request.path = 'https://prod3.server.com/some/path/12345'
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(mock_request.path, 'https://prod3.server.com/some/path/12345')
 
     def test_rewrite_url_updates_host_header(self):
-        self.fail('Implement')
+        self.modifier.rewrite_rules = [
+            (r'(https?://)prod1.server.com(.*)', r'\1prod2.server.com\2/foo/'),
+        ]
+        mock_request = self._create_mock_request()
+        mock_request.headers['Host'] = 'prod1.server.com'
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(mock_request.headers['Host'], 'prod2.server.com')
 
     def test_rewrite_url_does_not_update_host_header(self):
-        """HTTPS requests should not update host (hostname and port cannot be changed)."""
-        self.fail('Implement')
+        """Should not update the Host header if it does not already exist."""
+        self.modifier.rewrite_rules = [
+            (r'(https?://)prod1.server.com(.*)', r'\1prod2.server.com\2/foo/'),
+        ]
+        mock_request = self._create_mock_request()
+
+        self.modifier.modify(mock_request)
+
+        self.assertNotIn('Host', mock_request.headers)
 
     def _create_mock_request(self):
         mock_request = Mock()
+        mock_request.path = 'https://prod1.server.com/some/path/12345'
         mock_request.headers = {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0'
         }

@@ -61,6 +61,15 @@ class AdminClientIntegrationTest(TestCase):
 
         self.assertEqual(self.client.get_requests(), [])
 
+    def test_find(self):
+        self._make_request('https://stackoverflow.com/questions/tagged/django?page=2&sort=newest&pagesize=15')
+        self._make_request('https://docs.python.org/3.4/library/http.client.html')
+
+        self.assertEqual(self.client.find('/questions/tagged/django')['path'],
+                         'https://stackoverflow.com/questions/tagged/django?page=2&sort=newest&pagesize=15')
+        self.assertEqual(self.client.find('/3.4/library/http.client.html')['path'],
+                         'https://docs.python.org/3.4/library/http.client.html')
+
     def test_get_request_body_empty(self):
         self._make_request('https://www.amazon.com')
         last_request = self.client.get_last_request()
@@ -144,14 +153,38 @@ class AdminClientIntegrationTest(TestCase):
             'User-Agent': 'Test_User_Agent_String'
         })
 
-    def test_find(self):
-        self._make_request('https://stackoverflow.com/questions/tagged/django?page=2&sort=newest&pagesize=15')
-        self._make_request('https://docs.python.org/3.4/library/http.client.html')
+    def test_set_rewrite_rules(self):
+        self.client.set_rewrite_rules([
+            (r'http://www.stackoverflow.com(.*)', r'https://www.github.com\1'),
+        ])
+        self._make_request('http://www.stackoverflow.com')
 
-        self.assertEqual(self.client.find('/questions/tagged/django')['path'],
-                         'https://stackoverflow.com/questions/tagged/django?page=2&sort=newest&pagesize=15')
-        self.assertEqual(self.client.find('/3.4/library/http.client.html')['path'],
-                         'https://docs.python.org/3.4/library/http.client.html')
+        last_request = self.client.get_last_request()
+
+        self.assertEqual(last_request.path, 'https://www.github.com/')
+        self.assertEqual(last_request['headers']['Host'], 'www.github.com')
+
+    def test_clear_rewrite_rules(self):
+        self.client.set_rewrite_rules([
+            (r'https://www.stackoverflow.com(.*)', r'https://www.github.com\1'),
+        ])
+        self.client.clear_rewrite_rules()
+
+        self._make_request('https://www.stackoverflow.com/')
+
+        last_request = self.client.get_last_request()
+
+        self.assertEqual(last_request.path, 'https://www.stackoverflow.com/')
+        self.assertEqual(last_request['headers']['Host'], 'www.stackoverflow.com')
+
+    def test_get_rewrite_rules(self):
+        self.client.set_rewrite_rules([
+            (r'http://www.stackoverflow.com(.*)', r'https://www.github.com\1'),
+        ])
+
+        self.assertEqual(self.client.get_rewrite_rules(), [
+            [r'http://www.stackoverflow.com(.*)', r'https://www.github.com\1'],
+        ])
 
     def setUp(self):
         self.client = AdminClient()
@@ -174,7 +207,7 @@ class AdminClientIntegrationTest(TestCase):
         urllib.request.install_opener(opener)
 
     def _make_request(self, url):
-        with urllib.request.urlopen(url, timeout=1) as response:
+        with urllib.request.urlopen(url, timeout=5) as response:
             html = response.read()
 
         return html

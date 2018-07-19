@@ -3,6 +3,7 @@ import os
 import pkgutil
 import re
 import threading
+from urllib.parse import urlsplit
 
 log = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ class RequestModifier:
             ]
         """
         with self._lock:
-            return list(self._rewrite_rules)
+            return [(pat.pattern, repl) for pat, repl in self._rewrite_rules]
 
     @rewrite_rules.setter
     def rewrite_rules(self, rewrite_rules):
@@ -118,7 +119,24 @@ class RequestModifier:
                     request.headers[header] = value
 
     def _rewrite_url(self, request):
-        pass
+        with self._lock:
+            rewrite_rules = self._rewrite_rules[:]
+
+        original_netloc = urlsplit(request.path).netloc
+
+        for pattern, replacement in rewrite_rules:
+            modified, count = pattern.subn(replacement, request.path)
+
+            if count > 0:
+                request.path = modified
+                break
+
+        modified_netloc = urlsplit(request.path).netloc
+
+        if original_netloc != modified_netloc:
+            # Modify the Host header if it exists
+            if 'Host' in request.headers:
+                request.headers['Host'] = modified_netloc
 
 
 def extract_cert():
