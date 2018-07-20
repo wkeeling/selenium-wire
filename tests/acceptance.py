@@ -49,7 +49,7 @@ class BrowserIntegrationTest(TestCase):
         driver.quit()
 
     def test_safari_can_access_requests(self):
-        url = 'https://www.stackoverflow.com/'
+        url = 'https://github.com/'
         options = {
             'port': 12345
         }
