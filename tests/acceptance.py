@@ -15,13 +15,13 @@ from seleniumwire import webdriver
 #    - Different Selenium versions
 
 
-class SeleniumIntegrationTest(TestCase):
+class BrowserIntegrationTest(TestCase):
 
     options = {
-            'proxy': {
-                'http': 'http://167.99.193.171:8000',
-                'https': 'https://167.99.193.171:8000'
-            }
+        'proxy': {
+            'http': 'http://167.99.193.171:8000',
+            'https': 'https://167.99.193.171:8000'
+        }
     }
 
     def test_firefox_can_access_requests(self):
