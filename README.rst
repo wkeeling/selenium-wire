@@ -55,12 +55,6 @@ Prints:
     ...
 
 
-Because Selenium Wire extends Selenium it can be used as a drop-in replacement. Just ensure that you import from ``seleniumwire`` when importing ``webdriver``:
-
-.. code:: python
-
-    from seleniumwire import webdriver
-
 Features
 ~~~~~~~~
 
@@ -81,25 +75,23 @@ Installation
 
 Install using pip:
 
-.. code:: python
+.. code:: bash
 
-    $ pip install selenium-wire
+    pip install selenium-wire
 
 **Open SSL**
 
-In addition you will need to have ``openssl`` installed, which is needed by Selenium Wire for capturing HTTPS requests.
+In addition, you'll need to have ``openssl`` installed, which is needed by Selenium Wire for capturing HTTPS requests.
 
-For apt based Linux systems:
-
-.. code:: bash
-
-    $ sudo apt install openssl
-
-or for RPM based Linux systems:
+For Linux:
 
 .. code:: bash
 
-    $ sudo yum install openssl
+    # For apt based Linux systems
+    sudo apt install openssl
+
+    # For RPM based Linux systems
+    sudo yum install openssl
 
 For Windows, you can download an installer here: https://slproweb.com/products/Win32OpenSSL.html
 
@@ -107,20 +99,66 @@ For Windows, you can download an installer here: https://slproweb.com/products/W
 Browser Setup
 -------------
 
-**Firefox**
-No setup should be necessary. Everything should just work straight out of the box.
+**Firefox and Chrome**
 
-**Chrome**
 No setup should be necessary. Everything should just work straight out of the box.
 
 **Safari**
 
+There are a few manual steps that have to be carried out before you can use Safari with Selenium Wire.
+
+# You must allow Safari to be controlled remotely by selecting "Allow Remote Automation" from Safari's "Develop" menu.
+
+# You must install
+
+Usage
+~~~~~
+
+Selenium Wire extends Selenium and so it can be used as a drop-in replacement. You just need to make sure you import ``webdriver`` from the ``seleniumwire`` package:
+
+.. code:: python
+
+    from seleniumwire import webdriver
+
+Then it's just a matter of creating a new driver instance. Firefox and Chrome require no additional configuration.
+
+**Firefox**
+
+.. code:: python
+
+    driver = webdriver.Firefox()
+
+**Chrome**
+
+.. code:: python
+
+    driver = webdriver.Chrome()
+
+**Safari**
+
+For Safari, you need to tell Selenium Wire the port number you selected when you configured the browser in *Browser Setup*.
+For example, if you chose port 12345, then you would pass it like this:
+
+.. code:: python
+
+    options = {
+        'port': 12345
+    }
+    driver = webdriver.Safari(seleniumwire_options=options)
+
+
+
+
+.. code:: python
+
+    driver = webdriver.Safari()
+
+Selenium Wire captures all HTTP/HTTPS traffic made by the browser during a test.
 
 Accessing Requests
-~~~~~~~~~~~~~~~~~~
-Selenium Wire captures all HTTP/HTTPS traffic made by the browser during a test. Accessing captured requests is straightforward.
+------------------
 
-You can retrieve all requests with the ``driver.requests`` attribute.
+Accessing captured requests is straightforward. You can retrieve all requests with the ``driver.requests`` attribute.
 
 .. code:: python
 
@@ -247,7 +285,7 @@ The response can be retrieved from a request via the ``response`` attribute. A r
 Modifying Requests
 ~~~~~~~~~~~~~~~~~~
 
-Selenium Wire allows you to modify the request headers and also the request URL. 
+Selenium Wire allows you to modify the request headers and also the request URL.
 
 Modifying Headers
 -----------------
