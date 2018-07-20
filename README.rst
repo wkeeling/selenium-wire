@@ -79,12 +79,42 @@ Compatibilty
 Installation
 ~~~~~~~~~~~~
 
-* TODO
+Install using pip:
+
+.. code:: python
+
+    $ pip install selenium-wire
+
+**Open SSL**
+
+In addition you will need to have ``openssl`` installed, which is needed by Selenium Wire for capturing HTTPS requests.
+
+For apt based Linux systems:
+
+.. code:: bash
+
+    $ sudo apt install openssl
+
+or for RPM based Linux systems:
+
+.. code:: bash
+
+    $ sudo yum install openssl
+
+For Windows, you can download an installer here: https://slproweb.com/products/Win32OpenSSL.html
+
 
 Browser Setup
 -------------
 
-* TODO
+**Firefox**
+No setup should be necessary. Everything should just work straight out of the box.
+
+**Chrome**
+No setup should be necessary. Everything should just work straight out of the box.
+
+**Safari**
+
 
 Accessing Requests
 ~~~~~~~~~~~~~~~~~~
@@ -213,18 +243,24 @@ The response can be retrieved from a request via the ``response`` attribute. A r
 * ``body``
     The response body as ``bytes``. This is lazily evaluated and the binary data will be retrieved the first time this attribute is accessed. If the response has no body, the value of ``body`` will be ``None``.
 
-HTTPS
-~~~~~
-
-* TODO
 
 Modifying Requests
 ~~~~~~~~~~~~~~~~~~
 
-* TODO
+Selenium Wire allows you to modify the request headers and also the request URL. 
+
+Modifying Headers
+-----------------
+
+The property ``driver.header_overrides`` can be used to specify
 
 Proxies
 ~~~~~~~
+
+* TODO
+
+Limitations
+~~~~~~~~~~~
 
 * TODO
 
