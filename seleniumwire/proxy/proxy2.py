@@ -280,6 +280,12 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         if 'Accept-Encoding' in headers:
             ae = headers['Accept-Encoding']
             filtered_encodings = [x for x in re.split(r',\s*', ae) if x in ('identity', 'gzip', 'x-gzip', 'deflate')]
+
+            if not filtered_encodings:
+                filtered_encodings.append('identity')
+
+            del headers['Accept-Encoding']
+
             headers['Accept-Encoding'] = ', '.join(filtered_encodings)
 
         return headers
