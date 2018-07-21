@@ -109,31 +109,31 @@ There are a few manual steps that have to be carried out before you can use Safa
 
 #. You must allow Safari to be remotely controlled by selecting "Allow Remote Automation" from Safari's "Develop" menu.
 
-#. You must install Selenium Wire's root certificate into your Mac's keystore.
+#. You must install Selenium Wire's root certificate into your Mac's keystore. Follow these steps:
 
-    * First extract the certificate with:
+   * First extract the certificate with:
 
-    .. code:: bash
+   .. code:: bash
 
-        python -m seleniumwire extractcert
+       python -m seleniumwire extractcert
 
-    You should see a file called ``ca.crt`` in your current working directory.
+   You should see a file called ``ca.crt`` in your current working directory.
 
-    * Now open your Mac's Keychain Access utility (located in Applications > Utilities).
+   * Now open your Mac's Keychain Access utility (located in Applications > Utilities).
 
-    * From the File menu, select Import Items.
+   * From the File menu, select Import Items.
 
-    * Browse to the ``ca.crt`` file you just extracted and import it.
+   * Browse to the ``ca.crt`` file you just extracted and import it.
 
-    * Click on Certificates in the left hand side of the Key Chain Access utility and you should now see the Selenium Wire CA certificate listed.
+   * Click on Certificates in the left hand side of the Key Chain Access utility and you should now see the Selenium Wire CA certificate listed.
 
-    * Double-click the certificate in the right hand pane to open its properties.
+   * Double-click the certificate in the right hand pane to open its properties.
 
-    * At the top of the properties window that opens, expand the Trust section and select "Always Trust" in the top drop down menu.
+   * At the top of the properties window that opens, expand the Trust section and select "Always Trust" in the top drop down menu.
 
-    * Close the properties window (you may be prompted to enter your password).
+   * Close the properties window (you may be prompted to enter your password).
 
-    * Quit the Keychain Access utility.
+   * Quit the Keychain Access utility.
 
 
 Usage
@@ -145,7 +145,9 @@ Selenium Wire extends Selenium and so it can be used as a drop-in replacement. Y
 
     from seleniumwire import webdriver
 
-Then it's just a matter of creating a new driver instance. For Firefox and Chrome, you don't need to pass any Selenium Wire specific options (you can still pass any of your own webdriver specific options however).
+Then it's just a matter of creating a new driver instance.
+
+For Firefox and Chrome, you don't need to pass any Selenium Wire specific options (you can still pass any of your own webdriver specific options however).
 
 **Firefox**
 
