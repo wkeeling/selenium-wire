@@ -101,7 +101,7 @@ Browser Setup
 
 **Firefox and Chrome**
 
-No extra configuration should be necessary, everything should just work straight out of the box.
+No specific configuration should be necessary, everything should just work straight out of the box.
 
 **Safari**
 
@@ -289,7 +289,7 @@ Requests that you retrieve using ``driver.requests`` or one of the other mechani
     The request path.
 
 ``headers``
-    A case-insensitive dictionary of request headers. Asking for ``request.headers['user-agent']`` will return the value of the ``'User-Agent'`` header.
+    A case-insensitive dictionary of request headers. Asking for ``request.headers['user-agent']`` will return the value of the ``User-Agent`` header.
 
 ``body``
     The request body as ``bytes``. If the request has no body, the value of ``body`` will be ``None``.
@@ -309,7 +309,7 @@ The response can be retrieved from a request via the ``response`` attribute. A r
     The reason phrase such as ``OK`` or ``Not Found``.
 
 ``headers``
-     A case-insensitive dictionary of response headers. Asking for ``response.headers['content-length']`` will return the value of the ``'Content-Length'`` header.
+     A case-insensitive dictionary of response headers. Asking for ``response.headers['content-length']`` will return the value of the ``Content-Length`` header.
 
 ``body``
     The response body as ``bytes``. If the response has no body, the value of ``body`` will be ``None``.
