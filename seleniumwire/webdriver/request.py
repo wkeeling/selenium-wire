@@ -77,13 +77,12 @@ class InspectRequestsMixin:
     def header_overrides(self):
         """The header overrides for outgoing browser requests.
 
-        The value of the header overrides should be a dictionary. Where a
-        header in the dictionary exists in the request, the value will be
-        used in preference to the one in the request. Where a header in the
-        dictionary does not exist in the request, it will be added to the
-        request as a new header. To filter out a header from the request,
-        set that header in the dictionary with a value of None. Header
-        names are case insensitive.
+        The value of the headers should be a dictionary. Where a header in
+        the dictionary exists in the request, the dictionary value will
+        overwrite the one in the request. Where a header in the dictionary
+        does not exist in the request, it will be added to the request as a
+        new header. To filter out a header from the request, set that header
+        in the dictionary with a value of None. Header names are case insensitive.
         """
         return self._client.get_header_overrides()
 
