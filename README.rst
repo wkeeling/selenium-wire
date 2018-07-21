@@ -101,15 +101,40 @@ Browser Setup
 
 **Firefox and Chrome**
 
-No setup should be necessary. Everything should just work straight out of the box.
+No extra configuration should be necessary, everything should just work straight out of the box.
 
 **Safari**
 
 There are a few manual steps that have to be carried out before you can use Safari with Selenium Wire.
 
-# You must allow Safari to be controlled remotely by selecting "Allow Remote Automation" from Safari's "Develop" menu.
+#. You must allow Safari to be remotely controlled by selecting "Allow Remote Automation" from Safari's "Develop" menu.
 
-# You must install
+#. You must install Selenium Wire's root certificate into your Mac's keystore.
+
+    * First extract the certificate with:
+
+    .. code:: bash
+
+        python -m seleniumwire extractcert
+
+    You should see a file called ``ca.crt`` in your current working directory.
+
+    * Now open your Mac's Keychain Access utility (located in Applications > Utilities).
+
+    * From the File menu, select Import Items.
+
+    * Browse to the ``ca.crt`` file you just extracted and import it.
+
+    * Click on Certificates in the left hand side of the Key Chain Access utility and you should now see the Selenium Wire CA certificate listed.
+
+    * Double-click the certificate in the right hand pane to open its properties.
+
+    * At the top of the properties window that opens, expand the Trust section and select "Always Trust" in the top drop down menu.
+
+    * Close the properties window (you may be prompted to enter your password).
+
+    * Quit the Keychain Access utility.
+
 
 Usage
 ~~~~~
@@ -120,7 +145,7 @@ Selenium Wire extends Selenium and so it can be used as a drop-in replacement. Y
 
     from seleniumwire import webdriver
 
-Then it's just a matter of creating a new driver instance. Firefox and Chrome require no additional configuration.
+Then it's just a matter of creating a new driver instance. For Firefox and Chrome, you don't need to pass any Selenium Wire specific options (you can still pass any of your own webdriver specific options however).
 
 **Firefox**
 
@@ -136,7 +161,7 @@ Then it's just a matter of creating a new driver instance. Firefox and Chrome re
 
 **Safari**
 
-For Safari, you need to tell Selenium Wire the port number you selected when you configured the browser in *Browser Setup*.
+For Safari, you need to tell Selenium Wire the port number you selected when you configured the browser in **Browser Setup**.
 For example, if you chose port 12345, then you would pass it like this:
 
 .. code:: python
@@ -148,17 +173,12 @@ For example, if you chose port 12345, then you would pass it like this:
 
 
 
-
-.. code:: python
-
-    driver = webdriver.Safari()
-
-Selenium Wire captures all HTTP/HTTPS traffic made by the browser during a test.
-
 Accessing Requests
 ------------------
 
-Accessing captured requests is straightforward. You can retrieve all requests with the ``driver.requests`` attribute.
+Selenium Wire captures all HTTP/HTTPS traffic made by the browser during a test. Accessing captured requests is straightforward.
+
+You can retrieve all requests with the ``driver.requests`` attribute.
 
 .. code:: python
 
@@ -249,19 +269,19 @@ Request Attributes
 
 Requests that you retrieve using ``driver.requests`` or one of the other mechanisms have the following attributes.
 
-* ``method``
+``method``
     The HTTP method type such as ``GET`` or ``POST``.
 
-* ``path``
+``path``
     The request path.
 
-* ``headers``
+``headers``
     A case-insensitive dictionary of request headers. Asking for ``request.headers['user-agent']`` will return the value of the ``'User-Agent'`` header.
 
-* ``body``
-    The request body as ``bytes``. This is lazily evaluated and the binary data will be retrieved the first time this attribute is accessed. If the request has no body, the value of ``body`` will be ``None``.
+``body``
+    The request body as ``bytes``. If the request has no body, the value of ``body`` will be ``None``.
 
-* ``response``
+``response``
    The response associated with the request. This will be ``None`` if the request has no response.
 
 Response Attributes
@@ -269,23 +289,23 @@ Response Attributes
 
 The response can be retrieved from a request via the ``response`` attribute. A response may be ``None`` if it was never captured, which may happen if you asked for it before it returned, or if the server timed out etc. A response has the following attributes.
 
-* ``status_code``
+``status_code``
     The status code of the response such as ``200`` or ``404``.
 
-* ``reason``
+``reason``
     The reason phrase such as ``OK`` or ``Not Found``.
 
-* ``headers``
+``headers``
      A case-insensitive dictionary of response headers. Asking for ``response.headers['content-length']`` will return the value of the ``'Content-Length'`` header.
 
-* ``body``
-    The response body as ``bytes``. This is lazily evaluated and the binary data will be retrieved the first time this attribute is accessed. If the response has no body, the value of ``body`` will be ``None``.
+``body``
+    The response body as ``bytes``. If the response has no body, the value of ``body`` will be ``None``.
 
 
 Modifying Requests
 ~~~~~~~~~~~~~~~~~~
 
-Selenium Wire allows you to modify the request headers and also the request URL.
+Selenium Wire allows you to modify the request headers and also the request URL transmitted by the browser.
 
 Modifying Headers
 -----------------
