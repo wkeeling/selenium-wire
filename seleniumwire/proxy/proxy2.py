@@ -299,15 +299,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 text = io.getvalue()
             elif encoding == 'deflate':
                 text = zlib.compress(text)
-            elif encoding == 'br':
-                try:
-                    import brotli
-                except ImportError:
-                    brotli = None
-                if brotli:
-                    text = brotli.compress(text)
-                else:
-                    self.log_message('For br content encoding you need to install brotli with "pip install brotli"')
             else:
                 self.log_message("Unknown Content-Encoding: %s", encoding)
         return text
@@ -323,15 +314,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                     data = zlib.decompress(data)
                 except zlib.error:
                     data = zlib.decompress(data, -zlib.MAX_WBITS)
-            elif encoding == 'br':
-                try:
-                    import brotli
-                except ImportError:
-                    brotli = None
-                if brotli:
-                    data = brotli.decompress(data)
-                else:
-                    self.log_message('For br content encoding you need to install brotli with "pip install brotli"')
             else:
                 self.log_message("Unknown Content-Encoding: %s", encoding)
         return data
