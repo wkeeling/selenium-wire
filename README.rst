@@ -328,7 +328,7 @@ To add one or more new headers to a request, create a dictionary containing thos
 .. code:: python
 
     driver.header_overrides = {
-        'New-Header1': 'Some Value'
+        'New-Header1': 'Some Value',
         'New-Header2': 'Some Value'
     }
 
@@ -358,7 +358,7 @@ Rewriting URLs
 
 The ``driver.rewrite_rules`` attribute is used for rewriting request URLs.
 
-Each rewrite rule should be specified as a tuple or list containing the pattern to match and the replacement. One or more rewrite rules can be supplied.
+Each rewrite rule should be specified as a 2-tuple or list, the first element containing the pattern to match and the second element the replacement. One or more rewrite rules can be supplied.
 
 .. code:: python
 
@@ -366,10 +366,10 @@ Each rewrite rule should be specified as a tuple or list containing the pattern 
         (r'(https?://)prod1.server.com(.*)', r'\1prod2.server.com\2'),
     ]
 
-    # All subsequent requests that match http://prod1.server.com or https://prod1.server.com
-    # will be rewritten to http://prod2.server.com or https://prod2.server.com
+    # All subsequent requests that match http://prod1.server.com... or https://prod1.server.com...
+    # will be rewritten to http://prod2.server.com... or https://prod2.server.com...
 
-The match and replacement syntax is just Python's regex syntax - see `re.sub`_
+The match and replacement syntax is just Python's regex syntax. See `re.sub`_ for more information.
 
 .. _`re.sub`: https://docs.python.org/3/library/re.html#re.sub
 
