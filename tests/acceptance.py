@@ -78,3 +78,15 @@ class BrowserIntegrationTest(TestCase):
         self.assertEqual(request.headers['User-Agent'], user_agent)
 
         driver.quit()
+
+    def test_rewrite_url(self):
+        driver = webdriver.Firefox()
+        driver.rewrite_rules = [
+            (r'(https?://)www.python.org/', r'\1www.wikipedia.org/')
+        ]
+
+        driver.get('https://www.python.org/')
+
+        driver.wait_for_request('https://www.wikipedia.org/')  # Should find www.wikipedia.org
+
+        driver.quit()
