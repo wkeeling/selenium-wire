@@ -95,6 +95,29 @@ class InspectRequestsMixin:
     def header_overrides(self):
         self._client.clear_header_overrides()
 
+    @property
+    def rewrite_rules(self):
+        """The rules used to rewrite request URLs.
+
+        The value of the rewrite rules should be a list of sublists (or tuples)
+        with each sublist containing the pattern and replacement.
+
+        For example:
+            rewrite_rules = [
+                ('pattern', 'replacement'),
+                ('pattern', 'replacement'),
+            ]
+        """
+        return self._client.get_rewrite_rules()
+
+    @rewrite_rules.setter
+    def rewrite_rules(self, rewrite_rules):
+        self._client.set_rewrite_rules(rewrite_rules)
+
+    @rewrite_rules.deleter
+    def rewrite_rules(self):
+        self._client.clear_rewrite_rules()
+
 
 class Request:
     """An HTTP request made by the browser to the server.

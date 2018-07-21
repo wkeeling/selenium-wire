@@ -87,33 +87,6 @@ class InspectRequestsMixinTest(TestCase):
         self.mock_client.get_last_request.assert_called_once_with()
         self.assertIsNone(last_request)
 
-    def test_set_header_overrides(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
-        header_overrides = {
-            'User-Agent': 'Test_User_Agent_String'
-        }
-
-        driver.header_overrides = header_overrides
-
-        mock_client.set_header_overrides.assert_called_once_with(header_overrides)
-
-    def test_delete_header_overrides(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
-
-        del driver.header_overrides
-
-        mock_client.clear_header_overrides.assert_called_once_with()
-
-    def test_get_header_overrides(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
-
-        driver.header_overrides
-
-        mock_client.get_header_overrides.assert_called_once_with()
-
     def test_wait_for_request(self):
         mock_client = Mock()
         mock_client.find.return_value = {
@@ -149,6 +122,61 @@ class InspectRequestsMixinTest(TestCase):
             driver.wait_for_request('/some/path', timeout=1)
 
         mock_client.find.assert_has_calls([call('/some/path')] * 5)
+
+    def test_set_header_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+        header_overrides = {
+            'User-Agent': 'Test_User_Agent_String'
+        }
+
+        driver.header_overrides = header_overrides
+
+        mock_client.set_header_overrides.assert_called_once_with(header_overrides)
+
+    def test_delete_header_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        del driver.header_overrides
+
+        mock_client.clear_header_overrides.assert_called_once_with()
+
+    def test_get_header_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        driver.header_overrides
+
+        mock_client.get_header_overrides.assert_called_once_with()
+
+    def test_set_rewrite_rules(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+        rewrite_rules = [
+            ('http://somewhere.com/', 'https://www.somewhere.com'),
+            ('http://otherplace.com/', 'http://otherplace.com/api/')
+        ]
+
+        driver.rewrite_rules = rewrite_rules
+
+        mock_client.set_rewrite_rules.assert_called_once_with(rewrite_rules)
+
+    def test_delete_rewrite_rules(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        del driver.rewrite_rules
+
+        mock_client.clear_rewrite_rules.assert_called_once_with()
+
+    def test_get_rewrite_rules(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        driver.rewrite_rules
+
+        mock_client.get_rewrite_rules.assert_called_once_with()
 
 
 class RequestTest(TestCase):
