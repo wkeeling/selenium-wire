@@ -81,7 +81,7 @@ Install using pip:
 
 **Open SSL**
 
-In addition, you'll need to have ``openssl`` installed, which is needed by Selenium Wire for capturing HTTPS requests.
+In addition, you'll need to have openssl installed, which is needed by Selenium Wire for capturing HTTPS requests.
 
 For Linux:
 
@@ -183,8 +183,6 @@ For example, if you chose port 12345, then you would pass it like this:
         'port': 12345
     }
     driver = webdriver.Safari(seleniumwire_options=options)
-
-
 
 Accessing Requests
 ------------------
@@ -318,12 +316,69 @@ The response can be retrieved from a request via the ``response`` attribute. A r
 Modifying Requests
 ~~~~~~~~~~~~~~~~~~
 
-Selenium Wire allows you to modify the request headers and also the request URL transmitted by the browser.
+Selenium Wire allows you to modify the request headers the browser sends, and also rewrite any part of the request URL.
 
 Modifying Headers
 -----------------
 
-The property ``driver.header_overrides`` can be used to specify
+The ``driver.header_overrides`` attribute is used for modifying headers.
+
+To add one or more new headers to a request, create a dictionary containing those headers and set it as the value of ``header_overrides``.
+
+.. code:: python
+
+    driver.header_overrides = {
+        'New-Header1': 'Some Value'
+        'New-Header2': 'Some Value'
+    }
+
+    # All subsequent requests will now contain New-Header1 and New-Header2
+
+If a header already exists in a request it will be overwritten by the one in the dictionary. Header names are case-insensitive.
+
+To filter out one or more headers from a request, set the value of those headers as ``None``.
+
+.. code:: python
+
+    driver.header_overrides = {
+        'Existing-Header1': None,
+        'Existing-Header2': None
+    }
+
+    # All subsequent requests will now not contain Existing-Header1 or Existing-Header2
+
+To clear the header overrides that you have set, just use ``del``:
+
+.. code:: python
+
+    del driver.header_overrides
+
+Rewriting URLs
+--------------
+
+The ``driver.rewrite_rules`` attribute is used for rewriting request URLs.
+
+Each rewrite rule should be specified as a tuple or list containing the pattern to match and the replacement. One or more rewrite rules can be supplied.
+
+.. code:: python
+
+    driver.rewrite_rules = [
+        (r'(https?://)prod1.server.com(.*)', r'\1prod2.server.com\2'),
+    ]
+
+    # All subsequent requests that match http://prod1.server.com or https://prod1.server.com
+    # will be rewritten to http://prod2.server.com or https://prod2.server.com
+
+The match and replacement syntax is just Python's regex syntax - see `re.sub`_
+
+.. _`re.sub`: https://docs.python.org/3/library/re.html#re.sub
+
+To clear the rewrite rules that you have set, just use ``del``:
+
+.. code:: python
+
+    del driver.rewrite_rules
+
 
 Proxies
 ~~~~~~~
