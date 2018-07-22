@@ -58,8 +58,8 @@ Prints:
 Features
 ~~~~~~~~
 
-* Access all HTTP/HTTPS requests
 * Straightforward, user-friendly API
+* Access HTTPS requests
 * Access request/response bodies
 * Header injection/filtering
 * URL rewriting
