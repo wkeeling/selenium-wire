@@ -58,10 +58,10 @@ Prints:
 Features
 ~~~~~~~~
 
+* Access all HTTP/HTTPS requests
 * Straightforward, user-friendly API
-* HTTPS support
 * Access request/response bodies
-* Header injection/overrides
+* Header injection/filtering
 * URL rewriting
 * Proxy server support
 
@@ -358,7 +358,7 @@ Rewriting URLs
 
 The ``driver.rewrite_rules`` attribute is used for rewriting request URLs.
 
-Each rewrite rule should be specified as a 2-tuple or list, the first element containing the pattern to match and the second element the replacement. One or more rewrite rules can be supplied.
+Each rewrite rule should be specified as a 2-tuple or list, the first element containing the URL pattern to match and the second element the replacement. One or more rewrite rules can be supplied.
 
 .. code:: python
 
