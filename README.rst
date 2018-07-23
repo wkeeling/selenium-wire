@@ -396,7 +396,7 @@ You can configure a proxy for the http and https protocols, and optionally set a
         'https_proxy': 'https://username:password@host:port',
         'no_proxy': 'localhost,127.0.0.1,dev_server:8080'
     }
-    driver = webdriver.Safari(seleniumwire_options=options)
+    driver = webdriver.Firefox(seleniumwire_options=options)
 
 Note that you cannot use the ``DesiredCapabilities`` API for configuring a proxy like you might when using Selenium directly. This is because Selenium Wire uses this API to inject its own embedded proxy configuration under the covers.
 
