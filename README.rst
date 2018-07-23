@@ -81,7 +81,7 @@ Install using pip:
 
 **Open SSL**
 
-In addition, you'll need to have openssl installed, which is needed by Selenium Wire for capturing HTTPS requests.
+In addition, you'll need to have openssl installed which is needed by Selenium Wire for capturing HTTPS requests.
 
 For Linux:
 
@@ -101,7 +101,7 @@ Browser Setup
 
 **Firefox and Chrome**
 
-No specific configuration should be necessary, everything should just work straight out of the box.
+No specific configuration should be necessary - everything should just work straight out of the box.
 
 **Safari**
 
@@ -316,7 +316,7 @@ The response can be retrieved from a request via the ``response`` attribute. A r
 Modifying Requests
 ~~~~~~~~~~~~~~~~~~
 
-Selenium Wire allows you to modify the request headers the browser sends, and also rewrite any part of the request URL.
+Selenium Wire allows you to modify the request headers the browser sends, as well as rewrite any part of the request URL.
 
 Modifying Headers
 -----------------
@@ -383,7 +383,22 @@ To clear the rewrite rules that you have set, just use ``del``:
 Proxies
 ~~~~~~~
 
-* TODO
+If the site you are testing sits behind a proxy server, you can tell Selenium Wire about that proxy server in the options you pass to the webdriver instance. 
+
+The configuration for the proxy server should be specified as a URL in the format ``http://username:password@server:port``. The username and password are optional and can be specified when a proxy server requires authentication. 
+
+You can configure a proxy for the http and https protocols, and optionally set a value for ``no_proxy`` which should be a comma separated list of hostnames where the proxy should be bypassed. For example:
+
+.. code:: python
+
+    options = {
+        'http_proxy': 'http://username:password@host:port',
+        'https_proxy': 'https://username:password@host:port',
+        'no_proxy': 'localhost,127.0.0.1,dev_server:8080'
+    }
+    driver = webdriver.Safari(seleniumwire_options=options)
+
+Note that you cannot use the ``DesiredCapabilities`` API for configuring a proxy like you might when using Selenium directly. This is because Selenium Wire uses this API to inject its own embedded proxy configuration under the covers.
 
 Limitations
 ~~~~~~~~~~~
