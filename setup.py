@@ -31,7 +31,7 @@ setup(
     include_package_data=True,
     keywords='selenium-wire',
     name='selenium-wire',
-    packages=find_packages(include=['seleniumwire']),
+    packages=find_packages(),
     setup_requires=[],
     test_suite='tests',
     tests_require=[],
