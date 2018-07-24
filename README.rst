@@ -1,8 +1,5 @@
-
-
 Selenium Wire
 =============
-
 
 Selenium Wire extends Selenium's Python bindings to give your tests access to the underlying requests made by the browser. It is a lightweight library designed for ease of use with minimal external dependencies.
 
@@ -68,7 +65,9 @@ Features
 Compatibilty
 ~~~~~~~~~~~~
 
-* Selenium Wire requires Python 3 and Selenium 3.0.0
+* Python 3.5+
+* Selenium 3.0.0+
+* Firefox, Chrome, Safari and Edge are supported
 
 Installation
 ~~~~~~~~~~~~
@@ -379,7 +378,6 @@ To clear the rewrite rules that you have set, just use ``del``:
 
     del driver.rewrite_rules
 
-
 Proxies
 ~~~~~~~
 
@@ -405,19 +403,9 @@ Note that you cannot use the ``DesiredCapabilities`` API for configuring a proxy
 Limitations
 ~~~~~~~~~~~
 
-* TODO
-
+Selenium Wire will currently work with tests that run on the same machine as the browser. A distributed setup using Selenium Grid is not supported.
 
 License
--------
+~~~~~~~
 
 MIT
-
-
-Credits
--------
-
-This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
-
-.. _Cookiecutter: https://github.com/audreyr/cookiecutter
-.. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
