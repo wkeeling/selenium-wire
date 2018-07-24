@@ -155,18 +155,18 @@ class AdminClientIntegrationTest(TestCase):
 
     def test_set_rewrite_rules(self):
         self.client.set_rewrite_rules([
-            (r'http://www.stackoverflow.com(.*)', r'https://www.github.com\1'),
+            (r'http://stackoverflow.com(.*)', r'https://github.com\1'),
         ])
-        self._make_request('http://www.stackoverflow.com')
+        self._make_request('http://stackoverflow.com')
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual(last_request.path, 'https://www.github.com/')
-        self.assertEqual(last_request['headers']['Host'], 'www.github.com')
+        self.assertEqual(last_request['path'], 'https://github.com/')
+        self.assertEqual(last_request['headers']['Host'], 'github.com')
 
     def test_clear_rewrite_rules(self):
         self.client.set_rewrite_rules([
-            (r'https://www.stackoverflow.com(.*)', r'https://www.github.com\1'),
+            (r'https://stackoverflow.com(.*)', r'https://www.github.com\1'),
         ])
         self.client.clear_rewrite_rules()
 
@@ -174,8 +174,8 @@ class AdminClientIntegrationTest(TestCase):
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual(last_request.path, 'https://www.stackoverflow.com/')
-        self.assertEqual(last_request['headers']['Host'], 'www.stackoverflow.com')
+        self.assertEqual(last_request['path'], 'https://stackoverflow.com/')
+        self.assertEqual(last_request['headers']['Host'], 'stackoverflow.com')
 
     def test_get_rewrite_rules(self):
         self.client.set_rewrite_rules([
