@@ -22,7 +22,6 @@ import threading
 import time
 import urllib.parse
 import zlib
-from html.parser import HTMLParser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from io import BytesIO
 from socketserver import ThreadingMixIn
@@ -404,7 +403,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                     res_body = res_body.decode()
                 m = re.search(r'<title[^>]*>\s*([^<]+?)\s*</title>', res_body, re.I)
                 if m:
-                    h = HTMLParser()
                     print(with_color(32, "==== HTML TITLE ====\n%s\n" % html.unescape(m.group(1))))
             elif content_type.startswith('text/') and len(res_body) < 1024:
                 res_body_text = res_body
