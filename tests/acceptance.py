@@ -1,10 +1,7 @@
 import logging
-import os
-import sys
 from unittest import TestCase
 
 logging.basicConfig(level=logging.DEBUG)
-sys.path.remove(os.path.dirname(__file__))
 
 from seleniumwire import webdriver
 
