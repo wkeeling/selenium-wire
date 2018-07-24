@@ -383,18 +383,20 @@ To clear the rewrite rules that you have set, just use ``del``:
 Proxies
 ~~~~~~~
 
-If the site you are testing sits behind a proxy server, you can tell Selenium Wire about that proxy server in the options you pass to the webdriver instance. 
+If the site you are testing sits behind a proxy server, you can tell Selenium Wire about that proxy server in the options you pass to the webdriver instance.
 
-The configuration for the proxy server should be specified as a URL in the format ``http://username:password@server:port``. The username and password are optional and can be specified when a proxy server requires authentication. 
+The configuration for the proxy server should be specified as a URL in the format ``http://username:password@server:port``. The username and password are optional and can be specified when a proxy server requires authentication.
 
 You can configure a proxy for the http and https protocols, and optionally set a value for ``no_proxy`` which should be a comma separated list of hostnames where the proxy should be bypassed. For example:
 
 .. code:: python
 
     options = {
-        'http_proxy': 'http://username:password@host:port',
-        'https_proxy': 'https://username:password@host:port',
-        'no_proxy': 'localhost,127.0.0.1,dev_server:8080'
+        'proxy': {
+            'http': 'http://username:password@host:port',
+            'https': 'https://username:password@host:port',
+            'no_proxy': 'localhost,127.0.0.1,dev_server:8080'
+        }
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
