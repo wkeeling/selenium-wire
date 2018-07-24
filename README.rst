@@ -200,7 +200,7 @@ The requests are just a list and can be iterated (like in the opening example) a
 
     first_request = driver.requests[0]
 
-If you want to access the most recent request, use the dedicated ``driver.last_request`` attribute:
+The list of requests is in chronological order. If you want to access the most recent request, use the dedicated ``driver.last_request`` attribute:
 
 .. code:: python
 
