@@ -24,7 +24,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
-    description="Extends the Selenium Python bindings giving you the ability to inspect requests made by the browser.",
+    description="Extends Selenium's Python bindings to give you the ability to inspect requests made by the browser.",
     install_requires=['selenium'],
     license="MIT license",
     long_description=readme + '\n\n' + history,

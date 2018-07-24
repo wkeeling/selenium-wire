@@ -56,8 +56,8 @@ Features
 ~~~~~~~~
 
 * Straightforward, user-friendly API
-* Access HTTPS requests
-* Access request/response bodies
+* All HTTP/HTTPS requests captured
+* Access to request/response bodies
 * Header injection/filtering
 * URL rewriting
 * Proxy server support
