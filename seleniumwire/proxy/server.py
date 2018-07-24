@@ -20,6 +20,8 @@ class ProxyHTTPServer(ThreadingHTTPServer):
                     self.proxy_config[proxy_type] = parsed
                 except KeyError:
                     pass
+            self.proxy_config['no_proxy'] = [host.strip() for host in proxy_config.get('no_proxy', '').split(',')
+                                             if host]
 
         # Each server instance gets its own storage
         self.storage = RequestStorage()

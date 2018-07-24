@@ -224,7 +224,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         if origin not in self.tls.conns:
             # Attempt to connect to upstream proxy server
             proxy_config = self.server.proxy_config.get(scheme)
-            if proxy_config:
+            if proxy_config and netloc not in self.server.proxy_config['no_proxy']:
                 proxy_type, username, password, hostport = proxy_config
                 headers = {}
                 if username and password:
