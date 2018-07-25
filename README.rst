@@ -403,7 +403,8 @@ Note that you cannot use the ``DesiredCapabilities`` API for configuring a proxy
 Limitations
 ~~~~~~~~~~~
 
-Selenium Wire will currently work with tests that run on the same machine as the browser. A distributed setup using Selenium Grid is not supported.
+* Selenium Wire will currently work with tests that run on the same machine as the browser. A distributed setup using Selenium Grid is not supported.
+* Sites that use NTLM authentication (Windows authentication) cannot currently be tested with Selenium Wire. NTLM authentication is not supported.
 
 License
 ~~~~~~~
