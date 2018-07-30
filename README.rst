@@ -6,17 +6,13 @@ Selenium Wire extends Selenium's Python bindings to give your tests access to th
 With Selenium Wire, you author your tests in just the same way as you do with Selenium, but you get an additional user-friendly API for accessing things such as the request/response headers, status code and body content.
 
 .. image:: https://img.shields.io/badge/python-3.5%2C%203.6%2C%203.7-blue.svg
-    :target: https://pypi.python.org/pypi/selenium-wire
+        :target: https://pypi.python.org/pypi/selenium-wire
 
 .. image:: https://img.shields.io/pypi/v/selenium-wire.svg
         :target: https://pypi.python.org/pypi/selenium-wire
 
 .. image:: https://travis-ci.org/wkeeling/selenium-wire.svg?branch=master
         :target: https://travis-ci.org/wkeeling/selenium-wire
-
-.. image:: https://readthedocs.org/projects/selenium-wire/badge/?version=latest
-        :target: https://selenium-wire.readthedocs.io/en/latest/?badge=latest
-        :alt: Documentation Status
 
 Simple Example
 ~~~~~~~~~~~~~~
