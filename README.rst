@@ -61,7 +61,7 @@ Features
 Compatibilty
 ~~~~~~~~~~~~
 
-* Python 3.5+
+* Python 3.3+
 * Selenium 3.0.0+
 * Firefox, Chrome, Safari and Edge are supported
 
