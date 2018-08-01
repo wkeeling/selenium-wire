@@ -217,7 +217,7 @@ For this you can use Selenium's existing `implicit or explicit waits`_ to wait f
     button_element.click()
 
     # Wait for an element to appear, implying request complete
-    element = WebDriverWait(ff, 10).until(EC.presence_of_element_located((By.ID, "some-element")))
+    element = WebDriverWait(firefox, 10).until(EC.presence_of_element_located((By.ID, "some-element")))
 
     # Now check the completed request
     assert driver.last_request.response.status_code == 200
@@ -340,7 +340,7 @@ To filter out one or more headers from a request, set the value of those headers
         'Existing-Header2': None
     }
 
-    # All subsequent requests will now not contain Existing-Header1 or Existing-Header2
+    # All subsequent requests will now *not* contain Existing-Header1 or Existing-Header2
 
 To clear the header overrides that you have set, just use ``del``:
 
