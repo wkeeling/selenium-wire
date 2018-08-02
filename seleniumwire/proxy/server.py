@@ -1,3 +1,4 @@
+import os
 from urllib.request import _parse_proxy
 
 from .proxy2 import ThreadingHTTPServer
@@ -8,28 +9,54 @@ from .util import RequestModifier
 class ProxyHTTPServer(ThreadingHTTPServer):
 
     def __init__(self, *args, proxy_config=None, **kwargs):
-        self.proxy_config = proxy_config or {}
-
-        if proxy_config:
-            # Check for upstream proxy configuration
-            for proxy_type in ('http', 'https'):
-                try:
-                    # Parse the upstream proxy URL into (scheme, user, password, hostport)
-                    # for ease of access.
-                    parsed = _parse_proxy(proxy_config[proxy_type])
-                    self.proxy_config[proxy_type] = parsed
-                except KeyError:
-                    pass
-            self.proxy_config['no_proxy'] = [host.strip() for host in proxy_config.get('no_proxy', '').split(',')
-                                             if host]
-
         # Each server instance gets its own storage
         self.storage = RequestStorage()
 
         # Each server instance gets a request modifier
         self.modifier = RequestModifier()
 
+        # The server's upstream proxy configuration (if any)
+        self.proxy_config = self._sanitise_proxy_config(self._merge_with_env(proxy_config or {}))
+
         super().__init__(*args, **kwargs)
+
+    def _merge_with_env(self, proxy_config):
+        """Merge upstream proxy configuration with configuration loaded
+        from the environment.
+        """
+        http_proxy = os.environ.get('http_proxy')
+        https_proxy = os.environ.get('https_proxy')
+        no_proxy = os.environ.get('no_proxy')
+
+        merged = {}
+
+        if http_proxy:
+            merged['http'] = http_proxy
+        if https_proxy:
+            merged['https'] = https_proxy
+        if no_proxy:
+            merged['no_proxy'] = no_proxy
+
+        merged.update(proxy_config)
+
+        return merged
+
+    def _sanitise_proxy_config(self, proxy_config):
+        """Parse the proxy configuration into something more usable."""
+        for proxy_type in ('http', 'https'):
+            try:
+                # Parse the upstream proxy URL into (scheme, user, password, hostport)
+                # for ease of access.
+                parsed = _parse_proxy(proxy_config[proxy_type])
+                proxy_config[proxy_type] = parsed
+            except KeyError:
+                pass
+
+        if proxy_config:
+            proxy_config['no_proxy'] = [host.strip() for host in proxy_config.get('no_proxy', '').split(',')
+                                        if host]
+
+        return proxy_config
 
     def shutdown(self):
         super().shutdown()
