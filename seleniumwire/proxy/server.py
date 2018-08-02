@@ -1,4 +1,5 @@
 import os
+import socket
 from urllib.request import _parse_proxy
 
 from .proxy2 import ThreadingHTTPServer
@@ -7,6 +8,7 @@ from .util import RequestModifier
 
 
 class ProxyHTTPServer(ThreadingHTTPServer):
+    address_family = socket.AF_INET
 
     def __init__(self, *args, proxy_config=None, **kwargs):
         # Each server instance gets its own storage
