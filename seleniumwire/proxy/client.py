@@ -24,7 +24,7 @@ class AdminClient:
         self._proxy_addr = None
         self._proxy_port = None
 
-    def create_proxy(self, addr='', port=0, proxy_config=None, standalone=False):
+    def create_proxy(self, addr='0.0.0.0', port=0, proxy_config=None, standalone=False):
         """Creates a new proxy server and returns the address and port number that the
         server was started on.
 
