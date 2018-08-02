@@ -37,7 +37,7 @@ def join_with_script_dir(path):
 
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
-    address_family = socket.AF_INET
+    address_family = socket.AF_INET6
     daemon_threads = True
 
     def handle_error(self, request, client_address):
