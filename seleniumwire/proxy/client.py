@@ -54,8 +54,9 @@ class AdminClient:
         signal.signal(signal.SIGTERM, lambda *_: self.destroy_proxy())
         signal.signal(signal.SIGINT, lambda *_: self.destroy_proxy())
 
-        self._proxy_addr = addr
-        self._proxy_port = self._proxy.socket.getsockname()[1]
+        socketname = self._proxy.socket.getsockname()
+        self._proxy_addr = socketname[0]
+        self._proxy_port = socketname[1]
 
         log.info('Created proxy listening on {}:{}'.format(self._proxy_addr, self._proxy_port))
         return self._proxy_addr, self._proxy_port
