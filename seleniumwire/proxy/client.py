@@ -29,7 +29,7 @@ class AdminClient:
         server was started on.
 
         Args:
-            addr: The address the proxy server will listen on. Default localhost.
+            addr: The address the proxy server will listen on. Default - all available.
             port: The port the proxy server will listen on. Default 0 - which means
                 use the first available port.
             proxy_config: The configuration for any upstream proxy server. Default
