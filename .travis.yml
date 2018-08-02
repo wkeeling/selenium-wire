@@ -4,7 +4,7 @@ python:
 - 3.6
 - 3.5
 - 3.4
-install: pip install -U nose coverage tox-travis selenium
+install: pip install -U coverage nose selenium tox tox-travis
 script: tox
 deploy:
   provider: pypi
