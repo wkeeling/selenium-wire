@@ -1,7 +1,6 @@
 import argparse
 from argparse import RawDescriptionHelpFormatter
 import logging
-import os
 
 from seleniumwire.proxy import client, util
 
@@ -9,22 +8,8 @@ logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 
 
 def standalone_proxy(port):
-    port = int(port)
-    http_proxy = os.environ.get('http_proxy')
-    https_proxy = os.environ.get('https_proxy')
-    no_proxy = os.environ.get('no_proxy')
-
-    proxy_config = {}
-
-    if http_proxy:
-        proxy_config['http'] = http_proxy
-    if https_proxy:
-        proxy_config['https'] = https_proxy
-    if no_proxy:
-        proxy_config['no_proxy'] = no_proxy
-
     c = client.AdminClient()
-    c.create_proxy(port=port, proxy_config=proxy_config, standalone=True)
+    c.create_proxy(port=int(port), standalone=True)
 
 
 if __name__ == '__main__':
