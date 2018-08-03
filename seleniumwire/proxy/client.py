@@ -196,7 +196,7 @@ class AdminClient:
             data = response.read()
             try:
                 return json.loads(data.decode(encoding='utf-8'))
-            except (UnicodeDecodeError, json.JSONDecodeError):
+            except (UnicodeDecodeError, ValueError):
                 return data
         except ProxyException:
             raise
