@@ -8,8 +8,8 @@ With Selenium Wire, you author your tests in just the same way as you do with Se
 .. image:: https://travis-ci.org/wkeeling/selenium-wire.svg?branch=master
         :target: https://travis-ci.org/wkeeling/selenium-wire
 
-.. image:: https://codecov.io/gh/wkeeling/selenium-wire/branch/develop/graph/badge.svg
-    :target: https://codecov.io/gh/wkeeling/selenium-wire
+.. image:: https://codecov.io/gh/wkeeling/selenium-wire/branch/master/graph/badge.svg
+        :target: https://codecov.io/gh/wkeeling/selenium-wire
 
 .. image:: https://img.shields.io/badge/python-3.4%2C%203.5%2C%203.6%2C%203.7-blue.svg
         :target: https://pypi.python.org/pypi/selenium-wire
