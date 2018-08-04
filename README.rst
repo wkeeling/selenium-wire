@@ -32,11 +32,12 @@ Simple Example
 
     # Access requests via the `requests` attribute
     for request in driver.requests:
-        print(
-            request.path,
-            request.response.status_code,
-            request.response.headers['Content-Type']
-        )
+        if request.response:
+            print(
+                request.path,
+                request.response.status_code,
+                request.response.headers['Content-Type']
+            )
 
 Prints:
 
