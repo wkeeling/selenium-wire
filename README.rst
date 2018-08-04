@@ -92,6 +92,12 @@ For Linux:
     # For RPM based Linux systems
     sudo yum install openssl
 
+For MacOS:
+
+.. code:: bash
+
+    brew install openssl
+
 For Windows, you can download an installer here: https://slproweb.com/products/Win32OpenSSL.html
 
 
