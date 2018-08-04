@@ -199,6 +199,9 @@ class AdminClientIntegrationTest(TestCase):
         # No Content-Encoding header implies 'identity'
         self.assertEqual(requests[0]['response']['headers'].get('Content-Encoding', 'identity'), 'identity')
 
+    def test_through_upstream_proxy(self):
+        self.fail('Implement')
+
     def setUp(self):
         options = {}
         if self._testMethodName == 'test_disable_encoding':  # yuck
