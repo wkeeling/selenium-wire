@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 
 def standalone_proxy(port):
     c = client.AdminClient()
-    c.create_proxy(port=int(port), standalone=True)
+    c.create_proxy(port=int(port), options={'standalone': True})
 
 
 if __name__ == '__main__':

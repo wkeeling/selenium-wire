@@ -22,8 +22,9 @@ class Firefox(InspectRequestsMixin, _Firefox):
 
         self._client = AdminClient()
         addr, port = self._client.create_proxy(
-            port=seleniumwire_options.get('port', 0),
-            proxy_config=seleniumwire_options.get('proxy')
+            port=seleniumwire_options.pop('port', 0),
+            proxy_config=seleniumwire_options.pop('proxy', None),
+            options=seleniumwire_options
         )
 
         if 'port' not in seleniumwire_options:  # Auto config mode
@@ -63,8 +64,9 @@ class Chrome(InspectRequestsMixin, _Chrome):
 
         self._client = AdminClient()
         addr, port = self._client.create_proxy(
-            port=seleniumwire_options.get('port', 0),
-            proxy_config=seleniumwire_options.get('proxy')
+            port=seleniumwire_options.pop('port', 0),
+            proxy_config=seleniumwire_options.pop('proxy', None),
+            options=seleniumwire_options
         )
 
         if 'port' not in seleniumwire_options:  # Auto config mode
@@ -110,8 +112,9 @@ class Safari(InspectRequestsMixin, _Safari):
 
         self._client = AdminClient()
         self._client.create_proxy(
-            port=seleniumwire_options.get('port', 0),
-            proxy_config=seleniumwire_options.get('proxy')
+            port=seleniumwire_options.pop('port', 0),
+            proxy_config=seleniumwire_options.pop('proxy', None),
+            options=seleniumwire_options
         )
 
         super().__init__(*args, **kwargs)
@@ -140,7 +143,11 @@ class Edge(InspectRequestsMixin, _Edge):
         assert 'port' in seleniumwire_options, 'You must set a port number in the seleniumwire_options'
 
         self._client = AdminClient()
-        self._client.create_proxy(seleniumwire_options)
+        self._client.create_proxy(
+            port=seleniumwire_options.pop('port', 0),
+            proxy_config=seleniumwire_options.pop('proxy', None),
+            options=seleniumwire_options
+        )
 
         super().__init__(*args, **kwargs)
 

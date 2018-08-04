@@ -24,7 +24,7 @@ class AdminClient:
         self._proxy_addr = None
         self._proxy_port = None
 
-    def create_proxy(self, addr='0.0.0.0', port=0, proxy_config=None, standalone=False):
+    def create_proxy(self, addr='0.0.0.0', port=0, proxy_config=None, options=None):
         """Creates a new proxy server and returns the address and port number that the
         server was started on.
 
@@ -34,7 +34,10 @@ class AdminClient:
                 use the first available port.
             proxy_config: The configuration for any upstream proxy server. Default
                 is None.
-            standalone: When True the proxy server will block the main process from exiting.
+            options: Additional options to configure the proxy:
+                - standalone: When True the proxy server will block the main process from exiting.
+                - disable_encoding: Whether to disable content encoding of response bodies (e.g. gzip).
+                    When True, the Accept-Encoding will always be set to 'identity'.
 
         Returns:
             A tuple of the address and port number of the created proxy server.
@@ -43,11 +46,15 @@ class AdminClient:
             # TODO: ask the proxy manager to create a proxy and return that
             pass
 
+        if options is None:
+            options = {}
+
         CaptureRequestHandler.protocol_version = 'HTTP/1.1'
-        self._proxy = ProxyHTTPServer((addr, port), CaptureRequestHandler, proxy_config=proxy_config)
+        self._proxy = ProxyHTTPServer((addr, port), CaptureRequestHandler,
+                                      proxy_config=proxy_config, options=options)
 
         t = threading.Thread(name='Selenium Wire Proxy Server', target=self._proxy.serve_forever)
-        t.daemon = not standalone
+        t.daemon = not options.get('standalone')
         t.start()
 
         # Configure shutdown handlers

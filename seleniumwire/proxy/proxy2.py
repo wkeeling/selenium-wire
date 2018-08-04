@@ -278,7 +278,13 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         # accept only supported encodings
         if 'Accept-Encoding' in headers:
             ae = headers['Accept-Encoding']
-            filtered_encodings = [x for x in re.split(r',\s*', ae) if x in ('identity', 'gzip', 'x-gzip', 'deflate')]
+
+            if self.server.options.get('disable_encoding'):
+                permitted_encodings = ('identity', )
+            else:
+                permitted_encodings = ('identity', 'gzip', 'x-gzip', 'deflate')
+
+            filtered_encodings = [x for x in re.split(r',\s*', ae) if x in permitted_encodings]
 
             if not filtered_encodings:
                 filtered_encodings.append('identity')

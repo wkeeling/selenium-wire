@@ -186,9 +186,25 @@ class AdminClientIntegrationTest(TestCase):
             [r'http://www.stackoverflow.com(.*)', r'https://www.github.com\1'],
         ])
 
+    def test_disable_encoding(self):
+        # Explicitly set the accept-encoding to gzip
+        self.client.set_header_overrides({
+            'Accept-Encoding': 'gzip'
+        })
+
+        self._make_request('https://www.google.com/')
+
+        requests = self.client.get_requests()
+
+        # No Content-Encoding header implies 'identity'
+        self.assertEqual(requests[0]['response']['headers'].get('Content-Encoding', 'identity'), 'identity')
+
     def setUp(self):
+        options = {}
+        if self._testMethodName == 'test_disable_encoding':  # yuck
+            options['disable_encoding'] = True
         self.client = AdminClient()
-        host, port = self.client.create_proxy()
+        host, port = self.client.create_proxy(options=options)
         self._configure_proxy(host, port)
 
     def tearDown(self):
