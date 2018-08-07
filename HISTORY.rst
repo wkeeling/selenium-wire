@@ -12,3 +12,9 @@ History
 * Load proxy settings from env variables
 * Support disabling of content encoding
 * Updates to README
+
+0.3.0 (2018-08-07)
+------------------
+
+* Fix remote proxy basic authentication
+* Updates to README
