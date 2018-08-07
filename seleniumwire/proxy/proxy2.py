@@ -229,7 +229,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 headers = {}
                 if username and password:
                     auth = '%s:%s' % (username, password)
-                    headers['Proxy-Authorization'] = b'Basic ' + base64.b64encode(auth.encode('latin-1'))
+                    headers['Proxy-Authorization'] = 'Basic ' + base64.b64encode(auth.encode('latin-1')).decode(
+                        'latin-1')
                 if proxy_type == 'https':
                     conn = http.client.HTTPSConnection(hostport, timeout=self.timeout)
                     conn.set_tunnel(netloc, headers=headers)
