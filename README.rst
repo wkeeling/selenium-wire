@@ -78,11 +78,12 @@ Install using pip:
 
     pip install selenium-wire
 
-**Open SSL**
+Open SSL
+--------
 
-In addition, you'll need to have openssl installed which is needed by Selenium Wire for capturing HTTPS requests.
+Selenium Wire requires openssl for capturing HTTPS requests.
 
-For Linux:
+**Linux**
 
 .. code:: bash
 
@@ -92,13 +93,15 @@ For Linux:
     # For RPM based Linux systems
     sudo yum install openssl
 
-For MacOS:
+**MacOS**
 
 .. code:: bash
 
     brew install openssl
 
-For Windows, you can download an installer here: https://slproweb.com/products/Win32OpenSSL.html
+**Windows**
+
+You can download an installer here: https://slproweb.com/products/Win32OpenSSL.html
 
 
 Browser Setup
