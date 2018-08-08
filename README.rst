@@ -78,8 +78,8 @@ Install using pip:
 
     pip install selenium-wire
 
-Open SSL
---------
+OpenSSL
+-------
 
 Selenium Wire requires openssl for capturing HTTPS requests.
 
@@ -247,7 +247,7 @@ For example, to wait for an AJAX request to return after a button is clicked:
     # Wait for the request/response to complete
     request = driver.wait_for_request('/api/products/12345/')
 
-The ``wait_for_request()`` method will return the first *fully completed* request it finds that matches the supplied path. Fully completed meaning that the response must have returned. The method will wait up to 10 seconds by default, but you can vary that with the ``timeout`` argument:
+The ``wait_for_request()`` method will return the first *fully completed* request it finds that matches the supplied path. Fully completed meaning that the response must have returned. The method will wait up to 10 seconds by default but you can vary that with the ``timeout`` argument:
 
 .. code:: python
 
@@ -256,7 +256,7 @@ The ``wait_for_request()`` method will return the first *fully completed* reques
 
 If a fully completed request is not seen within the timeout period, a ``TimeoutException`` is raised.
 
-The ``wait_for_request()`` method does a substring match on the path, so you can pass just the part that uniquely identifies the request:
+The ``wait_for_request()`` method does a substring match on the path so you can pass just the part that uniquely identifies the request:
 
 .. code:: python
 
@@ -281,7 +281,7 @@ To clear previously captured requests, just use ``del``:
 
     del driver.requests
 
-This can be useful if you're only interested in capturing requests that occur when a specific action is performed, for example, the AJAX requests associated with a button click. In this case, you can clear out any previous requests with ``del`` before you click the button.
+This can be useful if you're only interested in capturing requests that occur when a specific action is performed, for example, the AJAX requests associated with a button click. In this case you can clear out any previous requests with ``del`` before you click the button.
 
 Request Attributes
 ~~~~~~~~~~~~~~~~~~
@@ -298,7 +298,7 @@ Requests that you retrieve using ``driver.requests`` or one of the other mechani
     A case-insensitive dictionary of request headers. Asking for ``request.headers['user-agent']`` will return the value of the ``User-Agent`` header.
 
 ``body``
-    The request body as ``bytes``. If the request has no body, the value of ``body`` will be ``None``.
+    The request body as ``bytes``. If the request has no body the value of ``body`` will be ``None``.
 
 ``response``
    The response associated with the request. This will be ``None`` if the request has no response.
@@ -306,7 +306,7 @@ Requests that you retrieve using ``driver.requests`` or one of the other mechani
 Response Attributes
 ~~~~~~~~~~~~~~~~~~~
 
-The response can be retrieved from a request via the ``response`` attribute. A response may be ``None`` if it was never captured, which may happen if you asked for it before it returned, or if the server timed out etc. A response has the following attributes.
+The response can be retrieved from a request via the ``response`` attribute. A response may be ``None`` if it was never captured, which may happen if you asked for it before it returned or if the server timed out etc. A response has the following attributes.
 
 ``status_code``
     The status code of the response such as ``200`` or ``404``.
@@ -318,13 +318,13 @@ The response can be retrieved from a request via the ``response`` attribute. A r
      A case-insensitive dictionary of response headers. Asking for ``response.headers['content-length']`` will return the value of the ``Content-Length`` header.
 
 ``body``
-    The response body as ``bytes``. If the response has no body, the value of ``body`` will be ``None``.
+    The response body as ``bytes``. If the response has no body the value of ``body`` will be ``None``.
 
 
 Modifying Requests
 ~~~~~~~~~~~~~~~~~~
 
-Selenium Wire allows you to modify the request headers the browser sends, as well as rewrite any part of the request URL.
+Selenium Wire allows you to modify the request headers the browser sends as well as rewrite any part of the request URL.
 
 Modifying Headers
 -----------------
@@ -390,11 +390,11 @@ To clear the rewrite rules that you have set, just use ``del``:
 Proxies
 ~~~~~~~
 
-If the site you are testing sits behind a proxy server, you can tell Selenium Wire about that proxy server in the options you pass to the webdriver instance.
+If the site you are testing sits behind a proxy server you can tell Selenium Wire about that proxy server in the options you pass to the webdriver instance.
 
 The configuration for the proxy server should be specified as a URL in the format ``http://username:password@server:port``. The username and password are optional and can be specified when a proxy server requires authentication.
 
-You can configure a proxy for the http and https protocols, and optionally set a value for ``no_proxy`` which should be a comma separated list of hostnames where the proxy should be bypassed. For example:
+You can configure a proxy for the http and https protocols and optionally set a value for ``no_proxy`` which should be a comma separated list of hostnames where the proxy should be bypassed. For example:
 
 .. code:: python
 
