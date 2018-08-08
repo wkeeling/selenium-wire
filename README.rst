@@ -254,7 +254,7 @@ The ``wait_for_request()`` method will return the first *fully completed* reques
     # Wait up to 30 seconds for a request/response
     request = driver.wait_for_request('/api/products/12345/', timeout=30)
 
-If a fully completed request is not seen within the timeout period, a ``TimeoutException`` is raised.
+If a fully completed request is not seen within the timeout period a ``TimeoutException`` is raised.
 
 The ``wait_for_request()`` method does a substring match on the path so you can pass just the part that uniquely identifies the request:
 
@@ -394,7 +394,7 @@ If the site you are testing sits behind a proxy server you can tell Selenium Wir
 
 The configuration for the proxy server should be specified as a URL in the format ``http://username:password@server:port``. The username and password are optional and can be specified when a proxy server requires authentication.
 
-You can configure a proxy for the http and https protocols and optionally set a value for ``no_proxy`` which should be a comma separated list of hostnames where the proxy should be bypassed. For example:
+You can configure a proxy for the http and https protocols and optionally set a value for ``no_proxy`` - which should be a comma separated list of hostnames where the proxy should be bypassed. For example:
 
 .. code:: python
 
