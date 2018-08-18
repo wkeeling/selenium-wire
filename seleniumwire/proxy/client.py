@@ -24,12 +24,12 @@ class AdminClient:
         self._proxy_addr = None
         self._proxy_port = None
 
-    def create_proxy(self, addr='0.0.0.0', port=0, proxy_config=None, options=None):
+    def create_proxy(self, addr='localhost', port=0, proxy_config=None, options=None):
         """Creates a new proxy server and returns the address and port number that the
         server was started on.
 
         Args:
-            addr: The address the proxy server will listen on. Default - all available.
+            addr: The address the proxy server will listen on. Default localhost.
             port: The port the proxy server will listen on. Default 0 - which means
                 use the first available port.
             proxy_config: The configuration for any upstream proxy server. Default
