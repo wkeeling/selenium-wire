@@ -414,7 +414,7 @@ The proxy configuration can also be loaded through environment variables called 
 Limitations
 ~~~~~~~~~~~
 
-* Selenium Wire will currently work with tests that run on the same machine as the browser. A distributed setup using Selenium Grid is not supported.
+* Selenium Wire will currently work with tests that run on the same machine as the browser. A distributed setup using Selenium Grid is not currently supported.
 * Sites that use NTLM authentication (Windows authentication) cannot currently be tested with Selenium Wire. NTLM authentication is not supported.
 
 License
