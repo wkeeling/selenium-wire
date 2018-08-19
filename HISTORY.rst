@@ -18,3 +18,9 @@ History
 
 * Fix remote proxy basic authentication
 * Updates to README
+
+0.4.0 (2018-08-19)
+------------------
+
+* OpenSSL for Windows now bundled
+* Setup instructions for Edge
