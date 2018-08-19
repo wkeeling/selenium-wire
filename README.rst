@@ -165,8 +165,6 @@ Like Safari, using Microsoft Edge requires some manual configuration before it c
 
 #. You must install `Microsoft's WebDriver`_ so that Edge can be remotely controlled - the same as if you were using Selenium directly.
 
-.. _`Microsoft's WebDriver`: http://go.microsoft.com/fwlink/?LinkId=619687
-
 #. You must install Selenium Wire's root certificate into your PC's certificate store by following these steps:
 
    * First extract the certificate with ``python -m seleniumwire extractcert``. You should see a file called ``ca.crt`` in your current working directory.
@@ -194,6 +192,8 @@ Like Safari, using Microsoft Edge requires some manual configuration before it c
    * In the "Address" box enter "localhost" and in the "Port" box a port number (e.g. 12345).
 
    * Click "OK" and then "OK" on the Internet Options window.
+
+.. _`Microsoft's WebDriver`: http://go.microsoft.com/fwlink/?LinkId=619687
 
 Usage
 ~~~~~
