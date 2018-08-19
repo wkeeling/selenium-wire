@@ -12,10 +12,6 @@ install: pip install -U tox-travis
 
 script: tox
 
-branches:
-  only:
-  - master
-
 after_success:
   - pip install codecov
   - codecov
