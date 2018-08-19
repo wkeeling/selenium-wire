@@ -107,15 +107,13 @@ No installation is required as OpenSSL for Windows is bundled with Selenium Wire
 Browser Setup
 -------------
 
-**Firefox**
+**Firefox and Chrome**
 
-You'll need to install the `Gecko driver`_ for Firefox to be remotely controlled - the same as if you were using Selenium directly.
+No specific configuration should be necessary - everything ought to just work.
+
+You will however need to ensure that you have downloaded the `Gecko driver`_ and `Chrome driver`_ for Firefox and Chrome to be remotely controlled - the same as if you were using Selenium directly. Once downloaded, ensure these executables are placed somewhere on the path.
 
 .. _`Gecko driver`: https://github.com/mozilla/geckodriver/
-
-**Chrome**
-
-You'll need to install the `Chrome driver`_ for Chrome to be remotely controlled - the same as if you were using Selenium directly.
 
 .. _`Chrome driver`: https://sites.google.com/a/chromium.org/chromedriver/
 
@@ -161,7 +159,7 @@ There are a few manual steps that have to be carried out before you can use Safa
 
 **Edge**
 
-Like Safari, using Microsoft Edge requires some manual configuration before it can be used with Selenium Wire.
+Like Safari, Microsoft Edge requires some manual configuration before it can be used with Selenium Wire.
 
 #. You must install `Microsoft's WebDriver`_ so that Edge can be remotely controlled - the same as if you were using Selenium directly.
 
@@ -466,7 +464,7 @@ The proxy configuration can also be loaded through environment variables called 
 Limitations
 ~~~~~~~~~~~
 
-* Selenium Wire will currently work with tests that run on the same machine as the browser. A distributed setup using Selenium Grid is not currently supported.
+* Selenium Wire will currently work with tests that run on the same machine as the browser. A distributed setup using Selenium Grid is not yet supported.
 * Sites that use NTLM authentication (Windows authentication) cannot currently be tested with Selenium Wire. NTLM authentication is not supported.
 
 License
