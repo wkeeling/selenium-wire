@@ -81,7 +81,7 @@ Install using pip:
 OpenSSL
 -------
 
-Selenium Wire requires openssl for capturing HTTPS requests.
+Selenium Wire requires OpenSSL for capturing HTTPS requests.
 
 **Linux**
 
@@ -101,7 +101,7 @@ Selenium Wire requires openssl for capturing HTTPS requests.
 
 **Windows**
 
-No installation required as OpenSSL for Windows is bundled with Selenium Wire.
+No installation is required as OpenSSL for Windows is bundled with Selenium Wire.
 
 
 Browser Setup
@@ -153,7 +153,7 @@ There are a few manual steps that have to be carried out before you can use Safa
 
 **Edge**
 
-Like with Safari, using Microsoft Edge requires some manual configuration before it can be used with Selenium Wire.
+Like Safari, using Microsoft Edge requires some manual configuration before it can be used with Selenium Wire.
 
 #. You must install Selenium Wire's root certificate into your PC's certificate store by following these steps:
 
@@ -219,6 +219,18 @@ For example, if you chose port 12345, then you would pass it like this:
         'port': 12345
     }
     driver = webdriver.Safari(seleniumwire_options=options)
+
+**Edge**
+
+For Edge, you need to tell Selenium Wire the port number you selected when you configured the browser in **Browser Setup**.
+For example, if you chose port 12345, then you would pass it like this:
+
+.. code:: python
+
+    options = {
+        'port': 12345
+    }
+    driver = webdriver.Edge(seleniumwire_options=options)
 
 Accessing Requests
 ------------------
