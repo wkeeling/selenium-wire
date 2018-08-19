@@ -101,7 +101,7 @@ Selenium Wire requires OpenSSL for capturing HTTPS requests.
 
 **Windows**
 
-No installation is required as OpenSSL for Windows is bundled with Selenium Wire.
+No installation is required. OpenSSL for Windows is bundled with Selenium Wire.
 
 
 Browser Setup
@@ -111,7 +111,7 @@ Browser Setup
 
 No specific configuration should be necessary - everything ought to just work.
 
-You will however need to ensure that you have downloaded the `Gecko driver`_ and `Chrome driver`_ for Firefox and Chrome to be remotely controlled - the same as if you were using Selenium directly. Once downloaded, ensure these executables are placed somewhere on the path.
+You will however need to ensure that you have downloaded the `Gecko driver`_ and `Chrome driver`_ for Firefox and Chrome to be remotely controlled - the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on the system path.
 
 .. _`Gecko driver`: https://github.com/mozilla/geckodriver/
 
