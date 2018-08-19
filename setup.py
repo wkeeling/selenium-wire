@@ -31,7 +31,6 @@ setup(
     include_package_data=True,
     keywords='selenium-wire',
     name='selenium-wire',
-    package_data={'': ['*.crt', '*.key']},
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     setup_requires=[],
     test_suite='nose.collector',
