@@ -149,11 +149,39 @@ There are a few manual steps that have to be carried out before you can use Safa
 
    * Check the "Secure Web Proxy (HTTPS)" checkbox and repeat the previous step for server and port.
 
-   * Click "OK" on the proxies window, and then "Apply" on the network window, before closing it.
+   * Click "OK" on the proxies window, and then "Apply" on the network window before closing it.
 
 **Edge**
 
-* TODO
+Like with Safari, using Microsoft Edge requires some manual configuration before it can be used with Selenium Wire.
+
+#. You must install Selenium Wire's root certificate into your PC's certificate store by following these steps:
+
+   * First extract the certificate with ``python -m seleniumwire extractcert``. You should see a file called ``ca.crt`` in your current working directory.
+
+   * Open Internet Options (you can search for it using Cortana on Windows 10).
+
+   * Click the "Content" tab and then the "Certificates" button.
+
+   * Press the "Import..." button to open the Certificate Import Wizard, then press "Next".
+
+   * Browse to the ``ca.crt`` you just extracted and press "Next".
+
+   * Select the "Place all certficates in the following store" option and browse to "Trusted Root Certification Authorities", press "OK" and then "Next".
+
+   * Press "Finish" on the final screen of the wizard, and then "OK" on all open windows.
+
+#. You need to tell Edge to use a proxy server for its HTTP and HTTPS traffic.
+
+   * Open Internet Options (you can search for it using Cortana on Windows 10).
+
+   * Click the "Connections" tab and then the "LAN settings" button.
+
+   * Tick the box that says "Use a proxy server for your LAN...".
+
+   * In the "Address" box enter "localhost" and in the "Port" box a port number (e.g. 12345).
+
+   * Click "OK" and then "OK" on the Internet Options window.
 
 Usage
 ~~~~~
