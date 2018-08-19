@@ -24,3 +24,8 @@ History
 
 * OpenSSL for Windows now bundled
 * Setup instructions for Edge
+
+0.5.0 (2018-08-19)
+------------------
+
+* Clearer README instructions
