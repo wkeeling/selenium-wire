@@ -101,7 +101,7 @@ Selenium Wire requires openssl for capturing HTTPS requests.
 
 **Windows**
 
-You can download an installer here: https://slproweb.com/products/Win32OpenSSL.html
+No installation required as OpenSSL for Windows is bundled with Selenium Wire.
 
 
 Browser Setup
