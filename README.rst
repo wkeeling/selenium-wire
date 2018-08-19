@@ -107,9 +107,17 @@ No installation is required as OpenSSL for Windows is bundled with Selenium Wire
 Browser Setup
 -------------
 
-**Firefox and Chrome**
+**Firefox**
 
-No specific configuration should be necessary - everything should just work straight out of the box.
+You'll need to install the `Gecko driver`_ for Firefox to be remotely controlled - the same as if you were using Selenium directly.
+
+.. _`Gecko driver`: https://github.com/mozilla/geckodriver/
+
+**Chrome**
+
+You'll need to install the `Chrome driver`_ for Chrome to be remotely controlled - the same as if you were using Selenium directly.
+
+.. _`Chrome driver`: https://sites.google.com/a/chromium.org/chromedriver/
 
 **Safari**
 
@@ -154,6 +162,10 @@ There are a few manual steps that have to be carried out before you can use Safa
 **Edge**
 
 Like Safari, using Microsoft Edge requires some manual configuration before it can be used with Selenium Wire.
+
+#. You must install `Microsoft's WebDriver`_ so that Edge can be remotely controlled - the same as if you were using Selenium directly.
+
+.. _`Microsoft's WebDriver`: http://go.microsoft.com/fwlink/?LinkId=619687
 
 #. You must install Selenium Wire's root certificate into your PC's certificate store by following these steps:
 
