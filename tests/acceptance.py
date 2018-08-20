@@ -6,20 +6,7 @@ logging.basicConfig(level=logging.DEBUG)
 from seleniumwire import webdriver
 
 
-# Need to test:
-#    - Different browsers
-#    - Different OS's
-#    - Different Selenium versions
-
-
 class BrowserIntegrationTest(TestCase):
-
-    options = {
-        'proxy': {
-            'http': 'http://167.99.193.171:8000',
-            'https': 'https://167.99.193.171:8000'
-        }
-    }
 
     def test_firefox_can_access_requests(self):
         url = 'https://www.python.org/'
