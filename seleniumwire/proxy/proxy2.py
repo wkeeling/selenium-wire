@@ -85,8 +85,16 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             os.makedirs(self.certdir, exist_ok=True)
             if not os.path.isfile(certpath):
                 epoch = "%d" % (time.time() * 1000)
-                openssl = self._get_openssl_path()
-                p1 = Popen([openssl, "req", "-new", "-key", self.certkey, "-subj", "/CN=%s" % hostname], stdout=PIPE)
+
+                new_cert_req = ["req", "-new", "-key", self.certkey, "-subj", "/CN=%s" % hostname]
+                if os.name == 'nt':
+                    openssl = os.path.join(os.path.dirname(__file__), 'win', 'openssl.exe')
+                    new_cert_req += ['-config', os.path.join(os.path.dirname(__file__), 'win', 'openssl.cnf')]
+                else:
+                    openssl = 'openssl'
+                new_cert_req.insert(0, openssl)
+
+                p1 = Popen(new_cert_req, stdout=PIPE)
                 p2 = Popen([openssl, "x509", "-req", "-days", "3650", "-CA", self.cacert, "-CAkey", self.cakey,
                             "-set_serial", epoch, "-out", certpath], stdin=p1.stdout, stderr=PIPE)
                 p2.communicate()
@@ -105,11 +113,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             self.close_connection = False
         else:
             self.close_connection = True
-
-    def _get_openssl_path(self):
-        if os.name == 'nt':
-            return os.path.join(os.path.dirname(__file__), 'openssl')
-        return 'openssl'            
 
     def connect_relay(self):
         address = self.path.split(':', 1)
