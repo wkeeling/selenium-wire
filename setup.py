@@ -25,7 +25,7 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
     description="Extends Selenium's Python bindings to give you the ability to inspect requests made by the browser.",
-    install_requires=['selenium'],
+    install_requires=['selenium>=3.4.0'],
     license="MIT license",
     long_description=readme + '\n\n' + history,
     include_package_data=True,
@@ -36,6 +36,6 @@ setup(
     test_suite='nose.collector',
     tests_require=['nose'],
     url='https://github.com/wkeeling/selenium-wire',
-    version='0.5.0',
+    version='0.6.0',
     zip_safe=False,
 )

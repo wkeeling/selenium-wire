@@ -29,3 +29,8 @@ History
 ------------------
 
 * Clearer README instructions
+
+0.6.0 (2018-08-21)
+------------------
+
+* Bundle openssl.cnf for Windows
