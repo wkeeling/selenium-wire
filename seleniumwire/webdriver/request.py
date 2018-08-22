@@ -119,11 +119,7 @@ class InspectRequestsMixin:
 
 
 class Request:
-    """An HTTP request made by the browser to the server.
-
-    This acts as a facade, hiding the details of the underlying proxy
-    whilst provding a user friendly API to clients.
-    """
+    """An HTTP request made by the browser to the server."""
 
     def __init__(self, data, client):
         """Initialises a new Request object with a dictionary of data and a

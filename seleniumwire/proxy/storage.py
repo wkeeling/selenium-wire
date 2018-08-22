@@ -244,13 +244,12 @@ class RequestStorage:
             shutil.rmtree(self._get_request_dir(indexed_request.id), ignore_errors=True)
 
     def find(self, path, check_response=True):
-        """Find the first request that matches the specified path.
+        """Find the first request that contains the specified path.
 
         Requests are searched in chronological order.
 
         Args:
-            path: The request path which can be folder-relative, server-relative
-                or an absolute URL.
+            path: The request path which can be any part of the request URL.
             check_response: Where a path matches a request, whether to check
                 that the request has a corresponding response. Where
                 check_response=True and no response has been received, this
