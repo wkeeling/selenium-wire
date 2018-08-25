@@ -122,10 +122,12 @@ class AdminClient:
         self._make_request('DELETE', '/requests')
 
     def find(self, path):
-        """Whether a request with the specified path has been captured by the proxy.
+        """Find the first request that contains the specified path.
+
+        Requests are searched in chronological order.
 
         Args:
-            path: The path of a request to check existence for.
+            path: The request path which can be any part of the request URL.
         """
         return self._make_request('GET', '/find?path={}'.format(quote_plus(str(path))))
 
