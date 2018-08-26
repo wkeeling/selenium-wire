@@ -9,7 +9,7 @@ from .request import InspectRequestsMixin
 
 
 class Firefox(InspectRequestsMixin, _Firefox):
-    """Wraps the Firefox webdriver to provide additional methods for inspecting requests."""
+    """Extends the Firefox webdriver to provide additional methods for inspecting requests."""
 
     def __init__(self, *args, seleniumwire_options=None, **kwargs):
         """Initialise a new Firefox WebDriver instance.
@@ -51,7 +51,7 @@ class Firefox(InspectRequestsMixin, _Firefox):
 
 
 class Chrome(InspectRequestsMixin, _Chrome):
-    """Wraps the Chrome webdriver to provide additional methods for inspecting requests."""
+    """Extends the Chrome webdriver to provide additional methods for inspecting requests."""
 
     def __init__(self, *args, seleniumwire_options=None, **kwargs):
         """Initialise a new Chrome WebDriver instance.
@@ -93,7 +93,7 @@ class Chrome(InspectRequestsMixin, _Chrome):
 
 
 class Safari(InspectRequestsMixin, _Safari):
-    """Wraps the Safari webdriver to provide additional methods for inspecting requests."""
+    """Extends the Safari webdriver to provide additional methods for inspecting requests."""
 
     def __init__(self, seleniumwire_options=None, *args, **kwargs):
         """Initialise a new Safari WebDriver instance.
@@ -125,7 +125,7 @@ class Safari(InspectRequestsMixin, _Safari):
 
 
 class Edge(InspectRequestsMixin, _Edge):
-    """Wraps the Edge webdriver to provide additional methods for inspecting requests."""
+    """Extends the Edge webdriver to provide additional methods for inspecting requests."""
 
     def __init__(self, seleniumwire_options=None, *args, **kwargs):
         """Initialise a new Edge WebDriver instance.
