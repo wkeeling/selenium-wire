@@ -275,7 +275,9 @@ Waiting for a request
 
 When you ask for captured requests using ``driver.requests`` or ``driver.last_request`` you have to be sure that the requests you're interested in have actually been captured. If you ask too soon, then you may find that a request is not yet present, or is present but has no associated response.
 
-For this you can use Selenium's existing `implicit or explicit waits`_ to wait for the DOM to change. For example:
+**Using implicit or explicit waits**
+
+One way to achieve this is to use Selenium's existing `implicit or explicit waits`_ to wait for the DOM to change. For example:
 
 .. code:: python
 
@@ -287,6 +289,8 @@ For this you can use Selenium's existing `implicit or explicit waits`_ to wait f
 
     # Now check the completed request
     assert driver.last_request.response.status_code == 200
+
+**Using driver.wait_for_request()**
 
 Alternatively, Selenium Wire provides ``driver.wait_for_request()``. This method takes a path (actually any part of the full URL) and will wait for a request with this path to complete before continuing.
 
