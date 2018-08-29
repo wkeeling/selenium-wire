@@ -447,6 +447,8 @@ To clear the rewrite rules that you have set, just use ``del``:
 Proxies
 ~~~~~~~
 
+Selenium Wire captures requests by using its own proxy server under the covers. This means you cannot use the webdriver's ``DesiredCapailities`` API to configure your own proxy, like you might when using Selenium directly.
+
 If the site you are testing sits behind a proxy server you can tell Selenium Wire about that proxy server in the options you pass to the webdriver instance.
 
 The configuration for the proxy server should be specified as a URL in the format ``http://username:password@server:port``. The username and password are optional and can be specified when a proxy server requires authentication.
@@ -463,8 +465,6 @@ You can configure a proxy for the http and https protocols and optionally set a 
         }
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
-
-Note that you cannot use the ``DesiredCapabilities`` API for configuring a proxy like you might when using Selenium directly. This is because Selenium Wire uses this API to inject its own embedded proxy configuration under the covers.
 
 The proxy configuration can also be loaded through environment variables called ``http``, ``https`` and ``no_proxy``. The proxy configuration in the options passed to the webdriver instance will take precedence over environment variable configuration if both are specified.
 
