@@ -34,3 +34,8 @@ History
 ------------------
 
 * Bundle openssl.cnf for Windows
+
+0.7.0 (2018-08-29)
+------------------
+
+* README and doc updates
