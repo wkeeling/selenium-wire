@@ -447,7 +447,7 @@ To clear the rewrite rules that you have set, just use ``del``:
 Proxies
 ~~~~~~~
 
-Selenium Wire captures requests by using its own proxy server under the covers. This means you cannot use the webdriver's ``DesiredCapailities`` API to configure your own proxy, like you might when using Selenium directly.
+Selenium Wire captures requests by using its own proxy server under the covers. This means you cannot use the webdriver's ``DesiredCapabilities`` API to configure your own proxy, like you might when using Selenium directly.
 
 If the site you are testing sits behind a proxy server you can tell Selenium Wire about that proxy server in the options you pass to the webdriver instance.
 
