@@ -26,7 +26,7 @@ setup(
     ],
     description="Extends Selenium's Python bindings to give you the ability to inspect requests made by the browser.",
     install_requires=['selenium>=3.4.0'],
-    license="MIT license",
+    license="MIT",
     long_description=readme + '\n\n' + history,
     include_package_data=True,
     keywords='selenium-wire',
