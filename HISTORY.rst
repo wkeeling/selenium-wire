@@ -39,3 +39,8 @@ History
 ------------------
 
 * README and doc updates
+
+0.8.0 (2018-09-20)
+------------------
+
+* Fix issue where new headers were not being added to the request when using driver.header_overrides
