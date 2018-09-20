@@ -105,17 +105,22 @@ class RequestModifier:
 
     def _modify_headers(self, request):
         with self._lock:
-            headers_lc = {h.lower(): v for h, v in self._headers.items()}
+            headers_lc = {h.lower(): (h, v) for h, v in self._headers.items()}
 
+        # Remove/replace any header that already exists in the request
         for header in list(request.headers):
             try:
-                value = headers_lc[header.lower()]
+                value = headers_lc.pop(header.lower())[1]
             except KeyError:
                 pass
             else:
                 del request.headers[header]
                 if value is not None:
                     request.headers[header] = value
+
+        # Add new headers to the request that don't already exist
+        for header, value in headers_lc.values():
+            request.headers[header] = value
 
     def _rewrite_url(self, request):
         with self._lock:

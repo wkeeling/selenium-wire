@@ -29,6 +29,16 @@ class RequestModifierTest(TestCase):
 
         self.assertEqual(mock_request.headers['User-Agent'], 'Test_User_Agent_String')
 
+    def test_add_new_header(self):
+        self.modifier.headers = {
+            'New-Header': 'Some-Value'
+        }
+        mock_request = self._create_mock_request()
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(mock_request.headers['New-Header'], 'Some-Value')
+
     def test_filter_out_header(self):
         self.modifier.headers = {
             'User-Agent': None
