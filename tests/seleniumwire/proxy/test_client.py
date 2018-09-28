@@ -64,11 +64,20 @@ class AdminClientIntegrationTest(TestCase):
     def test_find(self):
         self._make_request('https://stackoverflow.com/questions/tagged/django?page=2&sort=newest&pagesize=15')
         self._make_request('https://docs.python.org/3.4/library/http.client.html')
+        self._make_request('https://www.google.com')
 
-        self.assertEqual(self.client.find('/questions/tagged/django')['path'],
-                         'https://stackoverflow.com/questions/tagged/django?page=2&sort=newest&pagesize=15')
-        self.assertEqual(self.client.find('/3.4/library/http.client.html')['path'],
-                         'https://docs.python.org/3.4/library/http.client.html')
+        self.assertEqual(
+            self.client.find('/questions/tagged/django')['path'],
+            'https://stackoverflow.com/questions/tagged/django?page=2&sort=newest&pagesize=15'
+        )
+        self.assertEqual(
+            self.client.find('/3.4/library/http.client.html')['path'],
+            'https://docs.python.org/3.4/library/http.client.html'
+        )
+        self.assertEqual(
+            self.client.find('https://www.google.com')['path'],
+            'https://www.google.com/'
+        )
 
     def test_get_request_body_empty(self):
         self._make_request('https://www.amazon.com')
