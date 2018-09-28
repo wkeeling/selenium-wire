@@ -92,7 +92,7 @@ class InspectRequestsMixinTest(TestCase):
         mock_client.find.return_value = {
             'id': '98765',
             'method': 'GET',
-            'path': 'http://www.example.com/different/path?foo=bar',
+            'path': 'http://www.example.com/some/path?foo=bar',
             'headers': {
                 'Accept': '*/*',
                 'Host': 'www.example.com'
@@ -111,7 +111,7 @@ class InspectRequestsMixinTest(TestCase):
         request = driver.wait_for_request('/some/path')
 
         mock_client.find.assert_called_once_with('/some/path')
-        self.assertEqual(request.path, 'http://www.example.com/different/path?foo=bar')
+        self.assertEqual(request.path, 'http://www.example.com/some/path?foo=bar')
 
     def test_wait_for_request_timeout(self):
         mock_client = Mock()
