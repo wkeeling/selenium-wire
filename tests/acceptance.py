@@ -1,4 +1,5 @@
 import logging
+import os
 from unittest import TestCase
 
 logging.basicConfig(level=logging.DEBUG)
@@ -89,3 +90,33 @@ class BrowserIntegrationTest(TestCase):
         driver.wait_for_request('https://www.wikipedia.org/')  # Should find www.wikipedia.org
 
         driver.quit()
+
+    def test_wait_for_request_headless_chrome(self):
+        # https://github.com/wkeeling/selenium-wire/issues/6
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument("--headless")
+
+        def get_page_response(url):
+
+            # check for current os
+            if os.name == 'posix':
+                # osx
+                driver_path = '/usr/local/bin/chromedriver'
+            elif os.name == 'nt':
+                # win32
+                driver_path = 'C:\chromedriver\chromedriver'
+            else:
+                print('Unknown operating system!!!')
+                exit()
+
+            driver = webdriver.Chrome(
+                chrome_options=chrome_options,
+                executable_path=driver_path
+            )
+            driver.get(url)
+            request = driver.wait_for_request(url, timeout=3)
+            print(request)
+
+            self.assertEqual(request.path, 'https://www.google.com/')
+
+        get_page_response('https://www.google.com')
