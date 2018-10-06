@@ -54,7 +54,6 @@ Prints:
     https://www.google.com/gen_204?s=webaft&t=aft&atyp=csi&ei=kgRJW7DBONKTlwTK77wQ&rt=wsrt.366,aft.58,prt.58 204 text/html; charset=UTF-8
     ...
 
-
 Features
 ~~~~~~~~
 
@@ -71,6 +70,8 @@ Compatibilty
 * Python 3.4+
 * Selenium 3.4.0+
 * Firefox, Chrome, Safari and Edge are supported
+
+.. contents:: Table of Contents
 
 Installation
 ~~~~~~~~~~~~
