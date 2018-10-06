@@ -71,7 +71,11 @@ Compatibilty
 * Selenium 3.4.0+
 * Firefox, Chrome, Safari and Edge are supported
 
-.. contents:: Table of Contents
+Table of Contents
+~~~~~~~~~~~~~~~~~
+
+.. contents::
+   :backlinks: top
 
 Installation
 ~~~~~~~~~~~~
