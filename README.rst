@@ -74,8 +74,31 @@ Compatibilty
 Table of Contents
 ~~~~~~~~~~~~~~~~~
 
-.. contents::
-   :backlinks: top
+- `Installation`_
+
+  * `OpenSSL`_
+  * `Browser Setup`_
+
+- `Usage`_
+
+  * `Accessing Requests`_
+  * `Waiting for a Request`_
+  * `Clearing Requests`_
+
+- `Request Attributes`_
+
+- `Response Attributes`_
+
+- `Modifying Requests`_
+
+  * `Modifying Headers`_
+  * `Rewriting URLs`_
+
+- `Proxies`_
+
+- `Limitations`_
+
+- `License`_
 
 Installation
 ~~~~~~~~~~~~
