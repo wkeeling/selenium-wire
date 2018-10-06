@@ -185,7 +185,7 @@ Like Safari, Microsoft Edge requires some manual configuration before it can be 
 
 #. You need to tell Edge to use a proxy server for its HTTP and HTTPS traffic.
 
-   * Open Internet Options (you can search for it using Cortana on Windows 10).
+   * Open Internet Options (you can search for it from the Windows 10 start menu).
 
    * Click the "Connections" tab and then the "LAN settings" button.
 
@@ -200,11 +200,18 @@ Like Safari, Microsoft Edge requires some manual configuration before it can be 
 Usage
 ~~~~~
 
-Selenium Wire extends Selenium and so it can be used as a drop-in replacement. You just need to make sure you import ``webdriver`` from the ``seleniumwire`` package:
+Ensure that you import ``webdriver`` from the ``seleniumwire`` package:
 
 .. code:: python
 
     from seleniumwire import webdriver
+
+For sub-packages of ``webdriver``, you can continue to import these directly from ``selenium``. For example, to import ``WebDriverWait``:
+
+.. code:: python
+
+    # Sub-packages of webdriver must still be imported from `selenium` itself
+    from selenium.webdriver.support.ui import WebDriverWait
 
 Then it's just a matter of creating a new driver instance.
 
@@ -271,7 +278,7 @@ The list of requests is in chronological order. If you want to access the most r
 
 This is more efficient than using ``driver.requests[-1]``.
 
-Waiting for a request
+Waiting for a Request
 ---------------------
 
 When you ask for captured requests using ``driver.requests`` or ``driver.last_request`` you have to be sure that the requests you're interested in have actually been captured. If you ask too soon, then you may find that a request is not yet present, or is present but has no associated response.
@@ -293,17 +300,19 @@ One way to achieve this is to use Selenium's existing `implicit or explicit wait
 
 **Using driver.wait_for_request()**
 
-Alternatively, Selenium Wire provides ``driver.wait_for_request()``. This method takes a path (actually any part of the full URL) and will wait for a request with this path to complete before continuing.
+Alternatively, Selenium Wire provides ``driver.wait_for_request()``. This method will wait for a previous request with a specific path to complete before allowing the test to continue.
 
 For example, to wait for an AJAX request to return after a button is clicked:
 
 .. code:: python
 
-    # Click a button that triggers a background request
+    # Click a button that triggers a background request to https://server/api/products/12345/
     button_element.click()
 
     # Wait for the request/response to complete
     request = driver.wait_for_request('/api/products/12345/')
+
+Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action.
 
 The ``wait_for_request()`` method will return the first *fully completed* request it finds that matches the supplied path. Fully completed meaning that the response must have returned. The method will wait up to 10 seconds by default but you can vary that with the ``timeout`` argument:
 
@@ -330,7 +339,7 @@ Or alternatively you can pass the full URL itself:
 
 .. _`implicit or explicit waits`: https://www.seleniumhq.org/docs/04_webdriver_advanced.jsp
 
-Clearing requests
+Clearing Requests
 -----------------
 
 To clear previously captured requests, just use ``del``:
