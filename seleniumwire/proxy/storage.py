@@ -120,8 +120,7 @@ class RequestStorage:
 
         if response_body is not None:
             self._save(response_body, request_dir, 'responsebody')
-
-        indexed_request.has_response = True
+            indexed_request.has_response = True
 
     def _get_indexed_request(self, request_id):
         with self._lock:
