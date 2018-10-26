@@ -21,7 +21,7 @@ class ProxyHTTPServer(ThreadingHTTPServer):
         self.proxy_config = self._sanitise_proxy_config(self._merge_with_env(proxy_config or {}))
 
         # Additional proxy server configuration
-        self.options = options
+        self.options = options or {}
 
         super().__init__(*args, **kwargs)
 
