@@ -135,6 +135,10 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
             req: The request (an instance of CaptureRequestHandler).
             req_body: The binary request body.
         """
+        if req.method in self.server.options.get('ignore_http_methods', ['OPTIONS']):
+            log.debug('Not capturing %s request: %s', req.method, req.path)
+            return
+
         log.info('Capturing request: %s', req.path)
 
         # First make any modifications to the request
