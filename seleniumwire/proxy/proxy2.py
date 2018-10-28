@@ -289,7 +289,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         if 'Accept-Encoding' in headers:
             ae = headers['Accept-Encoding']
 
-            if self.server.options.get('disable_encoding'):
+            if self.server.options.get('disable_encoding') is True:
                 permitted_encodings = ('identity', )
             else:
                 permitted_encodings = ('identity', 'gzip', 'x-gzip', 'deflate')
