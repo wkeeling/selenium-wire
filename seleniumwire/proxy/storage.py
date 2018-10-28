@@ -5,7 +5,6 @@ import os
 import pickle
 import shutil
 import signal
-import tempfile
 import threading
 from urllib.parse import urlparse
 import uuid
@@ -29,12 +28,12 @@ class RequestStorage:
 
         Args:
             base_dir: The directory where request and response data is stored.
-                If not specified, the system's temp folder is used.
+                If not specified, the current user's home folder is used.
         """
         if base_dir is None:
-            base_dir = tempfile.gettempdir()
+            base_dir = os.path.expanduser('~')
 
-        self._storage_dir = os.path.join(base_dir, 'seleniumwire', 'storage-{}'.format(str(uuid.uuid4())))
+        self._storage_dir = os.path.join(base_dir, '.seleniumwire', 'storage-{}'.format(str(uuid.uuid4())))
         os.makedirs(self._storage_dir)
         self._cleanup_old_dirs()
 

@@ -15,7 +15,7 @@ class RequestStorageTest(TestCase):
 
     def test_initialise(self):
         RequestStorage(base_dir=self.base_dir)
-        storage_dir = glob.glob(os.path.join(self.base_dir, 'seleniumwire', 'storage-*'))
+        storage_dir = glob.glob(os.path.join(self.base_dir, '.seleniumwire', 'storage-*'))
 
         self.assertEqual(len(storage_dir), 1)
 
@@ -29,16 +29,16 @@ class RequestStorageTest(TestCase):
 
     def test_cleanup_does_not_remove_parent_folder(self):
         # There is an existing storage folder
-        os.makedirs(os.path.join(self.base_dir, 'seleniumwire', 'teststorage'))
+        os.makedirs(os.path.join(self.base_dir, '.seleniumwire', 'teststorage'))
         storage = RequestStorage(base_dir=self.base_dir)
         storage._cleanup()
 
         # The existing storage folder is not cleaned up
         self.assertEqual(len(os.listdir(self.base_dir)), 1)
-        self.assertTrue(os.path.exists(os.path.join(self.base_dir, 'seleniumwire', 'teststorage')))
+        self.assertTrue(os.path.exists(os.path.join(self.base_dir, '.seleniumwire', 'teststorage')))
 
     def test_initialise_clears_old_folders(self):
-        test_dir = os.path.join(self.base_dir, 'seleniumwire', 'storage-test')
+        test_dir = os.path.join(self.base_dir, '.seleniumwire', 'storage-test')
         os.makedirs(test_dir)
         two_days_ago = (datetime.now() - timedelta(days=2)).timestamp()
         os.utime(test_dir, times=(two_days_ago, two_days_ago))
@@ -205,13 +205,13 @@ class RequestStorageTest(TestCase):
         requests = storage.load_requests()
 
         self.assertFalse(requests)
-        self.assertFalse(glob.glob(os.path.join(self.base_dir, 'seleniumwire', 'storage-*', '*')))
+        self.assertFalse(glob.glob(os.path.join(self.base_dir, '.seleniumwire', 'storage-*', '*')))
 
     def test_get_cert_dir(self):
         storage = RequestStorage(base_dir=self.base_dir)
 
         self.assertTrue(fnmatch(storage.get_cert_dir(),
-                                os.path.join(self.base_dir, 'seleniumwire', 'storage-*', 'certs')))
+                                os.path.join(self.base_dir, '.seleniumwire', 'storage-*', 'certs')))
 
     def test_find(self):
         mock_request_1 = self._create_mock_request('http://www.example.com/test/path/?foo=bar')
@@ -234,7 +234,7 @@ class RequestStorageTest(TestCase):
         self.assertIsNone(storage.find('http://www.example.com/test/path/?x=y'))
 
     def _get_stored_path(self, request_id, filename):
-        return glob.glob(os.path.join(self.base_dir, 'seleniumwire', 'storage-*',
+        return glob.glob(os.path.join(self.base_dir, '.seleniumwire', 'storage-*',
                                       'request-{}'.format(request_id), filename))
 
     def _create_mock_request(self, path='http://www.example.com/test/path/'):
