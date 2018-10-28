@@ -44,3 +44,9 @@ History
 ------------------
 
 * Fix issue where new headers were not being added to the request when using driver.header_overrides
+
+0.9.0 (2018-10-28)
+------------------
+
+* Ignore OPTIONS requests by default, and allow list of methods to be configurable via the ignore_http_methods option.
+* Move default Selenium Wire request storage from system temp to user home to prevent permission collisions.
