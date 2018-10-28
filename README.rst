@@ -96,6 +96,8 @@ Table of Contents
 
 - `Proxies`_
 
+- `Misc. Options`_
+
 - `Limitations`_
 
 - `License`_
@@ -504,6 +506,24 @@ You can configure a proxy for the http and https protocols and optionally set a 
     driver = webdriver.Firefox(seleniumwire_options=options)
 
 The proxy configuration can also be loaded through environment variables called ``http``, ``https`` and ``no_proxy``. The proxy configuration in the options passed to the webdriver instance will take precedence over environment variable configuration if both are specified.
+
+Misc. Options
+~~~~~~~~~~~~~
+
+Other options that can be passed to Selenium Wire via the `seleniumwire_options` webdriver attribute:
+
+``ignore_http_methods``
+    A list of HTTP methods that should be ignored by Selenium Wire and not captured (specified as uppercase strings). By default, OPTIONS requests are not captured. To capture all request methods, set `ignore_http_methods` to an empty list:
+
+.. code:: python
+
+    options = {
+        'ignore_http_methods': []
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``disable_encoding``
+    Whether to disable content encoding. When set to `True`, only an `Accept-Encoding` of `identity` will be transmitted to the server. This tells the server to not compress/modify the response. Default is `False`.
 
 Limitations
 ~~~~~~~~~~~
