@@ -510,10 +510,10 @@ The proxy configuration can also be loaded through environment variables called 
 Misc. Options
 ~~~~~~~~~~~~~
 
-Other options that can be passed to Selenium Wire via the `seleniumwire_options` webdriver attribute:
+Other options that can be passed to Selenium Wire via the ``seleniumwire_options`` webdriver attribute:
 
 ``ignore_http_methods``
-    A list of HTTP methods that should be ignored by Selenium Wire and not captured (specified as uppercase strings). By default, OPTIONS requests are not captured. To capture all request methods, set `ignore_http_methods` to an empty list:
+    A list of HTTP methods that should be ignored by Selenium Wire and not captured (specified as uppercase strings). By default, OPTIONS requests are not captured. To capture all request methods, set ``ignore_http_methods`` to an empty list:
 
 .. code:: python
 
@@ -523,7 +523,7 @@ Other options that can be passed to Selenium Wire via the `seleniumwire_options`
     driver = webdriver.Firefox(seleniumwire_options=options)
 
 ``disable_encoding``
-    Whether to disable content encoding. When set to `True`, only an `Accept-Encoding` of `identity` will be transmitted to the server. This tells the server to not compress/modify the response. Default is `False`.
+    Whether to disable content encoding. When set to ``True``, the ``Accept-Encoding`` header will be set to ``identity`` for all requests. This tells the server to not compress/modify the response. Default is ``False``.
 
 Limitations
 ~~~~~~~~~~~
