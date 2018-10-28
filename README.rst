@@ -513,12 +513,12 @@ Misc. Options
 Other options that can be passed to Selenium Wire via the ``seleniumwire_options`` webdriver attribute:
 
 ``ignore_http_methods``
-    A list of HTTP methods that should be ignored by Selenium Wire and not captured (specified as uppercase strings). By default, OPTIONS requests are not captured. To capture all request methods, set ``ignore_http_methods`` to an empty list:
+    A list of HTTP methods that should be ignored by Selenium Wire and not captured (specified as uppercase strings). By default, OPTIONS requests are ignored. To capture all request methods, set ``ignore_http_methods`` to an empty list:
 
 .. code:: python
 
     options = {
-        'ignore_http_methods': []
+        'ignore_http_methods': []  # Capture all requests, including OPTIONS requests
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
