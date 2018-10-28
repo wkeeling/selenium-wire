@@ -17,7 +17,7 @@ class CaptureRequestHandlerTest(TestCase):
         self.mock_storage.save_request.assert_called_once_with(self.handler, self.body)
 
     def test_ignores_options_method_by_default(self):
-        self.handler.method = 'OPTIONS'
+        self.handler.command = 'OPTIONS'
         self.handler.request_handler(self.handler, self.body)
 
         self.assertFalse(self.mock_modifier.modify.called)
@@ -31,7 +31,7 @@ class CaptureRequestHandlerTest(TestCase):
         self.assertFalse(self.mock_storage.save_request.called)
 
     def test_ignores_no_method(self):
-        self.handler.method = 'OPTIONS'
+        self.handler.command = 'OPTIONS'
         self.handler.server.options = {'ignore_http_methods': []}
         self.handler.request_handler(self.handler, self.body)
 
@@ -46,5 +46,5 @@ class CaptureRequestHandlerTest(TestCase):
         self.handler.server.storage = self.mock_storage
         self.handler.server.options = {}
         self.handler.path = 'https://www.google.com/foo/bar?x=y'
-        self.handler.method = 'GET'
+        self.handler.command = 'GET'
         self.body = b'hello world'
