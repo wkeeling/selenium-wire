@@ -156,6 +156,10 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
             res: The response (a http.client.HTTPResponse instance) that corresponds to the request.
             res_body: The binary response body.
         """
+        if not hasattr(req, 'id'):
+            # Request was not stored
+            return
+
         log.info('Capturing response: %s %s %s', req.path, res.status, res.reason)
         self.server.storage.save_response(req.id, res, res_body)
 

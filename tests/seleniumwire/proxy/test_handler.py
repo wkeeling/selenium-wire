@@ -37,11 +37,25 @@ class CaptureRequestHandlerTest(TestCase):
 
         self.mock_storage.save_request.assert_called_once_with(self.handler, self.body)
 
+    def test_save_response_called(self):
+        res, res_body = Mock(), Mock()
+        self.handler.response_handler(self.handler, self.body, res, res_body)
+
+        self.mock_storage.save_response.assert_called_once_with('12345', res, res_body)
+
+    def test_ignores_response(self):
+        res, res_body = Mock(), Mock()
+        delattr(self.handler, 'id')
+        self.handler.response_handler(self.handler, self.body, res, res_body)
+
+        self.assertFalse(self.mock_storage.save_response.called)
+
     def setUp(self):
         CaptureRequestHandler.__init__ = Mock(return_value=None)
         self.mock_modifier, self.mock_storage = Mock(), Mock()
         self.handler = CaptureRequestHandler()
         self.handler.server = Mock()
+        self.handler.id = '12345'
         self.handler.server.modifier = self.mock_modifier
         self.handler.server.storage = self.mock_storage
         self.handler.server.options = {}
