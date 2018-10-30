@@ -49,13 +49,10 @@ class ProxyHTTPServer(ThreadingHTTPServer):
     def _sanitise_proxy_config(self, proxy_config):
         """Parse the proxy configuration into something more usable."""
         for proxy_type in ('http', 'https'):
-            try:
-                # Parse the upstream proxy URL into (scheme, user, password, hostport)
-                # for ease of access.
-                parsed = _parse_proxy(proxy_config[proxy_type])
-                proxy_config[proxy_type] = parsed
-            except KeyError:
-                pass
+            # Parse the upstream proxy URL into (scheme, user, password, hostport)
+            # for ease of access.
+            if proxy_config.get(proxy_type) is not None:
+                proxy_config[proxy_type] = _parse_proxy(proxy_config[proxy_type])
 
         if proxy_config:
             proxy_config['no_proxy'] = [host.strip() for host in proxy_config.get('no_proxy', '').split(',')
