@@ -50,3 +50,9 @@ History
 
 * Ignore OPTIONS requests by default, and allow list of methods to be configurable via the ignore_http_methods option.
 * Move default Selenium Wire request storage from system temp to user home to prevent permission collisions.
+
+0.10.0 (2018-10-30)
+-------------------
+
+* Fix issue where ignoring OPTIONS requests would trigger AttributeError
+* Allow proxy settings to be explicitly set to None
