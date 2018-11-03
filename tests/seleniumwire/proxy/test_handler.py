@@ -185,9 +185,104 @@ class AdminMixinTest(TestCase):
 
     def test_set_header_overrides(self):
         self.handler.path = 'http://seleniumwire/header_overrides'
-        self.command = 'POST'
+        self.handler.command = 'POST'
+        self.handler.headers = {
+            'Content-Length': 20
+        }
+        self.mock_rfile.read.return_value = b'{"User-Agent": "useragent"}'
 
+        self.handler.admin_handler()
 
+        self.mock_rfile.read.assert_called_once_with(20)
+        self.assertEqual(self.mock_modifier.headers, {'User-Agent': 'useragent'})
+        self.assert_response_mocks_called(
+            status=200,
+            headers=[('Content-Type', 'application/json'),
+                     ('Content-Length', 16)],
+            body=b'{"status": "ok"}'
+        )
+
+    def test_delete_header_overrides(self):
+        self.handler.path = 'http://seleniumwire/header_overrides'
+        self.handler.command = 'DELETE'
+        self.mock_modifier.headers = {'User-Agent': 'useragent'}
+
+        self.handler.admin_handler()
+
+        self.assertFalse(hasattr(self.mock_modifier, 'headers'))
+        self.assert_response_mocks_called(
+            status=200,
+            headers=[('Content-Type', 'application/json'),
+                     ('Content-Length', 16)],
+            body=b'{"status": "ok"}'
+        )
+
+    def test_get_header_overrides(self):
+        self.handler.path = 'http://seleniumwire/header_overrides'
+        self.mock_modifier.headers = {'User-Agent': 'useragent'}
+
+        self.handler.admin_handler()
+
+        self.assert_response_mocks_called(
+            status=200,
+            headers=[('Content-Type', 'application/json'),
+                     ('Content-Length', 27)],
+            body=b'{"User-Agent": "useragent"}'
+        )
+
+    def test_set_rewrite_rules(self):
+        self.handler.path = 'http://seleniumwire/rewrite_rules'
+        self.handler.command = 'POST'
+        self.handler.headers = {
+            'Content-Length': 20
+        }
+        self.mock_rfile.read.return_value = b'[["https?://)prod1.server.com(.*)", "\\\\1prod2.server.com\\\\2"]]'
+
+        self.handler.admin_handler()
+
+        self.mock_rfile.read.assert_called_once_with(20)
+        self.assertEqual(self.mock_modifier.rewrite_rules,
+                         [["https?://)prod1.server.com(.*)", r"\1prod2.server.com\2"]])
+        self.assert_response_mocks_called(
+            status=200,
+            headers=[('Content-Type', 'application/json'),
+                     ('Content-Length', 16)],
+            body=b'{"status": "ok"}'
+        )
+
+    def test_delete_rewrite_rules(self):
+        self.handler.path = 'http://seleniumwire/rewrite_rules'
+        self.handler.command = 'DELETE'
+        self.mock_modifier.rewrite_rules = [["https?://)prod1.server.com(.*)", r"\1prod2.server.com\2"]]
+
+        self.handler.admin_handler()
+
+        self.assertFalse(hasattr(self.mock_modifier, 'rewrite_rules'))
+        self.assert_response_mocks_called(
+            status=200,
+            headers=[('Content-Type', 'application/json'),
+                     ('Content-Length', 16)],
+            body=b'{"status": "ok"}'
+        )
+
+    def test_get_rewrite_rules(self):
+        self.handler.path = 'http://seleniumwire/rewrite_rules'
+        self.mock_modifier.rewrite_rules = [["https?://)prod1.server.com(.*)", r"\1prod2.server.com\2"]]
+
+        self.handler.admin_handler()
+
+        self.assert_response_mocks_called(
+            status=200,
+            headers=[('Content-Type', 'application/json'),
+                     ('Content-Length', 62)],
+            body=b'[["https?://)prod1.server.com(.*)", "\\\\1prod2.server.com\\\\2"]]'
+        )
+
+    def test_no_handler(self):
+        self.handler.path = 'http://seleniumwire/foobar'
+
+        with self.assertRaises(RuntimeError):
+            self.handler.admin_handler()
 
     def assert_response_mocks_called(self, status, headers, body):
         self.mock_send_response.assert_called_once_with(status)
@@ -202,6 +297,7 @@ class AdminMixinTest(TestCase):
         self.mock_send_response = Mock()
         self.mock_send_header = Mock()
         self.mock_end_headers = Mock()
+        self.mock_rfile = Mock()
         self.mock_wfile = Mock()
 
         self.handler = CaptureRequestHandler()
@@ -213,4 +309,5 @@ class AdminMixinTest(TestCase):
         self.handler.send_response = self.mock_send_response
         self.handler.send_header = self.mock_send_header
         self.handler.end_headers = self.mock_end_headers
+        self.handler.rfile = self.mock_rfile
         self.handler.wfile = self.mock_wfile
