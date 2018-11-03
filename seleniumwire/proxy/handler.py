@@ -112,6 +112,8 @@ class AdminMixin:
         self.send_header('Content-Type', content_type)
         self.send_header('Content-Length', len(body))
         self.end_headers()
+        if isinstance(body, str):
+            body = body.encode('utf-8')
         self.wfile.write(body)
 
 
