@@ -75,7 +75,7 @@ class AdminMixinTest(TestCase):
 
         self.handler.admin_handler()
 
-        self.mock_storage.load_requests.assert_called_once()
+        self.mock_storage.load_requests.assert_called_once_with()
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
@@ -89,7 +89,7 @@ class AdminMixinTest(TestCase):
 
         self.handler.admin_handler()
 
-        self.mock_storage.clear_requests.assert_called_once()
+        self.mock_storage.clear_requests.assert_called_once_with()
 
         self.assert_response_mocks_called(
             status=200,
@@ -104,7 +104,7 @@ class AdminMixinTest(TestCase):
 
         self.handler.admin_handler()
 
-        self.mock_storage.load_last_request.assert_called_once()
+        self.mock_storage.load_last_request.assert_called_once_with()
 
         self.assert_response_mocks_called(
             status=200,
@@ -287,7 +287,7 @@ class AdminMixinTest(TestCase):
     def assert_response_mocks_called(self, status, headers, body):
         self.mock_send_response.assert_called_once_with(status)
         self.mock_send_header.assert_has_calls([call(k, v) for k, v in headers])
-        self.mock_end_headers.assert_called_once()
+        self.mock_end_headers.assert_called_once_with()
         self.mock_wfile.write.assert_called_once_with(body)
 
     def setUp(self):
