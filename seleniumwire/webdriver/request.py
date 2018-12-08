@@ -101,7 +101,7 @@ class InspectRequestsMixin:
         The value of the rewrite rules should be a list of sublists (or tuples)
         with each sublist containing the pattern and replacement.
 
-        For example:
+        i.e:
             rewrite_rules = [
                 ('pattern', 'replacement'),
                 ('pattern', 'replacement'),
@@ -119,7 +119,7 @@ class InspectRequestsMixin:
 
 
 class Request:
-    """An HTTP request made by the browser to the server."""
+    """Represents a captured browser request."""
 
     def __init__(self, data, client):
         """Initialises a new Request object with a dictionary of data and a
@@ -164,7 +164,7 @@ class Request:
 
 
 class Response:
-    """An HTTP response returned from the server to the browser."""
+    """Represents a captured server response associated with a previous request."""
 
     def __init__(self, request_id, data, client):
         """Initialise a new Response object with a request id, a dictionary
