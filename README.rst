@@ -142,7 +142,7 @@ Browser Setup
 
 **Firefox and Chrome**
 
-No specific configuration should be necessary - everything ought to just work.
+No specific configuration should be necessary - everything should just work.
 
 You will however need to ensure that you have downloaded the `Gecko driver`_ and `Chrome driver`_ for Firefox and Chrome to be remotely controlled - the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on the system path.
 
@@ -341,7 +341,7 @@ For example, to wait for an AJAX request to return after a button is clicked:
     # Wait for the request/response to complete
     request = driver.wait_for_request('/api/products/12345/')
 
-Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action.
+* Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action.
 
 The ``wait_for_request()`` method will return the first *fully completed* request it finds that matches the supplied path. Fully completed meaning that the response must have returned. The method will wait up to 10 seconds by default but you can vary that with the ``timeout`` argument:
 
@@ -440,7 +440,7 @@ To add one or more new headers to a request, create a dictionary containing thos
 
 If a header already exists in a request it will be overwritten by the one in the dictionary. Header names are case-insensitive.
 
-To filter out one or more headers from a request, set the value of those headers as ``None``.
+To filter out one or more headers from a request, set the value of those headers to ``None``.
 
 .. code:: python
 
