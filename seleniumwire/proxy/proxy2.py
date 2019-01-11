@@ -54,7 +54,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
     cacert = join_with_script_dir('ca.crt')
     certkey = join_with_script_dir('cert.key')
     certdir = join_with_script_dir('certs/')
-    timeout = 5
+    timeout = 15
     lock = threading.Lock()
     admin_path = 'http://proxy2'
 
@@ -155,7 +155,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 req.path = "https://%s%s" % (req.headers['Host'], req.path)
             else:
                 req.path = "http://%s%s" % (req.headers['Host'], req.path)
-
         req_body_modified = self.request_handler(req, req_body)
         if req_body_modified is False:
             self.send_error(403)
@@ -175,21 +174,12 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         conn = None
         try:
             conn = self.create_connection(origin)
-            conn.request(self.command, path, req_body, dict(req.headers))
+            conn.set_debuglevel(0)
+            conn.request(self.command, path, req_body, req.headers)
             res = conn.getresponse()
-
             version_table = {10: 'HTTP/1.0', 11: 'HTTP/1.1'}
             setattr(res, 'headers', res.msg)
             setattr(res, 'response_version', version_table[res.version])
-
-            # support streaming
-            if 'Content-Length' not in res.headers and 'no-store' in res.headers.get('Cache-Control', ''):
-                self.response_handler(req, req_body, res, '')
-                setattr(res, 'headers', self.filter_headers(res.headers))
-                self.relay_streaming(res)
-                with self.lock:
-                    self.save_handler(req, req_body, res, '')
-                return
 
             res_body = res.read()
         except Exception:
@@ -229,24 +219,23 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
     def create_connection(self, origin):
         scheme, netloc = origin
-
         if origin not in self.tls.conns:
             # Attempt to connect to upstream proxy server
             proxy_config = self.server.proxy_config.get(scheme)
             if proxy_config and netloc not in self.server.proxy_config['no_proxy']:
                 proxy_type, username, password, hostport = proxy_config
+                host, port = hostport.split(':')
                 headers = {}
                 if username and password:
                     auth = '%s:%s' % (username, password)
-                    headers['Proxy-Authorization'] = 'Basic ' + base64.b64encode(auth.encode('latin-1')).decode(
-                        'latin-1')
+                    headers['Proxy-Authorization'] = 'Basic ' + base64.b64encode(auth.encode('latin-1')).decode('latin-1')
                 if proxy_type == 'https':
-                    conn = http.client.HTTPSConnection(hostport, timeout=self.timeout)
-                    conn.set_tunnel(netloc, headers=headers)
+                    conn = http.client.HTTPSConnection(host=host, port=port, timeout=self.timeout, context=ssl._create_unverified_context())
+                    conn.set_tunnel(netloc, port=443, headers=headers)
                 else:
-                    conn = http.client.HTTPConnection(hostport, timeout=self.timeout)
-
-                self.tls.conns[origin] = conn
+                    conn = http.client.HTTPConnection(host=host, port=port, timeout=self.timeout)
+                    conn.set_tunnel(netloc, port=443, headers=headers)
+                #self.tls.conns[origin] = conn
 
         if origin not in self.tls.conns:
             if scheme == 'https':
@@ -254,7 +243,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             else:
                 self.tls.conns[origin] = http.client.HTTPConnection(netloc, timeout=self.timeout)
 
-        return self.tls.conns[origin]
+        return conn
 
     def relay_streaming(self, res):
         self.send_response(res.status, res.reason)
@@ -280,8 +269,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
     def filter_headers(self, headers):
         # http://tools.ietf.org/html/rfc2616#section-13.5.1
-        hop_by_hop = ('connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailers',
-                      'transfer-encoding', 'upgrade')
+        hop_by_hop = ('connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailers', 'transfer-encoding',
+                      'upgrade', 'Proxy-Authorization')
         for k in hop_by_hop:
             del headers[k]
 
@@ -292,7 +281,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             if self.server.options.get('disable_encoding') is True:
                 permitted_encodings = ('identity', )
             else:
-                permitted_encodings = ('identity', 'gzip', 'x-gzip', 'deflate')
+                permitted_encodings = ('identity', 'gzip', 'x-gzip', 'deflate', 'br', 'compress')
 
             filtered_encodings = [x for x in re.split(r',\s*', ae) if x in permitted_encodings]
 
