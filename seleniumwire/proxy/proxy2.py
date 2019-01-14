@@ -231,6 +231,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                     headers['Proxy-Authorization'] = 'Basic ' + base64.b64encode(auth.encode('latin-1')).decode('latin-1')
                     headers['Proxy-Connection'] = 'keep-alive'
                     headers['x-lpm-session'] = session
+                    headers['Keep-Alive'] = 'max=5, timeout=120'
                 if proxy_type == 'https':
                     conn = http.client.HTTPSConnection(host=host, port=port, timeout=self.timeout, context=ssl._create_unverified_context())
                     conn.set_tunnel(netloc, port=443, headers=headers)
