@@ -61,6 +61,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         self.tls = threading.local()
         self.tls.conns = {}
+        self.close_connection = self.rfile = self.wfile = self.connection = None
+
 
         super().__init__(*args, **kwargs)
 
@@ -147,6 +149,11 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             self.admin_handler()
             return
         req = self
+        parsed_url = urllib.parse.urlparse(req.path)
+
+        if "css" in parsed_url.path or "js" in parsed_url.path:
+            return
+
         content_length = int(req.headers.get('Content-Length', 0))
         req_body = self.rfile.read(content_length) if content_length else None
 
@@ -180,7 +187,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             version_table = {10: 'HTTP/1.0', 11: 'HTTP/1.1'}
             setattr(res, 'headers', res.msg)
             setattr(res, 'response_version', version_table[res.version])
-
             res_body = res.read()
         except Exception:
             if origin in self.tls.conns:
@@ -193,7 +199,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         content_encoding = res.headers.get('Content-Encoding', 'identity')
         res_body_plain = self.decode_content_body(res_body, content_encoding)
-
         res_body_modified = self.response_handler(req, req_body, res, res_body_plain)
         if res_body_modified is False:
             self.send_error(403)
@@ -231,14 +236,12 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                     headers['Proxy-Authorization'] = 'Basic ' + base64.b64encode(auth.encode('latin-1')).decode('latin-1')
                     headers['Proxy-Connection'] = 'keep-alive'
                     headers['x-lpm-session'] = session
-                    headers['Keep-Alive'] = 'max=5, timeout=120'
                 if proxy_type == 'https':
                     conn = http.client.HTTPSConnection(host=host, port=port, timeout=self.timeout, context=ssl._create_unverified_context())
-                    conn.set_tunnel(netloc, port=443, headers=headers)
                 else:
                     conn = http.client.HTTPConnection(host=host, port=port, timeout=self.timeout)
-                    conn.set_tunnel(netloc, port=443, headers=headers)
-                #self.tls.conns[origin] = conn
+
+                conn.set_tunnel(netloc, port=443, headers=headers)
 
         if origin not in self.tls.conns:
             if scheme == 'https':
@@ -247,22 +250,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 self.tls.conns[origin] = http.client.HTTPConnection(netloc, timeout=self.timeout)
 
         return conn
-
-    def relay_streaming(self, res):
-        self.send_response(res.status, res.reason)
-        for header, val in res.headers.items():
-            self.send_header(header, val)
-        self.end_headers()
-        try:
-            while True:
-                chunk = res.read(8192)
-                if not chunk:
-                    break
-                self.wfile.write(chunk)
-            self.wfile.flush()
-        except socket.error:
-            # connection closed by client
-            pass
 
     do_HEAD = do_GET
     do_POST = do_GET
