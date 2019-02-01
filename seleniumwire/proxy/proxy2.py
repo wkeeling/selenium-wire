@@ -229,13 +229,12 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             proxy_config = self.server.proxy_config.get(scheme)
             if proxy_config and netloc not in self.server.proxy_config['no_proxy']:
                 proxy_type, username, password, hostport = proxy_config
-                host, port, session = hostport.split(':')
+                host, port = hostport.split(':')
                 headers = {}
                 if username and password:
                     auth = '%s:%s' % (username, password)
                     headers['Proxy-Authorization'] = 'Basic ' + base64.b64encode(auth.encode('latin-1')).decode('latin-1')
                     headers['Proxy-Connection'] = 'keep-alive'
-                    headers['x-lpm-session'] = session
                 if proxy_type == 'https':
                     conn = http.client.HTTPSConnection(host=host, port=port, timeout=self.timeout, context=ssl._create_unverified_context())
                 else:
