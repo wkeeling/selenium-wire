@@ -525,6 +525,9 @@ Other options that can be passed to Selenium Wire via the ``seleniumwire_options
 ``disable_encoding``
     Whether to disable content encoding. When set to ``True``, the ``Accept-Encoding`` header will be set to ``identity`` for all requests. This tells the server to not compress/modify the response. Default is ``False``.
 
+``ssl_verify``
+    If it's `False` ignore the certificate check on request.  Allow self signed certificate on development servers. 
+
 Limitations
 ~~~~~~~~~~~
 

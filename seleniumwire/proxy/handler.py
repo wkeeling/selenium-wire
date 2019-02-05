@@ -123,6 +123,7 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
     """
 
     def do_GET(self):
+        self.check_ssl = self.server.options.get('ssl_verify', True)
         try:
             super().do_GET()
         except (socket.timeout, BrokenPipeError) as e:
