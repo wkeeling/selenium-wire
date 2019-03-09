@@ -1,3 +1,5 @@
+import base64
+import http.client
 import logging
 import os
 import pkgutil
@@ -6,6 +8,53 @@ import threading
 from urllib.parse import urlsplit
 
 log = logging.getLogger(__name__)
+
+
+class ProxyAuthorization:
+
+    @property
+    def authorization_headers(self):
+        headers = {}
+        if self.proxy_username and self.proxy_password:
+            auth = '%s:%s' % (self.proxy_username, self.proxy_password)
+            headers['Proxy-Authorization'] = 'Basic ' + base64.b64encode(auth.encode('latin-1')).decode(
+                'latin-1')
+        return headers
+
+
+class ProxyAwareHTTPConnection(ProxyAuthorization, http.client.HTTPConnection):
+
+    def __init__(self, proxy_config, host, *args, **kwargs):
+        self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config
+        self.proxied = proxy_config and host not in proxy_config['no_proxy']
+        self.host = host
+
+        if self.proxied:
+            super().__init__(self.proxy_host, *args, **kwargs)
+        else:
+            super().__init__(host, *args, **kwargs)
+
+    def request(self, method, url, body=None, headers={}, *, encode_chunked=False):
+        if self.proxied:
+            if not url.startswith('http'):
+                url = 'http://{}{}'.format(self.host, url)
+            headers.update(self.authorization_headers)
+
+        super().request(method, url, body, headers, encode_chunked=encode_chunked)
+
+
+class ProxyAwareHTTPSConnection(ProxyAuthorization, http.client.HTTPSConnection):
+
+    def __init__(self, proxy_config, host, *args, **kwargs):
+        self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config
+        self.proxied = proxy_config and host not in proxy_config['no_proxy']
+        self.host = host
+
+        if self.proxied:
+            super().__init__(self.proxy_host, *args, **kwargs)
+            self.set_tunnel(host, headers=self.authorization_headers)
+        else:
+            super().__init__(host, *args, **kwargs)
 
 
 class RequestModifier:

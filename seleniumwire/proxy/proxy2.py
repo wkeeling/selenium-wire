@@ -27,6 +27,8 @@ from io import BytesIO
 from socketserver import ThreadingMixIn
 from subprocess import PIPE, Popen
 
+from .util import ProxyAwareHTTPConnection, ProxyAwareHTTPSConnection
+
 
 def with_color(c, s):
     return "\x1b[%dm%s\x1b[0m" % (c, s)
@@ -229,30 +231,13 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
     def create_connection(self, origin):
         scheme, netloc = origin
-
-        if origin not in self.tls.conns:
-            # Attempt to connect to upstream proxy server
-            proxy_config = self.server.proxy_config.get(scheme)
-            if proxy_config and netloc not in self.server.proxy_config['no_proxy']:
-                proxy_type, username, password, hostport = proxy_config
-                headers = {}
-                if username and password:
-                    auth = '%s:%s' % (username, password)
-                    headers['Proxy-Authorization'] = 'Basic ' + base64.b64encode(auth.encode('latin-1')).decode(
-                        'latin-1')
-                if proxy_type == 'https':
-                    conn = http.client.HTTPSConnection(hostport, timeout=self.timeout)
-                    conn.set_tunnel(netloc, headers=headers)
-                else:
-                    conn = http.client.HTTPConnection(hostport, timeout=self.timeout)
-
-                self.tls.conns[origin] = conn
+        proxy_config = self.server.proxy_config.get(scheme)
 
         if origin not in self.tls.conns:
             if scheme == 'https':
-                self.tls.conns[origin] = http.client.HTTPSConnection(netloc, timeout=self.timeout)
+                self.tls.conns[origin] = ProxyAwareHTTPSConnection(proxy_config, netloc, timeout=self.timeout)
             else:
-                self.tls.conns[origin] = http.client.HTTPConnection(netloc, timeout=self.timeout)
+                self.tls.conns[origin] = ProxyAwareHTTPConnection(proxy_config, netloc, timeout=self.timeout)
 
         return self.tls.conns[origin]
 
