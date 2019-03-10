@@ -96,6 +96,15 @@ class AdminClientIntegrationTest(TestCase):
         self.assertIsInstance(body, bytes)
         self.assertIn(b'html', body)
 
+    def test_get_response_body_json(self):
+        self._make_request('https://radiopaedia.org/api/v1/countries/current')
+        last_request = self.client.get_last_request()
+
+        body = self.client.get_response_body(last_request['id'])
+
+        self.assertIsInstance(body, bytes)
+        self.assertIn(b'United Kingdom', body)
+
     def test_get_response_body_binary(self):
         self._make_request('https://www.python.org/static/img/python-logo@2x.png')
         last_request = self.client.get_last_request()

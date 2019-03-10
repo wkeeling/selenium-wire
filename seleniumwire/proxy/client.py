@@ -204,9 +204,11 @@ class AdminClient:
 
             data = response.read()
             try:
-                return json.loads(data.decode(encoding='utf-8'))
+                if response.getheader('Content-Type') == 'application/json':
+                    data = json.loads(data.decode(encoding='utf-8'))
             except (UnicodeDecodeError, ValueError):
-                return data
+                pass
+            return data
         except ProxyException:
             raise
         except Exception as e:
