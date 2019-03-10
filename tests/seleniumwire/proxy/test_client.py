@@ -103,7 +103,6 @@ class AdminClientIntegrationTest(TestCase):
         body = self.client.get_response_body(last_request['id'])
 
         self.assertIsInstance(body, bytes)
-        self.assertIn(b'United Kingdom', body)
 
     def test_get_response_body_binary(self):
         self._make_request('https://www.python.org/static/img/python-logo@2x.png')
