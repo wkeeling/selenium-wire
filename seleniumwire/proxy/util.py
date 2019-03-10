@@ -10,19 +10,15 @@ from urllib.parse import urlsplit
 log = logging.getLogger(__name__)
 
 
-class ProxyAuthorization:
-
-    @property
-    def authorization_headers(self):
-        headers = {}
-        if self.proxy_username and self.proxy_password:
-            auth = '%s:%s' % (self.proxy_username, self.proxy_password)
-            headers['Proxy-Authorization'] = 'Basic ' + base64.b64encode(auth.encode('latin-1')).decode(
-                'latin-1')
-        return headers
+def proxy_auth_headers(proxy_username, proxy_password):
+    headers = {}
+    if proxy_username and proxy_password:
+        auth = '{}:{}'.format(proxy_username, proxy_password)
+        headers['Proxy-Authorization'] = 'Basic {}'.format(base64.b64encode(auth.encode('latin-1')).decode('latin-1'))
+    return headers
 
 
-class ProxyAwareHTTPConnection(ProxyAuthorization, http.client.HTTPConnection):
+class ProxyAwareHTTPConnection(http.client.HTTPConnection):
 
     def __init__(self, proxy_config, netloc, *args, **kwargs):
         self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config.get('http')
@@ -38,19 +34,19 @@ class ProxyAwareHTTPConnection(ProxyAuthorization, http.client.HTTPConnection):
         if self.proxied:
             if not url.startswith('http'):
                 url = 'http://{}{}'.format(self.netloc, url)
-            headers.update(self.authorization_headers)
+            headers.update(proxy_auth_headers(self.proxy_username, self.proxy_password))
 
         super().request(method, url, body, headers, encode_chunked=encode_chunked)
 
 
-class ProxyAwareHTTPSConnection(ProxyAuthorization, http.client.HTTPSConnection):
+class ProxyAwareHTTPSConnection(http.client.HTTPSConnection):
 
     def __init__(self, proxy_config, netloc, *args, **kwargs):
         self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config.get('https')
 
         if proxy_config and netloc not in proxy_config['no_proxy']:
             super().__init__(self.proxy_host, *args, **kwargs)
-            self.set_tunnel(netloc, headers=self.authorization_headers)
+            self.set_tunnel(netloc, headers=proxy_auth_headers(self.proxy_username, self.proxy_password))
         else:
             super().__init__(netloc, *args, **kwargs)
 
