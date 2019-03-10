@@ -231,9 +231,9 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
     def create_connection(self, origin):
         scheme, netloc = origin
-        proxy_config = self.server.proxy_config.get(scheme)
 
         if origin not in self.tls.conns:
+            proxy_config = self.server.proxy_config
             if scheme == 'https':
                 self.tls.conns[origin] = ProxyAwareHTTPSConnection(proxy_config, netloc, timeout=self.timeout)
             else:

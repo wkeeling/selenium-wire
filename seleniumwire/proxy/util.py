@@ -24,20 +24,20 @@ class ProxyAuthorization:
 
 class ProxyAwareHTTPConnection(ProxyAuthorization, http.client.HTTPConnection):
 
-    def __init__(self, proxy_config, host, *args, **kwargs):
-        self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config
-        self.proxied = proxy_config and host not in proxy_config['no_proxy']
-        self.host = host
+    def __init__(self, proxy_config, netloc, *args, **kwargs):
+        self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config.get('http')
+        self.proxied = proxy_config and netloc not in proxy_config['no_proxy']
+        self.netloc = netloc
 
         if self.proxied:
             super().__init__(self.proxy_host, *args, **kwargs)
         else:
-            super().__init__(host, *args, **kwargs)
+            super().__init__(netloc, *args, **kwargs)
 
     def request(self, method, url, body=None, headers={}, *, encode_chunked=False):
         if self.proxied:
             if not url.startswith('http'):
-                url = 'http://{}{}'.format(self.host, url)
+                url = 'http://{}{}'.format(self.netloc, url)
             headers.update(self.authorization_headers)
 
         super().request(method, url, body, headers, encode_chunked=encode_chunked)
@@ -45,16 +45,14 @@ class ProxyAwareHTTPConnection(ProxyAuthorization, http.client.HTTPConnection):
 
 class ProxyAwareHTTPSConnection(ProxyAuthorization, http.client.HTTPSConnection):
 
-    def __init__(self, proxy_config, host, *args, **kwargs):
-        self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config
-        self.proxied = proxy_config and host not in proxy_config['no_proxy']
-        self.host = host
+    def __init__(self, proxy_config, netloc, *args, **kwargs):
+        self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config.get('https')
 
-        if self.proxied:
+        if proxy_config and netloc not in proxy_config['no_proxy']:
             super().__init__(self.proxy_host, *args, **kwargs)
-            self.set_tunnel(host, headers=self.authorization_headers)
+            self.set_tunnel(netloc, headers=self.authorization_headers)
         else:
-            super().__init__(host, *args, **kwargs)
+            super().__init__(netloc, *args, **kwargs)
 
 
 class RequestModifier:
