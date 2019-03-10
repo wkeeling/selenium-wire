@@ -1,6 +1,12 @@
 History
 ~~~~~~~
 
+1.0.2 (2019-03-10)
+------------------
+
+* Support for authentication when using http based proxies.
+* Fix bug where JSON response bodies were being decoded rather than being sent through as bytes.
+
 1.0.1 (2019-02-07)
 ------------------
 
