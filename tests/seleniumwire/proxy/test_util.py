@@ -165,7 +165,7 @@ class ProxyAwareHTTPConnectionTest(TestCase):
 
         mock_request.assert_called_once_with(
             'GET', 'http://example.com/foobar', None,
-            headers={'Proxy-Authorization': 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='}, encode_chunked=False
+            headers={'Proxy-Authorization': 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='}
         )
 
     @patch('seleniumwire.proxy.util.HTTPConnection.request')
@@ -176,7 +176,7 @@ class ProxyAwareHTTPConnectionTest(TestCase):
         conn.request('GET', '/foobar')
 
         mock_request.assert_called_once_with(
-            'GET', '/foobar', None, headers={}, encode_chunked=False
+            'GET', '/foobar', None, headers={}
         )
 
     def setUp(self):

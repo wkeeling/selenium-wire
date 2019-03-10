@@ -43,7 +43,7 @@ class ProxyAwareHTTPConnection(HTTPConnection):
         else:
             super().__init__(netloc, *args, **kwargs)
 
-    def request(self, method, url, body=None, headers=None, *, encode_chunked=False):
+    def request(self, method, url, body=None, headers=None, **kwargs):
         if headers is None:
             headers = {}
 
@@ -52,11 +52,7 @@ class ProxyAwareHTTPConnection(HTTPConnection):
                 url = 'http://{}{}'.format(self.netloc, url)
             headers.update(proxy_auth_headers(self.proxy_username, self.proxy_password))
 
-        try:
-            super().request(method, url, body, headers=headers, encode_chunked=encode_chunked)
-        except TypeError:
-            # Python 3.4/3.5
-            super().request(method, url, body, headers=headers)
+        super().request(method, url, body, headers=headers)
 
 
 class ProxyAwareHTTPSConnection(HTTPSConnection):
