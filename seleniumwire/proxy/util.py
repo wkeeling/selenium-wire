@@ -52,7 +52,11 @@ class ProxyAwareHTTPConnection(HTTPConnection):
                 url = 'http://{}{}'.format(self.netloc, url)
             headers.update(proxy_auth_headers(self.proxy_username, self.proxy_password))
 
-        super().request(method, url, body, headers=headers, encode_chunked=encode_chunked)
+        try:
+            super().request(method, url, body, headers=headers, encode_chunked=encode_chunked)
+        except TypeError:
+            # Python 3.4/3.5
+            super().request(method, url, body, headers=headers)
 
 
 class ProxyAwareHTTPSConnection(HTTPSConnection):
