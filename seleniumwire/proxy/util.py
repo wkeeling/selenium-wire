@@ -43,7 +43,7 @@ class ProxyAwareHTTPConnection(HTTPConnection):
         else:
             super().__init__(netloc, *args, **kwargs)
 
-    def request(self, method, url, body=None, headers=None, **kwargs):
+    def request(self, method, url, body=None, headers=None, *, encode_chunked=False):
         if headers is None:
             headers = {}
 
