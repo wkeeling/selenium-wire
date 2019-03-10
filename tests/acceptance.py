@@ -22,30 +22,8 @@ class BrowserIntegrationTest(TestCase):
         driver.quit()
 
     def test_chrome_can_access_requests(self):
-        options = webdriver.ChromeOptions()
-        options.add_argument('--no-sandbox')
-        options.add_argument(
-            "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36")
-        options.add_argument("--disable-default-apps")
-        options.add_argument("--lang=en,en-US")
-
-        # PROXY = "111.222.33.44:1234"
-        #
-        # options.add_argument('--proxy-server=%s' % PROXY)
-
-        chrome_driver = "/usr/local/bin/chromedriver"
-
-        options.add_argument("user-data-dir=/tmp/chromedata")
-
-        seleniumwire_options = {
-            'proxy': {
-                'http': 'http://111.222.33.44:1234',
-                'https': 'https://111.222.33.44:1234',
-            }
-        }
-
         url = 'https://www.wikipedia.org/'
-        driver = webdriver.Chrome(chrome_options=options, seleniumwire_options=seleniumwire_options, executable_path=chrome_driver)
+        driver = webdriver.Chrome()
         driver.get(url)
 
         request = driver.wait_for_request(url)
