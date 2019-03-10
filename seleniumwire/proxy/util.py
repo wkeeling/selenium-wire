@@ -1,11 +1,74 @@
+import base64
 import logging
 import os
 import pkgutil
 import re
 import threading
+from http.client import HTTPConnection, HTTPSConnection
 from urllib.parse import urlsplit
 
 log = logging.getLogger(__name__)
+
+
+def proxy_auth_headers(proxy_username, proxy_password):
+    """Create the Proxy-Authorization header based on the supplied username
+    and password, provided both are set.
+
+    Args:
+        proxy_username: The proxy username.
+        proxy_password: The proxy password.
+    Returns:
+        A dictionary containing the Proxy-Authorization header or an empty
+        dictionary if the username or password were not set.
+    """
+    headers = {}
+    if proxy_username and proxy_password:
+        auth = '{}:{}'.format(proxy_username, proxy_password)
+        headers['Proxy-Authorization'] = 'Basic {}'.format(base64.b64encode(auth.encode('latin-1')).decode('latin-1'))
+    return headers
+
+
+class ProxyAwareHTTPConnection(HTTPConnection):
+    """A specialised HTTPConnection that will transparently connect to a
+    proxy server based on supplied proxy configuration.
+    """
+
+    def __init__(self, proxy_config, netloc, *args, **kwargs):
+        self.netloc = netloc
+        self.proxied = proxy_config and netloc not in proxy_config['no_proxy']
+
+        if self.proxied:
+            self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config.get('http')
+            super().__init__(self.proxy_host, *args, **kwargs)
+        else:
+            super().__init__(netloc, *args, **kwargs)
+
+    def request(self, method, url, body=None, headers=None, **kwargs):
+        if headers is None:
+            headers = {}
+
+        if self.proxied:
+            if not url.startswith('http'):
+                url = 'http://{}{}'.format(self.netloc, url)
+            headers.update(proxy_auth_headers(self.proxy_username, self.proxy_password))
+
+        super().request(method, url, body, headers=headers)
+
+
+class ProxyAwareHTTPSConnection(HTTPSConnection):
+    """A specialised HTTPSConnection that will transparently connect to a
+    proxy server based on supplied proxy configuration.
+    """
+
+    def __init__(self, proxy_config, netloc, *args, **kwargs):
+        self.proxied = proxy_config and netloc not in proxy_config['no_proxy']
+
+        if self.proxied:
+            self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config.get('https')
+            super().__init__(self.proxy_host, *args, **kwargs)
+            self.set_tunnel(netloc, headers=proxy_auth_headers(self.proxy_username, self.proxy_password))
+        else:
+            super().__init__(netloc, *args, **kwargs)
 
 
 class RequestModifier:
