@@ -1,10 +1,10 @@
 import base64
-import http.client
 import logging
 import os
 import pkgutil
 import re
 import threading
+from http.client import HTTPConnection, HTTPSConnection
 from urllib.parse import urlsplit
 
 log = logging.getLogger(__name__)
@@ -28,39 +28,43 @@ def proxy_auth_headers(proxy_username, proxy_password):
     return headers
 
 
-class ProxyAwareHTTPConnection(http.client.HTTPConnection):
+class ProxyAwareHTTPConnection(HTTPConnection):
     """A specialised HTTPConnection that will transparently connect to a
     proxy server based on supplied proxy configuration.
     """
 
     def __init__(self, proxy_config, netloc, *args, **kwargs):
-        self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config.get('http')
-        self.proxied = proxy_config and netloc not in proxy_config['no_proxy']
         self.netloc = netloc
+        self.proxied = proxy_config and netloc not in proxy_config['no_proxy']
 
         if self.proxied:
+            self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config.get('http')
             super().__init__(self.proxy_host, *args, **kwargs)
         else:
             super().__init__(netloc, *args, **kwargs)
 
-    def request(self, method, url, body=None, headers={}, *, encode_chunked=False):
+    def request(self, method, url, body=None, headers=None, *, encode_chunked=False):
+        if headers is None:
+            headers = {}
+
         if self.proxied:
             if not url.startswith('http'):
                 url = 'http://{}{}'.format(self.netloc, url)
             headers.update(proxy_auth_headers(self.proxy_username, self.proxy_password))
 
-        super().request(method, url, body, headers, encode_chunked=encode_chunked)
+        super().request(method, url, body, headers=headers, encode_chunked=encode_chunked)
 
 
-class ProxyAwareHTTPSConnection(http.client.HTTPSConnection):
+class ProxyAwareHTTPSConnection(HTTPSConnection):
     """A specialised HTTPSConnection that will transparently connect to a
     proxy server based on supplied proxy configuration.
     """
 
     def __init__(self, proxy_config, netloc, *args, **kwargs):
-        self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config.get('https')
+        self.proxied = proxy_config and netloc not in proxy_config['no_proxy']
 
-        if proxy_config and netloc not in proxy_config['no_proxy']:
+        if self.proxied:
+            self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config.get('https')
             super().__init__(self.proxy_host, *args, **kwargs)
             self.set_tunnel(netloc, headers=proxy_auth_headers(self.proxy_username, self.proxy_password))
         else:
