@@ -11,6 +11,16 @@ log = logging.getLogger(__name__)
 
 
 def proxy_auth_headers(proxy_username, proxy_password):
+    """Create the Proxy-Authorization header based on the supplied username
+    and password, provided both are set.
+
+    Args:
+        proxy_username: The proxy username.
+        proxy_password: The proxy password.
+    Returns:
+        A dictionary containing the Proxy-Authorization header or an empty
+        dictionary if the username or password were not set.
+    """
     headers = {}
     if proxy_username and proxy_password:
         auth = '{}:{}'.format(proxy_username, proxy_password)
@@ -19,6 +29,9 @@ def proxy_auth_headers(proxy_username, proxy_password):
 
 
 class ProxyAwareHTTPConnection(http.client.HTTPConnection):
+    """A specialised HTTPConnection that will transparently connect to a
+    proxy server based on supplied proxy configuration.
+    """
 
     def __init__(self, proxy_config, netloc, *args, **kwargs):
         self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config.get('http')
@@ -40,6 +53,9 @@ class ProxyAwareHTTPConnection(http.client.HTTPConnection):
 
 
 class ProxyAwareHTTPSConnection(http.client.HTTPSConnection):
+    """A specialised HTTPSConnection that will transparently connect to a
+    proxy server based on supplied proxy configuration.
+    """
 
     def __init__(self, proxy_config, netloc, *args, **kwargs):
         self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config.get('https')
