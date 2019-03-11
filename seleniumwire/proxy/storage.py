@@ -43,9 +43,9 @@ class RequestStorage:
         self._lock = threading.Lock()
 
         # Register shutdown hooks for cleaning up stored requests
-        atexit.register(self._cleanup)
-        signal.signal(signal.SIGTERM, self._cleanup)
-        signal.signal(signal.SIGINT, self._cleanup)
+        atexit.register(lambda *_: self._cleanup())
+        signal.signal(signal.SIGTERM, lambda *_: self._cleanup())
+        signal.signal(signal.SIGINT, lambda *_: self._cleanup())
 
     def save_request(self, request, request_body=None):
         """Saves the request (a BaseHTTPRequestHandler instance) to storage, and optionally
@@ -283,11 +283,13 @@ class RequestStorage:
     def _get_request_dir(self, request_id):
         return os.path.join(self._storage_dir, 'request-{}'.format(request_id))
 
-    def _cleanup(self, *_):
-        """Removes the storage directory and if it is the only storage
-        directory, also removes the top level parent directory.
+    def _cleanup(self):
+        """Removes all stored requests, the storage directory containing those
+        requests, and if that is the only storage directory, also removes the
+        top level parent directory.
         """
         log.debug('Cleaning up %s', self._storage_dir)
+        self.clear_requests()
         shutil.rmtree(self._storage_dir, ignore_errors=True)
         try:
             # Attempt to remove the parent folder if it is empty
