@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 
 
 def proxy_auth_headers(proxy_username, proxy_password):
-    """Create the Proxy-Authorization header based on the supplied username
+    """Creates the Proxy-Authorization header based on the supplied username
     and password, provided both are set.
 
     Args:
