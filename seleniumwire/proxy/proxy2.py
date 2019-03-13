@@ -7,10 +7,8 @@
 #
 #
 
-import base64
 import gzip
 import html
-import http.client
 import json
 import os
 import re
