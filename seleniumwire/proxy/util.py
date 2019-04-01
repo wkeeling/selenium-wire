@@ -24,7 +24,7 @@ def proxy_auth_headers(proxy_username, proxy_password):
     headers = {}
     if proxy_username and proxy_password:
         auth = '{}:{}'.format(proxy_username, proxy_password)
-        headers['Proxy-Authorization'] = 'Basic {}'.format(base64.b64encode(auth.encode('latin-1')).decode('latin-1'))
+        headers['Proxy-Authorization'] = 'Basic {}'.format(base64.b64encode(auth.encode('utf-8')).decode('utf-8'))
     return headers
 
 
