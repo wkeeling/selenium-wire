@@ -1,6 +1,12 @@
 History
 ~~~~~~~
 
+1.0.3 (2019-04-01)
+------------------
+
+* Responses are no longer sent chunk by chunk where they are missing a Content-Type header.
+* Ensure delayed responses don't cause errors when server is not explicitly shutdown.
+
 1.0.2 (2019-03-10)
 ------------------
 
