@@ -182,15 +182,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             setattr(res, 'headers', res.msg)
             setattr(res, 'response_version', version_table[res.version])
 
-            # support streaming
-            if 'Content-Length' not in res.headers and 'no-store' in res.headers.get('Cache-Control', ''):
-                self.response_handler(req, req_body, res, '')
-                setattr(res, 'headers', self.filter_headers(res.headers))
-                self.relay_streaming(res)
-                with self.lock:
-                    self.save_handler(req, req_body, res, '')
-                return
-
             res_body = res.read()
         except Exception:
             if origin in self.tls.conns:
@@ -238,22 +229,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 self.tls.conns[origin] = ProxyAwareHTTPConnection(proxy_config, netloc, timeout=self.timeout)
 
         return self.tls.conns[origin]
-
-    def relay_streaming(self, res):
-        self.send_response(res.status, res.reason)
-        for header, val in res.headers.items():
-            self.send_header(header, val)
-        self.end_headers()
-        try:
-            while True:
-                chunk = res.read(8192)
-                if not chunk:
-                    break
-                self.wfile.write(chunk)
-            self.wfile.flush()
-        except socket.error:
-            # connection closed by client
-            pass
 
     do_HEAD = do_GET
     do_POST = do_GET
