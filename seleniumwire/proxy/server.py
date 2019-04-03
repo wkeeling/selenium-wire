@@ -62,4 +62,4 @@ class ProxyHTTPServer(ThreadingHTTPServer):
 
     def shutdown(self):
         super().shutdown()
-        self.storage.clear_requests()
+        self.storage.cleanup()
