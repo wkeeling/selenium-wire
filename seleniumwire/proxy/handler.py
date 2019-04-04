@@ -122,13 +122,17 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
     that pass through the proxy server and allows admin clients to access that data.
     """
 
-    def do_GET(self):
+    def __init__(self, *args, **kwargs):
         try:
-            super().do_GET()
-        except (socket.timeout, BrokenPipeError) as e:
-            # Log tracebacks at debug level to prevent these often harmless
-            # exceptions from alarming users.
-            log.debug(e, exc_info=True)
+            super().__init__(*args, **kwargs)
+        except (ConnectionError, socket.timeout, FileNotFoundError) as e:
+            # Suppress connectivity related tracebacks to prevent these normally
+            # harmless exceptions from alarming users. These exceptions can often
+            # occur during server shutdown.
+            if self.server.options.get('suppress_connection_errors', True):
+                log.debug(str(e))
+            else:
+                raise e
 
     def request_handler(self, req, req_body):
         """Captures a request and its body.

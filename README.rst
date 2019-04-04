@@ -525,6 +525,23 @@ Other options that can be passed to Selenium Wire via the ``seleniumwire_options
 ``disable_encoding``
     Whether to disable content encoding. When set to ``True``, the ``Accept-Encoding`` header will be set to ``identity`` for all requests. This tells the server to not compress/modify the response. Default is ``False``.
 
+.. code:: python
+
+    options = {
+        'disable_encoding': True  # Tell the server not to compress the response
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``suppress_connection_errors``
+    Whether to suppress connection related tracebacks. The default is ``True`` so that harmless errors that commonly occur at browser shutdown do not alarm users. When suppressed, the connection error message is logged at DEBUG level without a traceback. Set to ``False`` to allow exception propagation and see full tracebacks.
+
+.. code:: python
+
+    options = {
+        'suppress_connection_errors': False  # Show full tracebacks for any connection errors
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
 Limitations
 ~~~~~~~~~~~
 
