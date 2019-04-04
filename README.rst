@@ -525,6 +525,13 @@ Other options that can be passed to Selenium Wire via the ``seleniumwire_options
 ``disable_encoding``
     Whether to disable content encoding. When set to ``True``, the ``Accept-Encoding`` header will be set to ``identity`` for all requests. This tells the server to not compress/modify the response. Default is ``False``.
 
+.. code:: python
+
+    options = {
+        'disable_encoding': True  # Tell the server not to compress the response
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
 Limitations
 ~~~~~~~~~~~
 
