@@ -1,6 +1,12 @@
 History
 ~~~~~~~
 
+1.0.4 (2019-04-04)
+------------------
+
+* Clean up cached request directory tree on driver.quit().
+* Suppress connection related errors by default.
+
 1.0.3 (2019-04-01)
 ------------------
 
