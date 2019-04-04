@@ -21,7 +21,7 @@ class RequestStorageTest(TestCase):
 
     def test_cleanup_removes_storage(self):
         storage = RequestStorage(base_dir=self.base_dir)
-        storage._cleanup()
+        storage.cleanup()
 
         # The 'seleniumwire' parent folder should have been cleaned up
         # when there is nothing left inside of it.
@@ -31,7 +31,7 @@ class RequestStorageTest(TestCase):
         # There is an existing storage folder
         os.makedirs(os.path.join(self.base_dir, '.seleniumwire', 'teststorage'))
         storage = RequestStorage(base_dir=self.base_dir)
-        storage._cleanup()
+        storage.cleanup()
 
         # The existing storage folder is not cleaned up
         self.assertEqual(len(os.listdir(self.base_dir)), 1)

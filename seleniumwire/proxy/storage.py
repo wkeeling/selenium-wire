@@ -43,9 +43,9 @@ class RequestStorage:
         self._lock = threading.Lock()
 
         # Register shutdown hooks for cleaning up stored requests
-        atexit.register(lambda *_: self._cleanup())
-        signal.signal(signal.SIGTERM, lambda *_: self._cleanup())
-        signal.signal(signal.SIGINT, lambda *_: self._cleanup())
+        atexit.register(lambda *_: self.cleanup())
+        signal.signal(signal.SIGTERM, lambda *_: self.cleanup())
+        signal.signal(signal.SIGINT, lambda *_: self.cleanup())
 
     def save_request(self, request, request_body=None):
         """Saves the request (a BaseHTTPRequestHandler instance) to storage, and optionally
@@ -283,7 +283,7 @@ class RequestStorage:
     def _get_request_dir(self, request_id):
         return os.path.join(self._storage_dir, 'request-{}'.format(request_id))
 
-    def _cleanup(self):
+    def cleanup(self):
         """Removes all stored requests, the storage directory containing those
         requests, and if that is the only storage directory, also removes the
         top level parent directory.
