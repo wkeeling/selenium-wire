@@ -533,7 +533,7 @@ Other options that can be passed to Selenium Wire via the ``seleniumwire_options
     driver = webdriver.Firefox(seleniumwire_options=options)
 
 ``suppress_connection_errors``
-    Whether to suppress connection related tracebacks. The default is ``True`` so that harmless errors that commonly occur at browser shutdown do not alarm users. When suppressed, the connection error message is logged at DEBUG level without a traceback. Set to False to allow exception propagation and see full tracebacks.
+    Whether to suppress connection related tracebacks. The default is ``True`` so that harmless errors that commonly occur at browser shutdown do not alarm users. When suppressed, the connection error message is logged at DEBUG level without a traceback. Set to ``False`` to allow exception propagation and see full tracebacks.
 
 .. code:: python
 
