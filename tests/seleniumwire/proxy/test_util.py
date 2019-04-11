@@ -138,28 +138,28 @@ class RequestModifierTest(TestCase):
 class ProxyAwareHTTPConnectionTest(TestCase):
 
     def test_is_proxied(self):
-        conn = ProxyAwareHTTPConnection(self.config, 'example.com')
+        conn = ProxyAwareHTTPConnection(self.config, None, 'example.com')
 
         self.assertTrue(conn.proxied)
         self.assertEqual(conn.host, 'host')
 
     def test_is_not_proxied_when_no_proxy(self):
         self.config['no_proxy'] += ',example.com'
-        conn = ProxyAwareHTTPConnection(self.config, 'example.com')
+        conn = ProxyAwareHTTPConnection(self.config, None, 'example.com')
 
         self.assertFalse(conn.proxied)
         self.assertEqual(conn.host, 'example.com')
 
     def test_is_not_proxied_when_no_config(self):
         self.config = {}
-        conn = ProxyAwareHTTPConnection(self.config, 'example.com')
+        conn = ProxyAwareHTTPConnection(self.config, None, 'example.com')
 
         self.assertFalse(conn.proxied)
         self.assertEqual(conn.host, 'example.com')
 
     @patch('seleniumwire.proxy.util.HTTPConnection.request')
     def test_request_uses_absolute_url(self, mock_request):
-        conn = ProxyAwareHTTPConnection(self.config, 'example.com')
+        conn = ProxyAwareHTTPConnection(self.config, None, 'example.com')
         conn._create_connection = Mock()
         conn.request('GET', '/foobar')
 
@@ -171,7 +171,7 @@ class ProxyAwareHTTPConnectionTest(TestCase):
     @patch('seleniumwire.proxy.util.HTTPConnection.request')
     def test_request_uses_original_url_when_not_proxied(self, mock_request):
         self.config = {}
-        conn = ProxyAwareHTTPConnection(self.config, 'example.com')
+        conn = ProxyAwareHTTPConnection(self.config, None, 'example.com')
         conn._create_connection = Mock()
         conn.request('GET', '/foobar')
 
@@ -190,14 +190,14 @@ class ProxyAwareHTTPConnectionTest(TestCase):
 class ProxyAwareHTTPSConnectionTest(TestCase):
 
     def test_is_proxied(self):
-        conn = ProxyAwareHTTPSConnection(self.config, 'example.com')
+        conn = ProxyAwareHTTPSConnection(self.config, None, 'example.com')
 
         self.assertTrue(conn.proxied)
         self.assertEqual(conn.host, 'host')
 
     @patch('seleniumwire.proxy.util.HTTPSConnection.set_tunnel')
     def test_set_tunnel_is_called(self, mock_set_tunnel):
-        ProxyAwareHTTPSConnection(self.config, 'example.com')
+        ProxyAwareHTTPSConnection(self.config, None, 'example.com')
 
         mock_set_tunnel.assert_called_once_with(
             'example.com', headers={'Proxy-Authorization': 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='}
@@ -205,14 +205,14 @@ class ProxyAwareHTTPSConnectionTest(TestCase):
 
     def test_is_not_proxied_when_no_proxy(self):
         self.config['no_proxy'] += ',example.com'
-        conn = ProxyAwareHTTPSConnection(self.config, 'example.com')
+        conn = ProxyAwareHTTPSConnection(self.config, None, 'example.com')
 
         self.assertFalse(conn.proxied)
         self.assertEqual(conn.host, 'example.com')
 
     def test_is_not_proxied_when_no_config(self):
         self.config = {}
-        conn = ProxyAwareHTTPSConnection(self.config, 'example.com')
+        conn = ProxyAwareHTTPSConnection(self.config, None, 'example.com')
 
         self.assertFalse(conn.proxied)
         self.assertEqual(conn.host, 'example.com')
@@ -220,7 +220,7 @@ class ProxyAwareHTTPSConnectionTest(TestCase):
     @patch('seleniumwire.proxy.util.HTTPSConnection.set_tunnel')
     def test_set_tunnel_is_not_called(self, mock_set_tunnel):
         self.config = {}
-        ProxyAwareHTTPSConnection(self.config, 'example.com')
+        ProxyAwareHTTPSConnection(self.config, None, 'example.com')
 
         self.assertEqual(mock_set_tunnel.call_count, 0)
 
@@ -237,23 +237,35 @@ class ProxyAuthHeadersTest(TestCase):
     def test_create_headers(self):
         username = 'username'
         password = 'password'
+        custom_proxy_authorization = None
 
-        headers = proxy_auth_headers(username, password)
+        headers = proxy_auth_headers(username, password, custom_proxy_authorization)
 
         self.assertEqual(headers, {'Proxy-Authorization': 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='})
 
     def test_does_not_create_headers_when_missing_username(self):
         username = None
         password = 'password'
+        custom_proxy_authorization = None
 
-        headers = proxy_auth_headers(username, password)
+        headers = proxy_auth_headers(username, password, custom_proxy_authorization)
 
         self.assertEqual(headers, {})
 
     def test_does_not_create_headers_when_missing_password(self):
         username = 'username'
         password = None
+        custom_proxy_authorization = None
 
-        headers = proxy_auth_headers(username, password)
+        headers = proxy_auth_headers(username, password, custom_proxy_authorization)
 
         self.assertEqual(headers, {})
+
+    def test_create_headers_when_provide_custom_proxy_authorization(self):
+        username = 'username'
+        password = None
+        custom_proxy_authorization = 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='
+
+        headers = proxy_auth_headers(username, password, custom_proxy_authorization)
+
+        self.assertEqual(headers, {'Proxy-Authorization': 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='})
