@@ -507,6 +507,21 @@ You can configure a proxy for the http and https protocols and optionally set a 
 
 The proxy configuration can also be loaded through environment variables called ``http``, ``https`` and ``no_proxy``. The proxy configuration in the options passed to the webdriver instance will take precedence over environment variable configuration if both are specified.
 
+``custom_proxy_authorization``
+    Can provide custom proxy authorization to your proxy server.
+
+.. code:: python
+
+    options = {
+        'proxy': {
+            'http': 'http://host:port',
+            'https': 'https://host:port',
+            'no_proxy': 'localhost,127.0.0.1,dev_server:8080'
+        },
+        'custom_proxy_authorization': custom_proxy_authorization_str
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
 Misc. Options
 ~~~~~~~~~~~~~
 
