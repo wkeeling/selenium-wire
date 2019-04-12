@@ -490,7 +490,7 @@ Selenium Wire captures requests by using its own proxy server under the covers. 
 
 If the site you are testing sits behind a proxy server you can tell Selenium Wire about that proxy server in the options you pass to the webdriver instance.
 
-The configuration for the proxy server should be specified as a URL in the format ``http://username:password@server:port``. The username and password are optional and can be specified when a proxy server requires authentication. Basic authentication is supported by default.
+The configuration for the proxy server should be specified as a URL in the format ``http://username:password@server:port``. The username and password are optional and can be specified when a proxy server requires authentication. Basic authentication is used by default.
 
 You can configure a proxy for the http and https protocols and optionally set a value for ``no_proxy`` - which should be a comma separated list of hostnames where the proxy should be bypassed. For example:
 
@@ -509,7 +509,7 @@ The proxy configuration can also be loaded through environment variables called 
 
 **Proxy authentication other than Basic**
 
-Basic authentication is used by default when supplying a username and password in the URL - as described above. If you are connecting to an upstream proxy server that uses an authenication scheme different to Basic, then you can supply the full value for the ``Proxy-Authorization`` header using the ``custom_authorization`` option. For example, if your proxy used the Bearer scheme:
+Basic authentication is used by default when supplying a username and password in the URL - as described above. If you are connecting to an upstream proxy server that uses an authentication scheme different to Basic, then you can supply the full value for the ``Proxy-Authorization`` header using the ``custom_authorization`` option. For example, if your proxy used the Bearer scheme:
 
 .. code:: python
 
