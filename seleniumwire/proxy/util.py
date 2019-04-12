@@ -10,21 +10,24 @@ from urllib.parse import urlsplit
 log = logging.getLogger(__name__)
 
 
-def proxy_auth_headers(proxy_username, proxy_password):
+def proxy_auth_headers(proxy_username, proxy_password, custom_proxy_authorization):
     """Creates the Proxy-Authorization header based on the supplied username
     and password, provided both are set.
 
     Args:
         proxy_username: The proxy username.
         proxy_password: The proxy password.
+        custom_proxy_authorization: The custom proxy authorization.
     Returns:
         A dictionary containing the Proxy-Authorization header or an empty
         dictionary if the username or password were not set.
     """
     headers = {}
-    if proxy_username and proxy_password:
+    if proxy_username and proxy_password and not custom_proxy_authorization:
         auth = '{}:{}'.format(proxy_username, proxy_password)
         headers['Proxy-Authorization'] = 'Basic {}'.format(base64.b64encode(auth.encode('utf-8')).decode('utf-8'))
+    elif custom_proxy_authorization:
+        headers['Proxy-Authorization'] = custom_proxy_authorization
     return headers
 
 
@@ -33,9 +36,10 @@ class ProxyAwareHTTPConnection(HTTPConnection):
     proxy server based on supplied proxy configuration.
     """
 
-    def __init__(self, proxy_config, netloc, *args, **kwargs):
+    def __init__(self, proxy_config, custom_proxy_authorization, netloc, *args, **kwargs):
         self.netloc = netloc
         self.proxied = proxy_config and netloc not in proxy_config['no_proxy']
+        self.custom_proxy_authorization = custom_proxy_authorization
 
         if self.proxied:
             self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config.get('http')
@@ -50,7 +54,7 @@ class ProxyAwareHTTPConnection(HTTPConnection):
         if self.proxied:
             if not url.startswith('http'):
                 url = 'http://{}{}'.format(self.netloc, url)
-            headers.update(proxy_auth_headers(self.proxy_username, self.proxy_password))
+            headers.update(proxy_auth_headers(self.proxy_username, self.proxy_password, self.custom_proxy_authorization))
 
         super().request(method, url, body, headers=headers)
 
@@ -60,13 +64,14 @@ class ProxyAwareHTTPSConnection(HTTPSConnection):
     proxy server based on supplied proxy configuration.
     """
 
-    def __init__(self, proxy_config, netloc, *args, **kwargs):
+    def __init__(self, proxy_config, custom_proxy_authorization, netloc, *args, **kwargs):
         self.proxied = proxy_config and netloc not in proxy_config['no_proxy']
+        self.custom_proxy_authorization = custom_proxy_authorization
 
         if self.proxied:
             self.proxy_type, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config.get('https')
             super().__init__(self.proxy_host, *args, **kwargs)
-            self.set_tunnel(netloc, headers=proxy_auth_headers(self.proxy_username, self.proxy_password))
+            self.set_tunnel(netloc, headers=proxy_auth_headers(self.proxy_username, self.proxy_password, self.custom_proxy_authorization))
         else:
             super().__init__(netloc, *args, **kwargs)
 

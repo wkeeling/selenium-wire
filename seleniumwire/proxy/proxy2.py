@@ -223,10 +223,11 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         if origin not in self.tls.conns:
             proxy_config = self.server.proxy_config
+            custom_proxy_authorization = self.server.options.get('custom_proxy_authorization', None)
             if scheme == 'https':
-                self.tls.conns[origin] = ProxyAwareHTTPSConnection(proxy_config, netloc, timeout=self.timeout)
+                self.tls.conns[origin] = ProxyAwareHTTPSConnection(proxy_config, custom_proxy_authorization, netloc, timeout=self.timeout)
             else:
-                self.tls.conns[origin] = ProxyAwareHTTPConnection(proxy_config, netloc, timeout=self.timeout)
+                self.tls.conns[origin] = ProxyAwareHTTPConnection(proxy_config, custom_proxy_authorization, netloc, timeout=self.timeout)
 
         return self.tls.conns[origin]
 
