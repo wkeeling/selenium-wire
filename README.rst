@@ -490,7 +490,7 @@ Selenium Wire captures requests by using its own proxy server under the covers. 
 
 If the site you are testing sits behind a proxy server you can tell Selenium Wire about that proxy server in the options you pass to the webdriver instance.
 
-The configuration for the proxy server should be specified as a URL in the format ``http://username:password@server:port``. The username and password are optional and can be specified when a proxy server requires authentication.
+The configuration for the proxy server should be specified as a URL in the format ``http://username:password@server:port``. The username and password are optional and can be specified when a proxy server requires authentication. Basic authentication is supported by default.
 
 You can configure a proxy for the http and https protocols and optionally set a value for ``no_proxy`` - which should be a comma separated list of hostnames where the proxy should be bypassed. For example:
 
@@ -507,8 +507,9 @@ You can configure a proxy for the http and https protocols and optionally set a 
 
 The proxy configuration can also be loaded through environment variables called ``http``, ``https`` and ``no_proxy``. The proxy configuration in the options passed to the webdriver instance will take precedence over environment variable configuration if both are specified.
 
-``custom_proxy_authorization``
-    Can provide custom proxy authorization to your proxy server.
+**Proxy authentication other than Basic**
+
+Basic authentication is used by default when supplying a username and password in the URL - as described above. If you are connecting to an upstream proxy server that uses an authenication scheme different to Basic, then you can supply the full value for the ``Proxy-Authorization`` header using the ``custom_authorization`` option. For example, if your proxy used the Bearer scheme:
 
 .. code:: python
 
@@ -516,9 +517,9 @@ The proxy configuration can also be loaded through environment variables called 
         'proxy': {
             'http': 'http://host:port',
             'https': 'https://host:port',
-            'no_proxy': 'localhost,127.0.0.1,dev_server:8080'
-        },
-        'custom_proxy_authorization': custom_proxy_authorization_str
+            'no_proxy': 'localhost,127.0.0.1,dev_server:8080',
+            'custom_authorization': 'Bearer mytoken123'  # Custom Proxy-Authorization header value
+        }
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
