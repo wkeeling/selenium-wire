@@ -7,7 +7,6 @@
 #
 #
 
-import gzip
 import html
 import json
 import os
@@ -19,9 +18,7 @@ import sys
 import threading
 import time
 import urllib.parse
-import zlib
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from io import BytesIO
 from socketserver import ThreadingMixIn
 from subprocess import PIPE, Popen
 
@@ -192,16 +189,12 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             if conn:
                 conn.close()
 
-        content_encoding = res.headers.get('Content-Encoding', 'identity')
-        res_body_plain = self.decode_content_body(res_body, content_encoding)
-
-        res_body_modified = self.response_handler(req, req_body, res, res_body_plain)
+        res_body_modified = self.response_handler(req, req_body, res, res_body)
         if res_body_modified is False:
             self.send_error(403)
             return
         elif res_body_modified is not None:
-            res_body_plain = res_body_modified
-            res_body = self.encode_content_body(res_body_plain, content_encoding)
+            res_body = res_body_modified
             res.headers['Content-Length'] = str(len(res_body))
 
         setattr(res, 'headers', self.filter_headers(res.headers))
@@ -216,7 +209,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         self.wfile.flush()
 
         with self.lock:
-            self.save_handler(req, req_body, res, res_body_plain)
+            self.save_handler(req, req_body, res, res_body_modified)
 
     def create_connection(self, origin):
         scheme, netloc = origin
@@ -263,34 +256,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             headers['Accept-Encoding'] = ', '.join(filtered_encodings)
 
         return headers
-
-    def encode_content_body(self, text, encoding):
-        if encoding != 'identity':
-            if encoding in ('gzip', 'x-gzip'):
-                io = BytesIO()
-                with gzip.GzipFile(fileobj=io, mode='wb') as f:
-                    f.write(text)
-                text = io.getvalue()
-            elif encoding == 'deflate':
-                text = zlib.compress(text)
-            else:
-                self.log_message("Unknown Content-Encoding: %s", encoding)
-        return text
-
-    def decode_content_body(self, data, encoding):
-        if encoding != 'identity':
-            if encoding in ('gzip', 'x-gzip'):
-                io = BytesIO(data)
-                with gzip.GzipFile(fileobj=io) as f:
-                    data = f.read()
-            elif encoding == 'deflate':
-                try:
-                    data = zlib.decompress(data)
-                except zlib.error:
-                    data = zlib.decompress(data, -zlib.MAX_WBITS)
-            else:
-                self.log_message("Unknown Content-Encoding: %s", encoding)
-        return data
 
     def send_cacert(self):
         with open(self.cacert, 'rb') as f:

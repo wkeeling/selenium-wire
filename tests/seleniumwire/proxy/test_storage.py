@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
 from fnmatch import fnmatch
 import glob
+import gzip
 from http.client import HTTPMessage
+from io import BytesIO
 import os
 import pickle
 import shutil
@@ -171,6 +173,21 @@ class RequestStorageTest(TestCase):
         request_id = storage.save_request(mock_request, request_body=b'test request body')
         mock_response = self._create_mock_resonse()
         storage.save_response(request_id, mock_response, response_body=b'test response body')
+
+        response_body = storage.load_response_body(request_id)
+
+        self.assertEqual(response_body, b'test response body')
+
+    def test_load_response_body_encoded(self):
+        io = BytesIO()
+        with gzip.GzipFile(fileobj=io, mode='wb') as f:
+            f.write(b'test response body')
+        mock_request = self._create_mock_request()
+        storage = RequestStorage(base_dir=self.base_dir)
+        request_id = storage.save_request(mock_request, request_body=b'test request body')
+        mock_response = self._create_mock_resonse()
+        mock_response.headers['Content-Encoding'] = 'gzip'
+        storage.save_response(request_id, mock_response, response_body=io.getvalue())
 
         response_body = storage.load_response_body(request_id)
 
