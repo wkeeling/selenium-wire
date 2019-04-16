@@ -104,7 +104,7 @@ class AdminClientIntegrationTest(TestCase):
 
         self.assertIsInstance(body, bytes)
 
-    def test_get_response_body_binary(self):
+    def test_get_response_body_image(self):
         self._make_request('https://www.python.org/static/img/python-logo@2x.png')
         last_request = self.client.get_last_request()
 
