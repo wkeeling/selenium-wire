@@ -40,7 +40,7 @@ class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     def handle_error(self, request, client_address):
         # surpress socket/ssl related errors
         cls, e = sys.exc_info()[:2]
-        if cls is socket.error or cls is ssl.SSLError:
+        if issubclass(cls, socket.error) or issubclass(cls, ssl.SSLError):
             pass
         else:
             return HTTPServer.handle_error(self, request, client_address)
