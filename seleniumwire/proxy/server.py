@@ -2,9 +2,9 @@ import os
 import socket
 from urllib.request import _parse_proxy
 
+from .modifier import RequestModifier
 from .proxy2 import ThreadingHTTPServer
 from .storage import RequestStorage
-from .util import RequestModifier
 
 
 class ProxyHTTPServer(ThreadingHTTPServer):

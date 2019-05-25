@@ -7,6 +7,7 @@
 #
 #
 
+import base64
 import html
 import json
 import os
@@ -18,11 +19,10 @@ import sys
 import threading
 import time
 import urllib.parse
+from http.client import HTTPConnection, HTTPSConnection
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 from subprocess import PIPE, Popen
-
-from .util import ProxyAwareHTTPConnection, ProxyAwareHTTPSConnection
 
 
 def with_color(c, s):
@@ -364,20 +364,67 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             self.send_cacert()
 
 
-def test(handler_class=ProxyRequestHandler, server_class=ThreadingHTTPServer, protocol="HTTP/1.1"):
-    if sys.argv[1:]:
-        port = int(sys.argv[1])
-    else:
-        port = 8080
-    server_address = ('::1', port)
+def proxy_auth_headers(proxy_username, proxy_password, custom_proxy_authorization):
+    """Creates the Proxy-Authorization header based on the supplied username
+    and password, provided both are set.
 
-    handler_class.protocol_version = protocol
-    httpd = server_class(server_address, handler_class)
+    Args:
+        proxy_username: The proxy username.
+        proxy_password: The proxy password.
+        custom_proxy_authorization: The custom proxy authorization.
+    Returns:
+        A dictionary containing the Proxy-Authorization header or an empty
+        dictionary if the username or password were not set.
+    """
+    headers = {}
+    if proxy_username and proxy_password and not custom_proxy_authorization:
+        auth = '{}:{}'.format(proxy_username, proxy_password)
+        headers['Proxy-Authorization'] = 'Basic {}'.format(base64.b64encode(auth.encode('utf-8')).decode('utf-8'))
+    elif custom_proxy_authorization:
+        headers['Proxy-Authorization'] = custom_proxy_authorization
+    return headers
 
-    sa = httpd.socket.getsockname()
-    print("Serving HTTP Proxy on", sa[0], "port", sa[1], "...")
-    httpd.serve_forever()
+
+class ProxyAwareHTTPConnection(HTTPConnection):
+    """A specialised HTTPConnection that will transparently connect to a
+    proxy server based on supplied proxy configuration.
+    """
+
+    def __init__(self, proxy_config, netloc, *args, **kwargs):
+        self.netloc = netloc
+        self.proxied = proxy_config and netloc not in proxy_config['no_proxy']
+
+        if self.proxied:
+            _, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config.get('http')
+            self.custom_authorization = proxy_config.get('custom_authorization')
+            super().__init__(self.proxy_host, *args, **kwargs)
+        else:
+            super().__init__(netloc, *args, **kwargs)
+
+    def request(self, method, url, body=None, headers=None, *, encode_chunked=False):
+        if headers is None:
+            headers = {}
+
+        if self.proxied:
+            if not url.startswith('http'):
+                url = 'http://{}{}'.format(self.netloc, url)
+            headers.update(proxy_auth_headers(self.proxy_username, self.proxy_password, self.custom_authorization))
+
+        super().request(method, url, body, headers=headers)
 
 
-if __name__ == '__main__':
-    test()
+class ProxyAwareHTTPSConnection(HTTPSConnection):
+    """A specialised HTTPSConnection that will transparently connect to a
+    proxy server based on supplied proxy configuration.
+    """
+
+    def __init__(self, proxy_config, netloc, *args, **kwargs):
+        self.proxied = proxy_config and netloc not in proxy_config['no_proxy']
+
+        if self.proxied:
+            _, proxy_username, proxy_password, proxy_host = proxy_config.get('https')
+            super().__init__(proxy_host, *args, **kwargs)
+            self.set_tunnel(netloc, headers=proxy_auth_headers(proxy_username, proxy_password,
+                                                               proxy_config.get('custom_authorization')))
+        else:
+            super().__init__(netloc, *args, **kwargs)
