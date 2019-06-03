@@ -169,10 +169,6 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
         log.info('Capturing response: %s %s %s', req.path, res.status, res.reason)
         self.server.storage.save_response(req.id, res, res_body)
 
-    def save_handler(self, req, req_body, res, res_body):
-        # Override this to prevent our superclass from pumping out logging info.
-        pass
-
     @property
     def certdir(self):
         """Overrides the certdir attribute to retrieve the storage-specific certificate directory."""
