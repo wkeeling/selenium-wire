@@ -4,7 +4,7 @@ from selenium.webdriver import Firefox as _Firefox
 from selenium.webdriver import Safari as _Safari
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
-from seleniumwire.proxy.client import AdminClient
+from ..proxy.client import AdminClient
 from .request import InspectRequestsMixin
 
 
