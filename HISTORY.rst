@@ -1,6 +1,16 @@
 History
 ~~~~~~~
 
+1.0.5 (2019-06-15)
+------------------
+
+* Improve performance on Windows by explicitly closing the response output stream.
+* Capture stderr leaking from openssl to the console.
+* Ensure subjectAltName is added to self signed certificates.
+* Refactor certificate generation code.
+* More robust handling of socket errors.
+* Decode response bodies lazily when asked for, rather than eagerly on response capture.
+
 1.0.4 (2019-04-04)
 ------------------
 
