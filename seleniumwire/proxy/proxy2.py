@@ -207,6 +207,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         if res_body:
             self.wfile.write(res_body)
         self.wfile.flush()
+        self.close_connection = True
 
         with self.lock:
             self.save_handler(req, req_body, res, res_body_modified)
