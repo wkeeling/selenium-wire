@@ -62,7 +62,7 @@ def generate(hostname, certdir):
             new_cert_req.insert(0, openssl)
 
             epoch = '%d' % (time.time() * 1000)
-            p1 = Popen(new_cert_req, stdout=PIPE)
+            p1 = Popen(new_cert_req, stdout=PIPE, stderr=PIPE)
             p2 = Popen([openssl, 'x509', '-req', '-days', '3650', '-CA', CACERT, '-CAkey', CAKEY,
                         '-set_serial', epoch, '-out', certpath, '-extfile', extpath], stdin=p1.stdout, stderr=PIPE)
             p2.communicate()
