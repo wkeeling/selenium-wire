@@ -9,7 +9,7 @@ History
 * Ensure subjectAltName is added to self signed certificates.
 * Refactor certificate generation code.
 * More robust handling of socket errors.
-* Decode response bodies lazily when asked for, rather than eagerly on response capture.
+* Decode response bodies at the point a client asks for them, not at the point a response is captured.
 
 1.0.4 (2019-04-04)
 ------------------
