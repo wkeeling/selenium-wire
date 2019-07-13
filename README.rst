@@ -529,12 +529,12 @@ Other Options
 Other options that can be passed to Selenium Wire via the ``seleniumwire_options`` webdriver attribute:
 
 ``verify_ssl``
-    Whether to verify the certificate for HTTPS requests. Set this to ``False`` if your site uses a self-signed certificate. Default is ``True``.
+    Whether to verify the certificate for HTTPS requests. Set this to ``False`` if you're testing a site that uses a self-signed certificate. Default is ``True``.
 
 .. code:: python
 
     options = {
-        'verify_ssl': False  # Set to False when you're testing a site that uses a self-signed certificate
+        'verify_ssl': False  # Set to False if your site uses a self-signed certificate
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
