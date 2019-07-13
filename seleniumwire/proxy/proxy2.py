@@ -147,12 +147,19 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         if origin not in self.tls.conns:
             proxy_config = self.server.proxy_config
-            connection = {
-                'https': ProxyAwareHTTPSConnection,
-                'http': ProxyAwareHTTPConnection
-            }[scheme]
 
-            self.tls.conns[origin] = connection(proxy_config, netloc, timeout=self.connection_timeout)
+            kwargs = {
+                'timeout': self.timeout
+            }
+
+            if scheme == 'https':
+                connection = ProxyAwareHTTPSConnection
+                if not self.server.options.get('verify_ssl', True):
+                    kwargs['context'] = ssl._create_unverified_context()
+            else:
+                connection = ProxyAwareHTTPConnection
+
+            self.tls.conns[origin] = connection(proxy_config, netloc, **kwargs)
 
         return self.tls.conns[origin]
 
