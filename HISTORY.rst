@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+1.0.6 (2019-07-14)
+------------------
+
+* Support for disabling SSL verification when using self-signed certificates.
+
 1.0.5 (2019-06-15)
 ------------------
 
