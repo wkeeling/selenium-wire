@@ -81,6 +81,7 @@ Table of Contents
 
 - `Usage`_
 
+  * `Using Self-Signed Certificates`_
   * `Accessing Requests`_
   * `Waiting for a Request`_
   * `Clearing Requests`_
