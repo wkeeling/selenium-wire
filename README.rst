@@ -543,16 +543,6 @@ Other Options
 
 Other options that can be passed to Selenium Wire via the ``seleniumwire_options`` webdriver attribute:
 
-``verify_ssl``
-    Whether to verify the certificate for HTTPS requests. Set this to ``False`` if you're testing a site that uses a self-signed certificate. Default is ``True``.
-
-.. code:: python
-
-    options = {
-        'verify_ssl': False  # Set to False if your site uses a self-signed certificate
-    }
-    driver = webdriver.Firefox(seleniumwire_options=options)
-
 ``ignore_http_methods``
     A list of HTTP methods (specified as uppercase strings) that should be ignored by Selenium Wire and not captured. The default is ``['OPTIONS']`` which ignores all OPTIONS requests. To capture all request methods, set ``ignore_http_methods`` to an empty list:
 
