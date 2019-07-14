@@ -282,6 +282,20 @@ For example, if you chose port 12345, then you would pass it like this:
     }
     driver = webdriver.Edge(seleniumwire_options=options)
 
+Using Self-Signed Certificates
+------------------------------
+
+If the site you are testing uses a self-signed certificate then you must set the ``verify_ssl`` option to ``False`` in the ``seleniumwire_options``:
+
+.. code:: python
+
+    options = {
+        'verify_ssl': False
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+This this will need to be done regardless of the type of browser you are using.
+
 Accessing Requests
 ------------------
 
