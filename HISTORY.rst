@@ -1,6 +1,12 @@
 History
 ~~~~~~~
 
+1.0.7 (2019-07-30)
+------------------
+
+* Fix bug where temporary storage cleanup would sometimes fail when running in a multi-threaded environment.
+* Don't rely on signal handlers for temporary storage cleanup. Signal handlers are not compatible with multiple threads. Use driver.quit() for explicit cleanup.
+
 1.0.6 (2019-07-14)
 ------------------
 
