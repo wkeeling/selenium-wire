@@ -40,14 +40,17 @@ class RequestStorageTest(TestCase):
         self.assertTrue(os.path.exists(os.path.join(self.base_dir, '.seleniumwire', 'teststorage')))
 
     def test_initialise_clears_old_folders(self):
-        test_dir = os.path.join(self.base_dir, '.seleniumwire', 'storage-test')
-        os.makedirs(test_dir)
+        old_dir = os.path.join(self.base_dir, '.seleniumwire', 'storage-test1')
+        new_dir = os.path.join(self.base_dir, '.seleniumwire', 'storage-test2')
+        os.makedirs(old_dir)
+        os.makedirs(new_dir)
         two_days_ago = (datetime.now() - timedelta(days=2)).timestamp()
-        os.utime(test_dir, times=(two_days_ago, two_days_ago))
+        os.utime(old_dir, times=(two_days_ago, two_days_ago))
 
         RequestStorage(base_dir=self.base_dir)
 
-        self.assertFalse(os.path.exists(test_dir))
+        self.assertFalse(os.path.exists(old_dir))
+        self.assertTrue(os.path.exists(new_dir))
 
     def test_save_request(self):
         mock_request = self._create_mock_request()

@@ -1,4 +1,3 @@
-import atexit
 from datetime import datetime, timedelta
 import gzip
 from io import BytesIO
@@ -6,7 +5,6 @@ import logging
 import os
 import pickle
 import shutil
-import signal
 import threading
 from urllib.parse import urlparse
 import uuid
@@ -44,11 +42,6 @@ class RequestStorage:
         # A list of tuples: [(request id, request path, response received), ...]
         self._index = []
         self._lock = threading.Lock()
-
-        # Register shutdown hooks for cleaning up stored requests
-        atexit.register(lambda *_: self.cleanup())
-        signal.signal(signal.SIGTERM, lambda *_: self.cleanup())
-        signal.signal(signal.SIGINT, lambda *_: self.cleanup())
 
     def save_request(self, request, request_body=None):
         """Saves the request (a BaseHTTPRequestHandler instance) to storage, and optionally
@@ -326,9 +319,13 @@ class RequestStorage:
         parent_dir = os.path.dirname(self._storage_dir)
         for storage_dir in os.listdir(parent_dir):
             storage_dir = os.path.join(parent_dir, storage_dir)
-            if (os.path.getmtime(storage_dir) <
-                    (datetime.now() - timedelta(days=REMOVE_DATA_OLDER_THAN_DAYS)).timestamp()):
-                shutil.rmtree(storage_dir, ignore_errors=True)
+            try:
+                if (os.path.getmtime(storage_dir) <
+                        (datetime.now() - timedelta(days=REMOVE_DATA_OLDER_THAN_DAYS)).timestamp()):
+                    shutil.rmtree(storage_dir, ignore_errors=True)
+            except FileNotFoundError:
+                # Can happen if multiple instances are run concurrently
+                pass
 
 
 class _IndexedRequest(dict):
