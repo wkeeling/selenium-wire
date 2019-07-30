@@ -319,9 +319,13 @@ class RequestStorage:
         parent_dir = os.path.dirname(self._storage_dir)
         for storage_dir in os.listdir(parent_dir):
             storage_dir = os.path.join(parent_dir, storage_dir)
-            if (os.path.getmtime(storage_dir) <
-                    (datetime.now() - timedelta(days=REMOVE_DATA_OLDER_THAN_DAYS)).timestamp()):
-                shutil.rmtree(storage_dir, ignore_errors=True)
+            try:
+                if (os.path.getmtime(storage_dir) <
+                        (datetime.now() - timedelta(days=REMOVE_DATA_OLDER_THAN_DAYS)).timestamp()):
+                    shutil.rmtree(storage_dir, ignore_errors=True)
+            except FileNotFoundError:
+                # Can happen if multiple instances are run concurrently
+                pass
 
 
 class _IndexedRequest(dict):
