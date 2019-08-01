@@ -35,7 +35,6 @@ class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
 
 
 class ProxyRequestHandler(BaseHTTPRequestHandler):
-    connection_timeout = 5
     admin_path = 'http://proxy2'
     # Path to the directory used to store the generated certificates.
     # Subclasses can override certdir

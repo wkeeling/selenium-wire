@@ -543,6 +543,16 @@ Other Options
 
 Other options that can be passed to Selenium Wire via the ``seleniumwire_options`` webdriver attribute:
 
+``connection_timeout``
+    The number of seconds Selenium Wire should wait before timing out requests. The default is 5 seconds. Increase this value if you're working with a slow server that needs more time to respond. Set to ``None`` for no timeout.
+
+.. code:: python
+
+    options = {
+        'connection_timeout': None  # Never timeout
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
 ``ignore_http_methods``
     A list of HTTP methods (specified as uppercase strings) that should be ignored by Selenium Wire and not captured. The default is ``['OPTIONS']`` which ignores all OPTIONS requests. To capture all request methods, set ``ignore_http_methods`` to an empty list:
 
@@ -554,7 +564,7 @@ Other options that can be passed to Selenium Wire via the ``seleniumwire_options
     driver = webdriver.Firefox(seleniumwire_options=options)
 
 ``disable_encoding``
-    Whether to disable content encoding. When set to ``True``, the ``Accept-Encoding`` header will be set to ``identity`` for all requests. This tells the server to not compress/modify the response. Default is ``False``.
+    Whether to disable content encoding. When set to ``True``, the ``Accept-Encoding`` header will be set to ``identity`` for all requests. This tells the server to not compress/modify the response. The default is ``False``.
 
 .. code:: python
 

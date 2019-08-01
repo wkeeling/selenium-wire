@@ -49,6 +49,7 @@ class AdminClient:
             options = {}
 
         CaptureRequestHandler.protocol_version = 'HTTP/1.1'
+        CaptureRequestHandler.timeout = options.get('connection_timeout', 5)
         self._proxy = ProxyHTTPServer((addr, port), CaptureRequestHandler,
                                       proxy_config=proxy_config, options=options)
 
