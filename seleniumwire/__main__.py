@@ -1,6 +1,7 @@
 import argparse
 from argparse import RawDescriptionHelpFormatter
 import logging
+import signal
 
 from seleniumwire.proxy import client, util
 
@@ -9,6 +10,11 @@ logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 
 def standalone_proxy(port):
     c = client.AdminClient()
+
+    # Configure shutdown handlers
+    signal.signal(signal.SIGTERM, lambda *_: c.destroy_proxy())
+    signal.signal(signal.SIGINT, lambda *_: c.destroy_proxy())
+
     c.create_proxy(port=int(port), options={'standalone': True})
 
 
