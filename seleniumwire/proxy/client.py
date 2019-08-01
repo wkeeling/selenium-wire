@@ -1,7 +1,6 @@
 import http.client
 import json
 import logging
-import signal
 import threading
 from urllib.parse import quote_plus
 
@@ -56,10 +55,6 @@ class AdminClient:
         t = threading.Thread(name='Selenium Wire Proxy Server', target=self._proxy.serve_forever)
         t.daemon = not options.get('standalone')
         t.start()
-
-        # Configure shutdown handlers
-        signal.signal(signal.SIGTERM, lambda *_: self.destroy_proxy())
-        signal.signal(signal.SIGINT, lambda *_: self.destroy_proxy())
 
         socketname = self._proxy.socket.getsockname()
         self._proxy_addr = socketname[0]
