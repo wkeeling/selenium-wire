@@ -36,6 +36,6 @@ setup(
     test_suite='nose.collector',
     tests_require=['nose'],
     url='https://github.com/wkeeling/selenium-wire',
-    version='1.0.7',
+    version='1.0.8',
     zip_safe=False,
 )

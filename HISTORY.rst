@@ -1,6 +1,12 @@
 History
 ~~~~~~~
 
+1.0.8 (2019-08-01)
+------------------
+
+* Remove signal handler from AdminClient to allow running in multi-threaded environment.
+* Make connection timeout configurable.
+
 1.0.7 (2019-07-30)
 ------------------
 
