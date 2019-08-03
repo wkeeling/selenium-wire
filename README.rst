@@ -81,6 +81,7 @@ Table of Contents
 
 - `Usage`_
 
+  * `Creating the Webdriver`_
   * `Using Self-Signed Certificates`_
   * `Accessing Requests`_
   * `Waiting for a Request`_
@@ -153,79 +154,15 @@ You will however need to ensure that you have downloaded the `Gecko driver`_ and
 
 **Safari**
 
-There are a few manual steps that have to be carried out before you can use Safari with Selenium Wire.
+There are a few `manual steps`_ that have to be carried out before you can use Safari with Selenium Wire.
 
-#. You must allow Safari to be remotely controlled by selecting "Allow Remote Automation" from Safari's "Develop" menu.
-
-#. You must install Selenium Wire's root certificate into your Mac's keystore by following these steps:
-
-   * First extract the certificate with ``python -m seleniumwire extractcert``. You should see a file called ``ca.crt`` in your current working directory.
-
-   * Now open your Mac's Keychain Access utility (located in Applications > Utilities).
-
-   * From the "File" menu, select "Import Items".
-
-   * Browse to the ``ca.crt`` file you just extracted and import it.
-
-   * Click on "Certificates" in the left hand side of the Key Chain Access utility and you should now see the Selenium Wire CA certificate listed.
-
-   * Double-click the certificate in the right hand pane to open its properties.
-
-   * At the top of the properties window that opens, expand the "Trust" section and select "Always Trust" in the top drop down menu.
-
-   * Close the properties window (you may be prompted to enter your password).
-
-   * Quit the Keychain Access utility.
-
-#. You need to tell Safari to use a proxy server for its HTTP and HTTPS traffic.
-
-   * From Safari's "Safari" menu, open "Preferences".
-
-   * Click the "Advanced" tab at the top.
-
-   * Click the "Change Settings..." button for the "Proxies" option.
-
-   * Check the "Web Proxy (HTTP)" checkbox and enter "localhost" in the server box, and a port (e.g. 12345) in the box next to it.
-
-   * Check the "Secure Web Proxy (HTTPS)" checkbox and repeat the previous step for server and port.
-
-   * Click "OK" on the proxies window, and then "Apply" on the network window before closing it.
+.. _`manual steps`: ./safari_setup.rst
 
 **Edge**
 
-Like Safari, Microsoft Edge requires some manual configuration before it can be used with Selenium Wire.
+Like Safari, Microsoft Edge requires some `manual configuration`_ before it can be used with Selenium Wire.
 
-#. You must install `Microsoft's WebDriver`_ so that Edge can be remotely controlled - the same as if you were using Selenium directly.
-
-#. You must install Selenium Wire's root certificate into your PC's certificate store by following these steps:
-
-   * First extract the certificate with ``python -m seleniumwire extractcert``. You should see a file called ``ca.crt`` in your current working directory.
-
-   * Open Internet Options (you can search for it using Cortana on Windows 10).
-
-   * Click the "Content" tab and then the "Certificates" button.
-
-   * Press the "Import..." button to open the Certificate Import Wizard, then press "Next".
-
-   * Browse to the ``ca.crt`` you just extracted and press "Next".
-
-   * Select the "Place all certficates in the following store" option and browse to "Trusted Root Certification Authorities", press "OK" and then "Next".
-
-   * Press "Finish" on the final screen of the wizard, and then "OK" on all open windows.
-
-#. You need to tell Edge to use a proxy server for its HTTP and HTTPS traffic.
-
-   * Open Internet Options (you can search for it from the Windows 10 start menu).
-
-   * Click the "Connections" tab and then the "LAN settings" button.
-
-   * Tick the box that says "Use a proxy server for your LAN...".
-
-   * In the "Address" box enter "localhost" and in the "Port" box a port number (e.g. 12345).
-
-   * Click "OK" and then "OK" on the Internet Options window.
-
-.. _`Microsoft's WebDriver`: http://go.microsoft.com/fwlink/?LinkId=619687
+.. _`manual configuration`: ./edge_setup.rst
 
 Usage
 ~~~~~
@@ -236,16 +173,19 @@ Ensure that you import ``webdriver`` from the ``seleniumwire`` package:
 
     from seleniumwire import webdriver
 
-For sub-packages of ``webdriver``, you can continue to import these directly from ``selenium``. For example, to import ``WebDriverWait``:
+* For sub-packages of ``webdriver``, you should continue to import these directly from ``selenium``. For example, to import ``WebDriverWait``:
 
 .. code:: python
 
     # Sub-packages of webdriver must still be imported from `selenium` itself
     from selenium.webdriver.support.ui import WebDriverWait
 
-Then it's just a matter of creating a new driver instance.
+Creating the Webdriver
+----------------------
 
-For Firefox and Chrome, you don't need to pass any Selenium Wire specific options (you can still pass any of your own webdriver specific options however).
+For Firefox and Chrome, you don't need to do anything special. Just instantiate the webdriver as you would normally, passing in Selenium specific options if you have any. Selenium Wire also has it's `own options`_ that can be passed in the ``seleniumwire_options`` attribute.
+
+.. _`own options`: #other-options
 
 **Firefox**
 
@@ -261,27 +201,21 @@ For Firefox and Chrome, you don't need to pass any Selenium Wire specific option
 
 **Safari**
 
-For Safari, you need to tell Selenium Wire the port number you selected when you configured the browser in **Browser Setup**.
-For example, if you chose port 12345, then you would pass it like this:
+For Safari, you need to tell Selenium Wire the port number you selected when you configured the browser in `Browser Setup`_.
+For example, if you chose port 12345, then you would pass it in the ``seleniumwire_options`` like this:
 
 .. code:: python
 
-    options = {
-        'port': 12345
-    }
-    driver = webdriver.Safari(seleniumwire_options=options)
+    driver = webdriver.Safari(seleniumwire_options={'port': 12345})
 
 **Edge**
 
-For Edge, you need to tell Selenium Wire the port number you selected when you configured the browser in **Browser Setup**.
-For example, if you chose port 12345, then you would pass it like this:
+For Edge, you need to tell Selenium Wire the port number you selected when you configured the browser in `Browser Setup`_.
+For example, if you chose port 12345, then you would pass it in the ``seleniumwire_options`` like this:
 
 .. code:: python
 
-    options = {
-        'port': 12345
-    }
-    driver = webdriver.Edge(seleniumwire_options=options)
+    driver = webdriver.Edge(seleniumwire_options={'port': 12345})
 
 Using Self-Signed Certificates
 ------------------------------
@@ -290,31 +224,26 @@ If the site you are testing uses a self-signed certificate then you must set the
 
 .. code:: python
 
-    options = {
-        'verify_ssl': False
-    }
-    driver = webdriver.Firefox(seleniumwire_options=options)
+    driver = webdriver.Firefox(seleniumwire_options={'verify_ssl': False})
 
 This this will need to be done regardless of the type of browser you are using.
 
 Accessing Requests
 ------------------
 
-Selenium Wire captures all HTTP/HTTPS traffic made by the browser during a test. Accessing captured requests is straightforward.
+Selenium Wire captures all HTTP/HTTPS traffic made by the browser during a test.
 
-You can retrieve all requests with the ``driver.requests`` attribute.
+**driver.requests**
 
-.. code:: python
-
-    all_requests = driver.requests
-
-The requests are just a list and can be iterated (like in the opening example) and indexed:
+You can retrieve all requests with the ``driver.requests`` attribute. The requests are just a list and can be iterated (like in the opening example) and indexed:
 
 .. code:: python
 
     first_request = driver.requests[0]
 
-The list of requests is in chronological order. If you want to access the most recent request, use the dedicated ``driver.last_request`` attribute:
+**driver.last_request**
+
+The list of requests held by ``driver.requests`` is in chronological order. If you want to access the most recent request, use the dedicated ``driver.last_request`` attribute:
 
 .. code:: python
 
@@ -327,24 +256,9 @@ Waiting for a Request
 
 When you ask for captured requests using ``driver.requests`` or ``driver.last_request`` you have to be sure that the requests you're interested in have actually been captured. If you ask too soon, then you may find that a request is not yet present, or is present but has no associated response.
 
-**Using implicit or explicit waits**
+**driver.wait_for_request()**
 
-One way to achieve this is to use Selenium's existing `implicit or explicit waits`_ to wait for the DOM to change. For example:
-
-.. code:: python
-
-    # Click a button that triggers a background request
-    button_element.click()
-
-    # Wait for an element to appear, implying request complete
-    element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "some-element")))
-
-    # Now check the completed request
-    assert driver.last_request.response.status_code == 200
-
-**Using driver.wait_for_request()**
-
-Alternatively, Selenium Wire provides ``driver.wait_for_request()``. This method will wait for a previous request with a specific path to complete before allowing the test to continue.
+This method will wait for a previous request with a specific path to complete before allowing the test to continue. The path can be a unique part of the URL or the full URL itself.
 
 For example, to wait for an AJAX request to return after a button is clicked:
 
@@ -367,37 +281,19 @@ The ``wait_for_request()`` method will return the first *fully completed* reques
 
 If a fully completed request is not seen within the timeout period a ``TimeoutException`` is raised.
 
-The ``wait_for_request()`` method does a substring match on the path so you can pass just the part that uniquely identifies the request:
-
-.. code:: python
-
-    # Pass just the unique part of the path
-    request = driver.wait_for_request('/12345/')
-
-Or alternatively you can pass the full URL itself:
-
-.. code:: python
-
-    # Match the full URL
-    request = driver.wait_for_request('https://server/api/products/12345/')
-
-.. _`implicit or explicit waits`: https://www.seleniumhq.org/docs/04_webdriver_advanced.jsp
-
 Clearing Requests
 -----------------
 
-To clear previously captured requests, just use ``del``:
+To clear previously captured requests, use ``del``:
 
 .. code:: python
 
     del driver.requests
 
-This can be useful if you're only interested in capturing requests that occur when a specific action is performed, for example, the AJAX requests associated with a button click. In this case you can clear out any previous requests with ``del`` before you click the button.
-
 Request Attributes
 ~~~~~~~~~~~~~~~~~~
 
-Requests that you retrieve using ``driver.requests`` or one of the other mechanisms have the following attributes.
+Requests have the following attributes.
 
 ``method``
     The HTTP method type such as ``GET`` or ``POST``.
@@ -466,7 +362,7 @@ To filter out one or more headers from a request, set the value of those headers
 
     # All subsequent requests will now *not* contain Existing-Header1 or Existing-Header2
 
-To clear the header overrides that you have set, just use ``del``:
+To clear the header overrides that you have set, use ``del``:
 
 .. code:: python
 
@@ -492,7 +388,7 @@ The match and replacement syntax is just Python's regex syntax. See `re.sub`_ fo
 
 .. _`re.sub`: https://docs.python.org/3/library/re.html#re.sub
 
-To clear the rewrite rules that you have set, just use ``del``:
+To clear the rewrite rules that you have set, use ``del``:
 
 .. code:: python
 
@@ -503,11 +399,7 @@ Proxies
 
 Selenium Wire captures requests by using its own proxy server under the covers. This means you cannot use the webdriver's ``DesiredCapabilities`` API to configure your own proxy, like you might when using Selenium directly.
 
-If the site you are testing sits behind a proxy server you can tell Selenium Wire about that proxy server in the options you pass to the webdriver instance.
-
-The configuration for the proxy server should be specified as a URL in the format ``http://username:password@server:port``. The username and password are optional and can be specified when a proxy server requires authentication. Basic authentication is used by default.
-
-You can configure a proxy for the http and https protocols and optionally set a value for ``no_proxy`` - which should be a comma separated list of hostnames where the proxy should be bypassed. For example:
+If the site you are testing sits behind a proxy server you can tell Selenium Wire about that proxy server in the options you pass to the webdriver instance. The configuration takes the following format:
 
 .. code:: python
 
@@ -520,11 +412,13 @@ You can configure a proxy for the http and https protocols and optionally set a 
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
+The username and password are optional and can be specified when a proxy server requires authentication. Basic authentication is assumed by default.
+
 The proxy configuration can also be loaded through environment variables called ``http``, ``https`` and ``no_proxy``. The proxy configuration in the options passed to the webdriver instance will take precedence over environment variable configuration if both are specified.
 
 **Proxy authentication other than Basic**
 
-Basic authentication is used by default when supplying a username and password in the URL - as described above. If you are connecting to an upstream proxy server that uses an authentication scheme different to Basic, then you can supply the full value for the ``Proxy-Authorization`` header using the ``custom_authorization`` option. For example, if your proxy used the Bearer scheme:
+Basic authentication is used by default when supplying a username and password in the URL. If you are connecting to an upstream proxy server that uses an authentication scheme different to Basic, then you can supply the full value for the ``Proxy-Authorization`` header using the ``custom_authorization`` option. For example, if your proxy used the Bearer scheme:
 
 .. code:: python
 
