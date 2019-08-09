@@ -13,10 +13,12 @@ log = logging.getLogger(__name__)
 class AdminClient:
     """Provides an API for sending commands to a remote proxy server."""
 
-    def __init__(self, proxy_mgr_addr=None, proxy_mgr_port=None):
+    def __init__(self, proxy_mgr_addr=None, proxy_mgr_port=None, custom_capture_request_handler=None):
         # The address of the proxy manager if set
         self._proxy_mgr_addr = proxy_mgr_addr
         self._proxy_mgr_port = proxy_mgr_port
+
+        self._capture_request_handler=custom_capture_request_handler or CaptureRequestHandler
 
         # Reference to a created proxy instance and its address/port
         self._proxy = None
@@ -48,9 +50,9 @@ class AdminClient:
         if options is None:
             options = {}
 
-        CaptureRequestHandler.protocol_version = 'HTTP/1.1'
-        CaptureRequestHandler.timeout = options.get('connection_timeout', 5)
-        self._proxy = ProxyHTTPServer((addr, port), CaptureRequestHandler,
+        self._capture_request_handler.protocol_version = 'HTTP/1.1'
+        self._capture_request_handler.timeout = options.get('connection_timeout', 5)
+        self._proxy = ProxyHTTPServer((addr, port), self._capture_request_handler,
                                       proxy_config=proxy_config, options=options)
 
         t = threading.Thread(name='Selenium Wire Proxy Server', target=self._proxy.serve_forever)
