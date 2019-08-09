@@ -60,9 +60,11 @@ Features
 * Straightforward, user-friendly API
 * All HTTP/HTTPS requests captured
 * Access to request/response bodies
+* Modify responses
 * Header injection/filtering
 * URL rewriting
 * Proxy server support
+
 
 Compatibilty
 ~~~~~~~~~~~~
@@ -95,6 +97,8 @@ Table of Contents
 
   * `Modifying Headers`_
   * `Rewriting URLs`_
+
+- `Modifying Responses`_
 
 - `Proxies`_
 
@@ -393,6 +397,28 @@ To clear the rewrite rules that you have set, use ``del``:
 .. code:: python
 
     del driver.rewrite_rules
+
+Modifying Responses
+~~~~~~~~~~~~~~~~~~~
+
+Modifying responses can be done by passing your function to the ``custom_response_handler`` argument of you desired webdriver. In the example below, a the length of the response body is simply printed out. Custom response handlers should maintain a signature that it compatible with ``CaptureRequestHandler.response_handler``, as all arguments passed to that function will in turn be passed to your function. In order to modify the response data, you will need to return it from your function (the response data for the request is given in the ``res_body`` argument).
+
+.. code:: python
+
+    def custom(req, req_body, res, res_body):
+        print(f'res_body length: {len(res_body)}')
+
+    drv = webdriver.Firefox(custom_response_handler=custom)
+    drv.get('https://example.com')
+
+The code above will print to the console (loading a page will almost always initiate more than one request):
+
+.. code:: python
+
+    res_body length: 471
+    res_body length: 471
+    res_body length: 606
+
 
 Proxies
 ~~~~~~~
