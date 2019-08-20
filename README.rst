@@ -98,8 +98,6 @@ Table of Contents
   * `Modifying Headers`_
   * `Rewriting URLs`_
 
-- `Modifying Responses`_
-
 - `Proxies`_
 
 - `Other Options`_
@@ -398,28 +396,6 @@ To clear the rewrite rules that you have set, use ``del``:
 
     del driver.rewrite_rules
 
-Modifying Responses
-~~~~~~~~~~~~~~~~~~~
-
-Modifying responses can be done by passing your function to the ``custom_response_handler`` argument of you desired webdriver. In the example below, a the length of the response body is simply printed out. Custom response handlers should maintain a signature that it compatible with ``CaptureRequestHandler.response_handler``, as all arguments passed to that function will in turn be passed to your function. In order to modify the response data, you will need to return it from your function (the response data for the request is given in the ``res_body`` argument).
-
-.. code:: python
-
-    def custom(req, req_body, res, res_body):
-        print(f'res_body length: {len(res_body)}')
-
-    drv = webdriver.Firefox(custom_response_handler=custom)
-    drv.get('https://example.com')
-
-The code above will print to the console (loading a page will almost always initiate more than one request):
-
-.. code:: python
-
-    res_body length: 471
-    res_body length: 471
-    res_body length: 606
-
-
 Proxies
 ~~~~~~~
 
@@ -472,6 +448,29 @@ Other options that can be passed to Selenium Wire via the ``seleniumwire_options
         'connection_timeout': None  # Never timeout
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
+
+``custom_response_handler``
+    This function that should be passed in custom response handlers should maintain a signature that it compatible with ``CaptureRequestHandler.response_handler``, as all arguments passed to that function will in turn be passed to your function. In order to modify the response data, you will need to return it from your function (the response data for the request is given in the ``res_body`` argument).
+
+.. code:: python
+
+    def custom(req, req_body, res, res_body):
+        print(f'res_body length: {len(res_body)}')
+
+    options = {
+        'custom_response_handler': custom
+    }
+    drv = webdriver.Firefox(seleniumwire_options=options)
+    drv.get('https://example.com')
+
+The code above will print something like this to the console (loading a page will almost always initiate more than one request):
+
+.. code:: python
+
+    res_body length: 471
+    res_body length: 606
+
+
 
 ``ignore_http_methods``
     A list of HTTP methods (specified as uppercase strings) that should be ignored by Selenium Wire and not captured. The default is ``['OPTIONS']`` which ignores all OPTIONS requests. To capture all request methods, set ``ignore_http_methods`` to an empty list:
