@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+1.0.9 (2019-08-25)
+------------------
+
+* Add ability to provide a custom response handler method.
+
 1.0.8 (2019-08-01)
 ------------------
 

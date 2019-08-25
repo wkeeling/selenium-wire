@@ -35,12 +35,7 @@ class AdminClient:
                 use the first available port.
             proxy_config: The configuration for any upstream proxy server. Default
                 is None.
-            options: Additional options to configure the proxy:
-                - standalone: When True the proxy server will block the main process from exiting.
-                - disable_encoding: Whether to disable content encoding of response bodies (e.g. gzip).
-                    When True, the Accept-Encoding will always be set to 'identity'.
-                - custom_response_handler: Output of this function is returned after running
-                    CaptureRequestHandler.response_handler. See the aforementioned function for recommended signature
+            options: Additional options to configure the proxy.
 
         Returns:
             A tuple of the address and port number of the created proxy server.
