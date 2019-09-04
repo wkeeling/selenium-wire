@@ -1,6 +1,7 @@
 import re
 import threading
 from urllib.parse import urlsplit
+from .util import is_list_alike
 
 
 class RequestModifier:
@@ -9,10 +10,11 @@ class RequestModifier:
 
     Instances of this class are designed to be stateful and threadsafe.
     """
+
     def __init__(self):
         """Initialise a new RequestModifier."""
         self._lock = threading.Lock()
-        self._headers = {}
+        self._headers = ()
         self._rewrite_rules = []
 
     @property
@@ -24,10 +26,14 @@ class RequestModifier:
         overwrite the one in the request. Where a header in the dictionary
         does not exist in the request, it will be added to the request as a
         new header. To filter out a header from the request, set that header
-        in the dictionary with a value of None. Header names are case insensitive.
+        in the dictionary with a value of None. Header names are case
+        insensitive.
         """
         with self._lock:
-            return dict(self._headers)
+            if is_list_alike(self._headers):
+                return self._headers[1]
+            else:
+                return self._headers
 
     @headers.setter
     def headers(self, headers):
@@ -38,6 +44,7 @@ class RequestModifier:
         """
         with self._lock:
             self._headers = headers
+        pass
 
     @headers.deleter
     def headers(self):
@@ -46,7 +53,7 @@ class RequestModifier:
         After this is called, request headers will pass through unmodified.
         """
         with self._lock:
-            self._headers.clear()
+            self._headers = ()
 
     @property
     def rewrite_rules(self):
@@ -99,8 +106,17 @@ class RequestModifier:
         self._rewrite_url(request)
 
     def _modify_headers(self, request):
+        # If self._headers is tuple or list, need to use the pattern matching
+        if is_list_alike(self._headers):
+            headers = self._matched_headers(self._headers, request.path)
+        else:
+            headers = self._headers
+
+        if not headers:
+            return
+
         with self._lock:
-            headers_lc = {h.lower(): (h, v) for h, v in self._headers.items()}
+            headers_lc = {h.lower(): (h, v) for h, v in headers.items()}
 
         # Remove/replace any header that already exists in the request
         for header in list(request.headers):
@@ -136,3 +152,13 @@ class RequestModifier:
             # Modify the Host header if it exists
             if 'Host' in request.headers:
                 request.headers['Host'] = modified_netloc
+
+    def _matched_headers(self, header_rules, path):
+        results = {}
+        for rule in header_rules:
+            pattern = rule[0]
+            headers = rule[1]
+            match = re.search(pattern, path)
+            if match:
+                results = {**results, **headers}
+        return results
