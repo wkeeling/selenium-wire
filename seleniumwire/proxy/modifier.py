@@ -14,33 +14,43 @@ class RequestModifier:
     def __init__(self):
         """Initialise a new RequestModifier."""
         self._lock = threading.Lock()
-        self._headers = ()
+        self._headers = []
         self._rewrite_rules = []
 
     @property
     def headers(self):
         """The headers that should be used to override the request headers.
 
-        The value of the headers should be a dictionary. Where a header in
-        the dictionary exists in the request, the dictionary value will
-        overwrite the one in the request. Where a header in the dictionary
-        does not exist in the request, it will be added to the request as a
-        new header. To filter out a header from the request, set that header
-        in the dictionary with a value of None. Header names are case
-        insensitive.
+        The value of the headers could be a dictionary or list of sublists,
+        with each sublist having two elements - the pattern and headers.
+        Where a header in the dictionary exists in the request, the dictionary
+        value will overwrite the one in the request. Where a header in the
+        dictionary does not exist in the request, it will be added to the
+        request as a new header. To filter out a header from the request,
+        set that header in the dictionary with a value of None.
+        Header names are case insensitive.
+
+        For example:
+            headers = {'User-Agent':'Firefox'}
+            headers = [
+                ('.*google.com.*', {'User-Agent':'Firefox'}),
+                ('url2', {'User-Agent':'IE'}),
+            ]
         """
         with self._lock:
             if is_list_alike(self._headers):
-                return self._headers[1]
-            else:
                 return self._headers
+            else:
+                return dict(self._headers)
 
     @headers.setter
     def headers(self, headers):
         """Sets the headers to override request headers.
 
         Args:
-            headers: The dictionary of headers to set.
+            headers: The dictionary of headers or list of sublists,
+            with each sublist having two elements - the pattern and headers
+            to set.
         """
         with self._lock:
             self._headers = headers
@@ -53,7 +63,10 @@ class RequestModifier:
         After this is called, request headers will pass through unmodified.
         """
         with self._lock:
-            self._headers = ()
+            if is_list_alike(self._headers):
+                return [(pat, head) for pat, head in self._headers]
+            else:
+                self._headers.clear()
 
     @property
     def rewrite_rules(self):
