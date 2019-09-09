@@ -115,16 +115,15 @@ class RequestModifier:
         self._rewrite_url(request)
 
     def _modify_headers(self, request):
-        # If self._headers is tuple or list, need to use the pattern matching
-        if is_list_alike(self._headers):
-            headers = self._matched_headers(self._headers, request.path)
-        else:
-            headers = self._headers
-
-        if not headers:
-            return
-
         with self._lock:
+            # If self._headers is tuple or list, need to use the pattern matching
+            if is_list_alike(self._headers):
+                headers = self._matched_headers(self._headers, request.path)
+            else:
+                headers = self._headers
+
+            if not headers:
+                return
             headers_lc = {h.lower(): (h, v) for h, v in headers.items()}
 
         # Remove/replace any header that already exists in the request
