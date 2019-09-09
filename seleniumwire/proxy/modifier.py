@@ -173,5 +173,5 @@ class RequestModifier:
             headers = rule[1]
             match = re.search(pattern, path)
             if match:
-                results = {**results, **headers}
+                results.update(headers)
         return results
