@@ -54,7 +54,6 @@ class RequestModifier:
         """
         with self._lock:
             self._headers = headers
-        pass
 
     @headers.deleter
     def headers(self):
@@ -63,10 +62,7 @@ class RequestModifier:
         After this is called, request headers will pass through unmodified.
         """
         with self._lock:
-            if is_list_alike(self._headers):
-                return [(pat, head) for pat, head in self._headers]
-            else:
-                self._headers.clear()
+            self._headers.clear()
 
     @property
     def rewrite_rules(self):
