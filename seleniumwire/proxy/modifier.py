@@ -1,6 +1,7 @@
 import re
 import threading
 from urllib.parse import urlsplit
+from .util import is_list_alike
 
 
 class RequestModifier:
@@ -9,32 +10,47 @@ class RequestModifier:
 
     Instances of this class are designed to be stateful and threadsafe.
     """
+
     def __init__(self):
         """Initialise a new RequestModifier."""
         self._lock = threading.Lock()
-        self._headers = {}
+        self._headers = []
         self._rewrite_rules = []
 
     @property
     def headers(self):
         """The headers that should be used to override the request headers.
 
-        The value of the headers should be a dictionary. Where a header in
-        the dictionary exists in the request, the dictionary value will
-        overwrite the one in the request. Where a header in the dictionary
-        does not exist in the request, it will be added to the request as a
-        new header. To filter out a header from the request, set that header
-        in the dictionary with a value of None. Header names are case insensitive.
+        The value of the headers could be a dictionary or list of sublists,
+        with each sublist having two elements - the pattern and headers.
+        Where a header in the dictionary exists in the request, the dictionary
+        value will overwrite the one in the request. Where a header in the
+        dictionary does not exist in the request, it will be added to the
+        request as a new header. To filter out a header from the request,
+        set that header in the dictionary with a value of None.
+        Header names are case insensitive.
+
+        For example:
+            headers = {'User-Agent':'Firefox'}
+            headers = [
+                ('.*google.com.*', {'User-Agent':'Firefox'}),
+                ('url2', {'User-Agent':'IE'}),
+            ]
         """
         with self._lock:
-            return dict(self._headers)
+            if is_list_alike(self._headers):
+                return self._headers
+            else:
+                return dict(self._headers)
 
     @headers.setter
     def headers(self, headers):
         """Sets the headers to override request headers.
 
         Args:
-            headers: The dictionary of headers to set.
+            headers: The dictionary of headers or list of sublists,
+            with each sublist having two elements - the pattern and headers
+            to set.
         """
         with self._lock:
             self._headers = headers
@@ -100,7 +116,15 @@ class RequestModifier:
 
     def _modify_headers(self, request):
         with self._lock:
-            headers_lc = {h.lower(): (h, v) for h, v in self._headers.items()}
+            # If self._headers is tuple or list, need to use the pattern matching
+            if is_list_alike(self._headers):
+                headers = self._matched_headers(self._headers, request.path)
+            else:
+                headers = self._headers
+
+            if not headers:
+                return
+            headers_lc = {h.lower(): (h, v) for h, v in headers.items()}
 
         # Remove/replace any header that already exists in the request
         for header in list(request.headers):
@@ -136,3 +160,13 @@ class RequestModifier:
             # Modify the Host header if it exists
             if 'Host' in request.headers:
                 request.headers['Host'] = modified_netloc
+
+    def _matched_headers(self, header_rules, path):
+        results = {}
+        for rule in header_rules:
+            pattern = rule[0]
+            headers = rule[1]
+            match = re.search(pattern, path)
+            if match:
+                results.update(headers)
+        return results

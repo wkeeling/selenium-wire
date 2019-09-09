@@ -1,3 +1,4 @@
+import collections.abc
 import logging
 import os
 import pkgutil
@@ -8,7 +9,8 @@ log = logging.getLogger(__name__)
 
 
 def create_custom_capture_request_handler(custom_response_handler):
-    """Creates a custom class derived from CaptureRequestHandler with the response_handler method overwritten to return
+    """Creates a custom class derived from CaptureRequestHandler with the
+    response_handler method overwritten to return
     custom_response_handler after running super().response_handler"""
     class CustomCaptureRequestHandler(CaptureRequestHandler):
         def response_handler(self, *args, **kwargs):
@@ -25,4 +27,10 @@ def extract_cert():
     with open(os.path.join(os.getcwd(), cert_name), 'wb') as out:
         out.write(cert)
 
-    log.info('{} extracted. You can now import this into a browser.'.format(cert_name))
+    log.info('{} extracted. You can now import this into a browser.'.format(
+        cert_name))
+
+
+def is_list_alike(container):
+    return (isinstance(container, collections.abc.Sequence) and not
+            isinstance(container, str))

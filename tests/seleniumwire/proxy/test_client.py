@@ -30,7 +30,8 @@ class AdminClientIntegrationTest(TestCase):
         self.assertEqual(request['path'], 'https://www.python.org/')
         self.assertEqual(request['headers']['Accept-Encoding'], 'identity')
         self.assertEqual(request['response']['status_code'], 200)
-        self.assertEqual(request['response']['headers']['Content-Type'], 'text/html; charset=utf-8')
+        self.assertEqual(request['response']['headers']
+                         ['Content-Type'], 'text/html; charset=utf-8')
 
     def test_get_requests_multiple(self):
         self._make_request('https://github.com/')
@@ -62,8 +63,10 @@ class AdminClientIntegrationTest(TestCase):
         self.assertEqual(self.client.get_requests(), [])
 
     def test_find(self):
-        self._make_request('https://stackoverflow.com/questions/tagged/django?page=2&sort=newest&pagesize=15')
-        self._make_request('https://docs.python.org/3.4/library/http.client.html')
+        self._make_request(
+            'https://stackoverflow.com/questions/tagged/django?page=2&sort=newest&pagesize=15')
+        self._make_request(
+            'https://docs.python.org/3.4/library/http.client.html')
         self._make_request('https://www.google.com')
 
         self.assertEqual(
@@ -105,7 +108,8 @@ class AdminClientIntegrationTest(TestCase):
         self.assertIsInstance(body, bytes)
 
     def test_get_response_body_image(self):
-        self._make_request('https://www.python.org/static/img/python-logo@2x.png')
+        self._make_request(
+            'https://www.python.org/static/img/python-logo@2x.png')
         last_request = self.client.get_last_request()
 
         body = self.client.get_response_body(last_request['id'])
@@ -113,7 +117,8 @@ class AdminClientIntegrationTest(TestCase):
         self.assertIsInstance(body, bytes)
 
     def test_get_response_body_empty(self):
-        self._make_request('http://www.python.org')  # Redirects to https with empty body
+        # Redirects to https with empty body
+        self._make_request('http://www.python.org')
         redirect_request = self.client.get_requests()[0]
 
         body = self.client.get_response_body(redirect_request['id'])
@@ -128,7 +133,8 @@ class AdminClientIntegrationTest(TestCase):
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual(last_request['headers']['User-Agent'], 'Test_User_Agent_String')
+        self.assertEqual(last_request['headers']
+                         ['User-Agent'], 'Test_User_Agent_String')
 
     def test_set_header_overrides_case_insensitive(self):
         self.client.set_header_overrides({
@@ -138,7 +144,8 @@ class AdminClientIntegrationTest(TestCase):
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual(last_request['headers']['User-Agent'], 'Test_User_Agent_String')
+        self.assertEqual(last_request['headers']
+                         ['User-Agent'], 'Test_User_Agent_String')
 
     def test_set_header_overrides_filters_out_header(self):
         self.client.set_header_overrides({
@@ -159,7 +166,8 @@ class AdminClientIntegrationTest(TestCase):
 
         last_request = self.client.get_last_request()
 
-        self.assertNotEqual(last_request['headers']['User-Agent'], 'Test_User_Agent_String')
+        self.assertNotEqual(
+            last_request['headers']['User-Agent'], 'Test_User_Agent_String')
 
     def test_get_header_overrides(self):
         self.client.set_header_overrides({
@@ -169,6 +177,17 @@ class AdminClientIntegrationTest(TestCase):
         self.assertEqual(self.client.get_header_overrides(), {
             'User-Agent': 'Test_User_Agent_String'
         })
+
+    def test_get_url_match_header_overrides(self):
+        self.client.set_header_overrides([['host1', {
+            'User-Agent': 'Test_User_Agent_String'
+        }], ['host2', {'User-Agent2': 'Test_User_Agent_String'
+                       }]])
+
+        self.assertEqual(self.client.get_header_overrides(), [['host1', {
+            'User-Agent': 'Test_User_Agent_String'
+        }], ['host2', {'User-Agent2': 'Test_User_Agent_String'
+                       }]])
 
     def test_set_rewrite_rules(self):
         self.client.set_rewrite_rules([
@@ -214,7 +233,8 @@ class AdminClientIntegrationTest(TestCase):
         requests = self.client.get_requests()
 
         # No Content-Encoding header implies 'identity'
-        self.assertEqual(requests[0]['response']['headers'].get('Content-Encoding', 'identity'), 'identity')
+        self.assertEqual(requests[0]['response']['headers'].get(
+            'Content-Encoding', 'identity'), 'identity')
 
     def setUp(self):
         options = {}
