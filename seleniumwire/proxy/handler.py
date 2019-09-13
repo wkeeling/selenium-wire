@@ -178,11 +178,11 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
             req: The request (an instance of CaptureRequestHandler).
             req_body: The binary request body.
         """
-        if req.command in self.server.options.get('ignore_http_methods', ['OPTIONS']):
+        not_captured_opts = req.command in self.server.options.get(
+            'ignore_http_methods', ['OPTIONS'])
+        not_in_scope = not self._in_scope(self.server.scopes, req.path)
+        if not_captured_opts or not_in_scope:
             log.debug('Not capturing %s request: %s', req.command, req.path)
-            return
-
-        if not self._in_scope(self.server.scopes, req.path):
             return
 
         log.info('Capturing request: %s', req.path)
