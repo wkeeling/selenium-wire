@@ -51,17 +51,21 @@ class AdminMixin:
             elif self.command == 'GET':
                 self._get_rewrite_rules()
         else:
-            raise RuntimeError('No handler configured for: {} {}'.format(self.command, self.path))
+            raise RuntimeError(
+                'No handler configured for: {} {}'.format(self.command, self.path))
 
     def _get_requests(self):
-        self._send_response(json.dumps(self.server.storage.load_requests()).encode('utf-8'), 'application/json')
+        self._send_response(json.dumps(self.server.storage.load_requests()).encode(
+            'utf-8'), 'application/json')
 
     def _get_last_request(self):
-        self._send_response(json.dumps(self.server.storage.load_last_request()).encode('utf-8'), 'application/json')
+        self._send_response(json.dumps(self.server.storage.load_last_request()).encode(
+            'utf-8'), 'application/json')
 
     def _clear_requests(self):
         self.server.storage.clear_requests()
-        self._send_response(json.dumps({'status': 'ok'}).encode('utf-8'), 'application/json')
+        self._send_response(json.dumps({'status': 'ok'}).encode(
+            'utf-8'), 'application/json')
 
     def _get_request_body(self, request_id):
         body = self.server.storage.load_request_body(request_id[0])
@@ -77,35 +81,42 @@ class AdminMixin:
         self._send_response(body, 'application/octet-stream')
 
     def _find_request(self, path):
-        self._send_response(json.dumps(self.server.storage.find(path[0])).encode('utf-8'), 'application/json')
+        self._send_response(json.dumps(self.server.storage.find(
+            path[0])).encode('utf-8'), 'application/json')
 
     def _set_header_overrides(self):
         content_length = int(self.headers.get('Content-Length', 0))
         req_body = self.rfile.read(content_length)
         headers = json.loads(req_body.decode('utf-8'))
         self.server.modifier.headers = headers
-        self._send_response(json.dumps({'status': 'ok'}).encode('utf-8'), 'application/json')
+        self._send_response(json.dumps({'status': 'ok'}).encode(
+            'utf-8'), 'application/json')
 
     def _clear_header_overrides(self):
         del self.server.modifier.headers
-        self._send_response(json.dumps({'status': 'ok'}).encode('utf-8'), 'application/json')
+        self._send_response(json.dumps({'status': 'ok'}).encode(
+            'utf-8'), 'application/json')
 
     def _get_header_overrides(self):
-        self._send_response(json.dumps(self.server.modifier.headers).encode('utf-8'), 'application/json')
+        self._send_response(json.dumps(self.server.modifier.headers).encode(
+            'utf-8'), 'application/json')
 
     def _set_rewrite_rules(self):
         content_length = int(self.headers.get('Content-Length', 0))
         req_body = self.rfile.read(content_length)
         rewrite_rules = json.loads(req_body.decode('utf-8'))
         self.server.modifier.rewrite_rules = rewrite_rules
-        self._send_response(json.dumps({'status': 'ok'}).encode('utf-8'), 'application/json')
+        self._send_response(json.dumps({'status': 'ok'}).encode(
+            'utf-8'), 'application/json')
 
     def _clear_rewrite_rules(self):
         del self.server.modifier.rewrite_rules
-        self._send_response(json.dumps({'status': 'ok'}).encode('utf-8'), 'application/json')
+        self._send_response(json.dumps({'status': 'ok'}).encode(
+            'utf-8'), 'application/json')
 
     def _get_rewrite_rules(self):
-        self._send_response(json.dumps(self.server.modifier.rewrite_rules).encode('utf-8'), 'application/json')
+        self._send_response(json.dumps(self.server.modifier.rewrite_rules).encode(
+            'utf-8'), 'application/json')
 
     def _send_response(self, body, content_type):
         self.send_response(200)
@@ -166,7 +177,8 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
             # Request was not stored
             return
 
-        log.info('Capturing response: %s %s %s', req.path, res.status, res.reason)
+        log.info('Capturing response: %s %s %s',
+                 req.path, res.status, res.reason)
         self.server.storage.save_response(req.id, res, res_body)
 
     @property
