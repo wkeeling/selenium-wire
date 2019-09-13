@@ -4,9 +4,8 @@ import logging
 import threading
 from urllib.parse import quote_plus
 
-from .handler import ADMIN_PATH, CaptureRequestHandler
+from .handler import ADMIN_PATH, CaptureRequestHandler, create_custom_capture_request_handler
 from .server import ProxyHTTPServer
-from .util import create_custom_capture_request_handler
 
 log = logging.getLogger(__name__)
 

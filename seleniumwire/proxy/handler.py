@@ -191,3 +191,12 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
             return
         # Send server error messages through our own logging config.
         log.debug(format_, *args, exc_info=True)
+def create_custom_capture_request_handler(custom_response_handler):
+    """Creates a custom class derived from CaptureRequestHandler with the
+    response_handler method overwritten to return
+    custom_response_handler after running super().response_handler"""
+    class CustomCaptureRequestHandler(CaptureRequestHandler):
+        def response_handler(self, *args, **kwargs):
+            super().response_handler(*args, **kwargs)
+            return custom_response_handler(*args, **kwargs)
+    return CustomCaptureRequestHandler

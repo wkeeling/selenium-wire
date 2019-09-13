@@ -3,20 +3,8 @@ import logging
 import os
 import pkgutil
 
-from .handler import CaptureRequestHandler
 
 log = logging.getLogger(__name__)
-
-
-def create_custom_capture_request_handler(custom_response_handler):
-    """Creates a custom class derived from CaptureRequestHandler with the
-    response_handler method overwritten to return
-    custom_response_handler after running super().response_handler"""
-    class CustomCaptureRequestHandler(CaptureRequestHandler):
-        def response_handler(self, *args, **kwargs):
-            super().response_handler(*args, **kwargs)
-            return custom_response_handler(*args, **kwargs)
-    return CustomCaptureRequestHandler
 
 
 def extract_cert():
