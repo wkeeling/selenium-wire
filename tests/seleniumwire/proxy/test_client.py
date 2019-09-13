@@ -222,6 +222,56 @@ class AdminClientIntegrationTest(TestCase):
             [r'http://www.stackoverflow.com(.*)', r'https://www.github.com\1'],
         ])
 
+    def test_set_single_scopes(self):
+        self.client.set_scopes('.*stackoverflow.*')
+
+        self._make_request('https://stackoverflow.com')
+
+        last_request = self.client.get_last_request()
+
+        self.assertEqual(last_request['path'], 'https://stackoverflow.com/')
+        self.assertEqual(last_request['headers']['Host'], 'stackoverflow.com')
+
+        self._make_request('https://github.com')
+
+        last_request = self.client.get_last_request()
+
+        self.assertEqual(last_request['path'], 'https://stackoverflow.com/')
+        self.assertEqual(last_request['headers']['Host'], 'stackoverflow.com')
+        self.assertNotEqual(last_request['path'], 'https://github.com/')
+        self.assertNotEqual(last_request['headers']['Host'], 'github.com')
+
+    def test_set_multiples_scopes(self):
+        self.client.set_scopes(('.*stackoverflow.*', '.*github.*'))
+
+        self._make_request('https://stackoverflow.com')
+        last_request = self.client.get_last_request()
+        self.assertEqual(last_request['path'], 'https://stackoverflow.com/')
+        self.assertEqual(last_request['headers']['Host'], 'stackoverflow.com')
+
+        self._make_request('https://github.com')
+        last_request = self.client.get_last_request()
+        self.assertEqual(last_request['path'], 'https://github.com/')
+        self.assertEqual(last_request['headers']['Host'], 'github.com')
+
+        self._make_request('https://google.com')
+        last_request = self.client.get_last_request()
+        self.assertNotEqual(last_request['path'], 'https://google.com/')
+        self.assertNotEqual(last_request['headers']['Host'], 'google.com')
+
+    def test_reset_scopes(self):
+        self.client.set_scopes(('.*stackoverflow.*', '.*github.*'))
+        self.client.reset_scopes()
+
+        self._make_request('https://www.stackoverflow.com')
+        self.assertTrue(self.client.get_last_request())
+
+    def test_get_scopes(self):
+        self.client.set_scopes(('.*stackoverflow.*', '.*github.*'))
+
+        self.assertEqual(self.client.get_scopes(), ['.*stackoverflow.*', '.*github.*'
+                                                    ])
+
     def test_disable_encoding(self):
         # Explicitly set the accept-encoding to gzip
         self.client.set_header_overrides({

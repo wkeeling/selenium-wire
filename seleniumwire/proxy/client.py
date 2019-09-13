@@ -185,6 +185,22 @@ class AdminClient:
         """Gets any previously set rewrite rules"""
         return self._make_request('GET', '/rewrite_rules')
 
+    def set_scopes(self, scopes):
+        """Sets the scopes for the seleniumwire to log/modify request and response.
+
+        Args:
+            scopes: a regex string or list of regex string.
+        """
+        self._make_request('POST', '/scopes', data=scopes)
+
+    def reset_scopes(self):
+        """Reset scopes to let proxy capture all requests."""
+        self._make_request('DELETE', '/scopes')
+
+    def get_scopes(self):
+        """Gets any previously set scopes"""
+        return self._make_request('GET', '/scopes')
+
     def _make_request(self, command, path, data=None):
         url = '{}{}'.format(ADMIN_PATH, path)
         conn = http.client.HTTPConnection(self._proxy_addr, self._proxy_port)

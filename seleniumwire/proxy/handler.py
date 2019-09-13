@@ -1,8 +1,10 @@
 import json
 import logging
+import re
 import socket
 from urllib.parse import parse_qs, urlparse
 
+from .util import is_list_alike
 from .proxy2 import ProxyRequestHandler
 
 log = logging.getLogger(__name__)
@@ -50,6 +52,13 @@ class AdminMixin:
                 self._clear_rewrite_rules()
             elif self.command == 'GET':
                 self._get_rewrite_rules()
+        elif path == '/scopes':
+            if self.command == 'POST':
+                self._set_scopes()
+            elif self.command == 'DELETE':
+                self._reset_scopes()
+            elif self.command == 'GET':
+                self._get_scopes()
         else:
             raise RuntimeError(
                 'No handler configured for: {} {}'.format(self.command, self.path))
@@ -127,6 +136,23 @@ class AdminMixin:
             body = body.encode('utf-8')
         self.wfile.write(body)
 
+    def _set_scopes(self):
+        content_length = int(self.headers.get('Content-Length', 0))
+        req_body = self.rfile.read(content_length)
+        scopes = json.loads(req_body.decode('utf-8'))
+        self.server.scopes = scopes
+        self._send_response(json.dumps({'status': 'ok'}).encode(
+            'utf-8'), 'application/json')
+
+    def _reset_scopes(self):
+        self.server.scopes = []
+        self._send_response(json.dumps({'status': 'ok'}).encode(
+            'utf-8'), 'application/json')
+
+    def _get_scopes(self):
+        self._send_response(json.dumps(self.server.scopes).encode(
+            'utf-8'), 'application/json')
+
 
 class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
     """Specialisation of ProxyRequestHandler that captures requests and responses
@@ -154,6 +180,9 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
         """
         if req.command in self.server.options.get('ignore_http_methods', ['OPTIONS']):
             log.debug('Not capturing %s request: %s', req.command, req.path)
+            return
+
+        if not self._in_scope(self.server.scopes, req.path):
             return
 
         log.info('Capturing request: %s', req.path)
@@ -203,6 +232,19 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
             return
         # Send server error messages through our own logging config.
         log.debug(format_, *args, exc_info=True)
+
+    def _in_scope(self, scopes, path):
+        if not scopes:
+            return True
+        elif not is_list_alike(scopes):
+            scopes = [scopes]
+        for scope in scopes:
+            match = re.search(scope, path)
+            if match:
+                return True
+        return False
+
+
 def create_custom_capture_request_handler(custom_response_handler):
     """Creates a custom class derived from CaptureRequestHandler with the
     response_handler method overwritten to return

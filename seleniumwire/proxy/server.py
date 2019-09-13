@@ -10,7 +10,7 @@ from .storage import RequestStorage
 class ProxyHTTPServer(ThreadingHTTPServer):
     address_family = socket.AF_INET
 
-    def __init__(self, *args, proxy_config=None, options=None, **kwargs):
+    def __init__(self, *args, proxy_config=None, options=None, scopes=None, **kwargs):
         # Each server instance gets its own storage
         self.storage = RequestStorage()
 
@@ -23,6 +23,9 @@ class ProxyHTTPServer(ThreadingHTTPServer):
 
         # Additional proxy server configuration
         self.options = options or {}
+
+        # A scope for proxy to be interested
+        self.scopes = scopes or []
 
         super().__init__(*args, **kwargs)
 
