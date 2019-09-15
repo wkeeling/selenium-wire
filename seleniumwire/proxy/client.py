@@ -4,9 +4,8 @@ import logging
 import threading
 from urllib.parse import quote_plus
 
-from .handler import ADMIN_PATH, CaptureRequestHandler
+from .handler import ADMIN_PATH, CaptureRequestHandler, create_custom_capture_request_handler
 from .server import ProxyHTTPServer
-from .util import create_custom_capture_request_handler
 
 log = logging.getLogger(__name__)
 
@@ -185,6 +184,22 @@ class AdminClient:
     def get_rewrite_rules(self):
         """Gets any previously set rewrite rules"""
         return self._make_request('GET', '/rewrite_rules')
+
+    def set_scopes(self, scopes):
+        """Sets the scopes for the seleniumwire to log/modify request and response.
+
+        Args:
+            scopes: a regex string or list of regex string.
+        """
+        self._make_request('POST', '/scopes', data=scopes)
+
+    def reset_scopes(self):
+        """Reset scopes to let proxy capture all requests."""
+        self._make_request('DELETE', '/scopes')
+
+    def get_scopes(self):
+        """Gets any previously set scopes"""
+        return self._make_request('GET', '/scopes')
 
     def _make_request(self, command, path, data=None):
         url = '{}{}'.format(ADMIN_PATH, path)

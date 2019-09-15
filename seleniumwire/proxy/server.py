@@ -10,7 +10,7 @@ from .storage import RequestStorage
 class ProxyHTTPServer(ThreadingHTTPServer):
     address_family = socket.AF_INET
 
-    def __init__(self, *args, proxy_config=None, options=None, **kwargs):
+    def __init__(self, *args, proxy_config=None, options=None, scopes=None, **kwargs):
         # Each server instance gets its own storage
         self.storage = RequestStorage()
 
@@ -18,10 +18,14 @@ class ProxyHTTPServer(ThreadingHTTPServer):
         self.modifier = RequestModifier()
 
         # The server's upstream proxy configuration (if any)
-        self.proxy_config = self._sanitise_proxy_config(self._merge_with_env(proxy_config or {}))
+        self.proxy_config = self._sanitise_proxy_config(
+            self._merge_with_env(proxy_config or {}))
 
         # Additional proxy server configuration
         self.options = options or {}
+
+        # A scope for proxy to be interested
+        self.scopes = scopes or []
 
         super().__init__(*args, **kwargs)
 
@@ -52,7 +56,8 @@ class ProxyHTTPServer(ThreadingHTTPServer):
             # Parse the upstream proxy URL into (scheme, user, password, hostport)
             # for ease of access.
             if proxy_config.get(proxy_type) is not None:
-                proxy_config[proxy_type] = _parse_proxy(proxy_config[proxy_type])
+                proxy_config[proxy_type] = _parse_proxy(
+                    proxy_config[proxy_type])
 
         if proxy_config:
             proxy_config['no_proxy'] = [host.strip() for host in proxy_config.get('no_proxy', '').split(',')
