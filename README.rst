@@ -392,10 +392,10 @@ Header overrides can also be applied on a per-URL basis, in the following format
 .. code:: python
 
     driver.header_overrides = [
-            ('.*prod1.server.com.*', {'User-Agent': 'Test_User_Agent_String',
-                                      'New-Header': 'HeaderValue'}),
-            ('.*prod2.server.com.*', {'User-Agent2': 'Test_User_Agent_String2',
-                                      'New-Header2': 'HeaderValue'})
+        ('.*prod1.server.com.*', {'User-Agent': 'Test_User_Agent_String',
+                                  'New-Header': 'HeaderValue'}),
+        ('.*prod2.server.com.*', {'User-Agent2': 'Test_User_Agent_String2',
+                                  'New-Header2': 'HeaderValue'})
     ]
 
     # Only requests to prod1.server.com or prod2.server.com will have their headers modified

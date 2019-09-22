@@ -2,7 +2,7 @@ History
 ~~~~~~~
 
 1.0.10 (2019-09-22)
-------------------
+-------------------
 
 * Scope request capture.
 * Apply header filtering on a per-URL basis.
