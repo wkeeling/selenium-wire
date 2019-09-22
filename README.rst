@@ -88,6 +88,7 @@ Table of Contents
   * `Accessing Requests`_
   * `Waiting for a Request`_
   * `Clearing Requests`_
+  * `Scoping Request Capture`_
 
 - `Request Attributes`_
 
@@ -292,6 +293,22 @@ To clear previously captured requests, use ``del``:
 
     del driver.requests
 
+Scoping Request Capture
+-----------------------
+
+By default, Selenium Wire will capture all requests the browser makes during a test. You may want to restrict this to particular URLs - e.g. for performance reasons.
+
+To restrict request capture use the ``scopes`` attribute. This accepts a list of regular expressions that will match URLs to be captured.
+
+.. code:: python
+
+    driver.scopes = [
+        '.*stackoverflow.*',
+        '.*github.*'
+    ]
+
+    # Only request URLs containing "stackoverflow" or "github" will now be captured...
+
 Request Attributes
 ~~~~~~~~~~~~~~~~~~
 
@@ -369,6 +386,20 @@ To clear the header overrides that you have set, use ``del``:
 .. code:: python
 
     del driver.header_overrides
+
+Header overrides can also be applied on a per-URL basis, in the following format:
+
+.. code:: python
+
+    driver.header_overrides = [
+            ('.*prod1.server.com.*', {'User-Agent': 'Test_User_Agent_String',
+                                      'New-Header': 'HeaderValue'}),
+            ('.*prod2.server.com.*', {'User-Agent2': 'Test_User_Agent_String2',
+                                      'New-Header2': 'HeaderValue'})
+    ]
+
+    # Only requests to prod1.server.com or prod2.server.com will have their headers modified
+
 
 Rewriting URLs
 --------------

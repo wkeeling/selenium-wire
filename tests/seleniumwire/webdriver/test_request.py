@@ -178,6 +178,34 @@ class InspectRequestsMixinTest(TestCase):
 
         mock_client.get_rewrite_rules.assert_called_once_with()
 
+    def test_set_scopes(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+        scopes = [
+            '.*stackoverflow.*',
+            '.*github.*'
+        ]
+
+        driver.scopes = scopes
+
+        mock_client.set_scopes.assert_called_once_with(scopes)
+
+    def test_delete_scopes(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        del driver.scopes
+
+        mock_client.reset_scopes.assert_called_once_with()
+
+    def test_get_scopes(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        driver.scopes
+
+        mock_client.get_scopes.assert_called_once_with()
+
 
 class RequestTest(TestCase):
 

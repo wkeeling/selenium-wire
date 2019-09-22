@@ -117,6 +117,29 @@ class InspectRequestsMixin:
     def rewrite_rules(self):
         self._client.clear_rewrite_rules()
 
+    @property
+    def scopes(self):
+        """The URL patterns used to scope request capture.
+
+        The value of the scopes should be a list (or tuple) of
+        regular expressions.
+
+        For example:
+            scopes = [
+                '.*stackoverflow.*',
+                '.*github.*'
+            ]
+        """
+        return self._client.get_scopes()
+
+    @scopes.setter
+    def scopes(self, scopes):
+        self._client.set_scopes(scopes)
+
+    @scopes.deleter
+    def scopes(self):
+        self._client.reset_scopes()
+
 
 class Request:
     """Represents a captured browser request."""
