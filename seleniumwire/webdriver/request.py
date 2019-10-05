@@ -140,7 +140,31 @@ class InspectRequestsMixin:
     def scopes(self):
         self._client.reset_scopes()
 
+    
+    @property
+    def filters(self):
+        """The URL patterns used to filter request url blacklisting.
 
+        The value of the filters should be a list (or tuple) of
+        regular expressions.
+
+        For example:
+            filters = [
+                    '.*stackoverflow.*',
+                    '.*github.*'
+                ]
+        """
+        return self._client.get_filters()
+
+    @filters.setter
+    def filters(self, filters):
+        self._client.set_filters(filters)
+
+    @filters.deleter
+    def filters(self):
+        self._client.reset_filters()
+
+    
 class Request:
     """Represents a captured browser request."""
 

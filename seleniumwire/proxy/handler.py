@@ -59,6 +59,14 @@ class AdminMixin:
                 self._reset_scopes()
             elif self.command == 'GET':
                 self._get_scopes()
+
+        elif path == '/filters':
+            if self.command == 'POST':
+                self._set_filters()
+            elif self.command == 'DELETE':
+                self._reset_filters()
+            elif self.command == 'GET':
+                self._get_filters()
         else:
             raise RuntimeError(
                 'No handler configured for: {} {}'.format(self.command, self.path))
@@ -153,6 +161,23 @@ class AdminMixin:
         self._send_response(json.dumps(self.server.scopes).encode(
             'utf-8'), 'application/json')
 
+    def _set_filters(self):
+        content_length = int(self.headers.get('Content-Length', 0))
+        req_body = self.rfile.read(content_length)
+        filters = json.loads(req_body.decode('utf-8'))
+        self.server.filters = filters
+        self._send_response(json.dumps({'status': 'ok'}).encode(
+            'utf-8'), 'application/json')
+
+    def _reset_filters(self):
+        self.server.filters = []
+        self._send_response(json.dumps({'status': 'ok'}).encode(
+            'utf-8'), 'application/json')
+
+    def _get_filters(self):
+        self._send_response(json.dumps(self.server.filters).encode(
+            'utf-8'), 'application/json')
+
 
 class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
     """Specialisation of ProxyRequestHandler that captures requests and responses
@@ -178,9 +203,14 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
             req: The request (an instance of CaptureRequestHandler).
             req_body: The binary request body.
         """
+        is_blacklisted = self._is_blocked(self.server.filters, req.path)
+        if is_blacklisted:
+            self.send_error(503)
+
         ignore_method = req.command in self.server.options.get(
             'ignore_http_methods', ['OPTIONS'])
         not_in_scope = not self._in_scope(self.server.scopes, req.path)
+
         if ignore_method or not_in_scope:
             log.debug('Not capturing %s request: %s', req.command, req.path)
             return
@@ -241,6 +271,16 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
         for scope in scopes:
             match = re.search(scope, path)
             if match:
+                return True
+        return False
+
+    def _is_blocked(self, filters, path):
+        if not filters:
+            return False
+        elif not is_list_alike(filters):
+            filters = [filters]
+        for f in filters:
+            if re.search(f, path):
                 return True
         return False
 

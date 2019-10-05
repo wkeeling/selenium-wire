@@ -48,15 +48,18 @@ class AdminClient:
 
         custom_response_handler = options.get('custom_response_handler')
         if custom_response_handler is not None:
-            self._capture_request_handler = create_custom_capture_request_handler(custom_response_handler)
+            self._capture_request_handler = create_custom_capture_request_handler(
+                custom_response_handler)
         else:
             self._capture_request_handler = CaptureRequestHandler
         self._capture_request_handler.protocol_version = 'HTTP/1.1'
-        self._capture_request_handler.timeout = options.get('connection_timeout', 5)
+        self._capture_request_handler.timeout = options.get(
+            'connection_timeout', 5)
         self._proxy = ProxyHTTPServer((addr, port), self._capture_request_handler,
                                       proxy_config=proxy_config, options=options)
 
-        t = threading.Thread(name='Selenium Wire Proxy Server', target=self._proxy.serve_forever)
+        t = threading.Thread(name='Selenium Wire Proxy Server',
+                             target=self._proxy.serve_forever)
         t.daemon = not options.get('standalone')
         t.start()
 
@@ -64,7 +67,8 @@ class AdminClient:
         self._proxy_addr = socketname[0]
         self._proxy_port = socketname[1]
 
-        log.info('Created proxy listening on {}:{}'.format(self._proxy_addr, self._proxy_port))
+        log.info('Created proxy listening on {}:{}'.format(
+            self._proxy_addr, self._proxy_port))
         return self._proxy_addr, self._proxy_port
 
     def destroy_proxy(self):
@@ -201,6 +205,22 @@ class AdminClient:
         """Gets any previously set scopes"""
         return self._make_request('GET', '/scopes')
 
+    def set_filters(self, filters):
+        """Sets the filters for the seleniumwire to block requests.
+
+        Args:
+            filters: a regex string or list of regex string.
+        """
+        self._make_request('POST', '/filters', data=filters)
+
+    def reset_filters(self):
+        """Reset filters to let proxy capture all requests."""
+        self._make_request('DELETE', '/filters')
+
+    def get_filters(self):
+        """Gets any previously set filters"""
+        return self._make_request('GET', '/filters')
+
     def _make_request(self, command, path, data=None):
         url = '{}{}'.format(ADMIN_PATH, path)
         conn = http.client.HTTPConnection(self._proxy_addr, self._proxy_port)
@@ -215,7 +235,8 @@ class AdminClient:
             response = conn.getresponse()
 
             if response.status != 200:
-                raise ProxyException('Proxy returned status code {} for {}'.format(response.status, url))
+                raise ProxyException(
+                    'Proxy returned status code {} for {}'.format(response.status, url))
 
             data = response.read()
             try:
@@ -227,7 +248,8 @@ class AdminClient:
         except ProxyException:
             raise
         except Exception as e:
-            raise ProxyException('Unable to retrieve data from proxy: {}'.format(e))
+            raise ProxyException(
+                'Unable to retrieve data from proxy: {}'.format(e))
         finally:
             try:
                 conn.close()

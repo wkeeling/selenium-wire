@@ -27,6 +27,8 @@ class ProxyHTTPServer(ThreadingHTTPServer):
         # A scope for proxy to be interested
         self.scopes = []
 
+        self.filters = None
+
         super().__init__(*args, **kwargs)
 
     def _merge_with_env(self, proxy_config):
