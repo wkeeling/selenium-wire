@@ -206,6 +206,34 @@ class InspectRequestsMixinTest(TestCase):
 
         mock_client.get_scopes.assert_called_once_with()
 
+    def test_set_filters(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+        filters = [
+            '.*stackoverflow.*',
+            '\.jpg',
+            '\.png'
+        ]
+
+        driver.filters = filters
+
+        mock_client.set_filters.assert_called_once_with(filters)
+
+    def test_delete_filters(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        del driver.filters
+
+        mock_client.reset_filters.assert_called_once_with()
+
+    def test_get_filters(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        driver.filters
+
+        mock_client.get_filters.assert_called_once_with()
 
 class RequestTest(TestCase):
 

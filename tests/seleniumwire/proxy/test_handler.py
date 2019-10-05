@@ -60,6 +60,7 @@ class CaptureRequestHandlerTest(TestCase):
         self.handler.server.storage = self.mock_storage
         self.handler.server.options = {}
         self.handler.server.scopes = []
+        self.handler.server.filters = []
         self.handler.path = 'https://www.google.com/foo/bar?x=y'
         self.handler.command = 'GET'
         self.body = None

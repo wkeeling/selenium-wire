@@ -27,7 +27,7 @@ class ProxyHTTPServer(ThreadingHTTPServer):
         # A scope for proxy to be interested
         self.scopes = []
 
-        self.filters = None
+        self.filters = []
 
         super().__init__(*args, **kwargs)
 

@@ -277,10 +277,8 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
     def _is_blocked(self, filters, path):
         if not filters:
             return False
-        elif not is_list_alike(filters):
-            filters = [filters]
-        for f in filters:
-            if re.search(f, path):
+        for pattern in filters:
+            if re.search(pattern, path):
                 return True
         return False
 
