@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+1.0.11 (2019-12-31)
+-------------------
+
+* Fix duplication of content-length header when altering body content
+
 1.0.10 (2019-09-22)
 -------------------
 
