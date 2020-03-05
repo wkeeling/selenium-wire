@@ -242,6 +242,26 @@ def proxy_auth_headers(proxy_username, proxy_password, custom_proxy_authorizatio
         headers['Proxy-Authorization'] = custom_proxy_authorization
     return headers
 
+def parse_proxy(proxy_config):
+    '''Split proxy_config to include correct port
+
+    Expects output from urllib.request._parse_proxy`
+    '''
+    protocol, username, password, host = proxy_config
+    host = host.split(':', 1)
+    hostname = host[0]
+
+    if host[1:]:
+        port = int(host[1])
+    elif protocol == 'http':
+        port = 80
+    elif protocol == 'https':
+        port = 443
+    else:
+        port = None
+
+    return protocol, username, password, hostname, port
+
 
 class ProxyAwareHTTPConnection(HTTPConnection):
     """A specialised HTTPConnection that will transparently connect to a
@@ -253,9 +273,9 @@ class ProxyAwareHTTPConnection(HTTPConnection):
         self.proxied = proxy_config and netloc not in proxy_config['no_proxy']
 
         if self.proxied:
-            _, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config.get('http')
+            self.proxy_protocol, self.proxy_username, self.proxy_password, self.proxy_host, self.proxy_port = parse_proxy(proxy_config.get('http'))
             self.custom_authorization = proxy_config.get('custom_authorization')
-            super().__init__(self.proxy_host, *args, **kwargs)
+            super().__init__(self.proxy_host, self.proxy_port, *args, **kwargs)
         else:
             super().__init__(netloc, *args, **kwargs)
 
@@ -280,9 +300,11 @@ class ProxyAwareHTTPSConnection(HTTPSConnection):
         self.proxied = proxy_config and netloc not in proxy_config['no_proxy']
 
         if self.proxied:
-            _, proxy_username, proxy_password, proxy_host = proxy_config.get('https')
-            super().__init__(proxy_host, *args, **kwargs)
-            self.set_tunnel(proxy_host, proxy_port, headers=proxy_auth_headers(proxy_username, proxy_password,
-                                                            proxy_config.get('custom_authorization')))
+            proxy = proxy_config.get('https')
+            self.proxy_protocol, self.proxy_username, self.proxy_password, self.proxy_host, self.proxy_port = parse_proxy(proxy_config.get('https'))
+            super().__init__(self.proxy_host, self.proxy_port, *args, **kwargs)
+            headers = proxy_auth_headers(self.proxy_username, self.proxy_password,
+                                         proxy_config.get('custom_authorization'))
+            self.set_tunnel(netloc, headers=headers)
         else:
             super().__init__(netloc, *args, **kwargs)
