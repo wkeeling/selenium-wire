@@ -234,6 +234,8 @@ def proxy_auth_headers(proxy_username, proxy_password, custom_proxy_authorizatio
     """
     headers = {}
     if proxy_username and proxy_password and not custom_proxy_authorization:
+        proxy_username = urllib.parse.unquote(proxy_username)
+        proxy_password = urllib.parse.unquote(proxy_password)
         auth = '{}:{}'.format(proxy_username, proxy_password)
         headers['Proxy-Authorization'] = 'Basic {}'.format(base64.b64encode(auth.encode('utf-8')).decode('utf-8'))
     elif custom_proxy_authorization:
@@ -280,7 +282,7 @@ class ProxyAwareHTTPSConnection(HTTPSConnection):
         if self.proxied:
             _, proxy_username, proxy_password, proxy_host = proxy_config.get('https')
             super().__init__(proxy_host, *args, **kwargs)
-            self.set_tunnel(netloc, headers=proxy_auth_headers(proxy_username, proxy_password,
-                                                               proxy_config.get('custom_authorization')))
+            self.set_tunnel(proxy_host, proxy_port, headers=proxy_auth_headers(proxy_username, proxy_password,
+                                                            proxy_config.get('custom_authorization')))
         else:
             super().__init__(netloc, *args, **kwargs)
