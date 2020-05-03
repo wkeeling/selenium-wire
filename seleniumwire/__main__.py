@@ -8,7 +8,7 @@ from seleniumwire.proxy import client, util
 logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 
 
-def standalone_proxy(port):
+def standalone_proxy(port=0):
     c = client.AdminClient()
 
     # Configure shutdown handlers
