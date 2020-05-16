@@ -101,7 +101,7 @@ Table of Contents
 
 - `Proxies`_
 
-- `SOCKS`_
+  * `SOCKS`_
 
 - `Other Options`_
 
@@ -151,7 +151,7 @@ Browser Setup
 
 No specific configuration should be necessary - everything should just work.
 
-You will however need to ensure that you have downloaded the `Gecko driver`_ and `Chrome driver`_ for Firefox and Chrome to be remotely controlled - the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on the system path.
+You will however need to ensure that you have downloaded the `Gecko driver`_ and `Chrome driver`_ for Firefox and Chrome to be remotely controlled - the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on your PATH.
 
 .. _`Gecko driver`: https://github.com/mozilla/geckodriver/
 
@@ -445,7 +445,7 @@ If the site you are testing sits behind a proxy server you can tell Selenium Wir
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
-To use HTTP Basic Auth with your proxy, pass the username and password in the URL:
+To use HTTP Basic Auth with your proxy, specify the username and password in the URL:
 
 .. code:: python
 
@@ -455,13 +455,13 @@ To use HTTP Basic Auth with your proxy, pass the username and password in the UR
         }
     }
 
-Basic authentication is used by default when supplying a username and password. For proxy authentication schemes different to Basic, you can supply the full value for the ``Proxy-Authorization`` header using the ``custom_authorization`` option. For example, if your proxy used the Bearer scheme:
+For proxy authentication different to Basic, you can supply the full value for the ``Proxy-Authorization`` header using the ``custom_authorization`` option. For example, if your proxy used the Bearer scheme:
 
 .. code:: python
 
     options = {
         'proxy': {
-            'https': 'https://192.168.10.100:8889',
+            'https': 'https://192.168.10.100:8889',  # No username or password used
             'custom_authorization': 'Bearer mytoken123'  # Custom Proxy-Authorization header value
         }
     }
@@ -475,7 +475,7 @@ The proxy configuration can also be loaded through environment variables called 
     $ export NO_PROXY="localhost,127.0.0.1"
 
 SOCKS
-~~~~~
+-----
 
 Using a SOCKS proxy is the same as using an HTTP based one:
 
