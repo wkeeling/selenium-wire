@@ -23,6 +23,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
     description="Extends Selenium to give you the ability to inspect requests made by the browser.",
     install_requires=['selenium>=3.4.0'],
