@@ -57,7 +57,7 @@ Prints:
 Features
 ~~~~~~~~
 
-* Straightforward, user-friendly API
+* Pure Python with user-friendly API
 * All HTTP/HTTPS requests captured
 * Access to request/response bodies
 * Modify responses
@@ -100,6 +100,8 @@ Table of Contents
   * `Rewriting URLs`_
 
 - `Proxies`_
+
+  * `SOCKS`_
 
 - `Other Options`_
 
@@ -149,7 +151,7 @@ Browser Setup
 
 No specific configuration should be necessary - everything should just work.
 
-You will however need to ensure that you have downloaded the `Gecko driver`_ and `Chrome driver`_ for Firefox and Chrome to be remotely controlled - the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on the system path.
+You will however need to ensure that you have downloaded the `Gecko driver`_ and `Chrome driver`_ for Firefox and Chrome to be remotely controlled - the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on your PATH.
 
 .. _`Gecko driver`: https://github.com/mozilla/geckodriver/
 
@@ -430,40 +432,68 @@ To clear the rewrite rules that you have set, use ``del``:
 Proxies
 ~~~~~~~
 
-Selenium Wire captures requests by using its own proxy server under the covers. This means you cannot use the webdriver's ``DesiredCapabilities`` API to configure your own proxy, like you might when using Selenium directly.
-
 If the site you are testing sits behind a proxy server you can tell Selenium Wire about that proxy server in the options you pass to the webdriver instance. The configuration takes the following format:
 
 .. code:: python
 
     options = {
         'proxy': {
-            'http': 'http://username:password@host:port',
-            'https': 'https://username:password@host:port',
-            'no_proxy': 'localhost,127.0.0.1,dev_server:8080'
+            'http': 'http://192.168.10.100:8888',
+            'https': 'https://192.168.10.100:8889',
+            'no_proxy': 'localhost,127.0.0.1'
         }
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
-The username and password are optional and can be specified when a proxy server requires authentication. Basic authentication is assumed by default.
-
-The proxy configuration can also be loaded through environment variables called ``http``, ``https`` and ``no_proxy``. The proxy configuration in the options passed to the webdriver instance will take precedence over environment variable configuration if both are specified.
-
-**Proxy authentication other than Basic**
-
-Basic authentication is used by default when supplying a username and password in the URL. If you are connecting to an upstream proxy server that uses an authentication scheme different to Basic, then you can supply the full value for the ``Proxy-Authorization`` header using the ``custom_authorization`` option. For example, if your proxy used the Bearer scheme:
+To use HTTP Basic Auth with your proxy, specify the username and password in the URL:
 
 .. code:: python
 
     options = {
         'proxy': {
-            'http': 'http://host:port',
-            'https': 'https://host:port',
-            'no_proxy': 'localhost,127.0.0.1,dev_server:8080',
+            'https': 'https://user:pass@192.168.10.100:8889',
+        }
+    }
+
+For proxy authentication different to Basic, you can supply the full value for the ``Proxy-Authorization`` header using the ``custom_authorization`` option. For example, if your proxy used the Bearer scheme:
+
+.. code:: python
+
+    options = {
+        'proxy': {
+            'https': 'https://192.168.10.100:8889',  # No username or password used
             'custom_authorization': 'Bearer mytoken123'  # Custom Proxy-Authorization header value
         }
     }
+
+The proxy configuration can also be loaded through environment variables called ``HTTP_PROXY``, ``HTTPS_PROXY`` and ``NO_PROXY``:
+
+.. code:: bash
+
+    $ export HTTP_PROXY="http://192.168.10.100:8888"
+    $ export HTTPS_PROXY="https://192.168.10.100:8889"
+    $ export NO_PROXY="localhost,127.0.0.1"
+
+SOCKS
+-----
+
+Using a SOCKS proxy is the same as using an HTTP based one:
+
+.. code:: python
+
+    options = {
+        'proxy': {
+            'http': 'socks5://user:pass@192.168.10.100:8888',
+            'https': 'socks5://user:pass@192.168.10.100:8889',
+            'no_proxy': 'localhost,127.0.0.1'
+        }
+    }
     driver = webdriver.Firefox(seleniumwire_options=options)
+
+You can leave out the ``user`` and ``pass`` if your proxy doesn't require authentication.
+
+As well as ``socks5``, the schemes ``socks4`` and ``socks5h`` are supported. Use ``socks5h`` when you want DNS resolution to happen on the proxy server rather than on the client.
+
 
 Other Options
 ~~~~~~~~~~~~~
