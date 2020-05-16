@@ -275,7 +275,7 @@ class ProxyAwareHTTPSConnection(HTTPSConnection):
 
         if self.use_proxy and proxy_config['https'].scheme.startswith('http'):
             # For HTTP proxies, CONNECT tunnelling is used
-            super().__init__(proxy_config['https'].host, *args, **kwargs)
+            super().__init__(proxy_config['https'].hostport, *args, **kwargs)
             self.set_tunnel(
                 netloc,
                 headers=_create_auth_header(
