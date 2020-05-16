@@ -163,9 +163,7 @@ class RequestModifier:
 
     def _matched_headers(self, header_rules, path):
         results = {}
-        for rule in header_rules:
-            pattern = rule[0]
-            headers = rule[1]
+        for pattern, headers in header_rules:
             match = re.search(pattern, path)
             if match:
                 results.update(headers)

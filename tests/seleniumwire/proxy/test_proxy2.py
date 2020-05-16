@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 from urllib.request import _parse_proxy
 
 from seleniumwire.proxy.proxy2 import (ProxyAwareHTTPConnection, ProxyAwareHTTPSConnection,
-                                       proxy_auth_headers)
+                                       create_auth_header)
 
 
 class ProxyAwareHTTPConnectionTest(TestCase):
@@ -110,7 +110,7 @@ class ProxyAuthHeadersTest(TestCase):
         password = 'password'
         custom_proxy_authorization = None
 
-        headers = proxy_auth_headers(username, password, custom_proxy_authorization)
+        headers = create_auth_header(username, password, custom_proxy_authorization)
 
         self.assertEqual(headers, {'Proxy-Authorization': 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='})
 
@@ -119,7 +119,7 @@ class ProxyAuthHeadersTest(TestCase):
         password = 'password'
         custom_proxy_authorization = None
 
-        headers = proxy_auth_headers(username, password, custom_proxy_authorization)
+        headers = create_auth_header(username, password, custom_proxy_authorization)
 
         self.assertEqual(headers, {})
 
@@ -128,7 +128,7 @@ class ProxyAuthHeadersTest(TestCase):
         password = None
         custom_proxy_authorization = None
 
-        headers = proxy_auth_headers(username, password, custom_proxy_authorization)
+        headers = create_auth_header(username, password, custom_proxy_authorization)
 
         self.assertEqual(headers, {})
 
@@ -137,6 +137,6 @@ class ProxyAuthHeadersTest(TestCase):
         password = None
         custom_proxy_authorization = 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='
 
-        headers = proxy_auth_headers(username, password, custom_proxy_authorization)
+        headers = create_auth_header(username, password, custom_proxy_authorization)
 
         self.assertEqual(headers, {'Proxy-Authorization': 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='})

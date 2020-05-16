@@ -1,5 +1,6 @@
 import os
 import socket
+from collections import namedtuple
 from urllib.request import _parse_proxy
 
 from .modifier import RequestModifier
@@ -33,9 +34,9 @@ class ProxyHTTPServer(ThreadingHTTPServer):
         """Merge upstream proxy configuration with configuration loaded
         from the environment.
         """
-        http_proxy = os.environ.get('http_proxy')
-        https_proxy = os.environ.get('https_proxy')
-        no_proxy = os.environ.get('no_proxy')
+        http_proxy = os.environ.get('HTTP_PROXY')
+        https_proxy = os.environ.get('HTTPS_PROXY')
+        no_proxy = os.environ.get('NO_PROXY')
 
         merged = {}
 
@@ -52,16 +53,13 @@ class ProxyHTTPServer(ThreadingHTTPServer):
 
     def _sanitise_proxy_config(self, proxy_config):
         """Parse the proxy configuration into something more usable."""
+        conf = namedtuple('ProxyConf', 'scheme username password hostport')
+
         for proxy_type in ('http', 'https'):
-            # Parse the upstream proxy URL into (scheme, user, password, hostport)
+            # Parse the upstream proxy URL into (scheme, username, password, hostport)
             # for ease of access.
             if proxy_config.get(proxy_type) is not None:
-                proxy_config[proxy_type] = _parse_proxy(
-                    proxy_config[proxy_type])
-
-        if proxy_config:
-            proxy_config['no_proxy'] = [host.strip() for host in proxy_config.get('no_proxy', '').split(',')
-                                        if host]
+                proxy_config[proxy_type] = conf(*_parse_proxy(proxy_config[proxy_type]))
 
         return proxy_config
 

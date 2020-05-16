@@ -18,7 +18,7 @@ from http.client import HTTPConnection, HTTPSConnection
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 
-from . import cert
+from . import cert, socks
 
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
@@ -220,9 +220,89 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             self.send_cacert()
 
 
-def proxy_auth_headers(proxy_username, proxy_password, custom_proxy_authorization):
-    """Creates the Proxy-Authorization header based on the supplied username
-    and password, provided both are set.
+class ProxyAwareHTTPConnection(HTTPConnection):
+    """A specialised HTTPConnection that will transparently connect to a
+    HTTP or SOCKS proxy server based on supplied proxy configuration.
+    """
+
+    def __init__(self, proxy_config, netloc, *args, **kwargs):
+        self.proxy_config = proxy_config
+        self.netloc = netloc
+        self.use_proxy = 'http' in proxy_config and netloc not in proxy_config.get('no_proxy', '')
+
+        if self.use_proxy and proxy_config['http'].scheme.startswith('http'):
+            self.custom_authorization = proxy_config.get('custom_authorization')
+            super().__init__(proxy_config['http'].hostport, *args, **kwargs)
+        else:
+            super().__init__(netloc, *args, **kwargs)
+
+    def connect(self):
+        if self.use_proxy and self.proxy_config['http'].scheme.startswith('socks'):
+            self.sock = _socks_connection(
+                self.host,
+                self.port,
+                self.timeout,
+                self.proxy_config['http']
+            )
+        else:
+            super().connect()
+
+    def request(self, method, url, body=None, headers=None, *, encode_chunked=False):
+        if headers is None:
+            headers = {}
+
+        if self.use_proxy and self.proxy_config['http'].scheme.startswith('http'):
+            if not url.startswith('http'):
+                url = 'http://{}{}'.format(self.netloc, url)
+
+            headers.update(_create_auth_header(
+                self.proxy_config['http'].username,
+                self.proxy_config['http'].password,
+                self.custom_authorization)
+            )
+
+        super().request(method, url, body, headers=headers)
+
+
+class ProxyAwareHTTPSConnection(HTTPSConnection):
+    """A specialised HTTPSConnection that will transparently connect to a
+    HTTP or SOCKS proxy server based on supplied proxy configuration.
+    """
+
+    def __init__(self, proxy_config, netloc, *args, **kwargs):
+        self.proxy_config = proxy_config
+        self.use_proxy = 'https' in proxy_config and netloc not in proxy_config.get('no_proxy', '')
+
+        if self.use_proxy and proxy_config['https'].scheme.startswith('http'):
+            # For HTTP proxies, CONNECT tunnelling is used
+            super().__init__(proxy_config['https'].host, *args, **kwargs)
+            self.set_tunnel(
+                netloc,
+                headers=_create_auth_header(
+                    proxy_config['https'].username,
+                    proxy_config['https'].password,
+                    proxy_config.get('custom_authorization')
+                )
+            )
+        else:
+            super().__init__(netloc, *args, **kwargs)
+
+    def connect(self):
+        if self.use_proxy and self.proxy_config['https'].scheme.startswith('socks'):
+            self.sock = _socks_connection(
+                self.host,
+                self.port,
+                self.timeout,
+                self.proxy_config['https']
+            )
+            self.sock = self._context.wrap_socket(self.sock, server_hostname=self.host)
+        else:
+            super().connect()
+
+
+def _create_auth_header(proxy_username, proxy_password, custom_proxy_authorization):
+    """Create the Proxy-Authorization header based on the supplied username
+    and password or custom Proxy-Authorization header value.
 
     Args:
         proxy_username: The proxy username.
@@ -233,54 +313,38 @@ def proxy_auth_headers(proxy_username, proxy_password, custom_proxy_authorizatio
         dictionary if the username or password were not set.
     """
     headers = {}
+
     if proxy_username and proxy_password and not custom_proxy_authorization:
         auth = '{}:{}'.format(proxy_username, proxy_password)
         headers['Proxy-Authorization'] = 'Basic {}'.format(base64.b64encode(auth.encode('utf-8')).decode('utf-8'))
     elif custom_proxy_authorization:
         headers['Proxy-Authorization'] = custom_proxy_authorization
+
     return headers
 
 
-class ProxyAwareHTTPConnection(HTTPConnection):
-    """A specialised HTTPConnection that will transparently connect to a
-    proxy server based on supplied proxy configuration.
-    """
+def _socks_connection(host, port, timeout, socks_config):
+    """Create a SOCKS connection based on the supplied configuration."""
+    try:
+        socks_type = dict(
+            socks4=socks.PROXY_TYPE_SOCKS4,
+            socks5=socks.PROXY_TYPE_SOCKS5,
+            socks5h=socks.PROXY_TYPE_SOCKS5
+        )[socks_config.scheme]
+    except KeyError:
+        raise TypeError('Invalid SOCKS scheme: {}'.format(socks_config.scheme))
 
-    def __init__(self, proxy_config, netloc, *args, **kwargs):
-        self.netloc = netloc
-        self.proxied = proxy_config and netloc not in proxy_config['no_proxy']
+    socks_host, socks_port = socks_config.hostport.split(':')
 
-        if self.proxied:
-            _, self.proxy_username, self.proxy_password, self.proxy_host = proxy_config.get('http')
-            self.custom_authorization = proxy_config.get('custom_authorization')
-            super().__init__(self.proxy_host, *args, **kwargs)
-        else:
-            super().__init__(netloc, *args, **kwargs)
-
-    def request(self, method, url, body=None, headers=None, *, encode_chunked=False):
-        if headers is None:
-            headers = {}
-
-        if self.proxied:
-            if not url.startswith('http'):
-                url = 'http://{}{}'.format(self.netloc, url)
-            headers.update(proxy_auth_headers(self.proxy_username, self.proxy_password, self.custom_authorization))
-
-        super().request(method, url, body, headers=headers)
-
-
-class ProxyAwareHTTPSConnection(HTTPSConnection):
-    """A specialised HTTPSConnection that will transparently connect to a
-    proxy server based on supplied proxy configuration.
-    """
-
-    def __init__(self, proxy_config, netloc, *args, **kwargs):
-        self.proxied = proxy_config and netloc not in proxy_config['no_proxy']
-
-        if self.proxied:
-            _, proxy_username, proxy_password, proxy_host = proxy_config.get('https')
-            super().__init__(proxy_host, *args, **kwargs)
-            self.set_tunnel(netloc, headers=proxy_auth_headers(proxy_username, proxy_password,
-                                                               proxy_config.get('custom_authorization')))
-        else:
-            super().__init__(netloc, *args, **kwargs)
+    return socks.create_connection(
+        (host, port),
+        timeout,
+        None,
+        socks_type,
+        socks_host,
+        int(socks_port),
+        socks_config.scheme == 'socks5h',
+        socks_config.username,
+        socks_config.password,
+        ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
+    )
