@@ -10,20 +10,14 @@ from seleniumwire import webdriver
 class BrowserIntegrationTest(TestCase):
 
     def test_firefox_can_access_requests(self):
-        url = 'https://www.python.org'
-
-        options = {
-            'proxy': {
-                'https': 'socks5h://192.168.1.108:1080'
-            }
-        }
-        driver = webdriver.Firefox(seleniumwire_options=options)
+        url = 'https://www.python.org/'
+        driver = webdriver.Firefox()
         driver.get(url)
 
-        # request = driver.wait_for_request(url)
-        #
-        # self.assertEqual(request.response.status_code, 200)
-        # self.assertIn('text/html', request.response.headers['Content-Type'])
+        request = driver.wait_for_request(url)
+
+        self.assertEqual(request.response.status_code, 200)
+        self.assertIn('text/html', request.response.headers['Content-Type'])
 
         driver.quit()
 
