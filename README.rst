@@ -57,7 +57,7 @@ Prints:
 Features
 ~~~~~~~~
 
-* Pure Python, user-friendly API
+* Pure Python with user-friendly API
 * All HTTP/HTTPS requests captured
 * Access to request/response bodies
 * Modify responses
