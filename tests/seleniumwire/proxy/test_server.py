@@ -26,7 +26,7 @@ class ProxyHTTPServerTest(TestCase):
             ('127.0.0.1', 8080), Mock(), proxy_config=self.proxy_config, bind_and_activate=False
         )
 
-        self.assertEqual(self.server.proxy_config['no_proxy'], ['localhost', '127.0.0.1'])
+        self.assertEqual(self.server.proxy_config['no_proxy'], 'localhost, 127.0.0.1')
 
     def test_sets_no_http_when_none(self):
         self.proxy_config['http'] = None

@@ -1,9 +1,10 @@
+from collections import namedtuple
 from unittest import TestCase
 from unittest.mock import Mock, patch
 from urllib.request import _parse_proxy
 
 from seleniumwire.proxy.proxy2 import (ProxyAwareHTTPConnection, ProxyAwareHTTPSConnection,
-                                       create_auth_header)
+                                       _create_auth_header)
 
 
 class ProxyAwareHTTPConnectionTest(TestCase):
@@ -11,21 +12,21 @@ class ProxyAwareHTTPConnectionTest(TestCase):
     def test_is_proxied(self):
         conn = ProxyAwareHTTPConnection(self.config, 'example.com')
 
-        self.assertTrue(conn.proxied)
+        self.assertTrue(conn.use_proxy)
         self.assertEqual(conn.host, 'host')
 
     def test_is_not_proxied_when_no_proxy(self):
         self.config['no_proxy'] += ',example.com'
         conn = ProxyAwareHTTPConnection(self.config, 'example.com')
 
-        self.assertFalse(conn.proxied)
+        self.assertFalse(conn.use_proxy)
         self.assertEqual(conn.host, 'example.com')
 
     def test_is_not_proxied_when_no_config(self):
         self.config = {}
         conn = ProxyAwareHTTPConnection(self.config, 'example.com')
 
-        self.assertFalse(conn.proxied)
+        self.assertFalse(conn.use_proxy)
         self.assertEqual(conn.host, 'example.com')
 
     @patch('seleniumwire.proxy.proxy2.HTTPConnection.request')
@@ -51,9 +52,10 @@ class ProxyAwareHTTPConnectionTest(TestCase):
         )
 
     def setUp(self):
+        conf = namedtuple('ProxyConf', 'scheme username password hostport')
         self.config = {
-            'http': _parse_proxy('http://username:password@host:3128'),
-            'https': _parse_proxy('https://username:password@host:3128'),
+            'http': conf(*_parse_proxy('http://username:password@host:3128')),
+            'https': conf(*_parse_proxy('https://username:password@host:3128')),
             'no_proxy': 'localhost,127.0.0.1,dev_server:8080'
         }
 
@@ -63,7 +65,7 @@ class ProxyAwareHTTPSConnectionTest(TestCase):
     def test_is_proxied(self):
         conn = ProxyAwareHTTPSConnection(self.config, 'example.com')
 
-        self.assertTrue(conn.proxied)
+        self.assertTrue(conn.use_proxy)
         self.assertEqual(conn.host, 'host')
 
     @patch('seleniumwire.proxy.proxy2.HTTPSConnection.set_tunnel')
@@ -78,14 +80,14 @@ class ProxyAwareHTTPSConnectionTest(TestCase):
         self.config['no_proxy'] += ',example.com'
         conn = ProxyAwareHTTPSConnection(self.config, 'example.com')
 
-        self.assertFalse(conn.proxied)
+        self.assertFalse(conn.use_proxy)
         self.assertEqual(conn.host, 'example.com')
 
     def test_is_not_proxied_when_no_config(self):
         self.config = {}
         conn = ProxyAwareHTTPSConnection(self.config, 'example.com')
 
-        self.assertFalse(conn.proxied)
+        self.assertFalse(conn.use_proxy)
         self.assertEqual(conn.host, 'example.com')
 
     @patch('seleniumwire.proxy.proxy2.HTTPSConnection.set_tunnel')
@@ -96,12 +98,12 @@ class ProxyAwareHTTPSConnectionTest(TestCase):
         self.assertEqual(mock_set_tunnel.call_count, 0)
 
     def setUp(self):
+        conf = namedtuple('ProxyConf', 'scheme username password hostport')
         self.config = {
-            'http': _parse_proxy('http://username:password@host:3128'),
-            'https': _parse_proxy('https://username:password@host:3128'),
+            'http': conf(*_parse_proxy('http://username:password@host:3128')),
+            'https': conf(*_parse_proxy('https://username:password@host:3128')),
             'no_proxy': 'localhost,127.0.0.1,dev_server:8080'
         }
-
 
 class ProxyAuthHeadersTest(TestCase):
 
@@ -110,7 +112,7 @@ class ProxyAuthHeadersTest(TestCase):
         password = 'password'
         custom_proxy_authorization = None
 
-        headers = create_auth_header(username, password, custom_proxy_authorization)
+        headers = _create_auth_header(username, password, custom_proxy_authorization)
 
         self.assertEqual(headers, {'Proxy-Authorization': 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='})
 
@@ -119,7 +121,7 @@ class ProxyAuthHeadersTest(TestCase):
         password = 'password'
         custom_proxy_authorization = None
 
-        headers = create_auth_header(username, password, custom_proxy_authorization)
+        headers = _create_auth_header(username, password, custom_proxy_authorization)
 
         self.assertEqual(headers, {})
 
@@ -128,7 +130,7 @@ class ProxyAuthHeadersTest(TestCase):
         password = None
         custom_proxy_authorization = None
 
-        headers = create_auth_header(username, password, custom_proxy_authorization)
+        headers = _create_auth_header(username, password, custom_proxy_authorization)
 
         self.assertEqual(headers, {})
 
@@ -137,6 +139,6 @@ class ProxyAuthHeadersTest(TestCase):
         password = None
         custom_proxy_authorization = 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='
 
-        headers = create_auth_header(username, password, custom_proxy_authorization)
+        headers = _create_auth_header(username, password, custom_proxy_authorization)
 
         self.assertEqual(headers, {'Proxy-Authorization': 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='})
