@@ -178,7 +178,7 @@ class RequestStorage:
                 with open(os.path.join(request_dir, 'response'), 'rb') as res:
                     response = pickle.load(res)
                     request['response'] = response
-            except FileNotFoundError:
+            except (FileNotFoundError, EOFError):
                 pass
 
         return request
