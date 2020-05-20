@@ -41,6 +41,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
     certdir = cert.CERTDIR
 
     def __init__(self, *args, **kwargs):
+        self.timeout = 99999999
         self.tls = threading.local()
         self.tls.conns = {}
 
@@ -54,6 +55,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         self.log_message(format_, *args)
 
     def do_CONNECT(self):
+        print('do_CONNECT')
         self.send_response(200, 'Connection Established')
         self.end_headers()
 
@@ -66,11 +68,14 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         conntype = self.headers.get('Proxy-Connection', '')
         if self.protocol_version == 'HTTP/1.1' and conntype.lower() != 'close':
+            print('Not closing on CONNECT')
             self.close_connection = False
         else:
+            print('Closing on CONNECT')
             self.close_connection = True
 
     def do_GET(self):
+        print('do_GET')
         if self.path.startswith(self.admin_path):
             self.admin_handler()
             return
@@ -103,10 +108,14 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         origin = (scheme, netloc)
         conn = None
+        websocket = False
         try:
             conn = self.create_connection(origin)
             conn.request(self.command, path, req_body, dict(req.headers))
             res = conn.getresponse()
+
+            if res.headers.get('Upgrade') == 'websocket':
+                websocket = True
 
             version_table = {10: 'HTTP/1.0', 11: 'HTTP/1.1'}
             setattr(res, 'headers', res.msg)
@@ -119,7 +128,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             self.send_error(502)
             return
         finally:
-            if conn:
+            if conn and not websocket:
                 conn.close()
 
         res_body_modified = self.response_handler(req, req_body, res, res_body)
@@ -133,6 +142,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         setattr(res, 'headers', self.filter_headers(res.headers))
 
+        print(res.status, res.reason)
         self.send_response(res.status, res.reason)
 
         for header, val in res.headers.items():
@@ -141,7 +151,13 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         if res_body:
             self.wfile.write(res_body)
         self.wfile.flush()
-        self.close_connection = True
+        if not websocket:
+            self.close_connection = True
+
+        if websocket:
+            websocket_proxy = WebsocketProxy(self.rfile, self.wfile, conn)
+            websocket_proxies.append(websocket_proxy)
+            websocket_proxy.start()
 
     def create_connection(self, origin):
         scheme, netloc = origin
@@ -173,8 +189,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
     def filter_headers(self, headers):
         # http://tools.ietf.org/html/rfc2616#section-13.5.1
-        hop_by_hop = ('connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailers',
-                      'transfer-encoding', 'upgrade')
+        hop_by_hop = ('proxy-authenticate', 'proxy-authorization', 'te')
         for k in hop_by_hop:
             del headers[k]
 
@@ -348,3 +363,45 @@ def _socks_connection(host, port, timeout, socks_config):
         socks_config.password,
         ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
     )
+
+
+websocket_proxies = []
+
+
+class WebsocketProxy:
+
+    def __init__(self, rfile, wfile, conn):
+        self.rfile = rfile
+        self.wfile = wfile
+        self.conn = conn
+
+    def start(self):
+        def socket1_read():
+            while True:
+                try:
+                    r = self.rfile.read(16)
+                    print('Read from client', r)
+                    if not r:
+                        break
+                    self.conn.send(r)
+                    # print(self.rfile.read(16))
+                except Exception as e:
+                    print('Exception reading from client', str(e))
+
+        def socket2_read():
+            while True:
+                try:
+                    r = self.conn.sock.recv(16)
+                    print('Read from server', r)
+                    if not r:
+                        break
+                    self.wfile.write(r)
+                except Exception as e:
+                    print('Exception writing to client', str(e))
+
+        t1 = threading.Thread(target=socket1_read, daemon=True)
+        t2 = threading.Thread(target=socket2_read, daemon=True)
+
+        t1.start()
+        t2.start()
+

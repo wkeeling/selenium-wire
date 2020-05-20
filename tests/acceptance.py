@@ -10,7 +10,7 @@ from seleniumwire import webdriver
 class BrowserIntegrationTest(TestCase):
 
     def test_firefox_can_access_requests(self):
-        url = 'https://www.python.org/'
+        url = 'https://discord.gg'
         driver = webdriver.Firefox()
         driver.get(url)
 
