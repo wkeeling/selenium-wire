@@ -18,7 +18,6 @@ def standalone_proxy(port=0):
     c.create_proxy(port=int(port), options={
         'standalone': True,
         'verify_ssl': False,
-        'ignore_http_methods': ['GET', 'POST', 'PATCH', 'PUT', 'OPTIONS']
     })
 
 
