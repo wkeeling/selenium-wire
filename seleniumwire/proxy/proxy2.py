@@ -8,12 +8,10 @@
 #
 
 import base64
-import logging
 import re
 import socket
 import ssl
 import sys
-import time
 import threading
 import urllib.parse
 from http.client import HTTPConnection, HTTPSConnection
@@ -21,8 +19,6 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 
 from . import cert, socks
-
-LOG = logging.getLogger(__name__)
 
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
@@ -50,13 +46,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         self.websocket = False
 
         super().__init__(*args, **kwargs)
-
-    def log_error(self, format_, *args):
-        # suppress "Request timed out: timeout('timed out',)"
-        if isinstance(args[0], socket.timeout):
-            return
-
-        self.log_message(format_, *args)
 
     def do_CONNECT(self):
         self.send_response(200, 'Connection Established')
@@ -146,14 +135,16 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         for header, val in res.headers.items():
             self.send_header(header, val)
         self.end_headers()
+
         if res_body:
             self.wfile.write(res_body)
+
         self.wfile.flush()
-        if not self.websocket:
-            self.close_connection = True
 
         if self.websocket:
-            handle_websocket(self.connection, conn.sock)
+            self.handle_websocket(conn.sock)
+        else:
+            self.close_connection = True
 
     def create_connection(self, origin):
         scheme, netloc = origin
@@ -185,11 +176,24 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
     def filter_headers(self, headers):
         # http://tools.ietf.org/html/rfc2616#section-13.5.1
-        hop_by_hop = ('proxy-authenticate', 'proxy-authorization', 'te')
+        hop_by_hop = (
+            'keep-alive',
+            'proxy-authenticate',
+            'proxy-authorization',
+            'te',
+            'trailers',
+            'transfer-encoding',
+        )
+
         for k in hop_by_hop:
             del headers[k]
 
-        # accept only supported encodings
+        # Remove the `connection` header for non-websocket requests
+        if 'connection' in headers:
+            if 'upgrade' not in headers['connection'].lower():
+                del headers['connection']
+
+        # Accept only supported encodings
         if 'Accept-Encoding' in headers:
             ae = headers['Accept-Encoding']
 
@@ -208,6 +212,44 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             headers['Accept-Encoding'] = ', '.join(filtered_encodings)
 
         return headers
+
+    def handle_one_request(self):
+        if not self.websocket:
+            super().handle_one_request()
+
+    def handle_websocket(self, server_sock):
+        self.connection.settimeout(None)
+        server_sock.settimeout(None)
+
+        def server_read():
+            try:
+                while True:
+                    serverdata = server_sock.recv(4096)
+                    if not serverdata:
+                        break
+                    self.connection.sendall(serverdata)
+            finally:
+                if server_sock:
+                    server_sock.close()
+                if self.connection:
+                    self.connection.close()
+
+        t = threading.Thread(target=server_read, daemon=True)
+        t.start()
+
+        try:
+            while True:
+                clientdata = self.connection.recv(4096)
+                if not clientdata:
+                    break
+                server_sock.sendall(clientdata)
+        finally:
+            if server_sock:
+                server_sock.close()
+            if self.connection:
+                self.connection.close()
+
+        t.join()
 
     def send_cacert(self):
         with open(cert.CACERT, 'rb') as f:
@@ -230,9 +272,12 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         if self.path == 'http://proxy2.test/':
             self.send_cacert()
 
-    def handle_one_request(self):
-        if not self.websocket:
-            super().handle_one_request()
+    def log_error(self, format_, *args):
+        # suppress "Request timed out: timeout('timed out',)"
+        if isinstance(args[0], socket.timeout):
+            return
+
+        self.log_message(format_, *args)
 
 
 class ProxyAwareHTTPConnection(HTTPConnection):
@@ -363,32 +408,3 @@ def _socks_connection(host, port, timeout, socks_config):
         socks_config.password,
         ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
     )
-
-
-def handle_websocket(client_sock, server_sock):
-    client_sock.settimeout(None)
-    server_sock.settimeout(None)
-
-    def server_read():
-        try:
-            while True:
-                r = server_sock.recv(4096)
-                if not r:
-                    break
-                client_sock.sendall(r)
-        except Exception as e:
-            LOG.exception('Exception reading from server')
-        client_sock.close()
-
-    t = threading.Thread(target=server_read, daemon=True)
-    t.start()
-
-    try:
-        while True:
-            r = client_sock.recv(4096)
-            if not r:
-                break
-            server_sock.sendall(r)
-    except Exception as e:
-        LOG.exception('Exception reading from client')
-    server_sock.close()
