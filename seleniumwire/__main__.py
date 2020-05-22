@@ -15,7 +15,10 @@ def standalone_proxy(port=0):
     signal.signal(signal.SIGTERM, lambda *_: c.destroy_proxy())
     signal.signal(signal.SIGINT, lambda *_: c.destroy_proxy())
 
-    c.create_proxy(port=int(port), options={'standalone': True})
+    c.create_proxy(port=int(port), options={
+        'standalone': True,
+        'verify_ssl': False,
+    })
 
 
 if __name__ == '__main__':
