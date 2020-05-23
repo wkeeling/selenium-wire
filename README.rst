@@ -500,6 +500,16 @@ Other Options
 
 Other options that can be passed to Selenium Wire via the ``seleniumwire_options`` webdriver attribute:
 
+``request_storage_base_dir``
+    Captured requests and responses are stored in the current user's home folder by default. If you want to use a different folder, you can specify that here.
+
+.. code:: python
+
+    options = {
+        'request_storage_base_dir': '/tmp'  # Use /tmp to store captured data
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
 ``connection_timeout``
     The number of seconds Selenium Wire should wait before timing out requests. The default is 5 seconds. Increase this value if you're working with a slow server that needs more time to respond. Set to ``None`` for no timeout.
 
@@ -530,8 +540,6 @@ The code above will print something like this to the console (loading a page wil
 
     res_body length: 471
     res_body length: 606
-
-
 
 ``ignore_http_methods``
     A list of HTTP methods (specified as uppercase strings) that should be ignored by Selenium Wire and not captured. The default is ``['OPTIONS']`` which ignores all OPTIONS requests. To capture all request methods, set ``ignore_http_methods`` to an empty list:
