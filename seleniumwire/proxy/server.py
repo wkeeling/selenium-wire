@@ -13,7 +13,9 @@ class ProxyHTTPServer(ThreadingHTTPServer):
 
     def __init__(self, *args, proxy_config=None, options=None, **kwargs):
         # Each server instance gets its own storage
-        self.storage = RequestStorage()
+        self.storage = RequestStorage(
+            base_dir=options.pop('request_storage_base_dir', None)
+        )
 
         # Each server instance gets a request modifier
         self.modifier = RequestModifier()
