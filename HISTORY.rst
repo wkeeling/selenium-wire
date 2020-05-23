@@ -1,6 +1,14 @@
 History
 ~~~~~~~
 
+1.1.0 (2020-05-23)
+------------------
+
+* Allow the request storage base directory to be configurable.
+* Support proxying websocket connections.
+* Fix bug where attempting to filter out non-existent headers would raise an error.
+* Handle possibility of zero byte captured request/response files.
+
 1.0.12 (2020-05-16)
 -------------------
 
@@ -9,7 +17,7 @@ History
 1.0.11 (2019-12-31)
 -------------------
 
-* Fix duplication of content-length header when altering body content
+* Fix duplication of content-length header when altering body content.
 
 1.0.10 (2019-09-22)
 -------------------
