@@ -12,22 +12,22 @@ class ProxyHTTPServer(ThreadingHTTPServer):
     address_family = socket.AF_INET
 
     def __init__(self, *args, proxy_config=None, options=None, **kwargs):
-        # Each server instance gets its own storage
-        self.storage = RequestStorage(
-            base_dir=options.pop('request_storage_base_dir', None)
-        )
-
-        # Each server instance gets a request modifier
-        self.modifier = RequestModifier()
-
         # The server's upstream proxy configuration (if any)
         self.proxy_config = self._sanitise_proxy_config(
             self._merge_with_env(proxy_config or {}))
 
-        # Additional proxy server configuration
+        # Additional configuration
         self.options = options or {}
 
-        # A scope for proxy to be interested
+        # Used to stored captured requests
+        self.storage = RequestStorage(
+            base_dir=self.options.pop('request_storage_base_dir', None)
+        )
+
+        # Used to modify requests/responses passing through the server
+        self.modifier = RequestModifier()
+
+        # The scope of requests we're interested in capturing.
         self.scopes = []
 
         super().__init__(*args, **kwargs)
