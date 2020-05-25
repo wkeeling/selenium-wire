@@ -228,6 +228,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                     if not serverdata:
                         break
                     self.connection.sendall(serverdata)
+            except socket.error:
+                self.log_message('Ending websocket server connection')
             finally:
                 if server_sock:
                     server_sock.close()
@@ -243,6 +245,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 if not clientdata:
                     break
                 server_sock.sendall(clientdata)
+        except socket.error:
+            self.log_message('Ending websocket client connection')
         finally:
             if server_sock:
                 server_sock.close()
