@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+1.1.1 (2020-05-25)
+------------------
+
+* Handle errors occuring on websocket connections.
+
 1.1.0 (2020-05-23)
 ------------------
 
