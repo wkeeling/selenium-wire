@@ -143,8 +143,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         if self.websocket:
             self.handle_websocket(conn.sock)
-        else:
-            self.close_connection = True
+
+        self.close_connection = True
 
     def create_connection(self, origin):
         scheme, netloc = origin
@@ -253,7 +253,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             if self.connection:
                 self.connection.close()
 
-        self.close_connection = True
         t.join()
 
     def send_cacert(self):
