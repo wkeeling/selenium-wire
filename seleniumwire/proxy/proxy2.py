@@ -253,6 +253,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             if self.connection:
                 self.connection.close()
 
+        self.close_connection = True
         t.join()
 
     def send_cacert(self):
