@@ -1,6 +1,12 @@
 History
 ~~~~~~~
 
+1.1.2 (2020-05-27)
+------------------
+
+* Fix bug where request thread would spin after websocket closure.
+
+
 1.1.1 (2020-05-25)
 ------------------
 
