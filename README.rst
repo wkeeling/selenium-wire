@@ -530,6 +530,16 @@ Other options that can be passed to Selenium Wire via the ``seleniumwire_options
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
+``max_threads``
+    The maximum allowed number threads that will be used to handle requests. The default is 9999.
+
+.. code:: python
+
+    options = {
+        'max_threads': 3  # Allow a maximum of 3 threads to handle requests.
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
 ``custom_response_handler``
     This function that should be passed in custom response handlers should maintain a signature that it compatible with ``CaptureRequestHandler.response_handler``, as all arguments passed to that function will in turn be passed to your function. In order to modify the response data, you will need to return it from your function (the response data for the request is given in the ``res_body`` argument).
 
