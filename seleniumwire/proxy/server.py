@@ -13,7 +13,7 @@ from .storage import RequestStorage
 
 
 class BoundedThreadingMixin(ThreadingMixIn):
-    """Mix-in class that sets a maximum number of threads to handle requests."""
+    """Mix-in class that allows for a maximum number of threads to handle requests."""
 
     def __init__(self, max_threads, *args, **kwargs):
         self.sema = threading.BoundedSemaphore(value=max_threads)
