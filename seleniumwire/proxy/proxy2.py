@@ -35,7 +35,7 @@ class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
 
 
 class ProxyRequestHandler(BaseHTTPRequestHandler):
-    admin_path = 'http://proxy2'
+    admin_path = None
     # Path to the directory used to store the generated certificates.
     # Subclasses can override certdir
     certdir = cert.CERTDIR
@@ -65,7 +65,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             self.close_connection = True
 
     def do_GET(self):
-        if self.path.startswith(self.admin_path):
+        if self.admin_path and self.path.startswith(self.admin_path):
             self.admin_handler()
             return
         req = self
@@ -138,7 +138,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         self.wfile.flush()
 
         if self.websocket:
-            self.handle_websocket(conn.sock)
+            self._handle_websocket(conn.sock)
             self.close_connection = True
         elif not self._keepalive():
             self.close_connection = True
@@ -214,11 +214,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         return self.server.options.get('connection_keep_alive', True) \
                and self.headers.get('Connection', '').lower() != 'close'
 
-    def handle_one_request(self):
-        if not self.websocket:
-            super().handle_one_request()
-
-    def handle_websocket(self, server_sock):
+    def _handle_websocket(self, server_sock):
         self.connection.settimeout(None)
         server_sock.settimeout(None)
 
@@ -256,32 +252,50 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         t.join()
 
+    def handle_one_request(self):
+        if not self.websocket:
+            super().handle_one_request()
+
     def finish(self):
         for conn in self.tls.conns.values():
             if conn:
                 conn.close()
         super().finish()
 
-    def send_cacert(self):
-        with open(cert.CACERT, 'rb') as f:
-            data = f.read()
-
-        self.send_response(200, 'OK')
-        self.send_header('Content-Type', 'application/x-x509-ca-cert')
-        self.send_header('Content-Length', len(data))
-        self.send_header('Connection', 'close')
-        self.end_headers()
-        self.wfile.write(data)
-
     def request_handler(self, req, req_body):
+        """Hook method that subclasses should override to process a request.
+
+        Args:
+            req: A ProxyRequestHandler instance.
+            req_body: The request body as bytes.
+        """
         pass
 
     def response_handler(self, req, req_body, res, res_body):
+        """Hook method that subclasses should override to process a response.
+
+        Args:
+            req: The original request - a ProxyRequestHandler instance.
+            req_body: The request body as bytes.
+            res: The response (a http.client.HTTPResponse instance) that corresponds to the
+                request.
+            res_body: The response body as bytes.
+        """
         pass
 
     def admin_handler(self):
-        if self.path == 'http://proxy2.test/':
-            self.send_cacert()
+        """Subclasses should override this to process administration requests.
+
+        Administration requests are requests targeted at the proxy server itself
+        rather than a remote server.
+
+        Note that subclasses must set the admin_path class-level attribute to
+        a URL prefix that identifies administration requests. For example:
+            admin_path = 'http://myserver'
+        This method will then fire for any request with a URL path that starts
+        with http://myserver...
+        """
+        pass
 
     def log_error(self, format_, *args):
         # suppress "Request timed out: timeout('timed out',)"
