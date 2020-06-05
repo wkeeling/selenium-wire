@@ -66,7 +66,7 @@ class ProxyAwareHTTPConnectionTest(TestCase):
         conn._create_connection = Mock()
         conn.connect()
 
-        assert mock_socks.create_connection.call_count == 0
+        assert mock_socks._create_connection.call_count == 0
 
     @patch('seleniumwire.proxy.proxy2.socks')
     def test_connect_uses_socks5_proxy(self, mock_socks):
@@ -80,7 +80,7 @@ class ProxyAwareHTTPConnectionTest(TestCase):
         conn = ProxyAwareHTTPConnection(self.config, 'example.com')
         conn.connect()
 
-        mock_socks.create_connection.assert_called_once_with(
+        mock_socks._create_connection.assert_called_once_with(
             ('example.com', 80),
             socket._GLOBAL_DEFAULT_TIMEOUT,
             None,
@@ -105,7 +105,7 @@ class ProxyAwareHTTPConnectionTest(TestCase):
         conn = ProxyAwareHTTPConnection(self.config, 'example.com')
         conn.connect()
 
-        mock_socks.create_connection.assert_called_once_with(
+        mock_socks._create_connection.assert_called_once_with(
             ('example.com', 80),
             socket._GLOBAL_DEFAULT_TIMEOUT,
             None,
@@ -130,7 +130,7 @@ class ProxyAwareHTTPConnectionTest(TestCase):
         conn = ProxyAwareHTTPConnection(self.config, 'example.com')
         conn.connect()
 
-        mock_socks.create_connection.assert_called_once_with(
+        mock_socks._create_connection.assert_called_once_with(
             ('example.com', 80),
             socket._GLOBAL_DEFAULT_TIMEOUT,
             None,
@@ -218,7 +218,7 @@ class ProxyAwareHTTPSConnectionTest(TestCase):
         conn = ProxyAwareHTTPSConnection(self.config, 'example.com')
         conn.connect()
 
-        assert mock_socks.create_connection.call_count == 0
+        assert mock_socks._create_connection.call_count == 0
         mock_connect.assert_called_once_with()
 
     @patch('seleniumwire.proxy.proxy2.socks')
@@ -233,7 +233,7 @@ class ProxyAwareHTTPSConnectionTest(TestCase):
         conn = ProxyAwareHTTPSConnection(self.config, 'example.com', context=Mock())
         conn.connect()
 
-        mock_socks.create_connection.assert_called_once_with(
+        mock_socks._create_connection.assert_called_once_with(
             ('example.com', 443),
             socket._GLOBAL_DEFAULT_TIMEOUT,
             None,
@@ -258,7 +258,7 @@ class ProxyAwareHTTPSConnectionTest(TestCase):
         conn = ProxyAwareHTTPSConnection(self.config, 'example.com', context=Mock())
         conn.connect()
 
-        mock_socks.create_connection.assert_called_once_with(
+        mock_socks._create_connection.assert_called_once_with(
             ('example.com', 443),
             socket._GLOBAL_DEFAULT_TIMEOUT,
             None,
@@ -283,7 +283,7 @@ class ProxyAwareHTTPSConnectionTest(TestCase):
         conn = ProxyAwareHTTPSConnection(self.config, 'example.com', context=Mock())
         conn.connect()
 
-        mock_socks.create_connection.assert_called_once_with(
+        mock_socks._create_connection.assert_called_once_with(
             ('example.com', 443),
             socket._GLOBAL_DEFAULT_TIMEOUT,
             None,

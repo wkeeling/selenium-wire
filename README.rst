@@ -520,6 +520,16 @@ Other options that can be passed to Selenium Wire via the ``seleniumwire_options
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
+``connection_keep_alive``
+    Whether connections should be reused across requests. The default is ``True`` although this can be overridden on a per-request basis with a ``Connection: close`` header. Set to ``False`` to always close down connections after each request.
+
+.. code:: python
+
+    options = {
+        'connection_keep_alive': False  # Always close connections after each request
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
 ``custom_response_handler``
     This function that should be passed in custom response handlers should maintain a signature that it compatible with ``CaptureRequestHandler.response_handler``, as all arguments passed to that function will in turn be passed to your function. In order to modify the response data, you will need to return it from your function (the response data for the request is given in the ``res_body`` argument).
 

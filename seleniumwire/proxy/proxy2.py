@@ -93,12 +93,11 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         assert scheme in ('http', 'https')
         if netloc:
             req.headers['Host'] = netloc
-        setattr(req, 'headers', self.filter_headers(req.headers))
+        setattr(req, 'headers', self._filter_headers(req.headers))
 
         origin = (scheme, netloc)
-        conn = None
         try:
-            conn = self.create_connection(origin)
+            conn = self._create_connection(origin)
             conn.request(self.command, path, req_body, dict(req.headers))
             res = conn.getresponse()
 
@@ -115,9 +114,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 del self.tls.conns[origin]
             self.send_error(502)
             return
-        finally:
-            if conn and not self.websocket:
-                conn.close()
 
         res_body_modified = self.response_handler(req, req_body, res, res_body)
         if res_body_modified is False:
@@ -128,7 +124,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             del res.headers['Content-length']
             res.headers['Content-Length'] = str(len(res_body))
 
-        setattr(res, 'headers', self.filter_headers(res.headers))
+        setattr(res, 'headers', self._filter_headers(res.headers))
 
         self.send_response(res.status, res.reason)
 
@@ -143,10 +139,11 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         if self.websocket:
             self.handle_websocket(conn.sock)
+            self.close_connection = True
+        elif not self._keepalive():
+            self.close_connection = True
 
-        self.close_connection = True
-
-    def create_connection(self, origin):
+    def _create_connection(self, origin):
         scheme, netloc = origin
 
         if origin not in self.tls.conns:
@@ -174,7 +171,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
     do_OPTIONS = do_GET
     do_PATCH = do_GET
 
-    def filter_headers(self, headers):
+    def _filter_headers(self, headers):
         # http://tools.ietf.org/html/rfc2616#section-13.5.1
         hop_by_hop = (
             'keep-alive',
@@ -212,6 +209,10 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             headers['Accept-Encoding'] = ', '.join(filtered_encodings)
 
         return headers
+
+    def _keepalive(self):
+        return self.server.options.get('connection_keep_alive', True) \
+               and self.headers.get('Connection', '').lower() != 'close'
 
     def handle_one_request(self):
         if not self.websocket:
@@ -254,6 +255,12 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 self.connection.close()
 
         t.join()
+
+    def finish(self):
+        for conn in self.tls.conns.values():
+            if conn:
+                conn.close()
+        super().finish()
 
     def send_cacert(self):
         with open(cert.CACERT, 'rb') as f:
