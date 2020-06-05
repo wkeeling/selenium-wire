@@ -52,10 +52,11 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         else:
             self.close_connection = True
 
-    def do_GET(self):
+    def proxy_request(self):
         if self.admin_path and self.path.startswith(self.admin_path):
             self.admin_handler()
             return
+        
         req = self
         content_length = int(req.headers.get('Content-Length', 0))
         req_body = self.rfile.read(content_length) if content_length else None
@@ -152,12 +153,13 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         return self.tls.conns[origin]
 
-    do_HEAD = do_GET
-    do_POST = do_GET
-    do_PUT = do_GET
-    do_DELETE = do_GET
-    do_OPTIONS = do_GET
-    do_PATCH = do_GET
+    do_HEAD = proxy_request
+    do_POST = proxy_request
+    do_GET = proxy_request
+    do_PUT = proxy_request
+    do_DELETE = proxy_request
+    do_OPTIONS = proxy_request
+    do_PATCH = proxy_request
 
     def _filter_headers(self, headers):
         # http://tools.ietf.org/html/rfc2616#section-13.5.1
