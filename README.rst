@@ -84,7 +84,6 @@ Table of Contents
 - `Usage`_
 
   * `Creating the Webdriver`_
-  * `Using Self-Signed Certificates`_
   * `Accessing Requests`_
   * `Waiting for a Request`_
   * `Clearing Requests`_
@@ -221,17 +220,6 @@ For example, if you chose port 12345, then you would pass it in the ``seleniumwi
 .. code:: python
 
     driver = webdriver.Edge(seleniumwire_options={'port': 12345})
-
-Using Self-Signed Certificates
-------------------------------
-
-If the site you are testing uses a self-signed certificate then you must set the ``verify_ssl`` option to ``False`` in the ``seleniumwire_options``:
-
-.. code:: python
-
-    driver = webdriver.Firefox(seleniumwire_options={'verify_ssl': False})
-
-This this will need to be done regardless of the type of browser you are using.
 
 Accessing Requests
 ------------------
@@ -537,6 +525,16 @@ Other options that can be passed to Selenium Wire via the ``seleniumwire_options
 
     options = {
         'max_threads': 3  # Allow a maximum of 3 threads to handle requests.
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``verify_ssl``
+    Whether SSL certificates should be verified. The default is ``False`` which prevents errors with self-signed certificates.
+
+.. code:: python
+
+    options = {
+        'verify_ssl': True  # Verify SSL certificates but beware of errors with self-signed certificates.
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 

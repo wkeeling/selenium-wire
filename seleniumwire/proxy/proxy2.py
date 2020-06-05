@@ -144,7 +144,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
             if scheme == 'https':
                 connection = ProxyAwareHTTPSConnection
-                if not self.server.options.get('verify_ssl', True):
+                if not self.server.options.get('verify_ssl', False):
                     kwargs['context'] = ssl._create_unverified_context()
             else:
                 connection = ProxyAwareHTTPConnection
