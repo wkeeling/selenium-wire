@@ -215,7 +215,7 @@ class RequestTest(TestCase):
         request = Request(data, Mock())
 
         self.assertEqual(request.method, 'GET'),
-        self.assertEqual(request.path, 'http://www.example.com/some/path/')
+        self.assertEqual(request.path, 'http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=')
         self.assertEqual(len(request.headers), 3)
         self.assertEqual(request.headers['Host'], 'www.example.com')
         self.assertIsNone(request.response)
@@ -239,7 +239,7 @@ class RequestTest(TestCase):
 
         request = Request(data, Mock())
 
-        self.assertEqual(str(request), 'http://www.example.com/some/path/'.format(data))
+        self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', str(request))
 
     def test_create_request_with_response(self):
         data = self._request_data()
@@ -272,11 +272,39 @@ class RequestTest(TestCase):
         self.assertEqual(body, b'the body')
         mock_client.get_request_body.assert_called_once_with(data['id'])
 
+    def test_querystring(self):
+        data = self._request_data()
+
+        request = Request(data, Mock())
+
+        self.assertEqual(request.querystring, 'foo=bar&hello=world&foo=baz&other=')
+
+    def test_params_ssingle(self):
+        data = self._request_data()
+
+        request = Request(data, Mock())
+
+        self.assertEqual(request.params['hello'], 'world')
+
+    def test_params_multiple(self):
+        data = self._request_data()
+
+        request = Request(data, Mock())
+
+        self.assertEqual(request.params['foo'], ['bar', 'baz'])
+
+    def test_params_blank(self):
+        data = self._request_data()
+
+        request = Request(data, Mock())
+
+        self.assertEqual(request.params['other'], '')
+
     def _request_data(self):
         data = {
             'id': uuid.uuid4(),
             'method': 'GET',
-            'path': 'http://www.example.com/some/path/',
+            'path': 'http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
             'headers': {
                 'Accept': '*/*',
                 'Host': 'www.example.com',
