@@ -1,15 +1,19 @@
 import os
 import socket
+import ssl
+import sys
 from collections import namedtuple
+from http.server import HTTPServer
+from socketserver import ThreadingMixIn
 from urllib.request import _parse_proxy
 
 from .modifier import RequestModifier
-from .proxy2 import ThreadingHTTPServer
 from .storage import RequestStorage
 
 
-class ProxyHTTPServer(ThreadingHTTPServer):
+class ProxyHTTPServer(ThreadingMixIn, HTTPServer):
     address_family = socket.AF_INET
+    daemon_threads = True
 
     def __init__(self, *args, proxy_config=None, options=None, **kwargs):
         # The server's upstream proxy configuration (if any)
@@ -68,3 +72,11 @@ class ProxyHTTPServer(ThreadingHTTPServer):
     def shutdown(self):
         super().shutdown()
         self.storage.cleanup()
+
+    def handle_error(self, request, client_address):
+        # Suppress socket/ssl related errors
+        cls, e = sys.exc_info()[:2]
+        if issubclass(cls, socket.error) or issubclass(cls, ssl.SSLError):
+            pass
+        else:
+            return HTTPServer.handle_error(self, request, client_address)

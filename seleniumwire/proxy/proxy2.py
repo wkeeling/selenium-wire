@@ -2,8 +2,8 @@
 
 #
 #
-# This code is from the project https://github.com/inaz2/proxy2, with some
-# minor modifications.
+# This code originated from the project https://github.com/inaz2/proxy2 but has since
+# been modified extensively.
 #
 #
 
@@ -11,27 +11,12 @@ import base64
 import re
 import socket
 import ssl
-import sys
 import threading
 import urllib.parse
 from http.client import HTTPConnection, HTTPSConnection
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from socketserver import ThreadingMixIn
+from http.server import BaseHTTPRequestHandler
 
 from . import cert, socks
-
-
-class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
-    address_family = socket.AF_INET6
-    daemon_threads = True
-
-    def handle_error(self, request, client_address):
-        # surpress socket/ssl related errors
-        cls, e = sys.exc_info()[:2]
-        if issubclass(cls, socket.error) or issubclass(cls, ssl.SSLError):
-            pass
-        else:
-            return HTTPServer.handle_error(self, request, client_address)
 
 
 class ProxyRequestHandler(BaseHTTPRequestHandler):
@@ -53,7 +38,10 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         certpath = cert.generate(self.path.split(':')[0], self.certdir)
 
-        with ssl.wrap_socket(self.connection, keyfile=cert.CERTKEY, certfile=certpath, server_side=True) as conn:
+        with ssl.wrap_socket(self.connection,
+                             keyfile=cert.CERTKEY,
+                             certfile=certpath,
+                             server_side=True) as conn:
             self.connection = conn
             self.rfile = conn.makefile('rb', self.rbufsize)
             self.wfile = conn.makefile('wb', self.wbufsize)
