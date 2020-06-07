@@ -10,14 +10,19 @@ from seleniumwire import webdriver
 class BrowserIntegrationTest(TestCase):
 
     def test_firefox_can_access_requests(self):
-        url = 'https://www.python.org/'
+        url = 'https://httpbin.org/forms/post'
         driver = webdriver.Firefox()
         driver.get(url)
 
-        request = driver.wait_for_request(url)
+        custname = driver.find_element_by_name('custname')
+        custname.send_keys('Will')
+        button = driver.find_element_by_tag_name('button')
 
-        self.assertEqual(request.response.status_code, 200)
-        self.assertIn('text/html', request.response.headers['Content-Type'])
+        button.click()
+
+        post = driver.wait_for_request('https://httpbin.org/post')
+
+        print(post.params)
 
         driver.quit()
 

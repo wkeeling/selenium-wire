@@ -1,6 +1,14 @@
 History
 ~~~~~~~
 
+1.2.0 (2020-06-07)
+------------------
+
+* Add properties to allow easy retrieval of the query string and request parameters.
+* Don't verify SSL by default.
+* Allow configurable number of request threads.
+* Use connection persistance (keep-alive) by default. Make configurable.
+
 1.1.2 (2020-05-27)
 ------------------
 
