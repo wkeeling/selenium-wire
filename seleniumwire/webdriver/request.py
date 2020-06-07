@@ -200,7 +200,11 @@ class Request:
         Returns:
             A dictionary of request parameters.
         """
-        qs = urlsplit(self.path).query
+        qs = self.querystring
+
+        if self.headers.get('Content-Type') == 'application/x-www-form-urlencoded' and self.body:
+            qs = self.body.decode('utf-8', errors='replace')
+
         return {name: val[0] if len(val) == 1 else val for name, val in parse_qs(qs, keep_blank_values=True).items()}
 
     def __repr__(self):

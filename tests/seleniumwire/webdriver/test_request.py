@@ -279,26 +279,29 @@ class RequestTest(TestCase):
 
         self.assertEqual(request.querystring, 'foo=bar&hello=world&foo=baz&other=')
 
-    def test_params_ssingle(self):
+    def test_GET_params(self):
         data = self._request_data()
 
         request = Request(data, Mock())
 
-        self.assertEqual(request.params['hello'], 'world')
+        params = request.params
+        self.assertEqual(params['hello'], 'world')
+        self.assertEqual(params['foo'], ['bar', 'baz'])
+        self.assertEqual(params['other'], '')
 
-    def test_params_multiple(self):
+    def test_POST_params(self):
         data = self._request_data()
+        data['method'] = 'POST'
+        data['headers']['Content-Type'] = 'application/x-www-form-urlencoded'
+        mock_client = Mock()
+        mock_client.get_request_body.return_value = b'foo=bar&hello=world&foo=baz&other='
 
-        request = Request(data, Mock())
+        request = Request(data, mock_client)
 
-        self.assertEqual(request.params['foo'], ['bar', 'baz'])
-
-    def test_params_blank(self):
-        data = self._request_data()
-
-        request = Request(data, Mock())
-
-        self.assertEqual(request.params['other'], '')
+        params = request.params
+        self.assertEqual(params['hello'], 'world')
+        self.assertEqual(params['foo'], ['bar', 'baz'])
+        self.assertEqual(params['other'], '')
 
     def _request_data(self):
         data = {

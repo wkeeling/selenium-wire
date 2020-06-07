@@ -310,8 +310,14 @@ Requests have the following attributes.
 ``path``
     The request path.
 
+``querystring``
+    The query string.
+
 ``headers``
     A case-insensitive dictionary of request headers. Asking for ``request.headers['user-agent']`` will return the value of the ``User-Agent`` header.
+
+``params``
+    A dictionary of request parameters. If a parameter with the same name appears more than once in the request, it's value in the dictionary will be a list.
 
 ``body``
     The request body as ``bytes``. If the request has no body the value of ``body`` will be ``None``.
