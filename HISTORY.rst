@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+1.2.1 (2020-06-09)
+------------------
+
+* Use SHA256 digest when creating site certificates to fix Chrome HSTS security errors.
+
 1.2.0 (2020-06-07)
 ------------------
 
