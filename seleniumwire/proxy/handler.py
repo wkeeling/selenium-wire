@@ -228,10 +228,10 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
 
     def log_error(self, format_, *args):
         # Suppress "Request timed out: timeout('timed out',)"
-        if isinstance(args[0], socket.timeout):
+        if args and isinstance(args[0], socket.timeout):
             return
         # Send server error messages through our own logging config.
-        log.debug(format_, *args, exc_info=True)
+        log.error(format_, *args, exc_info=True)
 
     def _in_scope(self, scopes, path):
         if not scopes:

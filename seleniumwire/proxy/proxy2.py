@@ -99,9 +99,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
             res_body = res.read()
         except Exception:
-            if origin in self.tls.conns:
-                del self.tls.conns[origin]
-            self.send_error(502)
+            self.log_error('Error making request')
+            self.close_connection = True
             return
 
         res_body_modified = self.response_handler(req, req_body, res, res_body)
@@ -286,13 +285,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         with http://myserver...
         """
         pass
-
-    def log_error(self, format_, *args):
-        # suppress "Request timed out: timeout('timed out',)"
-        if isinstance(args[0], socket.timeout):
-            return
-
-        self.log_message(format_, *args)
 
 
 class ProxyAwareHTTPConnection(HTTPConnection):
