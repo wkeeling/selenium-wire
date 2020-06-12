@@ -11,7 +11,7 @@ With Selenium Wire, you author your tests in just the same way as you do with Se
 .. image:: https://codecov.io/gh/wkeeling/selenium-wire/branch/master/graph/badge.svg
         :target: https://codecov.io/gh/wkeeling/selenium-wire
 
-.. image:: https://img.shields.io/badge/python-3.4%2C%203.5%2C%203.6%2C%203.7-blue.svg
+.. image:: https://img.shields.io/badge/python-3.4%2C%203.5%2C%203.6%2C%203.7%2C%203.8-blue.svg
         :target: https://pypi.python.org/pypi/selenium-wire
 
 .. image:: https://img.shields.io/pypi/v/selenium-wire.svg

@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+1.2.2 (2020-06-12)
+------------------
+
+* Close connection on error rather than send 502 response to permit browser retry.
+
 1.2.1 (2020-06-09)
 ------------------
 
