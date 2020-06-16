@@ -363,12 +363,13 @@ class ProxyAwareHTTPSConnection(HTTPSConnection, ProxyAwareConnectionMixin):
 
     def __init__(self, proxy_config, netloc, *args, **kwargs):
         self.proxy_config = proxy_config
+        self.netloc = netloc
         self.use_proxy = 'https' in proxy_config and netloc not in proxy_config.get('no_proxy', '')
 
         if self.use_proxy:
             proxy = proxy_config['https']
             self._parse_proxy(proxy)
-            super().__init__(proxy.hostport, *args, **kwargs)
+            super().__init__(self.proxy_host, self.proxy_port, *args, **kwargs)
             self.set_tunnel(
                 netloc,
                 headers=_create_auth_header(
