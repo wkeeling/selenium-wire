@@ -79,7 +79,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         u = urllib.parse.urlsplit(req.path)
         scheme, netloc, path = u.scheme, u.netloc, (u.path + '?' + u.query if u.query else u.path)
-        assert scheme in ('http', 'https')
+        assert scheme in ('http', 'https', 'about')
         if netloc:
             req.headers['Host'] = netloc
         setattr(req, 'headers', self._filter_headers(req.headers))
