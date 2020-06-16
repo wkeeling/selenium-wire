@@ -310,9 +310,9 @@ class ProxyAwareHTTPSConnectionTest(TestCase):
             conn.connect()
 
 
-class ProxyAuthHeadersTest(TestCase):
+class ProxyAuthHeaderTest(TestCase):
 
-    def test_create_headers(self):
+    def test_create_header(self):
         username = 'username'
         password = 'password'
         custom_proxy_authorization = None
@@ -321,7 +321,7 @@ class ProxyAuthHeadersTest(TestCase):
 
         self.assertEqual(headers, {'Proxy-Authorization': 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='})
 
-    def test_does_not_create_headers_when_missing_username(self):
+    def test_create_header_missing_username(self):
         username = None
         password = 'password'
         custom_proxy_authorization = None
@@ -330,7 +330,7 @@ class ProxyAuthHeadersTest(TestCase):
 
         self.assertEqual(headers, {})
 
-    def test_does_not_create_headers_when_missing_password(self):
+    def test_create_header_missing_password(self):
         username = 'username'
         password = None
         custom_proxy_authorization = None
@@ -339,7 +339,7 @@ class ProxyAuthHeadersTest(TestCase):
 
         self.assertEqual(headers, {})
 
-    def test_create_headers_when_provide_custom_proxy_authorization(self):
+    def test_create_header_custom_proxy_authorization(self):
         username = None
         password = None
         custom_proxy_authorization = 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='
@@ -347,3 +347,12 @@ class ProxyAuthHeadersTest(TestCase):
         headers = _create_auth_header(username, password, custom_proxy_authorization)
 
         self.assertEqual(headers, {'Proxy-Authorization': 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='})
+
+    def test_create_header_quoted(self):
+        username = 'username%3b'
+        password = 'password%3b'
+        custom_proxy_authorization = None
+
+        headers = _create_auth_header(username, password, custom_proxy_authorization)
+
+        self.assertEqual(headers, {'Proxy-Authorization': 'Basic dXNlcm5hbWU7OnBhc3N3b3JkOw=='})

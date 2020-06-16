@@ -56,7 +56,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         if self.admin_path and self.path.startswith(self.admin_path):
             self.admin_handler()
             return
-        
+
         req = self
         content_length = int(req.headers.get('Content-Length', 0))
         req_body = self.rfile.read(content_length) if content_length else None
@@ -382,6 +382,8 @@ def _create_auth_header(proxy_username, proxy_password, custom_proxy_authorizati
     headers = {}
 
     if proxy_username and proxy_password and not custom_proxy_authorization:
+        proxy_username = urllib.parse.unquote(proxy_username)
+        proxy_password = urllib.parse.unquote(proxy_password)
         auth = '{}:{}'.format(proxy_username, proxy_password)
         headers['Proxy-Authorization'] = 'Basic {}'.format(base64.b64encode(auth.encode('utf-8')).decode('utf-8'))
     elif custom_proxy_authorization:
