@@ -287,7 +287,31 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         pass
 
 
-class ProxyAwareHTTPConnection(HTTPConnection):
+class ProxyAwareConnectionMixin:
+    def _parse_proxy(self, proxy_config):
+        """Split proxy_config to include correct port
+
+        Expects output from urllib.request._parse_proxy`
+        """
+        protocol, username, password, host = proxy_config
+        host = host.split(':', 1)
+
+        self.proxy_protocol = protocol
+        self.proxy_username = username
+        self.proxy_password = password
+        self.proxy_host = host[0]
+
+        if host[1:]:
+            self.proxy_port = int(host[1])
+        elif protocol == 'http':
+            self.proxy_port = 80
+        elif protocol == 'https':
+            self.proxy_port = 443
+        else:
+            self.proxy_port = None
+
+
+class ProxyAwareHTTPConnection(HTTPConnection, ProxyAwareConnectionMixin):
     """A specialised HTTPConnection that will transparently connect to a
     HTTP or SOCKS proxy server based on supplied proxy configuration.
     """
@@ -297,8 +321,8 @@ class ProxyAwareHTTPConnection(HTTPConnection):
         self.netloc = netloc
         self.use_proxy = 'http' in proxy_config and netloc not in proxy_config.get('no_proxy', '')
 
-        if self.proxied:
-            self.proxy_protocol, self.proxy_username, self.proxy_password, self.proxy_host, self.proxy_port = _parse_proxy(proxy_config.get('http'))
+        if self.use_proxy:
+            self._parse_proxy(proxy_config['http'])
             self.custom_authorization = proxy_config.get('custom_authorization')
             super().__init__(self.proxy_host, self.proxy_port, *args, **kwargs)
         else:
@@ -332,23 +356,23 @@ class ProxyAwareHTTPConnection(HTTPConnection):
         super().request(method, url, body, headers=headers)
 
 
-class ProxyAwareHTTPSConnection(HTTPSConnection):
+class ProxyAwareHTTPSConnection(HTTPSConnection, ProxyAwareConnectionMixin):
     """A specialised HTTPSConnection that will transparently connect to a
     HTTP or SOCKS proxy server based on supplied proxy configuration.
     """
 
     def __init__(self, proxy_config, netloc, *args, **kwargs):
         self.proxy_config = proxy_config
-        self.use_proxy = proxy_config and netloc not in proxy_config.get('no_proxy', '')
+        self.use_proxy = 'https' in proxy_config and netloc not in proxy_config.get('no_proxy', '')
 
         if self.use_proxy:
-            proxy = proxy_config.get('https')
-            self.proxy_protocol, self.proxy_username, self.proxy_password, self.proxy_host, self.proxy_port = _parse_proxy(proxy_config.get('https'))
-            super().__init__(proxy_config['https'].hostport, *args, **kwargs)
+            proxy = proxy_config['https']
+            self._parse_proxy(proxy)
+            super().__init__(proxy.hostport, *args, **kwargs)
             self.set_tunnel(
-                netloc, 
-                headers=_auth_header(
-                    self.proxy_username, 
+                netloc,
+                headers=_create_auth_header(
+                    self.proxy_username,
                     self.proxy_password,
                     proxy_config.get('custom_authorization')
                 )
@@ -367,27 +391,6 @@ class ProxyAwareHTTPSConnection(HTTPSConnection):
             self.sock = self._context.wrap_socket(self.sock, server_hostname=self.host)
         else:
             super().connect()
-
- 
-def _parse_proxy(proxy_config):
-    '''Split proxy_config to include correct port
-
-    Expects output from urllib.request._parse_proxy`
-    '''
-    protocol, username, password, host = proxy_config
-    host = host.split(':', 1)
-    hostname = host[0]
-
-    if host[1:]:
-        port = int(host[1])
-    elif protocol == 'http':
-        port = 80
-    elif protocol == 'https':
-        port = 443
-    else:
-        port = None
-
-    return protocol, username, password, hostname, port
 
 
 def _create_auth_header(proxy_username, proxy_password, custom_proxy_authorization):
