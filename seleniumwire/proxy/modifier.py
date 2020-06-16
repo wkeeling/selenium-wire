@@ -139,7 +139,8 @@ class RequestModifier:
 
         # Add new headers to the request that don't already exist
         for header, value in headers_lc.values():
-            request.headers[header] = value
+            if value is not None:
+                request.headers[header] = value
 
     def _rewrite_url(self, request):
         with self._lock:
@@ -163,9 +164,7 @@ class RequestModifier:
 
     def _matched_headers(self, header_rules, path):
         results = {}
-        for rule in header_rules:
-            pattern = rule[0]
-            headers = rule[1]
+        for pattern, headers in header_rules:
             match = re.search(pattern, path)
             if match:
                 results.update(headers)

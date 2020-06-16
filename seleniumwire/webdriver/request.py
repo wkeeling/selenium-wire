@@ -1,6 +1,7 @@
+import time
 from collections import OrderedDict
 from collections.abc import Mapping, MutableMapping
-import time
+from urllib.parse import parse_qs, urlsplit
 
 from selenium.common.exceptions import TimeoutException
 
@@ -178,6 +179,33 @@ class Request:
             self._data['body'] = self._client.get_request_body(self._data['id'])
 
         return self._data['body']
+
+    @property
+    def querystring(self):
+        """Get the query string from the request.
+
+        Returns:
+            The query string.
+        """
+        return urlsplit(self.path).query
+
+    @property
+    def params(self):
+        """Get the request parameters.
+
+        Parameters are returned as a dictionary. Each dictionary entry will have a single
+        string value, unless a parameter happens to occur more than once in the request,
+        in which case the value will be a list of strings.
+
+        Returns:
+            A dictionary of request parameters.
+        """
+        qs = self.querystring
+
+        if self.headers.get('Content-Type') == 'application/x-www-form-urlencoded' and self.body:
+            qs = self.body.decode('utf-8', errors='replace')
+
+        return {name: val[0] if len(val) == 1 else val for name, val in parse_qs(qs, keep_blank_values=True).items()}
 
     def __repr__(self):
         return 'Request({})'.format(self._data)

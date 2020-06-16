@@ -1,10 +1,52 @@
 History
 ~~~~~~~
 
+1.2.2 (2020-06-12)
+------------------
+
+* Close connection on error rather than send 502 response to permit browser retry.
+
+1.2.1 (2020-06-09)
+------------------
+
+* Use SHA256 digest when creating site certificates to fix Chrome HSTS security errors.
+
+1.2.0 (2020-06-07)
+------------------
+
+* Add properties to allow easy retrieval of the query string and request parameters.
+* Don't verify SSL by default.
+* Allow configurable number of request threads.
+* Use connection persistance (keep-alive) by default. Make configurable.
+
+1.1.2 (2020-05-27)
+------------------
+
+* Fix bug where request thread would spin after websocket closure.
+
+
+1.1.1 (2020-05-25)
+------------------
+
+* Handle errors occuring on websocket connections.
+
+1.1.0 (2020-05-23)
+------------------
+
+* Allow the request storage base directory to be configurable.
+* Support proxying websocket connections.
+* Fix bug where attempting to filter out non-existent headers would raise an error.
+* Handle possibility of zero byte captured request/response files.
+
+1.0.12 (2020-05-16)
+-------------------
+
+* Support for SOCKS proxies.
+
 1.0.11 (2019-12-31)
 -------------------
 
-* Fix duplication of content-length header when altering body content
+* Fix duplication of content-length header when altering body content.
 
 1.0.10 (2019-09-22)
 -------------------

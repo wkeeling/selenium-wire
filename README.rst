@@ -11,7 +11,7 @@ With Selenium Wire, you author your tests in just the same way as you do with Se
 .. image:: https://codecov.io/gh/wkeeling/selenium-wire/branch/master/graph/badge.svg
         :target: https://codecov.io/gh/wkeeling/selenium-wire
 
-.. image:: https://img.shields.io/badge/python-3.4%2C%203.5%2C%203.6%2C%203.7-blue.svg
+.. image:: https://img.shields.io/badge/python-3.4%2C%203.5%2C%203.6%2C%203.7%2C%203.8-blue.svg
         :target: https://pypi.python.org/pypi/selenium-wire
 
 .. image:: https://img.shields.io/pypi/v/selenium-wire.svg
@@ -57,7 +57,7 @@ Prints:
 Features
 ~~~~~~~~
 
-* Straightforward, user-friendly API
+* Pure Python with user-friendly API
 * All HTTP/HTTPS requests captured
 * Access to request/response bodies
 * Modify responses
@@ -84,7 +84,6 @@ Table of Contents
 - `Usage`_
 
   * `Creating the Webdriver`_
-  * `Using Self-Signed Certificates`_
   * `Accessing Requests`_
   * `Waiting for a Request`_
   * `Clearing Requests`_
@@ -100,6 +99,8 @@ Table of Contents
   * `Rewriting URLs`_
 
 - `Proxies`_
+
+  * `SOCKS`_
 
 - `Other Options`_
 
@@ -149,7 +150,7 @@ Browser Setup
 
 No specific configuration should be necessary - everything should just work.
 
-You will however need to ensure that you have downloaded the `Gecko driver`_ and `Chrome driver`_ for Firefox and Chrome to be remotely controlled - the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on the system path.
+You will however need to ensure that you have downloaded the `Gecko driver`_ and `Chrome driver`_ for Firefox and Chrome to be remotely controlled - the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on your PATH.
 
 .. _`Gecko driver`: https://github.com/mozilla/geckodriver/
 
@@ -219,17 +220,6 @@ For example, if you chose port 12345, then you would pass it in the ``seleniumwi
 .. code:: python
 
     driver = webdriver.Edge(seleniumwire_options={'port': 12345})
-
-Using Self-Signed Certificates
-------------------------------
-
-If the site you are testing uses a self-signed certificate then you must set the ``verify_ssl`` option to ``False`` in the ``seleniumwire_options``:
-
-.. code:: python
-
-    driver = webdriver.Firefox(seleniumwire_options={'verify_ssl': False})
-
-This this will need to be done regardless of the type of browser you are using.
 
 Accessing Requests
 ------------------
@@ -319,6 +309,12 @@ Requests have the following attributes.
 
 ``path``
     The request path.
+
+``querystring``
+    The query string.
+
+``params``
+    A dictionary of request parameters. If a parameter with the same name appears more than once in the request, it's value in the dictionary will be a list.
 
 ``headers``
     A case-insensitive dictionary of request headers. Asking for ``request.headers['user-agent']`` will return the value of the ``User-Agent`` header.
@@ -430,45 +426,83 @@ To clear the rewrite rules that you have set, use ``del``:
 Proxies
 ~~~~~~~
 
-Selenium Wire captures requests by using its own proxy server under the covers. This means you cannot use the webdriver's ``DesiredCapabilities`` API to configure your own proxy, like you might when using Selenium directly.
-
 If the site you are testing sits behind a proxy server you can tell Selenium Wire about that proxy server in the options you pass to the webdriver instance. The configuration takes the following format:
 
 .. code:: python
 
     options = {
         'proxy': {
-            'http': 'http://username:password@host:port',
-            'https': 'https://username:password@host:port',
-            'no_proxy': 'localhost,127.0.0.1,dev_server:8080'
+            'http': 'http://192.168.10.100:8888',
+            'https': 'https://192.168.10.100:8889',
+            'no_proxy': 'localhost,127.0.0.1'
         }
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
-The username and password are optional and can be specified when a proxy server requires authentication. Basic authentication is assumed by default.
-
-The proxy configuration can also be loaded through environment variables called ``http``, ``https`` and ``no_proxy``. The proxy configuration in the options passed to the webdriver instance will take precedence over environment variable configuration if both are specified.
-
-**Proxy authentication other than Basic**
-
-Basic authentication is used by default when supplying a username and password in the URL. If you are connecting to an upstream proxy server that uses an authentication scheme different to Basic, then you can supply the full value for the ``Proxy-Authorization`` header using the ``custom_authorization`` option. For example, if your proxy used the Bearer scheme:
+To use HTTP Basic Auth with your proxy, specify the username and password in the URL:
 
 .. code:: python
 
     options = {
         'proxy': {
-            'http': 'http://host:port',
-            'https': 'https://host:port',
-            'no_proxy': 'localhost,127.0.0.1,dev_server:8080',
+            'https': 'https://user:pass@192.168.10.100:8889',
+        }
+    }
+
+For proxy authentication different to Basic, you can supply the full value for the ``Proxy-Authorization`` header using the ``custom_authorization`` option. For example, if your proxy used the Bearer scheme:
+
+.. code:: python
+
+    options = {
+        'proxy': {
+            'https': 'https://192.168.10.100:8889',  # No username or password used
             'custom_authorization': 'Bearer mytoken123'  # Custom Proxy-Authorization header value
         }
     }
+
+The proxy configuration can also be loaded through environment variables called ``HTTP_PROXY``, ``HTTPS_PROXY`` and ``NO_PROXY``:
+
+.. code:: bash
+
+    $ export HTTP_PROXY="http://192.168.10.100:8888"
+    $ export HTTPS_PROXY="https://192.168.10.100:8889"
+    $ export NO_PROXY="localhost,127.0.0.1"
+
+SOCKS
+-----
+
+Using a SOCKS proxy is the same as using an HTTP based one:
+
+.. code:: python
+
+    options = {
+        'proxy': {
+            'http': 'socks5://user:pass@192.168.10.100:8888',
+            'https': 'socks5://user:pass@192.168.10.100:8889',
+            'no_proxy': 'localhost,127.0.0.1'
+        }
+    }
     driver = webdriver.Firefox(seleniumwire_options=options)
+
+You can leave out the ``user`` and ``pass`` if your proxy doesn't require authentication.
+
+As well as ``socks5``, the schemes ``socks4`` and ``socks5h`` are supported. Use ``socks5h`` when you want DNS resolution to happen on the proxy server rather than on the client.
+
 
 Other Options
 ~~~~~~~~~~~~~
 
 Other options that can be passed to Selenium Wire via the ``seleniumwire_options`` webdriver attribute:
+
+``request_storage_base_dir``
+    Captured requests and responses are stored in the current user's home folder by default. If you want to use a different folder, you can specify that here.
+
+.. code:: python
+
+    options = {
+        'request_storage_base_dir': '/tmp'  # Use /tmp to store captured data
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
 
 ``connection_timeout``
     The number of seconds Selenium Wire should wait before timing out requests. The default is 5 seconds. Increase this value if you're working with a slow server that needs more time to respond. Set to ``None`` for no timeout.
@@ -477,6 +511,36 @@ Other options that can be passed to Selenium Wire via the ``seleniumwire_options
 
     options = {
         'connection_timeout': None  # Never timeout
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``connection_keep_alive``
+    Whether connections should be reused across requests. The default is ``True`` although this can be overridden on a per-request basis with a ``Connection: close`` header. Set to ``False`` to always close down connections after each request.
+
+.. code:: python
+
+    options = {
+        'connection_keep_alive': False  # Always close connections after each request
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``max_threads``
+    The maximum allowed number threads that will be used to handle requests. The default is 9999.
+
+.. code:: python
+
+    options = {
+        'max_threads': 3  # Allow a maximum of 3 threads to handle requests.
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``verify_ssl``
+    Whether SSL certificates should be verified. The default is ``False`` which prevents errors with self-signed certificates.
+
+.. code:: python
+
+    options = {
+        'verify_ssl': True  # Verify SSL certificates but beware of errors with self-signed certificates.
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
@@ -500,8 +564,6 @@ The code above will print something like this to the console (loading a page wil
 
     res_body length: 471
     res_body length: 606
-
-
 
 ``ignore_http_methods``
     A list of HTTP methods (specified as uppercase strings) that should be ignored by Selenium Wire and not captured. The default is ``['OPTIONS']`` which ignores all OPTIONS requests. To capture all request methods, set ``ignore_http_methods`` to an empty list:

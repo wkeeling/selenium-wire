@@ -8,14 +8,17 @@ from seleniumwire.proxy import client, util
 logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 
 
-def standalone_proxy(port):
+def standalone_proxy(port=0):
     c = client.AdminClient()
 
     # Configure shutdown handlers
     signal.signal(signal.SIGTERM, lambda *_: c.destroy_proxy())
     signal.signal(signal.SIGINT, lambda *_: c.destroy_proxy())
 
-    c.create_proxy(port=int(port), options={'standalone': True})
+    c.create_proxy(port=int(port), options={
+        'standalone': True,
+        'verify_ssl': False,
+    })
 
 
 if __name__ == '__main__':

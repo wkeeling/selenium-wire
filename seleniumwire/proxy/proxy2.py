@@ -2,8 +2,8 @@
 
 #
 #
-# This code is from the project https://github.com/inaz2/proxy2, with some
-# minor modifications.
+# This code originated from the project https://github.com/inaz2/proxy2 but has since
+# been modified extensively.
 #
 #
 
@@ -11,31 +11,16 @@ import base64
 import re
 import socket
 import ssl
-import sys
 import threading
 import urllib.parse
 from http.client import HTTPConnection, HTTPSConnection
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from socketserver import ThreadingMixIn
+from http.server import BaseHTTPRequestHandler
 
-from . import cert
-
-
-class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
-    address_family = socket.AF_INET6
-    daemon_threads = True
-
-    def handle_error(self, request, client_address):
-        # surpress socket/ssl related errors
-        cls, e = sys.exc_info()[:2]
-        if issubclass(cls, socket.error) or issubclass(cls, ssl.SSLError):
-            pass
-        else:
-            return HTTPServer.handle_error(self, request, client_address)
+from . import cert, socks
 
 
 class ProxyRequestHandler(BaseHTTPRequestHandler):
-    admin_path = 'http://proxy2'
+    admin_path = None
     # Path to the directory used to store the generated certificates.
     # Subclasses can override certdir
     certdir = cert.CERTDIR
@@ -43,15 +28,9 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         self.tls = threading.local()
         self.tls.conns = {}
+        self.websocket = False
 
         super().__init__(*args, **kwargs)
-
-    def log_error(self, format_, *args):
-        # suppress "Request timed out: timeout('timed out',)"
-        if isinstance(args[0], socket.timeout):
-            return
-
-        self.log_message(format_, *args)
 
     def do_CONNECT(self):
         self.send_response(200, 'Connection Established')
@@ -59,7 +38,10 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         certpath = cert.generate(self.path.split(':')[0], self.certdir)
 
-        with ssl.wrap_socket(self.connection, keyfile=cert.CERTKEY, certfile=certpath, server_side=True) as conn:
+        with ssl.wrap_socket(self.connection,
+                             keyfile=cert.CERTKEY,
+                             certfile=certpath,
+                             server_side=True) as conn:
             self.connection = conn
             self.rfile = conn.makefile('rb', self.rbufsize)
             self.wfile = conn.makefile('wb', self.wbufsize)
@@ -70,10 +52,11 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         else:
             self.close_connection = True
 
-    def do_GET(self):
-        if self.path.startswith(self.admin_path):
+    def proxy_request(self):
+        if self.admin_path and self.path.startswith(self.admin_path):
             self.admin_handler()
             return
+
         req = self
         content_length = int(req.headers.get('Content-Length', 0))
         req_body = self.rfile.read(content_length) if content_length else None
@@ -96,17 +79,19 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         u = urllib.parse.urlsplit(req.path)
         scheme, netloc, path = u.scheme, u.netloc, (u.path + '?' + u.query if u.query else u.path)
-        assert scheme in ('http', 'https')
+        assert scheme in ('http', 'https', 'about')
         if netloc:
             req.headers['Host'] = netloc
-        setattr(req, 'headers', self.filter_headers(req.headers))
+        setattr(req, 'headers', self._filter_headers(req.headers))
 
         origin = (scheme, netloc)
-        conn = None
         try:
-            conn = self.create_connection(origin)
+            conn = self._create_connection(origin)
             conn.request(self.command, path, req_body, dict(req.headers))
             res = conn.getresponse()
+
+            if res.headers.get('Upgrade') == 'websocket':
+                self.websocket = True
 
             version_table = {10: 'HTTP/1.0', 11: 'HTTP/1.1'}
             setattr(res, 'headers', res.msg)
@@ -114,13 +99,9 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
             res_body = res.read()
         except Exception:
-            if origin in self.tls.conns:
-                del self.tls.conns[origin]
-            self.send_error(502)
+            self.log_error('Error making request')
+            self.close_connection = True
             return
-        finally:
-            if conn:
-                conn.close()
 
         res_body_modified = self.response_handler(req, req_body, res, res_body)
         if res_body_modified is False:
@@ -131,19 +112,26 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             del res.headers['Content-length']
             res.headers['Content-Length'] = str(len(res_body))
 
-        setattr(res, 'headers', self.filter_headers(res.headers))
+        setattr(res, 'headers', self._filter_headers(res.headers))
 
         self.send_response(res.status, res.reason)
 
         for header, val in res.headers.items():
             self.send_header(header, val)
         self.end_headers()
+
         if res_body:
             self.wfile.write(res_body)
-        self.wfile.flush()
-        self.close_connection = True
 
-    def create_connection(self, origin):
+        self.wfile.flush()
+
+        if self.websocket:
+            self._handle_websocket(conn.sock)
+            self.close_connection = True
+        elif not self._keepalive():
+            self.close_connection = True
+
+    def _create_connection(self, origin):
         scheme, netloc = origin
 
         if origin not in self.tls.conns:
@@ -155,7 +143,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
             if scheme == 'https':
                 connection = ProxyAwareHTTPSConnection
-                if not self.server.options.get('verify_ssl', True):
+                if not self.server.options.get('verify_ssl', False):
                     kwargs['context'] = ssl._create_unverified_context()
             else:
                 connection = ProxyAwareHTTPConnection
@@ -164,21 +152,34 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         return self.tls.conns[origin]
 
-    do_HEAD = do_GET
-    do_POST = do_GET
-    do_PUT = do_GET
-    do_DELETE = do_GET
-    do_OPTIONS = do_GET
-    do_PATCH = do_GET
+    do_HEAD = proxy_request
+    do_POST = proxy_request
+    do_GET = proxy_request
+    do_PUT = proxy_request
+    do_DELETE = proxy_request
+    do_OPTIONS = proxy_request
+    do_PATCH = proxy_request
 
-    def filter_headers(self, headers):
+    def _filter_headers(self, headers):
         # http://tools.ietf.org/html/rfc2616#section-13.5.1
-        hop_by_hop = ('connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailers',
-                      'transfer-encoding', 'upgrade')
+        hop_by_hop = (
+            'keep-alive',
+            'proxy-authenticate',
+            'proxy-authorization',
+            'te',
+            'trailers',
+            'transfer-encoding',
+        )
+
         for k in hop_by_hop:
             del headers[k]
 
-        # accept only supported encodings
+        # Remove the `connection` header for non-websocket requests
+        if 'connection' in headers:
+            if 'upgrade' not in headers['connection'].lower():
+                del headers['connection']
+
+        # Accept only supported encodings
         if 'Accept-Encoding' in headers:
             ae = headers['Accept-Encoding']
 
@@ -198,51 +199,177 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         return headers
 
-    def send_cacert(self):
-        with open(cert.CACERT, 'rb') as f:
-            data = f.read()
+    def _keepalive(self):
+        return self.server.options.get('connection_keep_alive', True) \
+               and self.headers.get('Connection', '').lower() != 'close'
 
-        self.send_response(200, 'OK')
-        self.send_header('Content-Type', 'application/x-x509-ca-cert')
-        self.send_header('Content-Length', len(data))
-        self.send_header('Connection', 'close')
-        self.end_headers()
-        self.wfile.write(data)
+    def _handle_websocket(self, server_sock):
+        self.connection.settimeout(None)
+        server_sock.settimeout(None)
+
+        def server_read():
+            try:
+                while True:
+                    serverdata = server_sock.recv(4096)
+                    if not serverdata:
+                        break
+                    self.connection.sendall(serverdata)
+            except socket.error:
+                self.log_message('Ending websocket server connection')
+            finally:
+                if server_sock:
+                    server_sock.close()
+                if self.connection:
+                    self.connection.close()
+
+        t = threading.Thread(target=server_read, daemon=True)
+        t.start()
+
+        try:
+            while True:
+                clientdata = self.connection.recv(4096)
+                if not clientdata:
+                    break
+                server_sock.sendall(clientdata)
+        except socket.error:
+            self.log_message('Ending websocket client connection')
+        finally:
+            if server_sock:
+                server_sock.close()
+            if self.connection:
+                self.connection.close()
+
+        t.join()
+
+    def handle_one_request(self):
+        if not self.websocket:
+            super().handle_one_request()
+
+    def finish(self):
+        for conn in self.tls.conns.values():
+            if conn:
+                conn.close()
+        super().finish()
 
     def request_handler(self, req, req_body):
+        """Hook method that subclasses should override to process a request.
+
+        Args:
+            req: A ProxyRequestHandler instance.
+            req_body: The request body as bytes.
+        """
         pass
 
     def response_handler(self, req, req_body, res, res_body):
+        """Hook method that subclasses should override to process a response.
+
+        Args:
+            req: The original request - a ProxyRequestHandler instance.
+            req_body: The request body as bytes.
+            res: The response (a http.client.HTTPResponse instance) that corresponds to the
+                request.
+            res_body: The response body as bytes.
+        """
         pass
 
     def admin_handler(self):
-        if self.path == 'http://proxy2.test/':
-            self.send_cacert()
+        """Subclasses should override this to process administration requests.
+
+        Administration requests are requests targeted at the proxy server itself
+        rather than a remote server.
+
+        Note that subclasses must set the admin_path class-level attribute to
+        a URL prefix that identifies administration requests. For example:
+            admin_path = 'http://myserver'
+        This method will then fire for any request with a URL path that starts
+        with http://myserver...
+        """
+        pass
 
 
-def proxy_auth_headers(proxy_username, proxy_password, custom_proxy_authorization):
-    """Creates the Proxy-Authorization header based on the supplied username
-    and password, provided both are set.
-
-    Args:
-        proxy_username: The proxy username.
-        proxy_password: The proxy password.
-        custom_proxy_authorization: The custom proxy authorization.
-    Returns:
-        A dictionary containing the Proxy-Authorization header or an empty
-        dictionary if the username or password were not set.
+class ProxyAwareHTTPConnection(HTTPConnection):
+    """A specialised HTTPConnection that will transparently connect to a
+    HTTP or SOCKS proxy server based on supplied proxy configuration.
     """
-    headers = {}
-    if proxy_username and proxy_password and not custom_proxy_authorization:
-        proxy_username = urllib.parse.unquote(proxy_username)
-        proxy_password = urllib.parse.unquote(proxy_password)
-        auth = '{}:{}'.format(proxy_username, proxy_password)
-        headers['Proxy-Authorization'] = 'Basic {}'.format(base64.b64encode(auth.encode('utf-8')).decode('utf-8'))
-    elif custom_proxy_authorization:
-        headers['Proxy-Authorization'] = custom_proxy_authorization
-    return headers
 
-def parse_proxy(proxy_config):
+    def __init__(self, proxy_config, netloc, *args, **kwargs):
+        self.proxy_config = proxy_config
+        self.netloc = netloc
+        self.use_proxy = 'http' in proxy_config and netloc not in proxy_config.get('no_proxy', '')
+
+        if self.proxied:
+            self.proxy_protocol, self.proxy_username, self.proxy_password, self.proxy_host, self.proxy_port = _parse_proxy(proxy_config.get('http'))
+            self.custom_authorization = proxy_config.get('custom_authorization')
+            super().__init__(self.proxy_host, self.proxy_port, *args, **kwargs)
+        else:
+            super().__init__(netloc, *args, **kwargs)
+
+    def connect(self):
+        if self.use_proxy and self.proxy_config['http'].scheme.startswith('socks'):
+            self.sock = _socks_connection(
+                self.host,
+                self.port,
+                self.timeout,
+                self.proxy_config['http']
+            )
+        else:
+            super().connect()
+
+    def request(self, method, url, body=None, headers=None, *, encode_chunked=False):
+        if headers is None:
+            headers = {}
+
+        if self.use_proxy and self.proxy_config['http'].scheme.startswith('http'):
+            if not url.startswith('http'):
+                url = 'http://{}{}'.format(self.netloc, url)
+
+            headers.update(_create_auth_header(
+                self.proxy_config['http'].username,
+                self.proxy_config['http'].password,
+                self.custom_authorization)
+            )
+
+        super().request(method, url, body, headers=headers)
+
+
+class ProxyAwareHTTPSConnection(HTTPSConnection):
+    """A specialised HTTPSConnection that will transparently connect to a
+    HTTP or SOCKS proxy server based on supplied proxy configuration.
+    """
+
+    def __init__(self, proxy_config, netloc, *args, **kwargs):
+        self.proxy_config = proxy_config
+        self.use_proxy = proxy_config and netloc not in proxy_config.get('no_proxy', '')
+
+        if self.use_proxy:
+            proxy = proxy_config.get('https')
+            self.proxy_protocol, self.proxy_username, self.proxy_password, self.proxy_host, self.proxy_port = _parse_proxy(proxy_config.get('https'))
+            super().__init__(proxy_config['https'].hostport, *args, **kwargs)
+            self.set_tunnel(
+                netloc, 
+                headers=_auth_header(
+                    self.proxy_username, 
+                    self.proxy_password,
+                    proxy_config.get('custom_authorization')
+                )
+            )
+        else:
+            super().__init__(netloc, *args, **kwargs)
+
+    def connect(self):
+        if self.use_proxy and self.proxy_config['https'].scheme.startswith('socks'):
+            self.sock = _socks_connection(
+                self.host,
+                self.port,
+                self.timeout,
+                self.proxy_config['https']
+            )
+            self.sock = self._context.wrap_socket(self.sock, server_hostname=self.host)
+        else:
+            super().connect()
+
+ 
+def _parse_proxy(proxy_config):
     '''Split proxy_config to include correct port
 
     Expects output from urllib.request._parse_proxy`
@@ -263,48 +390,53 @@ def parse_proxy(proxy_config):
     return protocol, username, password, hostname, port
 
 
-class ProxyAwareHTTPConnection(HTTPConnection):
-    """A specialised HTTPConnection that will transparently connect to a
-    proxy server based on supplied proxy configuration.
+def _create_auth_header(proxy_username, proxy_password, custom_proxy_authorization):
+    """Create the Proxy-Authorization header based on the supplied username
+    and password or custom Proxy-Authorization header value.
+
+    Args:
+        proxy_username: The proxy username.
+        proxy_password: The proxy password.
+        custom_proxy_authorization: The custom proxy authorization.
+    Returns:
+        A dictionary containing the Proxy-Authorization header or an empty
+        dictionary if the username or password were not set.
     """
+    headers = {}
 
-    def __init__(self, proxy_config, netloc, *args, **kwargs):
-        self.netloc = netloc
-        self.proxied = proxy_config and netloc not in proxy_config['no_proxy']
+    if proxy_username and proxy_password and not custom_proxy_authorization:
+        proxy_username = urllib.parse.unquote(proxy_username)
+        proxy_password = urllib.parse.unquote(proxy_password)
+        auth = '{}:{}'.format(proxy_username, proxy_password)
+        headers['Proxy-Authorization'] = 'Basic {}'.format(base64.b64encode(auth.encode('utf-8')).decode('utf-8'))
+    elif custom_proxy_authorization:
+        headers['Proxy-Authorization'] = custom_proxy_authorization
 
-        if self.proxied:
-            self.proxy_protocol, self.proxy_username, self.proxy_password, self.proxy_host, self.proxy_port = parse_proxy(proxy_config.get('http'))
-            self.custom_authorization = proxy_config.get('custom_authorization')
-            super().__init__(self.proxy_host, self.proxy_port, *args, **kwargs)
-        else:
-            super().__init__(netloc, *args, **kwargs)
-
-    def request(self, method, url, body=None, headers=None, *, encode_chunked=False):
-        if headers is None:
-            headers = {}
-
-        if self.proxied:
-            if not url.startswith('http'):
-                url = 'http://{}{}'.format(self.netloc, url)
-            headers.update(proxy_auth_headers(self.proxy_username, self.proxy_password, self.custom_authorization))
-
-        super().request(method, url, body, headers=headers)
+    return headers
 
 
-class ProxyAwareHTTPSConnection(HTTPSConnection):
-    """A specialised HTTPSConnection that will transparently connect to a
-    proxy server based on supplied proxy configuration.
-    """
+def _socks_connection(host, port, timeout, socks_config):
+    """Create a SOCKS connection based on the supplied configuration."""
+    try:
+        socks_type = dict(
+            socks4=socks.PROXY_TYPE_SOCKS4,
+            socks5=socks.PROXY_TYPE_SOCKS5,
+            socks5h=socks.PROXY_TYPE_SOCKS5
+        )[socks_config.scheme]
+    except KeyError:
+        raise TypeError('Invalid SOCKS scheme: {}'.format(socks_config.scheme))
 
-    def __init__(self, proxy_config, netloc, *args, **kwargs):
-        self.proxied = proxy_config and netloc not in proxy_config['no_proxy']
+    socks_host, socks_port = socks_config.hostport.split(':')
 
-        if self.proxied:
-            proxy = proxy_config.get('https')
-            self.proxy_protocol, self.proxy_username, self.proxy_password, self.proxy_host, self.proxy_port = parse_proxy(proxy_config.get('https'))
-            super().__init__(self.proxy_host, self.proxy_port, *args, **kwargs)
-            headers = proxy_auth_headers(self.proxy_username, self.proxy_password,
-                                         proxy_config.get('custom_authorization'))
-            self.set_tunnel(netloc, headers=headers)
-        else:
-            super().__init__(netloc, *args, **kwargs)
+    return socks.create_connection(
+        (host, port),
+        timeout,
+        None,
+        socks_type,
+        socks_host,
+        int(socks_port),
+        socks_config.scheme == 'socks5h',
+        socks_config.username,
+        socks_config.password,
+        ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
+    )

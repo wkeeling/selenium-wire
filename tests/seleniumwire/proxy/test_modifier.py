@@ -112,6 +112,16 @@ class RequestModifierTest(TestCase):
 
         self.assertNotIn('User-Agent', mock_request.headers)
 
+    def test_filter_out_non_existent_header(self):
+        self.modifier.headers = {
+            'Host': None  # Does not exist in the request
+        }
+        mock_request = self._create_mock_request()
+
+        self.modifier.modify(mock_request)
+
+        self.assertNotIn('Host', mock_request.headers)
+
     def test_clear_header_overrides(self):
         self.modifier.headers = {
             'User-Agent': 'Test_User_Agent_String'
