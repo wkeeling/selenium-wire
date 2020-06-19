@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+1.2.3 (2020-06-19)
+------------------
+
+* Disable connection persistence by default due to side effects in certain cases.
+
 1.2.2 (2020-06-12)
 ------------------
 
