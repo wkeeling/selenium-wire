@@ -515,12 +515,12 @@ Other options that can be passed to Selenium Wire via the ``seleniumwire_options
     driver = webdriver.Firefox(seleniumwire_options=options)
 
 ``connection_keep_alive``
-    Whether connections should be reused across requests. The default is ``True`` although this can be overridden on a per-request basis with a ``Connection: close`` header. Set to ``False`` to always close down connections after each request.
+    Whether connections should be reused across requests. The default is ``False``.
 
 .. code:: python
 
     options = {
-        'connection_keep_alive': False  # Always close connections after each request
+        'connection_keep_alive': True  # Allow persistent connections
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
