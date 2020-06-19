@@ -200,7 +200,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         return headers
 
     def _keepalive(self):
-        return self.server.options.get('connection_keep_alive', True) \
+        return self.server.options.get('connection_keep_alive', False) \
                and self.headers.get('Connection', '').lower() != 'close'
 
     def _handle_websocket(self, server_sock):
