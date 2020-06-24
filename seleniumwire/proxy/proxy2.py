@@ -20,6 +20,7 @@ from . import cert, socks
 
 
 class ProxyRequestHandler(BaseHTTPRequestHandler):
+    protocol_version = 'HTTP/1.1'
     admin_path = None
     # Path to the directory used to store the generated certificates.
     # Subclasses can override certdir
@@ -31,6 +32,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         self.websocket = False
 
         super().__init__(*args, **kwargs)
+
+        self.timeout = self.server.options.get('connection_timeout', 5)
 
     def do_CONNECT(self):
         self.send_response(200, 'Connection Established')
@@ -68,7 +71,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             else:
                 req.path = 'http://{}'.format(path)
 
-        req_body_modified = self.request_handler(req, req_body)
+        req_body_modified = self.handle_request(req, req_body)
         if req_body_modified is False:
             self.send_error(403)
             return
@@ -103,7 +106,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             self.close_connection = True
             return
 
-        res_body_modified = self.response_handler(req, req_body, res, res_body)
+        res_body_modified = self.handle_response(req, req_body, res, res_body)
         if res_body_modified is False:
             self.send_error(403)
             return
@@ -251,7 +254,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 conn.close()
         super().finish()
 
-    def request_handler(self, req, req_body):
+    def handle_request(self, req, req_body):
         """Hook method that subclasses should override to process a request.
 
         Args:
@@ -260,7 +263,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         """
         pass
 
-    def response_handler(self, req, req_body, res, res_body):
+    def handle_response(self, req, req_body, res, res_body):
         """Hook method that subclasses should override to process a response.
 
         Args:
@@ -272,7 +275,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         """
         pass
 
-    def admin_handler(self):
+    def handle_admin(self):
         """Subclasses should override this to process administration requests.
 
         Administration requests are requests targeted at the proxy server itself

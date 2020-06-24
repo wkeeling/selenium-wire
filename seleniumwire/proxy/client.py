@@ -51,8 +51,6 @@ class AdminClient:
             self._capture_request_handler = create_custom_capture_request_handler(custom_response_handler)
         else:
             self._capture_request_handler = CaptureRequestHandler
-        self._capture_request_handler.protocol_version = 'HTTP/1.1'
-        self._capture_request_handler.timeout = options.get('connection_timeout', 5)
         self._proxy = ProxyHTTPServer((addr, port), self._capture_request_handler,
                                       proxy_config=proxy_config, options=options)
 

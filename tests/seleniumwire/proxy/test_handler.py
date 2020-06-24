@@ -7,25 +7,25 @@ from seleniumwire.proxy.handler import CaptureRequestHandler
 class CaptureRequestHandlerTest(TestCase):
 
     def test_request_modifier_called(self):
-        self.handler.request_handler(self.handler, self.body)
+        self.handler.handle_request(self.handler, self.body)
 
         self.mock_modifier.modify.assert_called_once_with(self.handler)
 
     def test_save_request_called(self):
-        self.handler.request_handler(self.handler, self.body)
+        self.handler.handle_request(self.handler, self.body)
 
         self.mock_storage.save_request.assert_called_once_with(self.handler, self.body)
 
     def test_ignores_options_method_by_default(self):
         self.handler.command = 'OPTIONS'
-        self.handler.request_handler(self.handler, self.body)
+        self.handler.handle_request(self.handler, self.body)
 
         self.assertFalse(self.mock_modifier.modify.called)
         self.assertFalse(self.mock_storage.save_request.called)
 
     def test_ignores_get_method(self):
         self.handler.server.options = {'ignore_http_methods': ['OPTIONS', 'GET']}
-        self.handler.request_handler(self.handler, self.body)
+        self.handler.handle_request(self.handler, self.body)
 
         self.assertFalse(self.mock_modifier.modify.called)
         self.assertFalse(self.mock_storage.save_request.called)
@@ -33,20 +33,20 @@ class CaptureRequestHandlerTest(TestCase):
     def test_ignores_no_method(self):
         self.handler.command = 'OPTIONS'
         self.handler.server.options = {'ignore_http_methods': []}
-        self.handler.request_handler(self.handler, self.body)
+        self.handler.handle_request(self.handler, self.body)
 
         self.mock_storage.save_request.assert_called_once_with(self.handler, self.body)
 
     def test_save_response_called(self):
         res, res_body = Mock(), Mock()
-        self.handler.response_handler(self.handler, self.body, res, res_body)
+        self.handler.handle_response(self.handler, self.body, res, res_body)
 
         self.mock_storage.save_response.assert_called_once_with('12345', res, res_body)
 
     def test_ignores_response(self):
         res, res_body = Mock(), Mock()
         delattr(self.handler, 'id')
-        self.handler.response_handler(self.handler, self.body, res, res_body)
+        self.handler.handle_response(self.handler, self.body, res, res_body)
 
         self.assertFalse(self.mock_storage.save_response.called)
 
@@ -74,7 +74,7 @@ class AdminMixinTest(TestCase):
             {'id': '67890'},
         ]
 
-        self.handler.admin_handler()
+        self.handler.handle_admin()
 
         self.mock_storage.load_requests.assert_called_once_with()
         self.assert_response_mocks_called(
@@ -88,7 +88,7 @@ class AdminMixinTest(TestCase):
         self.handler.path = 'http://seleniumwire/requests'
         self.handler.command = 'DELETE'
 
-        self.handler.admin_handler()
+        self.handler.handle_admin()
 
         self.mock_storage.clear_requests.assert_called_once_with()
 
@@ -103,7 +103,7 @@ class AdminMixinTest(TestCase):
         self.handler.path = 'http://seleniumwire/last_request'
         self.mock_storage.load_last_request.return_value = {'id': '12345'}
 
-        self.handler.admin_handler()
+        self.handler.handle_admin()
 
         self.mock_storage.load_last_request.assert_called_once_with()
 
@@ -118,7 +118,7 @@ class AdminMixinTest(TestCase):
         self.handler.path = 'http://seleniumwire/request_body?request_id=12345'
         self.mock_storage.load_request_body.return_value = b'bodycontent'
 
-        self.handler.admin_handler()
+        self.handler.handle_admin()
 
         self.mock_storage.load_request_body.assert_called_once_with('12345')
         self.assert_response_mocks_called(
@@ -132,7 +132,7 @@ class AdminMixinTest(TestCase):
         self.handler.path = 'http://seleniumwire/response_body?request_id=12345'
         self.mock_storage.load_response_body.return_value = b'bodycontent'
 
-        self.handler.admin_handler()
+        self.handler.handle_admin()
 
         self.mock_storage.load_response_body.assert_called_once_with('12345')
         self.assert_response_mocks_called(
@@ -146,7 +146,7 @@ class AdminMixinTest(TestCase):
         self.handler.path = 'http://seleniumwire/response_body?request_id=12345'
         self.mock_storage.load_response_body.return_value = 'bodycontent'
 
-        self.handler.admin_handler()
+        self.handler.handle_admin()
 
         self.mock_storage.load_response_body.assert_called_once_with('12345')
         self.assert_response_mocks_called(
@@ -160,7 +160,7 @@ class AdminMixinTest(TestCase):
         self.handler.path = 'http://seleniumwire/find?path=/foo/bar'
         self.mock_storage.find.return_value = {'id': '12345'}
 
-        self.handler.admin_handler()
+        self.handler.handle_admin()
 
         self.mock_storage.find.assert_called_once_with('/foo/bar')
         self.assert_response_mocks_called(
@@ -174,7 +174,7 @@ class AdminMixinTest(TestCase):
         self.handler.path = 'http://seleniumwire/find?path=/foo/bar'
         self.mock_storage.find.return_value = None
 
-        self.handler.admin_handler()
+        self.handler.handle_admin()
 
         self.mock_storage.find.assert_called_once_with('/foo/bar')
         self.assert_response_mocks_called(
@@ -192,7 +192,7 @@ class AdminMixinTest(TestCase):
         }
         self.mock_rfile.read.return_value = b'{"User-Agent": "useragent"}'
 
-        self.handler.admin_handler()
+        self.handler.handle_admin()
 
         self.mock_rfile.read.assert_called_once_with(20)
         self.assertEqual(self.mock_modifier.headers, {'User-Agent': 'useragent'})
@@ -208,7 +208,7 @@ class AdminMixinTest(TestCase):
         self.handler.command = 'DELETE'
         self.mock_modifier.headers = {'User-Agent': 'useragent'}
 
-        self.handler.admin_handler()
+        self.handler.handle_admin()
 
         self.assertFalse(hasattr(self.mock_modifier, 'headers'))
         self.assert_response_mocks_called(
@@ -222,7 +222,7 @@ class AdminMixinTest(TestCase):
         self.handler.path = 'http://seleniumwire/header_overrides'
         self.mock_modifier.headers = {'User-Agent': 'useragent'}
 
-        self.handler.admin_handler()
+        self.handler.handle_admin()
 
         self.assert_response_mocks_called(
             status=200,
@@ -239,7 +239,7 @@ class AdminMixinTest(TestCase):
         }
         self.mock_rfile.read.return_value = b'[["https?://)prod1.server.com(.*)", "\\\\1prod2.server.com\\\\2"]]'
 
-        self.handler.admin_handler()
+        self.handler.handle_admin()
 
         self.mock_rfile.read.assert_called_once_with(20)
         self.assertEqual(self.mock_modifier.rewrite_rules,
@@ -256,7 +256,7 @@ class AdminMixinTest(TestCase):
         self.handler.command = 'DELETE'
         self.mock_modifier.rewrite_rules = [["https?://)prod1.server.com(.*)", r"\1prod2.server.com\2"]]
 
-        self.handler.admin_handler()
+        self.handler.handle_admin()
 
         self.assertFalse(hasattr(self.mock_modifier, 'rewrite_rules'))
         self.assert_response_mocks_called(
@@ -270,7 +270,7 @@ class AdminMixinTest(TestCase):
         self.handler.path = 'http://seleniumwire/rewrite_rules'
         self.mock_modifier.rewrite_rules = [["https?://)prod1.server.com(.*)", r"\1prod2.server.com\2"]]
 
-        self.handler.admin_handler()
+        self.handler.handle_admin()
 
         self.assert_response_mocks_called(
             status=200,
@@ -283,7 +283,7 @@ class AdminMixinTest(TestCase):
         self.handler.path = 'http://seleniumwire/foobar'
 
         with self.assertRaises(RuntimeError):
-            self.handler.admin_handler()
+            self.handler.handle_admin()
 
     def assert_response_mocks_called(self, status, headers, body):
         self.mock_send_response.assert_called_once_with(status)

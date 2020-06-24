@@ -71,7 +71,6 @@ class RequestStorage:
 
     def _index_request(self, request):
         request_id = str(uuid.uuid4())
-        request.id = request_id
 
         with self._lock:
             self._index.append(_IndexedRequest(id=request_id,

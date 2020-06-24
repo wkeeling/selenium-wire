@@ -21,7 +21,7 @@ class AdminMixin:
 
     admin_path = ADMIN_PATH
 
-    def admin_handler(self):
+    def handle_admin(self):
         parse_result = urlparse(self.path)
         path, params = parse_result.path, parse_qs(parse_result.query)
 
@@ -154,7 +154,59 @@ class AdminMixin:
             'utf-8'), 'application/json')
 
 
-class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
+class CaptureMixin:
+    """Mixin that handles the capturing of requests and responses."""
+
+    def capture_request(self, req, req_body):
+        """Capture a request and its body and return the unique id associated with the
+        captured request.
+
+        Args:
+            req: The request.
+            req_body: The binary request body.
+        Returns: The captured request id.
+        """
+        ignore_method = req.command in self._options.get(
+            'ignore_http_methods', ['OPTIONS'])
+        not_in_scope = not self._in_scope(self._scopes, req.path)
+        if ignore_method or not_in_scope:
+            log.debug('Not capturing %s request: %s', req.command, req.path)
+            return
+
+        log.info('Capturing request: %s', req.path)
+
+        # First make any modifications to the request
+        self._modifier.modify(req)
+
+        # Save the request to our storage
+        return self._storage.save_request(req, req_body)
+
+    def capture_response(self, req, req_body, res, res_body):
+        """Capture a response and its body that relate to a previous request.
+
+        Args:
+            req: The original request.
+            req_body: The body of the original request.
+            res: The response that corresponds to the request.
+            res_body: The binary response body.
+        """
+        log.info('Capturing response: %s %s %s',
+                 req.path, res.status, res.reason)
+        self._storage.save_response(req.id, res, res_body)
+
+    def _in_scope(self, scopes, path):
+        if not scopes:
+            return True
+        elif not is_list_alike(scopes):
+            scopes = [scopes]
+        for scope in scopes:
+            match = re.search(scope, path)
+            if match:
+                return True
+        return False
+
+
+class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
     """Specialisation of ProxyRequestHandler that captures requests and responses
     that pass through the proxy server and allows admin clients to access that data.
     """
@@ -171,29 +223,23 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
             else:
                 raise e
 
-    def request_handler(self, req, req_body):
+        self._options = self.server.options
+        self._scopes = self.server.scopes
+        self._modifier = self.server.modifier
+        self._storage = self.server.storage
+
+    def handle_request(self, req, req_body):
         """Captures a request and its body.
 
         Args:
             req: The request (an instance of CaptureRequestHandler).
             req_body: The binary request body.
         """
-        ignore_method = req.command in self.server.options.get(
-            'ignore_http_methods', ['OPTIONS'])
-        not_in_scope = not self._in_scope(self.server.scopes, req.path)
-        if ignore_method or not_in_scope:
-            log.debug('Not capturing %s request: %s', req.command, req.path)
-            return
+        # TODO: convert request
+        request_id = self.capture_request(req, req_body)
+        req.id = request_id
 
-        log.info('Capturing request: %s', req.path)
-
-        # First make any modifications to the request
-        self.server.modifier.modify(req)
-
-        # Save the request to our storage
-        self.server.storage.save_request(req, req_body)
-
-    def response_handler(self, req, req_body, res, res_body):
+    def handle_response(self, req, req_body, res, res_body):
         """Captures a response and its body that relate to a previous request.
 
         Args:
@@ -206,9 +252,8 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
             # Request was not stored
             return
 
-        log.info('Capturing response: %s %s %s',
-                 req.path, res.status, res.reason)
-        self.server.storage.save_response(req.id, res, res_body)
+        # TODO: convert request/response
+        self.capture_response(req, req_body, res, res_body)
 
     @property
     def certdir(self):
@@ -233,22 +278,12 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
         # Send server error messages through our own logging config.
         log.error(format_, *args, exc_info=True)
 
-    def _in_scope(self, scopes, path):
-        if not scopes:
-            return True
-        elif not is_list_alike(scopes):
-            scopes = [scopes]
-        for scope in scopes:
-            match = re.search(scope, path)
-            if match:
-                return True
-        return False
-
 
 def create_custom_capture_request_handler(custom_response_handler):
     """Creates a custom class derived from CaptureRequestHandler with the
     response_handler method overwritten to return
-    custom_response_handler after running super().response_handler"""
+    custom_response_handler after running super().response_handler
+    """
     class CustomCaptureRequestHandler(CaptureRequestHandler):
         def response_handler(self, *args, **kwargs):
             super().response_handler(*args, **kwargs)
