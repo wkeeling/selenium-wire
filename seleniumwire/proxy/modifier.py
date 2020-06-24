@@ -1,6 +1,7 @@
 import re
 import threading
 from urllib.parse import urlsplit
+
 from .util import is_list_alike
 
 

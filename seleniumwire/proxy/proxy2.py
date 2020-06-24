@@ -57,7 +57,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
     def proxy_request(self):
         if self.admin_path and self.path.startswith(self.admin_path):
-            self.admin_handler()
+            self.handle_admin()
             return
 
         req = self

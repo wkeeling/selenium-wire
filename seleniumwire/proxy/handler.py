@@ -4,8 +4,9 @@ import re
 import socket
 from urllib.parse import parse_qs, urlparse
 
-from .util import is_list_alike
 from .proxy2 import ProxyRequestHandler
+from .request import Request
+from .util import is_list_alike
 
 log = logging.getLogger(__name__)
 
@@ -18,17 +19,14 @@ class AdminMixin:
     This class intercepts administration requests and dispatches them to
     relevant handler methods.
     """
-
-    admin_path = ADMIN_PATH
-
-    def handle_admin(self):
-        parse_result = urlparse(self.path)
+    def dispatch_admin(self, request):
+        parse_result = urlparse(request.path)
         path, params = parse_result.path, parse_qs(parse_result.query)
 
         if path == '/requests':
-            if self.command == 'GET':
+            if request.method == 'GET':
                 self._get_requests()
-            elif self.command == 'DELETE':
+            elif request.method == 'DELETE':
                 self._clear_requests()
         elif path == '/last_request':
             self._get_last_request()
@@ -39,49 +37,49 @@ class AdminMixin:
         elif path == '/find':
             self._find_request(**params)
         elif path == '/header_overrides':
-            if self.command == 'POST':
+            if request.method == 'POST':
                 self._set_header_overrides()
-            elif self.command == 'DELETE':
+            elif request.method == 'DELETE':
                 self._clear_header_overrides()
-            elif self.command == 'GET':
+            elif request.method == 'GET':
                 self._get_header_overrides()
         elif path == '/rewrite_rules':
-            if self.command == 'POST':
+            if request.method == 'POST':
                 self._set_rewrite_rules()
-            elif self.command == 'DELETE':
+            elif request.method == 'DELETE':
                 self._clear_rewrite_rules()
-            elif self.command == 'GET':
+            elif request.method == 'GET':
                 self._get_rewrite_rules()
         elif path == '/scopes':
-            if self.command == 'POST':
+            if request.method == 'POST':
                 self._set_scopes()
-            elif self.command == 'DELETE':
+            elif request.method == 'DELETE':
                 self._reset_scopes()
-            elif self.command == 'GET':
+            elif request.method == 'GET':
                 self._get_scopes()
         else:
             raise RuntimeError(
-                'No handler configured for: {} {}'.format(self.command, self.path))
+                'No handler configured for: {} {}'.format(request.method, request.path))
 
     def _get_requests(self):
-        self._send_response(json.dumps(self.server.storage.load_requests()).encode(
+        self._send_response(json.dumps(self.storage.load_requests()).encode(
             'utf-8'), 'application/json')
 
     def _get_last_request(self):
-        self._send_response(json.dumps(self.server.storage.load_last_request()).encode(
+        self._send_response(json.dumps(self.storage.load_last_request()).encode(
             'utf-8'), 'application/json')
 
     def _clear_requests(self):
-        self.server.storage.clear_requests()
+        self.storage.clear_requests()
         self._send_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _get_request_body(self, request_id):
-        body = self.server.storage.load_request_body(request_id[0])
+        body = self.storage.load_request_body(request_id[0])
         self._send_body(body)
 
     def _get_response_body(self, request_id):
-        body = self.server.storage.load_response_body(request_id[0])
+        body = self.storage.load_response_body(request_id[0])
         self._send_body(body)
 
     def _send_body(self, body):
@@ -90,41 +88,41 @@ class AdminMixin:
         self._send_response(body, 'application/octet-stream')
 
     def _find_request(self, path):
-        self._send_response(json.dumps(self.server.storage.find(
+        self._send_response(json.dumps(self.storage.find(
             path[0])).encode('utf-8'), 'application/json')
 
     def _set_header_overrides(self):
         content_length = int(self.headers.get('Content-Length', 0))
         req_body = self.rfile.read(content_length)
         headers = json.loads(req_body.decode('utf-8'))
-        self.server.modifier.headers = headers
+        self.modifier.headers = headers
         self._send_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _clear_header_overrides(self):
-        del self.server.modifier.headers
+        del self.modifier.headers
         self._send_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _get_header_overrides(self):
-        self._send_response(json.dumps(self.server.modifier.headers).encode(
+        self._send_response(json.dumps(self.modifier.headers).encode(
             'utf-8'), 'application/json')
 
     def _set_rewrite_rules(self):
         content_length = int(self.headers.get('Content-Length', 0))
         req_body = self.rfile.read(content_length)
         rewrite_rules = json.loads(req_body.decode('utf-8'))
-        self.server.modifier.rewrite_rules = rewrite_rules
+        self.modifier.rewrite_rules = rewrite_rules
         self._send_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _clear_rewrite_rules(self):
-        del self.server.modifier.rewrite_rules
+        del self.modifier.rewrite_rules
         self._send_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _get_rewrite_rules(self):
-        self._send_response(json.dumps(self.server.modifier.rewrite_rules).encode(
+        self._send_response(json.dumps(self.modifier.rewrite_rules).encode(
             'utf-8'), 'application/json')
 
     def _send_response(self, body, content_type):
@@ -140,46 +138,45 @@ class AdminMixin:
         content_length = int(self.headers.get('Content-Length', 0))
         req_body = self.rfile.read(content_length)
         scopes = json.loads(req_body.decode('utf-8'))
-        self.server.scopes = scopes
+        self.scopes = scopes
         self._send_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _reset_scopes(self):
-        self.server.scopes = []
+        self.scopes = []
         self._send_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _get_scopes(self):
-        self._send_response(json.dumps(self.server.scopes).encode(
+        self._send_response(json.dumps(self.scopes).encode(
             'utf-8'), 'application/json')
 
 
 class CaptureMixin:
     """Mixin that handles the capturing of requests and responses."""
 
-    def capture_request(self, req, req_body):
-        """Capture a request and its body and return the unique id associated with the
+    def capture_request(self, request):
+        """Capture a request and return the unique id associated with the
         captured request.
 
         Args:
-            req: The request.
-            req_body: The binary request body.
+            request: The request to capture.
         Returns: The captured request id.
         """
-        ignore_method = req.command in self._options.get(
+        ignore_method = request.method in self.options.get(
             'ignore_http_methods', ['OPTIONS'])
-        not_in_scope = not self._in_scope(self._scopes, req.path)
+        not_in_scope = not self._in_scope(self.scopes, request.path)
         if ignore_method or not_in_scope:
-            log.debug('Not capturing %s request: %s', req.command, req.path)
+            log.debug('Not capturing %s request: %s', request.method, request.path)
             return
 
-        log.info('Capturing request: %s', req.path)
+        log.info('Capturing request: %s', request.path)
 
         # First make any modifications to the request
-        self._modifier.modify(req)
+        self.modifier.modify(request)
 
         # Save the request to our storage
-        return self._storage.save_request(req, req_body)
+        return self.storage.save_request(request)
 
     def capture_response(self, req, req_body, res, res_body):
         """Capture a response and its body that relate to a previous request.
@@ -192,7 +189,7 @@ class CaptureMixin:
         """
         log.info('Capturing response: %s %s %s',
                  req.path, res.status, res.reason)
-        self._storage.save_response(req.id, res, res_body)
+        self.storage.save_response(req.id, res, res_body)
 
     def _in_scope(self, scopes, path):
         if not scopes:
@@ -210,7 +207,8 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
     """Specialisation of ProxyRequestHandler that captures requests and responses
     that pass through the proxy server and allows admin clients to access that data.
     """
-
+    admin_path = ADMIN_PATH
+    
     def __init__(self, *args, **kwargs):
         try:
             super().__init__(*args, **kwargs)
@@ -223,10 +221,10 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
             else:
                 raise e
 
-        self._options = self.server.options
-        self._scopes = self.server.scopes
-        self._modifier = self.server.modifier
-        self._storage = self.server.storage
+        self.options = self.server.options
+        self.scopes = self.server.scopes
+        self.modifier = self.server.modifier
+        self.storage = self.server.storage
 
     def handle_request(self, req, req_body):
         """Captures a request and its body.
@@ -235,8 +233,16 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
             req: The request (an instance of CaptureRequestHandler).
             req_body: The binary request body.
         """
-        # TODO: convert request
-        request_id = self.capture_request(req, req_body)
+        # Convert the implementation specific request to one of our requests
+        # for handling.
+        request = Request(
+            method=req.command,
+            path=req.path,
+            headers=dict(req.headers),
+            body=req_body
+        )
+
+        request_id = self.capture_request(request)
         req.id = request_id
 
     def handle_response(self, req, req_body, res, res_body):
@@ -254,6 +260,10 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
 
         # TODO: convert request/response
         self.capture_response(req, req_body, res, res_body)
+
+    def handle_admin(self):
+        """Handle an admin request."""
+        self.dispatch_admin()
 
     @property
     def certdir(self):

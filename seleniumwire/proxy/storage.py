@@ -1,14 +1,14 @@
-from datetime import datetime, timedelta
 import gzip
-from io import BytesIO
 import logging
 import os
 import pickle
 import shutil
 import threading
-from urllib.parse import urlparse
 import uuid
 import zlib
+from datetime import datetime, timedelta
+from io import BytesIO
+from urllib.parse import urlparse
 
 log = logging.getLogger(__name__)
 
