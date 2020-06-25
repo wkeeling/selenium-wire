@@ -43,29 +43,19 @@ class RequestStorage:
         self._index = []
         self._lock = threading.Lock()
 
-    def save_request(self, request, request_body=None):
-        """Saves the request (a BaseHTTPRequestHandler instance) to storage, and optionally
-        saves the request body data if supplied.
+    def save_request(self, request):
+        """Saves the request to storage.
 
         Args:
-            request: The BaseHTTPRequestHandler instance to save.
-            request_body: The request body binary data.
+            request: The request to save.
         """
         request_id = self._index_request(request)
         request_dir = self._get_request_dir(request_id)
         os.mkdir(request_dir)
 
-        request_data = {
-            'id': request_id,
-            'method': request.command,
-            'path': request.path,
-            'headers': dict(request.headers),
-            'response': None
-        }
-
-        self._save(request_data, request_dir, 'request')
-        if request_body is not None:
-            self._save(request_body, request_dir, 'requestbody')
+        self._save(request, request_dir, 'request')
+        if request.body is not None:
+            self._save(request.body, request_dir, 'requestbody')
 
         return request_id
 
@@ -85,15 +75,12 @@ class RequestStorage:
         with open(os.path.join(request_dir, filename), 'wb') as out:
             pickle.dump(obj, out)
 
-    def save_response(self, request_id, response, response_body=None):
-        """Saves the response (a http.client.HTTPResponse instance) to storage, and optionally
-        saves the request body data if supplied.
+    def save_response(self, request_id, response):
+        """Saves the response to storage.
 
         Args:
             request_id: The id of the original request.
-            response: The http.client.HTTPResponse instance to save.
-            response_body: The response body binary data.
-
+            response: The response to save.
         """
         indexed_request = self._get_indexed_request(request_id)
 
@@ -103,17 +90,11 @@ class RequestStorage:
             log.debug('Cannot save response as request {} is no longer stored'.format(request_id))
             return
 
-        response_data = {
-            'status_code': response.status,
-            'reason': response.reason,
-            'headers': dict(response.headers)
-        }
-
         request_dir = self._get_request_dir(request_id)
-        self._save(response_data, request_dir, 'response')
+        self._save(response, request_dir, 'response')
 
-        if response_body is not None:
-            self._save(response_body, request_dir, 'responsebody')
+        if response.body is not None:
+            self._save(response.body, request_dir, 'responsebody')
 
         indexed_request.has_response = True
 
@@ -130,31 +111,13 @@ class RequestStorage:
     def load_requests(self):
         """Loads all previously saved requests known to the storage (known to its index).
 
-        The requests are returned as a list of dictionaries, in the format:
+        The requests are returned as a list of request objects.
 
-        [{
-            'id': 'request id',
-            'method': 'GET',
-            'path': 'http://www.example.com/some/path',
-            'headers': {
-                'Accept': '*/*',
-                'Host': 'www.example.com'
-            }
-            'response': {
-                'status_code': 200,
-                'reason': 'OK',
-                'headers': {
-                    'Content-Type': 'text/plain',
-                    'Content-Length': '15012'
-                }
-            }
-        }, ...]
-
-        Where a request does not have a corresponding response, a 'response' key will
-        still exist in the dictionary, but its value will be None.
+        Where a request does not have a corresponding response its 'response' attribute
+        will be None.
 
         Returns:
-            A list of dictionaries of previously saved requests.
+            A list of request objects.
         """
         with self._lock:
             index = self._index[:]
@@ -176,7 +139,7 @@ class RequestStorage:
             try:
                 with open(os.path.join(request_dir, 'response'), 'rb') as res:
                     response = pickle.load(res)
-                    request['response'] = response
+                    request.response = response
             except (FileNotFoundError, EOFError):
                 pass
 
@@ -206,7 +169,7 @@ class RequestStorage:
         try:
             raw_body = self._load_body(request_id, 'responsebody')
             request = self._load_request(request_id)
-            return self._decode_body(raw_body, request['response']['headers'].get('Content-Encoding', 'identity'))
+            return self._decode_body(raw_body, request.headers.get('Content-Encoding', 'identity'))
 
         except FileNotFoundError:
             return None

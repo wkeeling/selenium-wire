@@ -1,4 +1,5 @@
 """Houses the classes used to transfer request and response data between components. """
+import json
 
 
 class Request:
@@ -18,9 +19,13 @@ class Request:
         self.path = path
         self.headers = headers
         self.body = body
+        self.response = None
 
         if isinstance(self.body, str):
             self.body = self.body.encode('utf-8')
+
+    def to_json(self):
+        return json.dumps(vars(self))
 
 
 class Response:
