@@ -28,57 +28,65 @@ class AdminMixin:
         """
         parse_result = urlparse(request.path)
         path, params = parse_result.path, parse_qs(parse_result.query)
+        response = None
 
         if path == '/requests':
             if request.method == 'GET':
-                self._get_requests()
+                response = self._get_requests()
             elif request.method == 'DELETE':
-                self._clear_requests()
+                response = self._clear_requests()
         elif path == '/last_request':
-            self._get_last_request()
+            response = self._get_last_request()
         elif path == '/request_body':
-            self._get_request_body(**params)
+            response = self._get_request_body(**params)
         elif path == '/response_body':
-            self._get_response_body(**params)
+            response = self._get_response_body(**params)
         elif path == '/find':
-            self._find_request(**params)
+            response = self._find_request(**params)
         elif path == '/header_overrides':
             if request.method == 'POST':
-                self._set_header_overrides(request)
+                response = self._set_header_overrides(request)
             elif request.method == 'DELETE':
-                self._clear_header_overrides()
+                response = self._clear_header_overrides()
             elif request.method == 'GET':
-                self._get_header_overrides()
+                response = self._get_header_overrides()
         elif path == '/rewrite_rules':
             if request.method == 'POST':
-                self._set_rewrite_rules(request)
+                response = self._set_rewrite_rules(request)
             elif request.method == 'DELETE':
-                self._clear_rewrite_rules()
+                response = self._clear_rewrite_rules()
             elif request.method == 'GET':
-                self._get_rewrite_rules()
+                response = self._get_rewrite_rules()
         elif path == '/scopes':
             if request.method == 'POST':
-                self._set_scopes(request)
+                response = self._set_scopes(request)
             elif request.method == 'DELETE':
-                self._reset_scopes()
+                response = self._reset_scopes()
             elif request.method == 'GET':
-                self._get_scopes()
-        else:
+                response = self._get_scopes()
+
+        if response is None:
             raise RuntimeError(
-                'No handler configured for: {} {}'.format(request.method, request.path))
+                'No handler configured for: {} {}'.format(request.method, request.path)
+            )
+
+        return response
 
     def _get_requests(self):
-        return self._create_response(json.dumps(self.storage.load_requests()).encode(
-            'utf-8'), 'application/json')
+        return self._create_response(json.dumps(
+            [r.to_dict() for r in self.storage.load_requests()]
+        ).encode('utf-8'), 'application/json')
 
     def _get_last_request(self):
-        return self._create_response(json.dumps(self.storage.load_last_request()).encode(
-            'utf-8'), 'application/json')
+        return self._create_response(json.dumps(
+            self.storage.load_last_request().to_dict()
+        ).encode('utf-8'), 'application/json')
 
     def _clear_requests(self):
         self.storage.clear_requests()
-        return self._create_response(json.dumps({'status': 'ok'}).encode(
-            'utf-8'), 'application/json')
+        return self._create_response(json.dumps(
+            {'status': 'ok'}
+        ).encode('utf-8'), 'application/json')
 
     def _get_request_body(self, request_id):
         body = self.storage.load_request_body(request_id[0])
@@ -89,53 +97,63 @@ class AdminMixin:
         return self._create_response(body, 'application/octet-stream')
 
     def _find_request(self, path):
-        return self._create_response(json.dumps(self.storage.find(
-            path[0])).encode('utf-8'), 'application/json')
+        return self._create_response(json.dumps(
+            self.storage.find(path[0]).to_dict()
+        ).encode('utf-8'), 'application/json')
 
     def _set_header_overrides(self, request):
         headers = json.loads(request.body.decode('utf-8'))
         self.modifier.headers = headers
-        return self._create_response(json.dumps({'status': 'ok'}).encode(
-            'utf-8'), 'application/json')
+        return self._create_response(json.dumps(
+            {'status': 'ok'}
+        ).encode('utf-8'), 'application/json')
 
     def _clear_header_overrides(self):
         del self.modifier.headers
-        return self._create_response(json.dumps({'status': 'ok'}).encode(
-            'utf-8'), 'application/json')
+        return self._create_response(json.dumps(
+            {'status': 'ok'}
+        ).encode('utf-8'), 'application/json')
 
     def _get_header_overrides(self):
-        return self._create_response(json.dumps(self.modifier.headers).encode(
-            'utf-8'), 'application/json')
+        return self._create_response(json.dumps(
+            self.modifier.headers
+        ).encode('utf-8'), 'application/json')
 
     def _set_rewrite_rules(self, request):
         rewrite_rules = json.loads(request.body.decode('utf-8'))
         self.modifier.rewrite_rules = rewrite_rules
-        return self._create_response(json.dumps({'status': 'ok'}).encode(
-            'utf-8'), 'application/json')
+        return self._create_response(json.dumps(
+            {'status': 'ok'}
+        ).encode('utf-8'), 'application/json')
 
     def _clear_rewrite_rules(self):
         del self.modifier.rewrite_rules
-        return self._create_response(json.dumps({'status': 'ok'}).encode(
-            'utf-8'), 'application/json')
+        return self._create_response(json.dumps(
+            {'status': 'ok'}
+        ).encode('utf-8'), 'application/json')
 
     def _get_rewrite_rules(self):
-        return self._create_response(json.dumps(self.modifier.rewrite_rules).encode(
-            'utf-8'), 'application/json')
+        return self._create_response(json.dumps(
+            self.modifier.rewrite_rules
+        ).encode('utf-8'), 'application/json')
 
     def _set_scopes(self, request):
         scopes = json.loads(request.body.decode('utf-8'))
         self.scopes = scopes
-        return self._create_response(json.dumps({'status': 'ok'}).encode(
-            'utf-8'), 'application/json')
+        return self._create_response(json.dumps(
+            {'status': 'ok'}
+        ).encode('utf-8'), 'application/json')
 
     def _reset_scopes(self):
         self.scopes = []
-        return self._create_response(json.dumps({'status': 'ok'}).encode(
-            'utf-8'), 'application/json')
+        return self._create_response(json.dumps(
+            {'status': 'ok'}
+        ).encode('utf-8'), 'application/json')
 
     def _get_scopes(self):
-        return self._create_response(json.dumps(self.scopes).encode(
-            'utf-8'), 'application/json')
+        return self._create_response(json.dumps(
+            self.scopes
+        ).encode('utf-8'), 'application/json')
 
     def _create_response(self, body, content_type):
         response = Response(
