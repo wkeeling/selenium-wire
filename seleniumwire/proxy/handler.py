@@ -5,8 +5,8 @@ import socket
 from urllib.parse import parse_qs, urlparse
 
 from .proxy2 import ProxyRequestHandler
-from .request import Request
-from .util import is_list_alike
+from .request import Request, Response
+from .utils import is_list_alike
 
 log = logging.getLogger(__name__)
 
@@ -20,6 +20,12 @@ class AdminMixin:
     relevant handler methods.
     """
     def dispatch_admin(self, request):
+        """Dispatch the admin request for processing.
+
+        Args:
+            request: The request object.
+        Returns: A response object.
+        """
         parse_result = urlparse(request.path)
         path, params = parse_result.path, parse_qs(parse_result.query)
 
@@ -38,21 +44,21 @@ class AdminMixin:
             self._find_request(**params)
         elif path == '/header_overrides':
             if request.method == 'POST':
-                self._set_header_overrides()
+                self._set_header_overrides(request)
             elif request.method == 'DELETE':
                 self._clear_header_overrides()
             elif request.method == 'GET':
                 self._get_header_overrides()
         elif path == '/rewrite_rules':
             if request.method == 'POST':
-                self._set_rewrite_rules()
+                self._set_rewrite_rules(request)
             elif request.method == 'DELETE':
                 self._clear_rewrite_rules()
             elif request.method == 'GET':
                 self._get_rewrite_rules()
         elif path == '/scopes':
             if request.method == 'POST':
-                self._set_scopes()
+                self._set_scopes(request)
             elif request.method == 'DELETE':
                 self._reset_scopes()
             elif request.method == 'GET':
@@ -62,102 +68,95 @@ class AdminMixin:
                 'No handler configured for: {} {}'.format(request.method, request.path))
 
     def _get_requests(self):
-        self._send_response(json.dumps(self.storage.load_requests()).encode(
+        return self._create_response(json.dumps(self.storage.load_requests()).encode(
             'utf-8'), 'application/json')
 
     def _get_last_request(self):
-        self._send_response(json.dumps(self.storage.load_last_request()).encode(
+        return self._create_response(json.dumps(self.storage.load_last_request()).encode(
             'utf-8'), 'application/json')
 
     def _clear_requests(self):
         self.storage.clear_requests()
-        self._send_response(json.dumps({'status': 'ok'}).encode(
+        return self._create_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _get_request_body(self, request_id):
         body = self.storage.load_request_body(request_id[0])
-        self._send_body(body)
+        return self._create_response(body, 'application/octet-stream')
 
     def _get_response_body(self, request_id):
         body = self.storage.load_response_body(request_id[0])
-        self._send_body(body)
-
-    def _send_body(self, body):
-        if body is None:
-            body = b''
-        self._send_response(body, 'application/octet-stream')
+        return self._create_response(body, 'application/octet-stream')
 
     def _find_request(self, path):
-        self._send_response(json.dumps(self.storage.find(
+        return self._create_response(json.dumps(self.storage.find(
             path[0])).encode('utf-8'), 'application/json')
 
-    def _set_header_overrides(self):
-        content_length = int(self.headers.get('Content-Length', 0))
-        req_body = self.rfile.read(content_length)
-        headers = json.loads(req_body.decode('utf-8'))
+    def _set_header_overrides(self, request):
+        headers = json.loads(request.body.decode('utf-8'))
         self.modifier.headers = headers
-        self._send_response(json.dumps({'status': 'ok'}).encode(
+        return self._create_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _clear_header_overrides(self):
         del self.modifier.headers
-        self._send_response(json.dumps({'status': 'ok'}).encode(
+        return self._create_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _get_header_overrides(self):
-        self._send_response(json.dumps(self.modifier.headers).encode(
+        return self._create_response(json.dumps(self.modifier.headers).encode(
             'utf-8'), 'application/json')
 
-    def _set_rewrite_rules(self):
-        content_length = int(self.headers.get('Content-Length', 0))
-        req_body = self.rfile.read(content_length)
-        rewrite_rules = json.loads(req_body.decode('utf-8'))
+    def _set_rewrite_rules(self, request):
+        rewrite_rules = json.loads(request.body.decode('utf-8'))
         self.modifier.rewrite_rules = rewrite_rules
-        self._send_response(json.dumps({'status': 'ok'}).encode(
+        return self._create_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _clear_rewrite_rules(self):
         del self.modifier.rewrite_rules
-        self._send_response(json.dumps({'status': 'ok'}).encode(
+        return self._create_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _get_rewrite_rules(self):
-        self._send_response(json.dumps(self.modifier.rewrite_rules).encode(
+        return self._create_response(json.dumps(self.modifier.rewrite_rules).encode(
             'utf-8'), 'application/json')
 
-    def _send_response(self, body, content_type):
-        self.send_response(200)
-        self.send_header('Content-Type', content_type)
-        self.send_header('Content-Length', len(body))
-        self.end_headers()
-        if isinstance(body, str):
-            body = body.encode('utf-8')
-        self.wfile.write(body)
-
-    def _set_scopes(self):
-        content_length = int(self.headers.get('Content-Length', 0))
-        req_body = self.rfile.read(content_length)
-        scopes = json.loads(req_body.decode('utf-8'))
+    def _set_scopes(self, request):
+        scopes = json.loads(request.body.decode('utf-8'))
         self.scopes = scopes
-        self._send_response(json.dumps({'status': 'ok'}).encode(
+        return self._create_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _reset_scopes(self):
         self.scopes = []
-        self._send_response(json.dumps({'status': 'ok'}).encode(
+        return self._create_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _get_scopes(self):
-        self._send_response(json.dumps(self.scopes).encode(
+        return self._create_response(json.dumps(self.scopes).encode(
             'utf-8'), 'application/json')
+
+    def _create_response(self, body, content_type):
+        response = Response(
+            status=200,
+            reason='OK',
+            headers={
+                'Content-Type': content_type,
+                'Content-Length': len(body)
+            },
+            body=body or b''
+        )
+
+        return response
 
 
 class CaptureMixin:
     """Mixin that handles the capturing of requests and responses."""
 
     def capture_request(self, request):
-        """Capture a request and return the unique id associated with the
-        captured request.
+        """Capture a request and save the unique id associated with the
+        captured request in the id field.
 
         Args:
             request: The request to capture.
@@ -176,20 +175,19 @@ class CaptureMixin:
         self.modifier.modify(request)
 
         # Save the request to our storage
-        return self.storage.save_request(request)
+        request_id = self.storage.save_request(request)
+        request.id = request_id
 
-    def capture_response(self, req, req_body, res, res_body):
+    def capture_response(self, request_id, path, response):
         """Capture a response and its body that relate to a previous request.
 
         Args:
-            req: The original request.
-            req_body: The body of the original request.
-            res: The response that corresponds to the request.
-            res_body: The binary response body.
+            request_id: The id of the original request.
+            path: The request path.
+            response: The response to capture.
         """
-        log.info('Capturing response: %s %s %s',
-                 req.path, res.status, res.reason)
-        self.storage.save_response(req.id, res, res_body)
+        log.info('Capturing response: %s %s %s', path, response.status, response.reason)
+        self.storage.save_response(request_id, response)
 
     def _in_scope(self, scopes, path):
         if not scopes:
@@ -208,7 +206,7 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
     that pass through the proxy server and allows admin clients to access that data.
     """
     admin_path = ADMIN_PATH
-    
+
     def __init__(self, *args, **kwargs):
         try:
             super().__init__(*args, **kwargs)
@@ -235,15 +233,10 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
         """
         # Convert the implementation specific request to one of our requests
         # for handling.
-        request = Request(
-            method=req.command,
-            path=req.path,
-            headers=dict(req.headers),
-            body=req_body
-        )
+        request = self._create_request(req, req_body)
 
-        request_id = self.capture_request(request)
-        req.id = request_id
+        self.capture_request(request)
+        req.id = request.id
 
     def handle_response(self, req, req_body, res, res_body):
         """Captures a response and its body that relate to a previous request.
@@ -258,12 +251,42 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
             # Request was not stored
             return
 
-        # TODO: convert request/response
-        self.capture_response(req, req_body, res, res_body)
+        # Convert the implementation specific response to one of our responses
+        # for handling.
+        response = Response(
+            status=res.status,
+            reason=res.reason,
+            headers=dict(res.headers),
+            body=res_body
+        )
+
+        self.capture_response(req.id, req.path, response)
 
     def handle_admin(self):
         """Handle an admin request."""
-        self.dispatch_admin()
+        content_length = int(self.headers.get('Content-Length', 0))
+        req_body = self.rfile.read(content_length)
+        request = self._create_request(self, req_body)
+
+        response = self.dispatch_admin(request)
+
+        self.send_response(response.status)
+
+        for name, value in response.headers.items():
+            self.send_header(name, value)
+        self.end_headers()
+
+        self.wfile.write(response.body)
+
+    def _create_request(self, req, req_body):
+        request = Request(
+            method=req.command,
+            path=req.path,
+            headers=dict(req.headers),
+            body=req_body
+        )
+
+        return request
 
     @property
     def certdir(self):
