@@ -1,9 +1,8 @@
 import time
-from collections import OrderedDict
-from collections.abc import Mapping, MutableMapping
-from urllib.parse import parse_qs, urlsplit
 
 from selenium.common.exceptions import TimeoutException
+
+from ..proxy.request import Request, Response
 
 
 class InspectRequestsMixin:
@@ -21,7 +20,8 @@ class InspectRequestsMixin:
             A list of Request instances representing the requests made
             between the browser and server.
         """
-        return [Request(r, self._client) for r in self._client.get_requests()]
+        return [LazyRequest.from_dict({'client': self._client, **r})
+                for r in self._client.get_requests()]
 
     @requests.deleter
     def requests(self):
@@ -40,7 +40,7 @@ class InspectRequestsMixin:
         data = self._client.get_last_request()
 
         if data is not None:
-            return Request(data, self._client)
+            return LazyRequest.from_dict({'client': self._client, **data})
 
         return None
 
@@ -65,10 +65,10 @@ class InspectRequestsMixin:
         start = time.time()
 
         while time.time() - start < timeout:
-            request = self._client.find(path)
+            data = self._client.find(path)
 
-            if request is not None:
-                return Request(request, self._client)
+            if data is not None:
+                return LazyRequest.from_dict({'client': self._client, **data})
             else:
                 time.sleep(0.2)
 
@@ -142,184 +142,41 @@ class InspectRequestsMixin:
         self._client.reset_scopes()
 
 
-class Request:
-    """Represents a captured browser request."""
+class LazyRequest(Request):
+    """Specialisation of Request that allows for lazy retrieval of the request body."""
 
-    def __init__(self, data, client):
-        """Initialises a new Request object with a dictionary of data and a
-        proxy client instance.
-
-        See the proxy client doc for the dictionary structure.
-
-        Note that the response attribute may be None where no response is associated
-        with a given request.
-
-        Args:
-            data: The dictionary of data.
-            client: The proxy client instance.
-        """
-        self._data = data
+    def __init__(self, client, **kwargs):
+        super().__init__(**kwargs)
         self._client = client
-        self.method = data['method']
-        self.path = data['path']
-        self.headers = CaseInsensitiveDict(data['headers'])
-        if data['response'] is not None:
-            self.response = Response(self._data['id'], data['response'], client)
-        else:
-            self.response = None
 
     @property
     def body(self):
         """Lazily retrieves the request body when it is asked for.
 
         Returns:
-            The response bytes.
+            The request body as bytes.
         """
-        if self._data.get('body') is None:
-            self._data['body'] = self._client.get_request_body(self._data['id'])
+        if super().body is None:
+            super().body = self._client.get_request_body(self.id)
 
-        return self._data['body']
-
-    @property
-    def querystring(self):
-        """Get the query string from the request.
-
-        Returns:
-            The query string.
-        """
-        return urlsplit(self.path).query
-
-    @property
-    def params(self):
-        """Get the request parameters.
-
-        Parameters are returned as a dictionary. Each dictionary entry will have a single
-        string value, unless a parameter happens to occur more than once in the request,
-        in which case the value will be a list of strings.
-
-        Returns:
-            A dictionary of request parameters.
-        """
-        qs = self.querystring
-
-        if self.headers.get('Content-Type') == 'application/x-www-form-urlencoded' and self.body:
-            qs = self.body.decode('utf-8', errors='replace')
-
-        return {name: val[0] if len(val) == 1 else val for name, val in parse_qs(qs, keep_blank_values=True).items()}
-
-    def __repr__(self):
-        return 'Request({})'.format(self._data)
-
-    def __str__(self):
-        return self.path
+        return super().body
 
 
-class Response:
-    """Represents a captured server response associated with a previous request."""
+class LazyResponse(Response):
+    """Specialisation of Response that allows for lazy retrieval of the request body."""
 
-    def __init__(self, request_id, data, client):
-        """Initialise a new Response object with a request id, a dictionary
-        of data and a proxy client instance.
-
-        See the proxy client doc for the dictionary structure.
-
-        Args:
-            request_id: The request id.
-            data: The dictionary of data.
-            client: The proxy client instance.
-        """
-        self._request_id = request_id
+    def __init__(self, client, **kwargs):
+        super().__init__(**kwargs)
         self._client = client
-        self._data = data
-        self.status_code = data['status_code']
-        self.reason = data['reason']
-        self.headers = CaseInsensitiveDict(data['headers'])
 
     @property
     def body(self):
         """Lazily retrieves the response body when it is asked for.
 
         Returns:
-            The response bytes.
+            The response body as bytes.
         """
-        if self._data.get('body') is None:
-            self._data['body'] = self._client.get_response_body(self._request_id)
+        if super().body is None:
+            super().body = self._client.get_response_body(self._request_id)
 
-        return self._data['body']
-
-    def __repr__(self):
-        return "Response('{}', {})".format(self._request_id, self._data)
-
-    def __str__(self):
-        return '{} {}'.format(self.status_code, self.reason)
-
-
-# This class has been taken from the requests library.
-# https://github.com/requests/requests.
-class CaseInsensitiveDict(MutableMapping):
-    """A case-insensitive ``dict``-like object.
-    Implements all methods and operations of
-    ``MutableMapping`` as well as dict's ``copy``. Also
-    provides ``lower_items``.
-    All keys are expected to be strings. The structure remembers the
-    case of the last key to be set, and ``iter(instance)``,
-    ``keys()``, ``items()``, ``iterkeys()``, and ``iteritems()``
-    will contain case-sensitive keys. However, querying and contains
-    testing is case insensitive::
-        cid = CaseInsensitiveDict()
-        cid['Accept'] = 'application/json'
-        cid['aCCEPT'] == 'application/json'  # True
-        list(cid) == ['Accept']  # True
-    For example, ``headers['content-encoding']`` will return the
-    value of a ``'Content-Encoding'`` response header, regardless
-    of how the header name was originally stored.
-    If the constructor, ``.update``, or equality comparison
-    operations are given keys that have equal ``.lower()``s, the
-    behavior is undefined.
-    """
-
-    def __init__(self, data=None, **kwargs):
-        self._store = OrderedDict()
-        if data is None:
-            data = {}
-        self.update(data, **kwargs)
-
-    def __setitem__(self, key, value):
-        # Use the lowercased key for lookups, but store the actual
-        # key alongside the value.
-        self._store[key.lower()] = (key, value)
-
-    def __getitem__(self, key):
-        return self._store[key.lower()][1]
-
-    def __delitem__(self, key):
-        del self._store[key.lower()]
-
-    def __iter__(self):
-        return (casedkey for casedkey, mappedvalue in self._store.values())
-
-    def __len__(self):
-        return len(self._store)
-
-    def lower_items(self):
-        """Like iteritems(), but with all lowercase keys."""
-        return (
-            (lowerkey, keyval[1])
-            for (lowerkey, keyval)
-            in self._store.items()
-        )
-
-    def __eq__(self, other):
-        if isinstance(other, Mapping):
-            other = CaseInsensitiveDict(other)
-        else:
-            return NotImplemented
-        # Compare insensitively
-        return dict(self.lower_items()) == dict(other.lower_items())
-
-    # Copy is required
-    def copy(self):
-        return CaseInsensitiveDict(self._store.values())
-
-    def __repr__(self):
-        return str(dict(self.items()))
+        return super().body
