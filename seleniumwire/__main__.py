@@ -3,7 +3,7 @@ from argparse import RawDescriptionHelpFormatter
 import logging
 import signal
 
-from seleniumwire.proxy import client, util
+from seleniumwire.proxy import client, utils
 
 logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 

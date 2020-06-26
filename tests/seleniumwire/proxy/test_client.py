@@ -1,7 +1,7 @@
 import ssl
-from unittest import TestCase
 import urllib.error
 import urllib.request
+from unittest import TestCase
 
 from seleniumwire.proxy.client import AdminClient
 

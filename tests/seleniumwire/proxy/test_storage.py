@@ -1,15 +1,14 @@
-from datetime import datetime, timedelta
-from fnmatch import fnmatch
 import glob
 import gzip
-from http.client import HTTPMessage
-from io import BytesIO
 import os
 import pickle
 import shutil
+from datetime import datetime, timedelta
+from fnmatch import fnmatch
+from io import BytesIO
 from unittest import TestCase
-from unittest.mock import Mock
 
+from seleniumwire.proxy.request import Request, Response
 from seleniumwire.proxy.storage import RequestStorage
 
 
@@ -19,7 +18,7 @@ class RequestStorageTest(TestCase):
         RequestStorage(base_dir=self.base_dir)
         storage_dir = glob.glob(os.path.join(self.base_dir, '.seleniumwire', 'storage-*'))
 
-        self.assertEqual(len(storage_dir), 1)
+        self.assertEqual(1, len(storage_dir))
 
     def test_cleanup_removes_storage(self):
         storage = RequestStorage(base_dir=self.base_dir)
@@ -36,7 +35,7 @@ class RequestStorageTest(TestCase):
         storage.cleanup()
 
         # The existing storage folder is not cleaned up
-        self.assertEqual(len(os.listdir(self.base_dir)), 1)
+        self.assertEqual(1, len(os.listdir(self.base_dir)))
         self.assertTrue(os.path.exists(os.path.join(self.base_dir, '.seleniumwire', 'teststorage')))
 
     def test_initialise_clears_old_folders(self):
@@ -53,159 +52,162 @@ class RequestStorageTest(TestCase):
         self.assertTrue(os.path.exists(new_dir))
 
     def test_save_request(self):
-        mock_request = self._create_mock_request()
-
+        request = self._create_request()
         storage = RequestStorage(base_dir=self.base_dir)
-        request_id = storage.save_request(mock_request)
 
-        request_file_path = self._get_stored_path(request_id, 'request')
+        storage.save_request(request)
+
+        request_file_path = self._get_stored_path(request.id, 'request')
 
         with open(request_file_path[0], 'rb') as loaded:
             loaded_request = pickle.load(loaded)
 
-        self.assertEqual(loaded_request['id'], request_id)
-        self.assertEqual(loaded_request['path'], 'http://www.example.com/test/path/')
-        self.assertEqual(loaded_request['method'], 'GET')
-        self.assertEqual(loaded_request['headers'], {
+        self.assertEqual(request.id, loaded_request.id)
+        self.assertEqual('http://www.example.com/test/path/', loaded_request.path)
+        self.assertEqual('GET', loaded_request.method)
+        self.assertEqual({
             'Host': 'www.example.com',
             'Accept': '*/*'
-        })
-        self.assertIsNone(loaded_request['response'])
+        }, loaded_request.headers)
+        self.assertIsNone(loaded_request.response)
 
     def test_save_request_with_body(self):
-        mock_request = self._create_mock_request()
-        request_body = b'test request body'
-
+        body = b'test request body'
+        request = self._create_request(body=body)
         storage = RequestStorage(base_dir=self.base_dir)
-        request_id = storage.save_request(mock_request, request_body=request_body)
 
-        request_body_path = self._get_stored_path(request_id, 'requestbody')
+        storage.save_request(request)
+
+        request_body_path = self._get_stored_path(request.id, 'requestbody')
 
         with open(request_body_path[0], 'rb') as loaded:
             loaded_body = pickle.load(loaded)
 
-        self.assertEqual(loaded_body, b'test request body')
+        self.assertEqual(body, loaded_body)
 
     def test_save_response(self):
-        mock_request = self._create_mock_request()
+        request = self._create_request()
         storage = RequestStorage(base_dir=self.base_dir)
-        request_id = storage.save_request(mock_request)
-        mock_response = self._create_mock_resonse()
+        storage.save_request(request)
+        response = self._create_response()
 
-        storage.save_response(request_id, mock_response)
+        storage.save_response(request.id, response)
 
-        response_file_path = self._get_stored_path(request_id, 'response')
+        response_file_path = self._get_stored_path(request.id, 'response')
 
         with open(response_file_path[0], 'rb') as loaded:
             loaded_response = pickle.load(loaded)
 
-        self.assertEqual(loaded_response['status_code'], 200)
-        self.assertEqual(loaded_response['reason'], 'OK')
-        self.assertEqual(loaded_response['headers'], {
+        self.assertEqual(200, loaded_response.status)
+        self.assertEqual('OK', loaded_response.reason)
+        self.assertEqual({
             'Content-Type': 'application/json',
-            'Content-Length': '500'
-        })
+            'Content-Length': 500
+        }, loaded_response.headers)
 
     def test_save_response_with_body(self):
-        mock_request = self._create_mock_request()
+        body = b'some response body'
+        request = self._create_request()
         storage = RequestStorage(base_dir=self.base_dir)
-        request_id = storage.save_request(mock_request)
-        mock_response = self._create_mock_resonse()
-        response_body = b'some response body'
+        storage.save_request(request)
+        response = self._create_response(body=body)
 
-        storage.save_response(request_id, mock_response, response_body=response_body)
+        storage.save_response(request.id, response)
 
-        response_body_path = self._get_stored_path(request_id, 'responsebody')
+        response_body_path = self._get_stored_path(request.id, 'responsebody')
 
         with open(response_body_path[0], 'rb') as loaded:
             loaded_body = pickle.load(loaded)
 
-        self.assertEqual(loaded_body, b'some response body')
+        self.assertEqual(b'some response body', loaded_body)
 
     def test_save_response_no_request(self):
-        mock_request = self._create_mock_request()
+        request = self._create_request()
         storage = RequestStorage(base_dir=self.base_dir)
-        request_id = storage.save_request(mock_request)
-        mock_response = self._create_mock_resonse()
+        storage.save_request(request)
+        response = self._create_response()
         storage.clear_requests()
 
-        storage.save_response(request_id, mock_response)
+        storage.save_response(request.id, response)
 
-        response_file_path = self._get_stored_path(request_id, 'response')
+        response_file_path = self._get_stored_path(request.id, 'response')
 
         self.assertFalse(response_file_path)
 
     def test_load_requests(self):
-        mock_request_1 = self._create_mock_request()
-        mock_request_2 = self._create_mock_request()
+        request_1 = self._create_request()
+        request_2 = self._create_request()
         storage = RequestStorage(base_dir=self.base_dir)
-        request_id1 = storage.save_request(mock_request_1)
-        request_id2 = storage.save_request(mock_request_2)
+        storage.save_request(request_1)
+        storage.save_request(request_2)
 
         requests = storage.load_requests()
 
-        self.assertEqual(len(requests), 2)
-        self.assertEqual(requests[0]['id'], request_id1)
-        self.assertEqual(requests[1]['id'], request_id2)
-        self.assertIsNone(requests[0]['response'])
-        self.assertIsNone(requests[1]['response'])
+        self.assertEqual(2, len(requests))
+        self.assertEqual(request_1.id, requests[0].id)
+        self.assertEqual(request_2.id, requests[1].id)
+        self.assertIsNone(requests[0].response)
+        self.assertIsNone(requests[1].response)
 
     def test_load_response(self):
-        mock_request = self._create_mock_request()
+        request = self._create_request()
         storage = RequestStorage(base_dir=self.base_dir)
-        request_id = storage.save_request(mock_request)
-        mock_response = self._create_mock_resonse()
-        storage.save_response(request_id, mock_response)
+        storage.save_request(request)
+        response = self._create_response()
+        storage.save_response(request.id, response)
 
         requests = storage.load_requests()
 
-        self.assertIsNotNone(requests[0]['response'])
+        self.assertIsNotNone(requests[0].response)
 
     def test_load_request_body(self):
-        mock_request = self._create_mock_request()
+        body = b'test request body'
+        request = self._create_request(body=body)
         storage = RequestStorage(base_dir=self.base_dir)
-        request_id = storage.save_request(mock_request, request_body=b'test request body')
+        storage.save_request(request)
 
-        request_body = storage.load_request_body(request_id)
+        request_body = storage.load_request_body(request.id)
 
-        self.assertEqual(request_body, b'test request body')
+        self.assertEqual(body, request_body)
 
     def test_load_response_body(self):
-        mock_request = self._create_mock_request()
+        body = b'test response body'
+        request = self._create_request()
         storage = RequestStorage(base_dir=self.base_dir)
-        request_id = storage.save_request(mock_request, request_body=b'test request body')
-        mock_response = self._create_mock_resonse()
-        storage.save_response(request_id, mock_response, response_body=b'test response body')
+        storage.save_request(request)
+        mock_response = self._create_response(body=body)
+        storage.save_response(request.id, mock_response)
 
-        response_body = storage.load_response_body(request_id)
+        response_body = storage.load_response_body(request.id)
 
-        self.assertEqual(response_body, b'test response body')
+        self.assertEqual(body, response_body)
 
     def test_load_response_body_encoded(self):
+        body = b'test response body'
         io = BytesIO()
         with gzip.GzipFile(fileobj=io, mode='wb') as f:
-            f.write(b'test response body')
-        mock_request = self._create_mock_request()
+            f.write(body)
+        request = self._create_request()
         storage = RequestStorage(base_dir=self.base_dir)
-        request_id = storage.save_request(mock_request, request_body=b'test request body')
-        mock_response = self._create_mock_resonse()
-        mock_response.headers['Content-Encoding'] = 'gzip'
-        storage.save_response(request_id, mock_response, response_body=io.getvalue())
+        storage.save_request(request)
+        response = self._create_response(body=io.getvalue())
+        response.headers['Content-Encoding'] = 'gzip'
+        storage.save_response(request.id, response)
 
-        response_body = storage.load_response_body(request_id)
+        response_body = storage.load_response_body(request.id)
 
-        self.assertEqual(response_body, b'test response body')
+        self.assertEqual(body, response_body)
 
     def test_load_last_request(self):
-        mock_request_1 = self._create_mock_request()
-        mock_request_2 = self._create_mock_request()
+        request_1 = self._create_request()
+        request_2 = self._create_request()
         storage = RequestStorage(base_dir=self.base_dir)
-        storage.save_request(mock_request_1)
-        request_id2 = storage.save_request(mock_request_2)
+        storage.save_request(request_1)
+        storage.save_request(request_2)
 
         last_request = storage.load_last_request()
 
-        self.assertEqual(last_request['id'], request_id2)
+        self.assertEqual(request_2.id, last_request.id)
 
     def test_load_last_request_none(self):
         storage = RequestStorage(base_dir=self.base_dir)
@@ -215,11 +217,11 @@ class RequestStorageTest(TestCase):
         self.assertIsNone(last_request)
 
     def test_clear_requests(self):
-        mock_request_1 = self._create_mock_request()
-        mock_request_2 = self._create_mock_request()
+        request_1 = self._create_request()
+        request_2 = self._create_request()
         storage = RequestStorage(base_dir=self.base_dir)
-        storage.save_request(mock_request_1)
-        storage.save_request(mock_request_2)
+        storage.save_request(request_1)
+        storage.save_request(request_2)
 
         storage.clear_requests()
         requests = storage.load_requests()
@@ -234,18 +236,18 @@ class RequestStorageTest(TestCase):
                                 os.path.join(self.base_dir, '.seleniumwire', 'storage-*', 'certs')))
 
     def test_find(self):
-        mock_request_1 = self._create_mock_request('http://www.example.com/test/path/?foo=bar')
-        mock_request_2 = self._create_mock_request('http://www.stackoverflow.com/other/path/?x=y')
-        mock_response = self._create_mock_resonse()
+        request_1 = self._create_request('http://www.example.com/test/path/?foo=bar')
+        request_2 = self._create_request('http://www.stackoverflow.com/other/path/?x=y')
+        mock_response = self._create_response()
         storage = RequestStorage(base_dir=self.base_dir)
-        request_id = storage.save_request(mock_request_1)
-        storage.save_response(request_id, mock_response)
-        storage.save_request(mock_request_2)
+        storage.save_request(request_1)
+        storage.save_response(request_1.id, mock_response)
+        storage.save_request(request_2)
 
-        self.assertEqual(storage.find('/test/path/')['id'], request_id)
-        self.assertEqual(storage.find('/test/path/?foo=bar')['id'], request_id)
-        self.assertEqual(storage.find('http://www.example.com/test/path/?foo=bar')['id'], request_id)
-        self.assertEqual(storage.find('http://www.example.com/test/path/')['id'], request_id)
+        self.assertEqual(request_1.id, storage.find('/test/path/').id)
+        self.assertEqual(request_1.id, storage.find('/test/path/?foo=bar').id)
+        self.assertEqual(request_1.id, storage.find('http://www.example.com/test/path/?foo=bar').id)
+        self.assertEqual(request_1.id, storage.find('http://www.example.com/test/path/').id)
 
         self.assertIsNone(storage.find('/different/path'))
         self.assertIsNone(storage.find('/test/path/?x=y'))
@@ -257,25 +259,19 @@ class RequestStorageTest(TestCase):
         return glob.glob(os.path.join(self.base_dir, '.seleniumwire', 'storage-*',
                                       'request-{}'.format(request_id), filename))
 
-    def _create_mock_request(self, path='http://www.example.com/test/path/'):
-        mock_request = Mock()
-        mock_request.path = path
-        mock_request.command = 'GET'
-        headers = HTTPMessage()
-        headers.add_header('Host', 'www.example.com')
-        headers.add_header('Accept', '*/*')
-        mock_request.headers = headers
-        return mock_request
+    def _create_request(self, path='http://www.example.com/test/path/', body=None):
+        headers = {
+            'Host': 'www.example.com',
+            'Accept': '*/*'
+        }
+        return Request(method='GET', path=path, headers=headers, body=body)
 
-    def _create_mock_resonse(self):
-        mock_response = Mock()
-        mock_response.status = 200
-        mock_response.reason = 'OK'
-        headers = HTTPMessage()
-        headers.add_header('Content-Type', 'application/json')
-        headers.add_header('Content-Length', '500')
-        mock_response.headers = headers
-        return mock_response
+    def _create_response(self, body=None):
+        headers = {
+            'Content-Type': 'application/json',
+            'Content-Length': 500
+        }
+        return Response(status=200, reason='OK', headers=headers, body=body)
 
     def setUp(self):
         self.base_dir = os.path.join(os.path.dirname(__file__), 'data')

@@ -193,8 +193,7 @@ class CaptureMixin:
         self.modifier.modify(request)
 
         # Save the request to our storage
-        request_id = self.storage.save_request(request)
-        request.id = request_id
+        self.storage.save_request(request)
 
     def capture_response(self, request_id, path, response):
         """Capture a response and its body that relate to a previous request.

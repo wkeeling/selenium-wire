@@ -20,6 +20,9 @@ class RequestStorage:
     """Responsible for saving request and response data that passes through the proxy server,
     and provding an API to retrieve that data.
 
+    Requests and responses are saved separately. However, when a request is loaded, the
+    response, if there is one, is automatically loaded and attached to the request.
+
     This implementation writes the request and response data to disk, but keeps an in-memory
     index of what is on disk for fast retrieval. Instances are designed to be threadsafe.
     """
@@ -50,14 +53,13 @@ class RequestStorage:
             request: The request to save.
         """
         request_id = self._index_request(request)
+        request.id = request_id
         request_dir = self._get_request_dir(request_id)
         os.mkdir(request_dir)
 
         self._save(request, request_dir, 'request')
         if request.body is not None:
             self._save(request.body, request_dir, 'requestbody')
-
-        return request_id
 
     def _index_request(self, request):
         request_id = str(uuid.uuid4())
@@ -169,7 +171,7 @@ class RequestStorage:
         try:
             raw_body = self._load_body(request_id, 'responsebody')
             request = self._load_request(request_id)
-            return self._decode_body(raw_body, request.headers.get('Content-Encoding', 'identity'))
+            return self._decode_body(raw_body, request.response.headers.get('Content-Encoding', 'identity'))
 
         except FileNotFoundError:
             return None

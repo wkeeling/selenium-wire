@@ -1,8 +1,9 @@
 import uuid
 from unittest import TestCase
-from unittest.mock import call, Mock
+from unittest.mock import Mock, call
 
-from seleniumwire.webdriver.request import InspectRequestsMixin, Request, Response, TimeoutException
+from seleniumwire.webdriver.request import (InspectRequestsMixin, Request, Response,
+                                            TimeoutException)
 
 
 class Driver(InspectRequestsMixin):

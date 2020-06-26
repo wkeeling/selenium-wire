@@ -2,9 +2,10 @@ import logging
 import os
 from unittest import TestCase
 
+from seleniumwire import webdriver
+
 logging.basicConfig(level=logging.DEBUG)
 
-from seleniumwire import webdriver
 
 
 class BrowserIntegrationTest(TestCase):

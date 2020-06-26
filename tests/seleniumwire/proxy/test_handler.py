@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import call, Mock
+from unittest.mock import Mock, call
 
 from seleniumwire.proxy.handler import CaptureRequestHandler
 
