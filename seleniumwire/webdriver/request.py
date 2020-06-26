@@ -163,7 +163,7 @@ class LazyRequest(Request):
 
 
 class LazyResponse(Response):
-    """Specialisation of Response that allows for lazy retrieval of the request body."""
+    """Specialisation of Response that allows for lazy retrieval of the response body."""
 
     def __init__(self, client, **kwargs):
         super().__init__(**kwargs)
