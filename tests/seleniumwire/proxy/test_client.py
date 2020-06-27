@@ -191,9 +191,9 @@ class AdminClientIntegrationTest(TestCase):
 
     def test_set_rewrite_rules(self):
         self.client.set_rewrite_rules([
-            (r'http://stackoverflow.com(.*)', r'https://github.com\1'),
+            (r'https://stackoverflow.com(.*)', r'https://github.com\1'),
         ])
-        self._make_request('http://stackoverflow.com')
+        self._make_request('https://stackoverflow.com')
 
         last_request = self.client.get_last_request()
 
@@ -313,7 +313,7 @@ class AdminClientIntegrationTest(TestCase):
         request = urllib.request.Request(url)
         request.add_header('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 '
                                          '(KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36')
-        with urllib.request.urlopen(request, timeout=50) as response:
+        with urllib.request.urlopen(request, timeout=5) as response:
             html = response.read()
 
         return html
