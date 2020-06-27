@@ -65,8 +65,8 @@ class RequestStorage:
 
         self._save(request, request_dir, 'request')
 
-        if body is not None:
-            self._save(request.body, request_dir, 'requestbody')
+        if body:
+            self._save(body, request_dir, 'requestbody')
 
     def _index_request(self, request):
         request_id = str(uuid.uuid4())
@@ -106,8 +106,8 @@ class RequestStorage:
 
         self._save(response, request_dir, 'response')
 
-        if body is not None:
-            self._save(response.body, request_dir, 'responsebody')
+        if body:
+            self._save(body, request_dir, 'responsebody')
 
         indexed_request.has_response = True
 

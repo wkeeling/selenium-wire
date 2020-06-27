@@ -143,7 +143,6 @@ class AdminMixin:
             reason='OK',
             headers={
                 'Content-Type': content_type,
-                'Content-Length': len((body or b''))
             },
             body=body
         )

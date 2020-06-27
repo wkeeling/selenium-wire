@@ -149,17 +149,14 @@ class LazyRequest(Request):
         super().__init__(**kwargs)
         self._client = client
 
-    @property
+    @Request.body.getter
     def body(self):
         """Lazily retrieves the request body when it is asked for.
 
         Returns:
             The request body as bytes.
         """
-        if super().body is None:
-            super().body = self._client.get_request_body(self.id)
-
-        return super().body
+        return self._client.get_request_body(self.id)
 
 
 class LazyResponse(Response):
@@ -169,14 +166,11 @@ class LazyResponse(Response):
         super().__init__(**kwargs)
         self._client = client
 
-    @property
+    @Request.body.getter
     def body(self):
         """Lazily retrieves the response body when it is asked for.
 
         Returns:
             The response body as bytes.
         """
-        if super().body is None:
-            super().body = self._client.get_response_body(self._request_id)
-
-        return super().body
+        return self._client.get_response_body(self._request_id)

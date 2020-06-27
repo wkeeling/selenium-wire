@@ -8,7 +8,7 @@ from .utils import CaseInsensitiveDict
 class Request:
     """Represents an HTTP request."""
 
-    def __init__(self, *, method, path, headers, body=None):
+    def __init__(self, *, method, path, headers, body=b''):
         """Initialise a new Request object.
 
         Args:
@@ -24,8 +24,26 @@ class Request:
         self.body = body
         self.response = None
 
-        if isinstance(self.body, str):
-            self.body = self.body.encode('utf-8')
+        self.headers['Content-Length'] = len(self._body)
+
+    @property
+    def body(self):
+        """Get the request body.
+
+        Returns: The request body as bytes.
+        """
+        return self._body
+
+    @body.setter
+    def body(self, b):
+        if b is None:
+            self._body = b''
+        elif isinstance(b, str):
+            self._body = b.encode('utf-8')
+        elif not isinstance(b, bytes):
+            raise TypeError('body must be of type bytes')
+        else:
+            self._body = b
 
     @property
     def querystring(self):
@@ -56,7 +74,12 @@ class Request:
                 for name, val in parse_qs(qs, keep_blank_values=True).items()}
 
     def to_dict(self):
+        """Return a dictionary representation of the request, without the body.
+
+        Returns: A dictionary.
+        """
         d = vars(self)
+        d.pop('_body')
         d['headers'] = dict(d['headers'])
 
         if self.response is not None:
@@ -85,7 +108,7 @@ class Request:
 class Response:
     """Represents an HTTP response."""
 
-    def __init__(self, *, status, reason, headers, body=None):
+    def __init__(self, *, status, reason, headers, body=b''):
         """Initialise a new Response object.
 
         Args:
@@ -99,11 +122,35 @@ class Response:
         self.headers = headers
         self.body = body
 
-        if isinstance(self.body, str):
-            self.body = self.body.encode('utf-8')
+        self.headers['Content-Length'] = len(self._body)
+
+    @property
+    def body(self):
+        """Get the response body.
+
+        Returns: The response body as bytes.
+        """
+        return self._body
+
+    @body.setter
+    def body(self, b):
+        if b is None:
+            self._body = b''
+        elif isinstance(b, str):
+            self._body = b.encode('utf-8')
+        elif not isinstance(b, bytes):
+            raise TypeError('body must be of type bytes')
+        else:
+            self._body = b
 
     def to_dict(self):
-        return vars(self)
+        """Return a dictionary representation of the response, without the body.
+
+        Returns: A dictionary.
+        """
+        d = vars(self)
+        d.pop('_body')
+        return d
 
     @classmethod
     def from_dict(cls, d):
