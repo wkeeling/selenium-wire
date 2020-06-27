@@ -21,7 +21,10 @@ class RequestStorage:
     and provding an API to retrieve that data.
 
     Requests and responses are saved separately. However, when a request is loaded, the
-    response, if there is one, is automatically loaded and attached to the request.
+    response, if there is one, is automatically loaded and attached to the request. Furthermore,
+    when saving both requests and responses, the body is split out and saved separately.
+    Request/response bodies are not loaded automatically and must be retrieved via a separate
+    method call.
 
     This implementation writes the request and response data to disk, but keeps an in-memory
     index of what is on disk for fast retrieval. Instances are designed to be threadsafe.
@@ -57,8 +60,12 @@ class RequestStorage:
         request_dir = self._get_request_dir(request_id)
         os.mkdir(request_dir)
 
+        body = request.body
+        request.body = None  # The request body is stored separately to the request itself
+
         self._save(request, request_dir, 'request')
-        if request.body is not None:
+
+        if body is not None:
             self._save(request.body, request_dir, 'requestbody')
 
     def _index_request(self, request):
@@ -93,9 +100,13 @@ class RequestStorage:
             return
 
         request_dir = self._get_request_dir(request_id)
+
+        body = response.body
+        response.body = None  # The response body is stored separately to the response itself
+
         self._save(response, request_dir, 'response')
 
-        if response.body is not None:
+        if body is not None:
             self._save(response.body, request_dir, 'responsebody')
 
         indexed_request.has_response = True
@@ -200,8 +211,8 @@ class RequestStorage:
         """Loads the last saved request.
 
         Returns:
-            The last saved request dictionary (see load_requests() for dict structure).
-            If no requests have yet been stored, None is returned.
+            The last saved request dictionary or None if no requests
+            have yet been stored.
         """
         with self._lock:
             if self._index:

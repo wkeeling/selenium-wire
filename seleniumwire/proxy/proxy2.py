@@ -33,8 +33,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         super().__init__(*args, **kwargs)
 
-        self.timeout = self.server.options.get('connection_timeout', 5)
-
     def do_CONNECT(self):
         self.send_response(200, 'Connection Established')
         self.end_headers()

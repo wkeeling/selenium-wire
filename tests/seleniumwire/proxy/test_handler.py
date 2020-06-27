@@ -78,6 +78,7 @@ class CaptureRequestHandlerTest(TestCase):
         CaptureRequestHandler.__init__ = Mock(return_value=None)
         self.mock_modifier, self.mock_storage = Mock(), Mock()
         self.handler = CaptureRequestHandler()
+        self.handler.server = Mock()
         self.handler.id = '12345'
         self.handler.options = {}
         self.handler.modifier = self.mock_modifier
@@ -337,6 +338,7 @@ class AdminMixinTest(TestCase):
         self.mock_wfile = Mock()
 
         self.handler = CaptureRequestHandler()
+        self.handler.server = Mock()
         self.handler.modifier = self.mock_modifier
         self.handler.storage = self.mock_storage
         self.handler.options = {}
