@@ -97,9 +97,10 @@ class AdminMixin:
         return self._create_response(body, 'application/octet-stream')
 
     def _find_request(self, path):
-        return self._create_response(json.dumps(
-            self.storage.find(path[0]).to_dict()
-        ).encode('utf-8'), 'application/json')
+        request = self.storage.find(path[0])
+        if request is not None:
+            request = request.to_dict()
+        return self._create_response(json.dumps(request).encode('utf-8'), 'application/json')
 
     def _set_header_overrides(self, request):
         headers = json.loads(request.body.decode('utf-8'))
@@ -163,7 +164,7 @@ class AdminMixin:
                 'Content-Type': content_type,
                 'Content-Length': len(body)
             },
-            body=body or b''
+            body=body
         )
 
         return response

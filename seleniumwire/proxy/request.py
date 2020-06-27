@@ -57,9 +57,12 @@ class Request:
 
     def to_dict(self):
         d = vars(self)
+        d['headers'] = dict(d['headers'])
 
         if self.response is not None:
             d['response'] = self.response.to_dict()
+
+        return d
 
     @classmethod
     def from_dict(cls, d):

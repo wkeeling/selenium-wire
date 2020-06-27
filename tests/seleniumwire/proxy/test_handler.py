@@ -2,46 +2,70 @@ from unittest import TestCase
 from unittest.mock import Mock, call
 
 from seleniumwire.proxy.handler import CaptureRequestHandler
+from seleniumwire.proxy.request import Request
 
 
 class CaptureRequestHandlerTest(TestCase):
 
     def test_request_modifier_called(self):
+        modified = []
+        self.mock_modifier.modify.side_effect = lambda r: modified.append(r)
+
         self.handler.handle_request(self.handler, self.body)
 
-        self.mock_modifier.modify.assert_called_once_with(self.handler)
+        self.assertEqual(1, len(modified))
+        self.assertEqual('https://www.google.com/foo/bar?x=y', modified[0].path)
 
     def test_save_request_called(self):
+        saved = []
+        self.mock_storage.save_request.side_effect = lambda r: saved.append(r)
+
         self.handler.handle_request(self.handler, self.body)
 
-        self.mock_storage.save_request.assert_called_once_with(self.handler, self.body)
+        self.assertEqual(1, len(saved))
+        self.assertEqual('https://www.google.com/foo/bar?x=y', saved[0].path)
 
-    def test_ignores_options_method_by_default(self):
+    def test_ignores_options(self):
         self.handler.command = 'OPTIONS'
+
         self.handler.handle_request(self.handler, self.body)
 
         self.assertFalse(self.mock_modifier.modify.called)
         self.assertFalse(self.mock_storage.save_request.called)
 
-    def test_ignores_get_method(self):
-        self.handler.server.options = {'ignore_http_methods': ['OPTIONS', 'GET']}
+    def test_ignores_get(self):
+        self.handler.options = {'ignore_http_methods': ['OPTIONS', 'GET']}
+
         self.handler.handle_request(self.handler, self.body)
 
         self.assertFalse(self.mock_modifier.modify.called)
         self.assertFalse(self.mock_storage.save_request.called)
 
-    def test_ignores_no_method(self):
+    def test_no_ignores(self):
         self.handler.command = 'OPTIONS'
-        self.handler.server.options = {'ignore_http_methods': []}
+        self.handler.options = {'ignore_http_methods': []}
+
         self.handler.handle_request(self.handler, self.body)
 
-        self.mock_storage.save_request.assert_called_once_with(self.handler, self.body)
+        self.assertTrue(self.mock_modifier.modify.called)
+
+    def test_not_in_scope(self):
+        self.handler.scopes = ['http://www.somewhere.com']
+
+        self.handler.handle_request(self.handler, self.body)
+
+        self.assertFalse(self.mock_modifier.modify.called)
+        self.assertFalse(self.mock_storage.save_request.called)
 
     def test_save_response_called(self):
-        res, res_body = Mock(), Mock()
+        saved = []
+        self.mock_storage.save_response.side_effect = lambda i, r: saved.append(r)
+        res, res_body = Mock(status=200, reason='OK', headers={}), Mock()
+
         self.handler.handle_response(self.handler, self.body, res, res_body)
 
-        self.mock_storage.save_response.assert_called_once_with('12345', res, res_body)
+        self.assertEqual(1, len(saved))
+        self.assertEqual('200 OK', '{} {}'.format(saved[0].status, saved[0].reason))
 
     def test_ignores_response(self):
         res, res_body = Mock(), Mock()
@@ -54,12 +78,14 @@ class CaptureRequestHandlerTest(TestCase):
         CaptureRequestHandler.__init__ = Mock(return_value=None)
         self.mock_modifier, self.mock_storage = Mock(), Mock()
         self.handler = CaptureRequestHandler()
-        self.handler.server = Mock()
         self.handler.id = '12345'
-        self.handler.server.modifier = self.mock_modifier
-        self.handler.server.storage = self.mock_storage
-        self.handler.server.options = {}
-        self.handler.server.scopes = []
+        self.handler.options = {}
+        self.handler.modifier = self.mock_modifier
+        self.handler.storage = self.mock_storage
+        self.handler.scopes = []
+        self.handler.options = {}
+        self.handler.scopes = []
+        self.handler.headers = {}
         self.handler.path = 'https://www.google.com/foo/bar?x=y'
         self.handler.command = 'GET'
         self.body = None
@@ -69,10 +95,11 @@ class AdminMixinTest(TestCase):
 
     def test_get_requests(self):
         self.handler.path = 'http://seleniumwire/requests'
-        self.mock_storage.load_requests.return_value = [
-            {'id': '12345'},
-            {'id': '67890'},
-        ]
+        request_1 = Request(method='GET', path='http://somewhere.com/foo', headers={})
+        request_1.id = '12345'
+        request_2 = Request(method='GET', path='http://somewhere.com/bar', headers={})
+        request_2.id = '67890'
+        self.mock_storage.load_requests.return_value = [request_1, request_2]
 
         self.handler.handle_admin()
 
@@ -80,8 +107,10 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 34)],
-            body=b'[{"id": "12345"}, {"id": "67890"}]'
+                     ('Content-Length', 234)],
+            body=b'[{"id": "12345", "method": "GET", "path": "http://somewhere.com/foo", "headers": {}, '
+                 b'"body": null, "response": null}, {"id": "67890", "method": "GET", '
+                 b'"path": "http://somewhere.com/bar", "headers": {}, "body": null, "response": null}]'
         )
 
     def test_delete_requests(self):
@@ -101,7 +130,9 @@ class AdminMixinTest(TestCase):
 
     def test_get_last_request(self):
         self.handler.path = 'http://seleniumwire/last_request'
-        self.mock_storage.load_last_request.return_value = {'id': '12345'}
+        request = Request(method='GET', path='http://somewhere.com/foo', headers={})
+        request.id = '12345'
+        self.mock_storage.load_last_request.return_value = request
 
         self.handler.handle_admin()
 
@@ -110,8 +141,9 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 15)],
-            body=b'{"id": "12345"}'
+                     ('Content-Length', 115)],
+            body=b'{"id": "12345", "method": "GET", "path": "http://somewhere.com/foo", "headers": {}, '
+                 b'"body": null, "response": null}'
         )
 
     def test_get_request_body(self):
@@ -158,7 +190,9 @@ class AdminMixinTest(TestCase):
 
     def test_find(self):
         self.handler.path = 'http://seleniumwire/find?path=/foo/bar'
-        self.mock_storage.find.return_value = {'id': '12345'}
+        request = Request(method='GET', path='http://somewhere.com/foo', headers={})
+        request.id = '12345'
+        self.mock_storage.find.return_value = request
 
         self.handler.handle_admin()
 
@@ -166,8 +200,9 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 15)],
-            body=b'{"id": "12345"}'
+                     ('Content-Length', 115)],
+            body=b'{"id": "12345", "method": "GET", "path": "http://somewhere.com/foo", "headers": {}, '
+                 b'"body": null, "response": null}'
         )
 
     def test_find_no_match(self):
@@ -302,10 +337,11 @@ class AdminMixinTest(TestCase):
         self.mock_wfile = Mock()
 
         self.handler = CaptureRequestHandler()
-        self.handler.server = Mock()
-        self.handler.server.modifier = self.mock_modifier
-        self.handler.server.storage = self.mock_storage
-        self.handler.server.options = {}
+        self.handler.modifier = self.mock_modifier
+        self.handler.storage = self.mock_storage
+        self.handler.options = {}
+        self.handler.headers = {}
+        self.handler.scopes = []
         self.handler.command = 'GET'
         self.handler.send_response = self.mock_send_response
         self.handler.send_header = self.mock_send_header
