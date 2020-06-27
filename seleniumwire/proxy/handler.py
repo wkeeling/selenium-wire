@@ -343,7 +343,7 @@ def create_custom_capture_request_handler(custom_response_handler):
     custom_response_handler after running super().response_handler
     """
     class CustomCaptureRequestHandler(CaptureRequestHandler):
-        def response_handler(self, *args, **kwargs):
-            super().response_handler(*args, **kwargs)
+        def handle_response(self, *args, **kwargs):
+            super().handle_response(*args, **kwargs)
             return custom_response_handler(*args, **kwargs)
     return CustomCaptureRequestHandler
