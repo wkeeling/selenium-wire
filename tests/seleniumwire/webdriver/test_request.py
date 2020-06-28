@@ -2,7 +2,7 @@ import uuid
 from unittest import TestCase
 from unittest.mock import Mock, call
 
-from seleniumwire.webdriver.request import (InspectRequestsMixin, Request, Response,
+from seleniumwire.webdriver.request import (InspectRequestsMixin, LazyRequest, LazyResponse,
                                             TimeoutException)
 
 
@@ -208,47 +208,7 @@ class InspectRequestsMixinTest(TestCase):
         mock_client.get_scopes.assert_called_once_with()
 
 
-class RequestTest(TestCase):
-
-    def test_create_request(self):
-        data = self._request_data()
-
-        request = Request(data, Mock())
-
-        self.assertEqual(request.method, 'GET'),
-        self.assertEqual(request.path, 'http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=')
-        self.assertEqual(len(request.headers), 3)
-        self.assertEqual(request.headers['Host'], 'www.example.com')
-        self.assertIsNone(request.response)
-
-    def test_get_header_case_insensitive(self):
-        data = self._request_data()
-
-        request = Request(data, Mock())
-
-        self.assertEqual(request.headers['host'], 'www.example.com')
-
-    def test_request_repr(self):
-        data = self._request_data()
-
-        request = Request(data, Mock())
-
-        self.assertEqual(repr(request), 'Request({})'.format(data))
-
-    def test_request_str(self):
-        data = self._request_data()
-
-        request = Request(data, Mock())
-
-        self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', str(request))
-
-    def test_create_request_with_response(self):
-        data = self._request_data()
-        data['response'] = self._response_data()
-
-        request = Request(data, Mock())
-
-        self.assertIsInstance(request.response, Response)
+class LazyRequestTest(TestCase):
 
     def test_load_request_body(self):
         mock_client = Mock()
@@ -272,37 +232,6 @@ class RequestTest(TestCase):
 
         self.assertEqual(body, b'the body')
         mock_client.get_request_body.assert_called_once_with(data['id'])
-
-    def test_querystring(self):
-        data = self._request_data()
-
-        request = Request(data, Mock())
-
-        self.assertEqual(request.querystring, 'foo=bar&hello=world&foo=baz&other=')
-
-    def test_GET_params(self):
-        data = self._request_data()
-
-        request = Request(data, Mock())
-
-        params = request.params
-        self.assertEqual(params['hello'], 'world')
-        self.assertEqual(params['foo'], ['bar', 'baz'])
-        self.assertEqual(params['other'], '')
-
-    def test_POST_params(self):
-        data = self._request_data()
-        data['method'] = 'POST'
-        data['headers']['Content-Type'] = 'application/x-www-form-urlencoded'
-        mock_client = Mock()
-        mock_client.get_request_body.return_value = b'foo=bar&hello=world&foo=baz&other='
-
-        request = Request(data, mock_client)
-
-        params = request.params
-        self.assertEqual(params['hello'], 'world')
-        self.assertEqual(params['foo'], ['bar', 'baz'])
-        self.assertEqual(params['other'], '')
 
     def _request_data(self):
         data = {

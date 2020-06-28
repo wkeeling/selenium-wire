@@ -147,6 +147,8 @@ class AdminMixin:
             body=body
         )
 
+        response.headers['Content-Length'] = len(response.body)
+
         return response
 
 

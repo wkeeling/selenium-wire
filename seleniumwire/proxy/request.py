@@ -24,8 +24,6 @@ class Request:
         self.body = body
         self.response = None
 
-        self.headers['Content-Length'] = len(self._body)
-
     @property
     def body(self):
         """Get the request body.
@@ -79,6 +77,7 @@ class Request:
         Returns: A dictionary.
         """
         d = vars(self)
+        d.pop('id')
         d.pop('_body')
         d['headers'] = dict(d['headers'])
 
@@ -98,7 +97,7 @@ class Request:
         return request
 
     def __repr__(self):
-        return 'Request(method={method!r}, path={path!r}, headers={headers!r}, body={body!r})' \
+        return 'Request(method={method!r}, path={path!r}, headers={headers!r}, body={_body!r})' \
             .format(**vars(self))
 
     def __str__(self):
@@ -119,10 +118,8 @@ class Response:
         """
         self.status = status
         self.reason = reason
-        self.headers = headers
+        self.headers = CaseInsensitiveDict(headers)
         self.body = body
-
-        self.headers['Content-Length'] = len(self._body)
 
     @property
     def body(self):
@@ -158,7 +155,7 @@ class Response:
 
     def __repr__(self):
         return 'Response(status={status!r}, reason={reason!r}, headers={headers!r}, ' \
-               'body={body!r})'.format(**vars(self))
+               'body={_body!r})'.format(**vars(self))
 
     def __str__(self):
         return '{} {}'.format(self.status, self.reason)
