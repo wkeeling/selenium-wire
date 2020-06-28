@@ -27,7 +27,7 @@ class InspectRequestsMixinTest(TestCase):
                 'Host': 'www.example.com'
             },
             'response': {
-                'status_code': 200,
+                'status': 200,
                 'reason': 'OK',
                 'headers': {
                     'Content-Type': 'text/plain',
@@ -39,6 +39,7 @@ class InspectRequestsMixinTest(TestCase):
         requests = self.driver.requests
 
         self.mock_client.get_requests.assert_called_once_with()
+        self.assertEqual(1, len(requests))
         self.assertEqual(requests[0].path, 'http://www.example.com/some/path')
         self.assertEqual(requests[0].response.headers['Content-Type'], 'text/plain')
 
@@ -57,7 +58,6 @@ class InspectRequestsMixinTest(TestCase):
 
     def test_last_request(self):
         self.mock_client.get_last_request.return_value = {
-            'id': '98765',
             'method': 'GET',
             'path': 'http://www.example.com/different/path?foo=bar',
             'headers': {
@@ -65,7 +65,7 @@ class InspectRequestsMixinTest(TestCase):
                 'Host': 'www.example.com'
             },
             'response': {
-                'status_code': 200,
+                'status': 200,
                 'reason': 'OK',
                 'headers': {
                     'Content-Type': 'text/plain',
@@ -91,7 +91,6 @@ class InspectRequestsMixinTest(TestCase):
     def test_wait_for_request(self):
         mock_client = Mock()
         mock_client.find.return_value = {
-            'id': '98765',
             'method': 'GET',
             'path': 'http://www.example.com/some/path?foo=bar',
             'headers': {
@@ -99,7 +98,7 @@ class InspectRequestsMixinTest(TestCase):
                 'Host': 'www.example.com'
             },
             'response': {
-                'status_code': 200,
+                'status': 200,
                 'reason': 'OK',
                 'headers': {
                     'Content-Type': 'text/plain',
@@ -213,29 +212,17 @@ class LazyRequestTest(TestCase):
     def test_load_request_body(self):
         mock_client = Mock()
         mock_client.get_request_body.return_value = b'the body'
-        data = self._request_data()
 
-        request = Request(data, mock_client)
+        request = self._create_request(mock_client)
         body = request.body
 
         self.assertEqual(body, b'the body')
-        mock_client.get_request_body.assert_called_once_with(data['id'])
+        mock_client.get_request_body.assert_called_once_with(request.id)
 
-    def test_load_request_body_uses_cached_data(self):
+    def test_from_dict(self):
         mock_client = Mock()
-        mock_client.get_request_body.return_value = b'the body'
-        data = self._request_data()
-
-        request = Request(data, mock_client)
-        request.body  # Retrieves the body
-        body = request.body  # Uses the previously retrieved body
-
-        self.assertEqual(body, b'the body')
-        mock_client.get_request_body.assert_called_once_with(data['id'])
-
-    def _request_data(self):
-        data = {
-            'id': uuid.uuid4(),
+        request = LazyRequest.from_dict({
+            'id': '12345',
             'method': 'GET',
             'path': 'http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
             'headers': {
@@ -243,91 +230,81 @@ class LazyRequestTest(TestCase):
                 'Host': 'www.example.com',
                 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
             },
-            'response': None
-        }
+            'response': {
+                'status': 200,
+                'reason': 'OK',
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Content-Length': 120
+                },
+            }
+        }, mock_client)
 
-        return data
+        self.assertEqual('12345', request.id)
+        self.assertEqual('GET', request.method)
+        self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', request.path)
+        self.assertEqual({
+                'Accept': '*/*',
+                'Host': 'www.example.com',
+                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
+            }, request.headers)
+        self.assertIsInstance(request.response, LazyResponse)
 
-    def _response_data(self):
-        data = {
-            'status_code': 200,
-            'reason': 'OK',
-            'headers': {
-                'Content-Type': 'application/json',
-                'Content-Length': 120
-            },
-        }
+    def _create_request(self, client):
+        request = LazyRequest(
+            client,
+            method='GET',
+            path='http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
+            headers={
+                'Accept': '*/*',
+                'Host': 'www.example.com',
+                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
+            }
+        )
 
-        return data
+        return request
 
 
 class ResponseTest(TestCase):
 
-    def test_create_response(self):
-        data = self._response_data()
-
-        response = Response(uuid.uuid4(), data, Mock())
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.reason, 'OK')
-        self.assertEqual(len(response.headers), 2)
-        self.assertEqual(response.headers['Content-Type'], 'application/json')
-
-    def test_get_header_case_insensitive(self):
-        data = self._response_data()
-
-        response = Response(uuid.uuid4(), data, Mock())
-
-        self.assertEqual(response.headers['content-type'], 'application/json')
-
-    def test_response_repr(self):
-        request_id = uuid.uuid4()
-        data = self._response_data()
-
-        response = Response(request_id, data, Mock())
-
-        self.assertEqual(repr(response), "Response('{}', {})".format(request_id, data))
-
-    def test_response_str(self):
-        data = self._response_data()
-
-        response = Response(uuid.uuid4(), data, Mock())
-
-        self.assertEqual(str(response), '200 OK'.format(data))
-
     def test_load_response_body(self):
         mock_client = Mock()
         mock_client.get_response_body.return_value = b'the body'
-        data = self._response_data()
-        request_id = uuid.uuid4()
 
-        response = Response(request_id, data, mock_client)
+        response = self._create_response('12345', mock_client)
         body = response.body
 
         self.assertEqual(body, b'the body')
-        mock_client.get_response_body.assert_called_once_with(request_id)
+        mock_client.get_response_body.assert_called_once_with('12345')
 
-    def test_load_response_body_uses_cached_data(self):
+    def test_from_dict(self):
         mock_client = Mock()
-        mock_client.get_response_body.return_value = b'the body'
-        data = self._response_data()
-        request_id = uuid.uuid4()
-
-        response = Response(request_id, data, mock_client)
-        response.body  # Retrieves the body
-        body = response.body  # Uses the previously retrieved body
-
-        self.assertEqual(body, b'the body')
-        mock_client.get_response_body.assert_called_once_with(request_id)
-
-    def _response_data(self):
-        data = {
-            'status_code': 200,
+        response = LazyResponse.from_dict({
+            'status': 200,
             'reason': 'OK',
             'headers': {
                 'Content-Type': 'application/json',
                 'Content-Length': 120
             },
-        }
+            'body': 'foobar'
+        }, mock_client, '12345')
 
-        return data
+        self.assertEqual(200, response.status)
+        self.assertEqual('OK', response.reason)
+        self.assertEqual({
+            'Content-Type': 'application/json',
+            'Content-Length': 120
+        }, response.headers)
+
+    def _create_response(self, request_id, client):
+        response = LazyResponse(
+            request_id,
+            client,
+            status=200,
+            reason='OK',
+            headers={
+                'Content-Type': 'application/json',
+                'Content-Length': 120
+            },
+        )
+        return response

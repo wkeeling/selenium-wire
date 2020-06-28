@@ -90,39 +90,6 @@ class RequestTest(TestCase):
             'response': None
         }, request.to_dict())
 
-    def test_from_dict(self):
-        request = Request.from_dict({
-            'id': '12345',
-            'method': 'GET',
-            'path': 'http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
-            'headers': {
-                'Accept': '*/*',
-                'Host': 'www.example.com',
-                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
-            },
-            'body': 'foobar',
-            'response': {
-                'status': 200,
-                'reason': 'OK',
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Content-Length': 120
-                },
-                'body': b'helloworld'
-            }
-        })
-
-        self.assertEqual('12345', request.id)
-        self.assertEqual('GET', request.method)
-        self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', request.path)
-        self.assertEqual({
-                'Accept': '*/*',
-                'Host': 'www.example.com',
-                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
-            }, request.headers)
-        self.assertEqual(b'foobar', request.body)
-        self.assertIsNotNone(request.response)
-
     def _create_request(self, body=None):
         request = Request(
             method='GET',
@@ -190,25 +157,6 @@ class ResponseTest(TestCase):
                 'Content-Length': 120
             },
         }, response.to_dict())
-
-    def test_from_dict(self):
-        response = Response.from_dict({
-            'status': 200,
-            'reason': 'OK',
-            'headers': {
-                'Content-Type': 'application/json',
-                'Content-Length': 120
-            },
-            'body': 'foobar'
-        })
-
-        self.assertEqual(200, response.status)
-        self.assertEqual('OK', response.reason)
-        self.assertEqual({
-            'Content-Type': 'application/json',
-            'Content-Length': 120
-        }, response.headers)
-        self.assertEqual(b'foobar', response.body)
 
     def _create_response(self, body=None):
         response = Response(

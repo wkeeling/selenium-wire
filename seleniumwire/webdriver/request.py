@@ -20,8 +20,7 @@ class InspectRequestsMixin:
             A list of Request instances representing the requests made
             between the browser and server.
         """
-        return [LazyRequest.from_dict({'client': self._client, **r})
-                for r in self._client.get_requests()]
+        return [LazyRequest.from_dict(r, self._client) for r in self._client.get_requests()]
 
     @requests.deleter
     def requests(self):
@@ -40,7 +39,7 @@ class InspectRequestsMixin:
         data = self._client.get_last_request()
 
         if data is not None:
-            return LazyRequest.from_dict({'client': self._client, **data})
+            return LazyRequest.from_dict(data, self._client)
 
         return None
 
@@ -68,7 +67,7 @@ class InspectRequestsMixin:
             data = self._client.find(path)
 
             if data is not None:
-                return LazyRequest.from_dict({'client': self._client, **data})
+                return LazyRequest.from_dict(data, self._client)
             else:
                 time.sleep(0.2)
 
@@ -158,12 +157,27 @@ class LazyRequest(Request):
         """
         return self._client.get_request_body(self.id)
 
+    @classmethod
+    def from_dict(cls, d, client):
+        response = d.pop('response', None)
+        request_id = d.pop('id', None)
+        request = cls(client, **d)
+
+        if request_id is not None:
+            request.id = request_id
+
+        if response is not None:
+            request.response = LazyResponse.from_dict(response, client, request_id)
+
+        return request
+
 
 class LazyResponse(Response):
     """Specialisation of Response that allows for lazy retrieval of the response body."""
 
-    def __init__(self, client, **kwargs):
+    def __init__(self, request_id, client, **kwargs):
         super().__init__(**kwargs)
+        self._request_id = request_id
         self._client = client
 
     @Request.body.getter
@@ -174,3 +188,7 @@ class LazyResponse(Response):
             The response body as bytes.
         """
         return self._client.get_response_body(self._request_id)
+
+    @classmethod
+    def from_dict(cls, d, client, request_id):
+        return cls(request_id, client, **d)

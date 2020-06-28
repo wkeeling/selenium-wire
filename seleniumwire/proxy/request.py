@@ -85,20 +85,6 @@ class Request:
 
         return d
 
-    @classmethod
-    def from_dict(cls, d):
-        response = d.pop('response', None)
-        id_ = d.pop('id', None)
-        request = cls(**d)
-
-        if id_ is not None:
-            request.id = id_
-
-        if response is not None:
-            request.response = Response.from_dict(response)
-
-        return request
-
     def __repr__(self):
         return 'Request(method={method!r}, path={path!r}, headers={headers!r}, body={_body!r})' \
             .format(**vars(self))
@@ -151,10 +137,6 @@ class Response:
         d = vars(self)
         d.pop('_body')
         return d
-
-    @classmethod
-    def from_dict(cls, d):
-        return cls(**d)
 
     def __repr__(self):
         return 'Response(status={status!r}, reason={reason!r}, headers={headers!r}, ' \
