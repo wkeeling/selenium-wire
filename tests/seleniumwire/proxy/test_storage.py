@@ -98,7 +98,7 @@ class RequestStorageTest(TestCase):
         with open(response_file_path[0], 'rb') as loaded:
             loaded_response = pickle.load(loaded)
 
-        self.assertEqual(200, loaded_response.status)
+        self.assertEqual(200, loaded_response.status_code)
         self.assertEqual('OK', loaded_response.reason)
         self.assertEqual({
             'Content-Type': 'application/json',
@@ -271,7 +271,7 @@ class RequestStorageTest(TestCase):
             'Content-Type': 'application/json',
             'Content-Length': 500
         }
-        return Response(status=200, reason='OK', headers=headers, body=body)
+        return Response(status_code=200, reason='OK', headers=headers, body=body)
 
     def setUp(self):
         self.base_dir = os.path.join(os.path.dirname(__file__), 'data')

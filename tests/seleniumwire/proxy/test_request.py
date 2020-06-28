@@ -110,7 +110,7 @@ class ResponseTest(TestCase):
     def test_create_response(self):
         response = self._create_response()
 
-        self.assertEqual(200, response.status)
+        self.assertEqual(200, response.status_code)
         self.assertEqual('OK', response.reason)
         self.assertEqual(len(response.headers), 2)
         self.assertEqual('application/json', response.headers['Content-Type'])
@@ -137,7 +137,7 @@ class ResponseTest(TestCase):
     def test_response_repr(self):
         response = self._create_response()
 
-        self.assertEqual("Response(status=200, reason='OK', headers={"
+        self.assertEqual("Response(status_code=200, reason='OK', headers={"
                          "'Content-Type': 'application/json', 'Content-Length': 120"
                          "}, body=b'')", repr(response))
 
@@ -150,7 +150,7 @@ class ResponseTest(TestCase):
         response = self._create_response(body=b'helloworld')
 
         self.assertEqual({
-            'status': 200,
+            'status_code': 200,
             'reason': 'OK',
             'headers': {
                 'Content-Type': 'application/json',
@@ -160,7 +160,7 @@ class ResponseTest(TestCase):
 
     def _create_response(self, body=None):
         response = Response(
-            status=200,
+            status_code=200,
             reason='OK',
             headers={
                 'Content-Type': 'application/json',

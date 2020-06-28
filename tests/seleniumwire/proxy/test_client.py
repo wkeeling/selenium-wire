@@ -29,7 +29,7 @@ class AdminClientIntegrationTest(TestCase):
         self.assertEqual('GET', request['method'])
         self.assertEqual('https://www.python.org/', request['path'])
         self.assertEqual('identity', request['headers']['Accept-Encoding'])
-        self.assertEqual(200, request['response']['status'])
+        self.assertEqual(200, request['response']['status_code'])
         self.assertEqual( 'text/html; charset=utf-8', request['response']['headers']['Content-Type'])
 
     def test_get_requests_multiple(self):

@@ -67,7 +67,7 @@ class CaptureRequestHandlerTest(TestCase):
         self.assertEqual(1, len(saved))
         request_id, response = saved[0]
         self.assertEqual('12345', request_id)
-        self.assertEqual(200, response.status)
+        self.assertEqual(200, response.status_code)
         self.assertEqual('OK', response.reason)
 
     def test_ignores_response(self):

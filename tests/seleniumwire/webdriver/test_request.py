@@ -27,7 +27,7 @@ class InspectRequestsMixinTest(TestCase):
                 'Host': 'www.example.com'
             },
             'response': {
-                'status': 200,
+                'status_code': 200,
                 'reason': 'OK',
                 'headers': {
                     'Content-Type': 'text/plain',
@@ -65,7 +65,7 @@ class InspectRequestsMixinTest(TestCase):
                 'Host': 'www.example.com'
             },
             'response': {
-                'status': 200,
+                'status_code': 200,
                 'reason': 'OK',
                 'headers': {
                     'Content-Type': 'text/plain',
@@ -98,7 +98,7 @@ class InspectRequestsMixinTest(TestCase):
                 'Host': 'www.example.com'
             },
             'response': {
-                'status': 200,
+                'status_code': 200,
                 'reason': 'OK',
                 'headers': {
                     'Content-Type': 'text/plain',
@@ -231,7 +231,7 @@ class LazyRequestTest(TestCase):
                 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
             },
             'response': {
-                'status': 200,
+                'status_code': 200,
                 'reason': 'OK',
                 'headers': {
                     'Content-Type': 'application/json',
@@ -280,7 +280,7 @@ class ResponseTest(TestCase):
     def test_from_dict(self):
         mock_client = Mock()
         response = LazyResponse.from_dict({
-            'status': 200,
+            'status_code': 200,
             'reason': 'OK',
             'headers': {
                 'Content-Type': 'application/json',
@@ -289,7 +289,7 @@ class ResponseTest(TestCase):
             'body': 'foobar'
         }, mock_client, '12345')
 
-        self.assertEqual(200, response.status)
+        self.assertEqual(200, response.status_code)
         self.assertEqual('OK', response.reason)
         self.assertEqual({
             'Content-Type': 'application/json',
@@ -300,7 +300,7 @@ class ResponseTest(TestCase):
         response = LazyResponse(
             request_id,
             client,
-            status=200,
+            status_code=200,
             reason='OK',
             headers={
                 'Content-Type': 'application/json',

@@ -139,7 +139,7 @@ class AdminMixin:
 
     def _create_response(self, body, content_type='application/json'):
         response = Response(
-            status=200,
+            status_code=200,
             reason='OK',
             headers={
                 'Content-Type': content_type,
@@ -186,7 +186,7 @@ class CaptureMixin:
             path: The request path.
             response: The response to capture.
         """
-        log.info('Capturing response: %s %s %s', path, response.status, response.reason)
+        log.info('Capturing response: %s %s %s', path, response.status_code, response.reason)
         self.storage.save_response(request_id, response)
 
     def _in_scope(self, scopes, path):
@@ -249,7 +249,7 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
         # Convert the implementation specific response to one of our responses
         # for handling.
         response = Response(
-            status=res.status,
+            status_code=res.status,
             reason=res.reason,
             headers=dict(res.headers),
             body=res_body
@@ -265,7 +265,7 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
 
         response = self.dispatch_admin(request)
 
-        self.send_response(response.status)
+        self.send_response(response.status_code)
 
         for name, value in response.headers.items():
             self.send_header(name, value)

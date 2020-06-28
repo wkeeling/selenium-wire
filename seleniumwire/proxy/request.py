@@ -96,16 +96,16 @@ class Request:
 class Response:
     """Represents an HTTP response."""
 
-    def __init__(self, *, status, reason, headers, body=b''):
+    def __init__(self, *, status_code, reason, headers, body=b''):
         """Initialise a new Response object.
 
         Args:
-            status: The status code.
+            status_code: The status code.
             reason: The reason message (e.g. "OK" or "Not Found").
             headers: The response headers as a dictionary.
             body: The response body as bytes.
         """
-        self.status = status
+        self.status_code = status_code
         self.reason = reason
         self.headers = CaseInsensitiveDict(headers)
         self.body = body
@@ -141,8 +141,8 @@ class Response:
         return d
 
     def __repr__(self):
-        return 'Response(status={status!r}, reason={reason!r}, headers={headers!r}, ' \
+        return 'Response(status_code={status_code!r}, reason={reason!r}, headers={headers!r}, ' \
                'body={_body!r})'.format(**vars(self))
 
     def __str__(self):
-        return '{} {}'.format(self.status, self.reason)
+        return '{} {}'.format(self.status_code, self.reason)
