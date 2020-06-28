@@ -77,7 +77,6 @@ class Request:
         Returns: A dictionary.
         """
         d = vars(self)
-        d.pop('id')
         d.pop('_body')
         d['headers'] = dict(d['headers'])
 
@@ -89,7 +88,11 @@ class Request:
     @classmethod
     def from_dict(cls, d):
         response = d.pop('response', None)
+        id_ = d.pop('id', None)
         request = cls(**d)
+
+        if id_ is not None:
+            request.id = id_
 
         if response is not None:
             request.response = Response.from_dict(response)

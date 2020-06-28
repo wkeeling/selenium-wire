@@ -79,6 +79,7 @@ class RequestTest(TestCase):
         request.id = '12345'
 
         self.assertEqual({
+            'id': '12345',
             'method': 'GET',
             'path': 'http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
             'headers': {
@@ -91,6 +92,7 @@ class RequestTest(TestCase):
 
     def test_from_dict(self):
         request = Request.from_dict({
+            'id': '12345',
             'method': 'GET',
             'path': 'http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
             'headers': {
@@ -110,6 +112,7 @@ class RequestTest(TestCase):
             }
         })
 
+        self.assertEqual('12345', request.id)
         self.assertEqual('GET', request.method)
         self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', request.path)
         self.assertEqual({
