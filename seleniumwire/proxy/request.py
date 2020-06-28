@@ -136,6 +136,8 @@ class Response:
         """
         d = vars(self)
         d.pop('_body')
+        d['headers'] = dict(d['headers'])
+
         return d
 
     def __repr__(self):

@@ -59,13 +59,16 @@ class CaptureRequestHandlerTest(TestCase):
 
     def test_save_response_called(self):
         saved = []
-        self.mock_storage.save_response.side_effect = lambda i, r: saved.append(r)
-        res, res_body = Mock(status=200, reason='OK', headers={}), Mock()
+        self.mock_storage.save_response.side_effect = lambda i, r: saved.append((i, r))
+        res, res_body = Mock(status=200, reason='OK', headers={}), b'the body'
 
         self.handler.handle_response(self.handler, self.body, res, res_body)
 
         self.assertEqual(1, len(saved))
-        self.assertEqual('200 OK', '{} {}'.format(saved[0].status, saved[0].reason))
+        request_id, response = saved[0]
+        self.assertEqual('12345', request_id)
+        self.assertEqual(200, response.status)
+        self.assertEqual('OK', response.reason)
 
     def test_ignores_response(self):
         res, res_body = Mock(), Mock()
@@ -108,10 +111,10 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 234)],
+                     ('Content-Length', 206)],
             body=b'[{"id": "12345", "method": "GET", "path": "http://somewhere.com/foo", "headers": {}, '
-                 b'"body": null, "response": null}, {"id": "67890", "method": "GET", '
-                 b'"path": "http://somewhere.com/bar", "headers": {}, "body": null, "response": null}]'
+                 b'"response": null}, {"id": "67890", "method": "GET", '
+                 b'"path": "http://somewhere.com/bar", "headers": {}, "response": null}]'
         )
 
     def test_delete_requests(self):
@@ -142,9 +145,9 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 115)],
+                     ('Content-Length', 101)],
             body=b'{"id": "12345", "method": "GET", "path": "http://somewhere.com/foo", "headers": {}, '
-                 b'"body": null, "response": null}'
+                 b'"response": null}'
         )
 
     def test_get_request_body(self):
@@ -201,9 +204,9 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 115)],
+                     ('Content-Length', 101)],
             body=b'{"id": "12345", "method": "GET", "path": "http://somewhere.com/foo", "headers": {}, '
-                 b'"body": null, "response": null}'
+                 b'"response": null}'
         )
 
     def test_find_no_match(self):
@@ -335,6 +338,7 @@ class AdminMixinTest(TestCase):
         self.mock_send_header = Mock()
         self.mock_end_headers = Mock()
         self.mock_rfile = Mock()
+        self.mock_rfile.read.return_value = b'the body'
         self.mock_wfile = Mock()
 
         self.handler = CaptureRequestHandler()
