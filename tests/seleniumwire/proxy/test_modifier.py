@@ -214,8 +214,7 @@ class RequestModifierTest(TestCase):
 
         self.assertNotIn('Host', mock_request.headers)
 
-    def _create_mock_request(self,
-                             path="https://prod1.server.com/some/path/12345"):
+    def _create_mock_request(self, path="https://prod1.server.com/some/path/12345"):
         mock_request = Mock()
         mock_request.path = path
         mock_request.headers = {

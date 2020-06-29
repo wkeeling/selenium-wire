@@ -106,20 +106,25 @@ class RequestModifier:
         with self._lock:
             self._rewrite_rules.clear()
 
-    def modify(self, request):
+    def modify(self, request, headers_attr='headers', path_attr='path'):
         """Performs modifications to the request.
 
         Args:
-            request: The request (a BaseHTTPHandler instance) to modify.
+            request: The request to modify.
+            headers_attr: The name of the attribute holding the headers.
+            path_attr: The name of the attribute holding the path.
         """
-        self._modify_headers(request)
-        self._rewrite_url(request)
+        self._modify_headers(request, headers_attr, path_attr)
+        self._rewrite_url(request, headers_attr, path_attr)
 
-    def _modify_headers(self, request):
+    def _modify_headers(self, request, headers_attr, path_attr):
+        request_headers = getattr(request, headers_attr)
+        request_path = getattr(request, path_attr)
+
         with self._lock:
             # If self._headers is tuple or list, need to use the pattern matching
             if is_list_alike(self._headers):
-                headers = self._matched_headers(self._headers, request.path)
+                headers = self._matched_headers(self._headers, request_path)
             else:
                 headers = self._headers
 
@@ -128,40 +133,44 @@ class RequestModifier:
             headers_lc = {h.lower(): (h, v) for h, v in headers.items()}
 
         # Remove/replace any header that already exists in the request
-        for header in list(request.headers):
+        for header in list(request_headers):
             try:
                 value = headers_lc.pop(header.lower())[1]
             except KeyError:
                 pass
             else:
-                del request.headers[header]
+                del request_headers[header]
                 if value is not None:
-                    request.headers[header] = value
+                    request_headers[header] = value
 
         # Add new headers to the request that don't already exist
         for header, value in headers_lc.values():
             if value is not None:
-                request.headers[header] = value
+                request_headers[header] = value
 
-    def _rewrite_url(self, request):
+    def _rewrite_url(self, request, headers_attr, path_attr):
+        request_headers = getattr(request, headers_attr)
+        request_path = getattr(request, path_attr)
+
         with self._lock:
             rewrite_rules = self._rewrite_rules[:]
 
-        original_netloc = urlsplit(request.path).netloc
+        original_netloc = urlsplit(request_path).netloc
 
         for pattern, replacement in rewrite_rules:
-            modified, count = pattern.subn(replacement, request.path)
+            modified, count = pattern.subn(replacement, request_path)
 
             if count > 0:
-                request.path = modified
+                setattr(request, path_attr, modified)
                 break
 
-        modified_netloc = urlsplit(request.path).netloc
+        request_path = getattr(request, path_attr)
+        modified_netloc = urlsplit(request_path).netloc
 
         if original_netloc != modified_netloc:
             # Modify the Host header if it exists
-            if 'Host' in request.headers:
-                request.headers['Host'] = modified_netloc
+            if 'Host' in request_headers:
+                request_headers['Host'] = modified_netloc
 
     def _matched_headers(self, header_rules, path):
         results = {}
