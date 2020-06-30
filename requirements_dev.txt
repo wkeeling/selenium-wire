@@ -8,4 +8,4 @@ coverage==4.5.1
 Sphinx==1.7.1
 twine==1.10.0
 nose
-
+mitmproxy

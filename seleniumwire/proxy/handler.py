@@ -344,8 +344,8 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
 
 def create_custom_capture_request_handler(custom_response_handler):
     """Creates a custom class derived from CaptureRequestHandler with the
-    response_handler method overwritten to return
-    custom_response_handler after running super().response_handler
+    handle_response method overwritten to return
+    custom_response_handler after running super().handle_response
     """
     class CustomCaptureRequestHandler(CaptureRequestHandler):
         def handle_response(self, *args, **kwargs):

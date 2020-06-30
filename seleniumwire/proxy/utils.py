@@ -8,6 +8,20 @@ from collections.abc import Mapping, MutableMapping
 log = logging.getLogger(__name__)
 
 
+def get_upstream_config(options):
+    """Get the upstream proxy configuration from the options dictionary.
+    This will be overridden with any configuration found in the environment
+    variables HTTP_PROXY, HTTPS_PROXY, NO_PROXY
+
+    The configuration will be returned as a named tuple with the attributes
+        scheme, username, password, hostport
+
+    Args:
+        options: The selenium wire options.
+    Returns: A named tuple with attributes scheme, username, password, hostport.
+    """
+
+
 def extract_cert():
     """Extracts the root certificate to the current working directory."""
     cert_name = 'ca.crt'
