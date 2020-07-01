@@ -1,3 +1,5 @@
+"""This module manages the integraton with mitmproxy."""
+
 import threading
 
 
@@ -71,7 +73,7 @@ class RequestCapture(AdminMixin, CaptureMixin):
 
 
 class MitmProxy:
-    """Wrapper class that allows access to a running mitmproxy instance."""
+    """Wrapper class that provides access to a running mitmproxy instance."""
 
     def __init__(self, dump_master):
         self._dump_master = dump_master
