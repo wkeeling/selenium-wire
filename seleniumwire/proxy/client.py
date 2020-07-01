@@ -24,7 +24,7 @@ class AdminClient:
         self._proxy_port = None
         self._capture_request_handler = None
 
-    def create_proxy(self, addr='127.0.0.1', port=0, proxy_config=None, options=None):
+    def create_proxy(self, addr='127.0.0.1', port=0, options=None):
         """Creates a new proxy server and returns the address and port number that the
         server was started on.
 
@@ -32,8 +32,6 @@ class AdminClient:
             addr: The address the proxy server will listen on. Default 127.0.0.1.
             port: The port the proxy server will listen on. Default 0 - which means
                 use the first available port.
-            proxy_config: The configuration for any upstream proxy server. Default
-                is None.
             options: Additional options to configure the proxy.
 
         Returns:
@@ -53,8 +51,7 @@ class AdminClient:
             self._capture_request_handler = CaptureRequestHandler
             # Set the timeout here before the handler starts executing
             self._capture_request_handler.timeout = options.get('connection_timeout', 5)
-        self._proxy = ProxyHTTPServer((addr, port), self._capture_request_handler,
-                                      proxy_config=proxy_config, options=options)
+        self._proxy = ProxyHTTPServer((addr, port), self._capture_request_handler, options=options)
 
         t = threading.Thread(name='Selenium Wire Proxy Server', target=self._proxy.serve_forever)
         t.daemon = not options.get('standalone')

@@ -8,6 +8,7 @@ from http.server import HTTPServer
 from socketserver import ThreadingMixIn
 from urllib.request import _parse_proxy
 
+from . import utils
 from .modifier import RequestModifier
 from .storage import RequestStorage
 
@@ -39,10 +40,9 @@ class ProxyHTTPServer(BoundedThreadingMixin, HTTPServer):
     address_family = socket.AF_INET
     daemon_threads = True
 
-    def __init__(self, *args, proxy_config=None, options=None, **kwargs):
+    def __init__(self, *args, options=None, **kwargs):
         # The server's upstream proxy configuration (if any)
-        self.proxy_config = self._sanitise_proxy_config(
-            self._merge_with_env(proxy_config or {}))
+        self.proxy_config = utils.get_upstream_proxy(options)
 
         # Additional configuration
         self.options = options or {}

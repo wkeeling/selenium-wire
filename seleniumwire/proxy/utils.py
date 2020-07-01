@@ -2,13 +2,14 @@ import collections.abc
 import logging
 import os
 import pkgutil
-from collections import OrderedDict
+from collections import namedtuple, OrderedDict
 from collections.abc import Mapping, MutableMapping
+from urllib.request import _parse_proxy
 
 log = logging.getLogger(__name__)
 
 
-def get_upstream_config(options):
+def get_upstream_proxy(options):
     """Get the upstream proxy configuration from the options dictionary.
     This will be overridden with any configuration found in the environment
     variables HTTP_PROXY, HTTPS_PROXY, NO_PROXY
@@ -20,6 +21,32 @@ def get_upstream_config(options):
         options: The selenium wire options.
     Returns: A named tuple with attributes scheme, username, password, hostport.
     """
+    proxy_options = (options or {}).pop('proxy', {})
+
+    http_proxy = os.environ.get('HTTP_PROXY')
+    https_proxy = os.environ.get('HTTPS_PROXY')
+    no_proxy = os.environ.get('NO_PROXY')
+
+    merged = {}
+
+    if http_proxy:
+        merged['http'] = http_proxy
+    if https_proxy:
+        merged['https'] = https_proxy
+    if no_proxy:
+        merged['no_proxy'] = no_proxy
+
+    merged.update(proxy_options)
+
+    conf = namedtuple('ProxyConf', 'scheme username password hostport')
+
+    for proxy_type in ('http', 'https'):
+        # Parse the upstream proxy URL into (scheme, username, password, hostport)
+        # for ease of access.
+        if merged.get(proxy_type) is not None:
+            merged[proxy_type] = conf(*_parse_proxy(merged[proxy_type]))
+
+    return merged
 
 
 def extract_cert():
