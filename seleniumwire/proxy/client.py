@@ -44,22 +44,39 @@ class AdminClient:
         if options is None:
             options = {}
 
-        custom_response_handler = options.get('custom_response_handler')
-        if custom_response_handler is not None:
-            self._capture_request_handler = create_custom_capture_request_handler(custom_response_handler)
+        if options.get('backend', 'default') == 'default':
+            # Use the default backend
+            custom_response_handler = options.get('custom_response_handler')
+            if custom_response_handler is not None:
+                self._capture_request_handler = create_custom_capture_request_handler(custom_response_handler)
+            else:
+                self._capture_request_handler = CaptureRequestHandler
+                # Set the timeout here before the handler starts executing
+                self._capture_request_handler.timeout = options.get('connection_timeout', 5)
+            self._proxy = ProxyHTTPServer((addr, port), self._capture_request_handler, options=options)
+
+            t = threading.Thread(name='Selenium Wire Proxy Server', target=self._proxy.serve_forever)
+            t.daemon = not options.get('standalone')
+            t.start()
+
+            socketname = self._proxy.socket.getsockname()
+            self._proxy_addr = socketname[0]
+            self._proxy_port = socketname[1]
+        elif options.get('backend') == 'mitmproxy':
+            from . import mitmproxy
+
+            def mitmproxy_created(mitm):
+                self._proxy = mitm
+                self._proxy_addr = mitm.addr
+                self._proxy_port = mitm.port
+
+            mitmproxy.run(options, mitmproxy_created)
         else:
-            self._capture_request_handler = CaptureRequestHandler
-            # Set the timeout here before the handler starts executing
-            self._capture_request_handler.timeout = options.get('connection_timeout', 5)
-        self._proxy = ProxyHTTPServer((addr, port), self._capture_request_handler, options=options)
-
-        t = threading.Thread(name='Selenium Wire Proxy Server', target=self._proxy.serve_forever)
-        t.daemon = not options.get('standalone')
-        t.start()
-
-        socketname = self._proxy.socket.getsockname()
-        self._proxy_addr = socketname[0]
-        self._proxy_port = socketname[1]
+            raise TypeError(
+                "Invalid backend '{}'. "
+                "Valid values are 'default' or 'mitmproxy'."
+                .format(options['backend'])
+            )
 
         log.info('Created proxy listening on {}:{}'.format(self._proxy_addr, self._proxy_port))
         return self._proxy_addr, self._proxy_port
