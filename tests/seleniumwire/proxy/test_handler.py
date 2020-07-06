@@ -318,6 +318,53 @@ class AdminMixinTest(TestCase):
             body=b'[["https?://)prod1.server.com(.*)", "\\\\1prod2.server.com\\\\2"]]'
         )
 
+    def test_set_scopes(self):
+        self.handler.path = 'http://seleniumwire/scopes'
+        self.handler.command = 'POST'
+        self.handler.headers = {
+            'Content-Length': 35
+        }
+        self.mock_rfile.read.return_value = b'[".*stackoverflow.*", ".*github.*"]'
+
+        self.handler.handle_admin()
+
+        self.mock_rfile.read.assert_called_once_with(35)
+        self.assertEqual(self.handler.scopes, ['.*stackoverflow.*', '.*github.*'])
+        self.assert_response_mocks_called(
+            status=200,
+            headers=[('Content-Type', 'application/json'),
+                     ('Content-Length', 16)],
+            body=b'{"status": "ok"}'
+        )
+
+    def test_delete_scopes(self):
+        self.handler.path = 'http://seleniumwire/scopes'
+        self.handler.command = 'DELETE'
+        self.scopes = ['.*stackoverflow.*', '.*github.*']
+
+        self.handler.handle_admin()
+
+        self.assertEqual(self.handler.scopes, [])
+        self.assert_response_mocks_called(
+            status=200,
+            headers=[('Content-Type', 'application/json'),
+                     ('Content-Length', 16)],
+            body=b'{"status": "ok"}'
+        )
+
+    def test_get_scopes(self):
+        self.handler.path = 'http://seleniumwire/scopes'
+        self.handler.scopes = ['.*stackoverflow.*', '.*github.*']
+
+        self.handler.handle_admin()
+
+        self.assert_response_mocks_called(
+            status=200,
+            headers=[('Content-Type', 'application/json'),
+                     ('Content-Length', 35)],
+            body=b'[".*stackoverflow.*", ".*github.*"]'
+        )
+
     def test_initialise(self):
         self.handler.initialise = Mock()
         self.handler.path = 'http://seleniumwire/initialise'
