@@ -65,12 +65,9 @@ class AdminClient:
         elif options.get('backend') == 'mitmproxy':
             from . import mitmproxy
 
-            def mitmproxy_created(mitm):
-                self._proxy = mitm
-                self._proxy_addr = mitm.addr
-                self._proxy_port = mitm.port
-
-            mitmproxy.run(options, mitmproxy_created)
+            self._proxy = mitmproxy.run(port, options)
+            self._proxy_addr = addr
+            self._proxy_port = port
         else:
             raise TypeError(
                 "Invalid backend '{}'. "
@@ -78,25 +75,27 @@ class AdminClient:
                 .format(options['backend'])
             )
 
-        self.initialise(options)
+        self.initialise_proxy(options)
 
         log.info('Created proxy listening on {}:{}'.format(self._proxy_addr, self._proxy_port))
         return self._proxy_addr, self._proxy_port
 
-    def destroy_proxy(self):
-        """Stops the proxy server and performs any clean up actions."""
-        log.info('Destroying proxy')
-        # If proxy manager set, we would ask it to do this
-        self._proxy.shutdown()
-        self._proxy.server_close()  # Closes the server socket
-
-    def initialise(self, options):
+    def initialise_proxy(self, options):
         """Initialise the proxy with any options.
 
         Args:
             options: The selenium wire options.
         """
         self._make_request('POST', '/initialise', data=options)
+
+    def destroy_proxy(self):
+        """Stops the proxy server and performs any clean up actions."""
+        log.info('Destroying proxy')
+        # If proxy manager set, we would ask it to do this
+        self._proxy.shutdown()
+
+    def __del__(self):
+        self.destroy_proxy()
 
     def get_requests(self):
         """Returns the requests currently captured by the proxy server.

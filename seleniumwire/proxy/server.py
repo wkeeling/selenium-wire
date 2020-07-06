@@ -95,6 +95,7 @@ class ProxyHTTPServer(BoundedThreadingMixin, HTTPServer):
 
     def shutdown(self):
         super().shutdown()
+        super().server_close()  # Closes the server socket
         self.storage.cleanup()
 
     def handle_error(self, request, client_address):
