@@ -78,6 +78,8 @@ class AdminClient:
                 .format(options['backend'])
             )
 
+        self.initialise(options)
+
         log.info('Created proxy listening on {}:{}'.format(self._proxy_addr, self._proxy_port))
         return self._proxy_addr, self._proxy_port
 
@@ -87,6 +89,14 @@ class AdminClient:
         # If proxy manager set, we would ask it to do this
         self._proxy.shutdown()
         self._proxy.server_close()  # Closes the server socket
+
+    def initialise(self, options):
+        """Initialise the proxy with any options.
+
+        Args:
+            options: The selenium wire options.
+        """
+        self._make_request('POST', '/initialise', data=options)
 
     def get_requests(self):
         """Returns the requests currently captured by the proxy server.

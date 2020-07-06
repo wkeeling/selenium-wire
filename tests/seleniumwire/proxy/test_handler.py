@@ -318,6 +318,26 @@ class AdminMixinTest(TestCase):
             body=b'[["https?://)prod1.server.com(.*)", "\\\\1prod2.server.com\\\\2"]]'
         )
 
+    def test_initialise(self):
+        self.handler.initialise = Mock()
+        self.handler.path = 'http://seleniumwire/initialise'
+        self.handler.command = 'POST'
+        self.handler.headers = {
+            'Content-Length': 40
+        }
+        self.mock_rfile.read.return_value = b'{"port": 8080, "connection_timeout": 30}'
+
+        self.handler.handle_admin()
+
+        self.mock_rfile.read.assert_called_once_with(40)
+        self.handler.initialise.assert_called_once_with({'port': 8080, 'connection_timeout': 30})
+        self.assert_response_mocks_called(
+            status=200,
+            headers=[('Content-Type', 'application/json'),
+                     ('Content-Length', 16)],
+            body=b'{"status": "ok"}'
+        )
+
     def test_no_handler(self):
         self.handler.path = 'http://seleniumwire/foobar'
 

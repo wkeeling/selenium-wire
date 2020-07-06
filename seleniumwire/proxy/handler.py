@@ -64,6 +64,8 @@ class AdminMixin:
                 response = self._reset_scopes()
             elif request.method == 'GET':
                 response = self._get_scopes()
+        elif path == '/initialise':
+            return self._initialise(request)
 
         if response is None:
             raise RuntimeError(
@@ -137,6 +139,11 @@ class AdminMixin:
     def _get_scopes(self):
         return self._create_response(json.dumps(self.scopes).encode('utf-8'))
 
+    def _initialise(self, request):
+        options = json.loads(request.body.decode('utf-8'))
+        self.initialise(options)
+        return self._create_response(json.dumps({'status': 'ok'}).encode('utf-8'))
+
     def _create_response(self, body, content_type='application/json'):
         response = Response(
             status_code=200,
@@ -150,6 +157,14 @@ class AdminMixin:
         response.headers['Content-Length'] = len(response.body)
 
         return response
+
+    def initialise(self, options):
+        """Perform any initialisation actions before any admin requests are served.
+
+        Args:
+            options: The selenium wire options.
+        """
+        pass
 
 
 class CaptureMixin:
