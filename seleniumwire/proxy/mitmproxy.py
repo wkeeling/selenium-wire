@@ -44,6 +44,8 @@ def start(host, port, options, timeout=10):
         '--set',
         'ssl_insecure={}'.format(str(options.get('verify_ssl', 'true')).lower()),
         '--set',
+        'upstream_cert=false',
+        '--set',
         'stream_websockets=true',
         '--set',
         'termlog_verbosity=error',
