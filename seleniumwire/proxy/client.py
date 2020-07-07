@@ -63,11 +63,13 @@ class AdminClient:
             self._proxy_addr = socketname[0]
             self._proxy_port = socketname[1]
         elif options.get('backend') == 'mitmproxy':
+            # Use mitmproxy if installed
             from . import mitmproxy
 
-            self._proxy = mitmproxy.run(port, options)
+            self._proxy = mitmproxy.run(addr, port, options)
             self._proxy_addr = addr
             self._proxy_port = port
+            self._proxy.wait()
         else:
             raise TypeError(
                 "Invalid backend '{}'. "
@@ -93,9 +95,6 @@ class AdminClient:
         log.info('Destroying proxy')
         # If proxy manager set, we would ask it to do this
         self._proxy.shutdown()
-
-    def __del__(self):
-        self.destroy_proxy()
 
     def get_requests(self):
         """Returns the requests currently captured by the proxy server.
