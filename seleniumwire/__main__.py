@@ -23,16 +23,24 @@ def standalone_proxy(port=0):
 
 if __name__ == '__main__':
     commands = {
-        'extractcert': util.extract_cert,
+        'extractcert': utils.extract_cert,
         'standaloneproxy': standalone_proxy
     }
-    parser = argparse.ArgumentParser(description='\n\nsupported commands: \n  %s'
-                                                 % '\n  '.join(sorted(commands)),
-                                     formatter_class=RawDescriptionHelpFormatter,
-                                     usage='python -m seleniumwire <command>')
-    parser.add_argument('command', help='The command name')
-    parser.add_argument('args', nargs='*', help='Optional list of space separated positional and keyword arguments, '
-                                                'e.g. arg1 arg2 kwarg1=12345', default=None)
+    parser = argparse.ArgumentParser(
+        description='\n\nsupported commands: \n  %s' % '\n  '.join(sorted(commands)),
+        formatter_class=RawDescriptionHelpFormatter,
+        usage='python -m seleniumwire <command>'
+    )
+    parser.add_argument(
+        'command',
+        help='The command name'
+    )
+    parser.add_argument(
+        'args',
+        nargs='*',
+        help='Optional list of space separated positional and keyword arguments, e.g. arg1 arg2 kwarg1=12345',
+        default=None
+    )
 
     args = parser.parse_args()
     pargs = [arg for arg in args.args if '=' not in arg and arg is not args.command]
@@ -44,7 +52,11 @@ if __name__ == '__main__':
         print("Unsupported command '{}' (use --help for list of commands)".format(args.command))
     except TypeError as e:
         if 'unexpected' in str(e):
-            print('Unrecognised arguments: {} {}'.format(' '.join(pargs), ' '.join('{}={}'.format(k, v)
-                                                                                   for k, v in kwargs.items())))
+            print('Unrecognised arguments: {} {}'.format(
+                ' '.join(pargs),
+                ' '.join('{}={}'.format(k, v) for k, v in kwargs.items())
+            ))
         elif 'missing' in str(e):
             print('Missing arguments')
+        else:
+            print(str(e))

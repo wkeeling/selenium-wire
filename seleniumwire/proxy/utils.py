@@ -8,6 +8,11 @@ from urllib.request import _parse_proxy
 
 log = logging.getLogger(__name__)
 
+ca_certs = {
+    'default': 'ca.crt',
+    'mitmproxy': 'mitmproxy.crt'
+}
+
 
 def get_upstream_proxy(options):
     """Get the upstream proxy configuration from the options dictionary.
@@ -53,9 +58,16 @@ def get_upstream_proxy(options):
     return merged
 
 
-def extract_cert():
+def extract_cert(backend='default'):
     """Extracts the root certificate to the current working directory."""
-    cert_name = 'ca.crt'
+    try:
+        cert_name = ca_certs[backend]
+    except KeyError as e:
+        raise TypeError(
+            "Invalid backend '{}'. "
+            "Valid values are 'default' or 'mitmproxy'."
+            .format(backend)
+        ) from e
     cert = pkgutil.get_data(__package__, cert_name)
 
     with open(os.path.join(os.getcwd(), cert_name), 'wb') as out:
