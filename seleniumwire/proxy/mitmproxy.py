@@ -40,7 +40,7 @@ def start(host, port, options, timeout=10):
     proxy = subprocess.Popen([
         'mitmdump',
         '--set',
-        f'listen_port={port}',
+        'listen_port={}'.format(port),
         '--set',
         'ssl_insecure={}'.format(str(options.get('verify_ssl', 'true')).lower()),
         '--set',
@@ -90,19 +90,19 @@ def _get_upstream_proxy_args(options):
 
         args += [
             '--set',
-            f'mode=upstream:{scheme}://{hostport}'
+            'mode=upstream:{}://{}'.format(scheme, hostport)
         ]
 
         if username and password:
             args += [
                 '--set',
-                f'upstream_auth={username}:{password}'
+                'upstream_auth={}:{}'.format(username, password)
             ]
 
     return args
 
 
-class RequestCapture(AdminMixin, CaptureMixin):
+class MitmProxyRequestHandler(AdminMixin, CaptureMixin):
     """Mitmproxy add-on which provides request modification and capture.
 
     Clients do not import this class. Mitmproxy will automatically load it
@@ -139,6 +139,9 @@ class RequestCapture(AdminMixin, CaptureMixin):
 
             self.capture_request(request)
             flow.request.id = request.id
+
+            if self.options.get('disable_encoding') is True:
+                flow.request.headers['Accept-Encoding'] = 'identity'
 
     def response(self, flow):
         if not hasattr(flow.request, 'id'):
@@ -187,11 +190,12 @@ class MitmProxy:
 
     def shutdown(self):
         self.proc.terminate()
+        self.proc.wait(timeout=10)
 
     def __del__(self):
         self.shutdown()
 
 
 addons = [
-    RequestCapture()
+    MitmProxyRequestHandler()
 ]
