@@ -14,12 +14,16 @@ def get_upstream_proxy(options):
     This will be overridden with any configuration found in the environment
     variables HTTP_PROXY, HTTPS_PROXY, NO_PROXY
 
-    The configuration will be returned as a named tuple with the attributes
+    The configuration will be returned as a dictionary with keys 'http',
+    'https' and 'no_proxy'. The value of the 'http' and 'https' keys will
+    be a named tuple with the attributes:
         scheme, username, password, hostport
+    Note that the keys will only be present in the dictionary when relevant
+    proxy configuration exists.
 
     Args:
         options: The selenium wire options.
-    Returns: A named tuple with attributes scheme, username, password, hostport.
+    Returns: A dictionary.
     """
     proxy_options = (options or {}).pop('proxy', {})
 

@@ -1,5 +1,6 @@
 """This module manages the integraton with mitmproxy."""
 
+import logging
 import socket
 import subprocess
 import time
@@ -10,39 +11,93 @@ try:
 except ImportError:
     raise ImportError('mitmproxy not found. Install it with "pip install mitmproxy".')
 
-from seleniumwire.proxy.handler import AdminMixin, CaptureMixin
+from seleniumwire.proxy.handler import ADMIN_PATH, AdminMixin, CaptureMixin
 from seleniumwire.proxy.modifier import RequestModifier
 from seleniumwire.proxy.request import Request, Response
 from seleniumwire.proxy.storage import RequestStorage
+from seleniumwire.proxy.utils import get_upstream_proxy
 
 DEFAULT_LISTEN_PORT = 9950
 
 
-def run(host, port, options):
-    """Create and run an instance of mitmproxy server in a subprocess.
+def start(host, port, options, timeout=10):
+    """Start an instance of mitmproxy server in a subprocess.
 
     Args:
         host: The host running mitmproxy.
         port: The port mitmproxy will listen on.
         options: The selenium wire options.
+        timeout: The number of seconds to wait for the server to start.
+            Default 10 seconds.
 
-    Returns: A MitmProxy object representing the running server.
+    Returns: A MitmProxy object representing the server.
+    Raises:
+        TimeoutException: if the mitmproxy server did not start in the
+            timout period.
     """
+    port = port or DEFAULT_LISTEN_PORT
+
     proxy = subprocess.Popen([
         'mitmdump',
         '--set',
-        'listen_port={}'.format(port or DEFAULT_LISTEN_PORT),
+        f'listen_port={port}',
         '--set',
-        'ssl_insecure={}'.format(str(options.get('verify_ssl', 'false')).lower()),
+        'ssl_insecure={}'.format(str(options.get('verify_ssl', 'true')).lower()),
         '--set',
         'stream_websockets=true',
         '--set',
         'termlog_verbosity=error',
+        '--set',
+        'flow_detail=0',
+        *_get_upstream_proxy_args(options),
         '-s',
         __file__
     ])
 
-    return MitmProxy(host, port, proxy)
+    start_time = time.time()
+
+    while time.time() - start_time < timeout:
+        with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+            if sock.connect_ex((host, port)) == 0:
+                return MitmProxy(host, port, proxy)
+            time.sleep(0.5)
+
+    raise TimeoutError('mitmproxy did not start within {} seconds'.format(timeout))
+
+
+def _get_upstream_proxy_args(options):
+    args = []
+    proxy_config = get_upstream_proxy(options)
+
+    http_proxy = proxy_config.get('http')
+    https_proxy = proxy_config.get('https')
+    conf = None
+
+    if http_proxy and https_proxy:
+        if http_proxy != https_proxy:
+            raise ValueError('http and https proxy must be the same for the mitmproxy backend')
+
+        conf = https_proxy
+    elif http_proxy:
+        conf = http_proxy
+    elif https_proxy:
+        conf = https_proxy
+
+    if conf:
+        scheme, username, password, hostport = conf
+
+        args += [
+            '--set',
+            f'mode=upstream:{scheme}://{hostport}'
+        ]
+
+        if username and password:
+            args += [
+                '--set',
+                f'upstream_auth={username}:{password}'
+            ]
+
+    return args
 
 
 class RequestCapture(AdminMixin, CaptureMixin):
@@ -63,8 +118,15 @@ class RequestCapture(AdminMixin, CaptureMixin):
             base_dir=options.get('request_storage_base_dir')
         )
 
+        # The logging in this add-on is not controlled by the logging
+        # in the selenium test because we're running in a subprocess.
+        # For the time being, configure basic logging using a config option.
+        logging.basicConfig(
+            level=getattr(logging, options.get('mitmproxy_log_level', 'ERROR'))
+        )
+
     def request(self, flow):
-        if flow.request.url.startswith('http://seleniumwire'):
+        if flow.request.url.startswith(ADMIN_PATH):
             self.handle_admin(flow)
         else:
             # Make any modifications to the original request
@@ -120,27 +182,6 @@ class MitmProxy:
         self.host = host
         self.port = port
         self.proc = proc
-
-    def wait(self, timeout=10):
-        """Wait for mitmproxy server to start.
-
-        Args:
-            timeout: The number of seconds to wait for the server to start.
-                Default 10 seconds.
-
-        Raises:
-            TimeoutException if the mitmproxy server did not start in the
-                timout period.
-        """
-        start = time.time()
-
-        while time.time() - start < timeout:
-            with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
-                if sock.connect_ex((self.host, self.port)) == 0:
-                    return
-                time.sleep(0.5)
-
-        raise TimeoutError('mitmproxy did not start within {} seconds'.format(timeout))
 
     def shutdown(self):
         self.proc.terminate()

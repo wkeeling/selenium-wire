@@ -66,10 +66,9 @@ class AdminClient:
             # Use mitmproxy if installed
             from . import mitmproxy
 
-            self._proxy = mitmproxy.run(addr, port, options)
-            self._proxy_addr = addr
-            self._proxy_port = port
-            self._proxy.wait()
+            self._proxy = mitmproxy.start(addr, port, options)
+            self._proxy_addr = self._proxy.host
+            self._proxy_port = self._proxy.port
         else:
             raise TypeError(
                 "Invalid backend '{}'. "
