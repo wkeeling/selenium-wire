@@ -8,8 +8,9 @@ from contextlib import closing
 
 try:
     import mitmproxy
-except ImportError:
-    raise ImportError('mitmproxy not found. Install it with "pip install mitmproxy".')
+except ImportError as e:
+    raise ImportError("To use the mitmproxy backend you must first "
+                      "install mitmproxy with 'pip install mitmproxy'.") from e
 
 from seleniumwire.proxy.handler import ADMIN_PATH, AdminMixin, CaptureMixin
 from seleniumwire.proxy.modifier import RequestModifier
