@@ -30,7 +30,6 @@ class CaptureRequestHandlerTest(TestCase):
 
         self.handler.handle_request(self.handler, self.body)
 
-        self.assertFalse(self.mock_modifier.modify.called)
         self.assertFalse(self.mock_storage.save_request.called)
 
     def test_ignores_get(self):
@@ -38,7 +37,6 @@ class CaptureRequestHandlerTest(TestCase):
 
         self.handler.handle_request(self.handler, self.body)
 
-        self.assertFalse(self.mock_modifier.modify.called)
         self.assertFalse(self.mock_storage.save_request.called)
 
     def test_no_ignores(self):
@@ -54,7 +52,6 @@ class CaptureRequestHandlerTest(TestCase):
 
         self.handler.handle_request(self.handler, self.body)
 
-        self.assertFalse(self.mock_modifier.modify.called)
         self.assertFalse(self.mock_storage.save_request.called)
 
     def test_save_response_called(self):
