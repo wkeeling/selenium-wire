@@ -393,7 +393,7 @@ class AdminMixinTest(TestCase):
         self.mock_send_response.assert_called_once_with(status)
         self.mock_send_header.assert_has_calls([call(k, v) for k, v in headers])
         self.mock_end_headers.assert_called_once_with()
-        self.mock_wfile.write.assert_called_once()
+        self.assertEqual(1, self.mock_wfile.write.call_count)
         try:
             body = json.loads(body.decode('utf-8'))
             rbody = json.loads(self.rbody.decode('utf-8'))
