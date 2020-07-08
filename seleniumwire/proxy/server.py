@@ -60,39 +60,6 @@ class ProxyHTTPServer(BoundedThreadingMixin, HTTPServer):
 
         super().__init__(self.options.get('max_threads', 9999), *args, **kwargs)
 
-    def _merge_with_env(self, proxy_config):
-        """Merge upstream proxy configuration with configuration loaded
-        from the environment.
-        """
-        http_proxy = os.environ.get('HTTP_PROXY')
-        https_proxy = os.environ.get('HTTPS_PROXY')
-        no_proxy = os.environ.get('NO_PROXY')
-
-        merged = {}
-
-        if http_proxy:
-            merged['http'] = http_proxy
-        if https_proxy:
-            merged['https'] = https_proxy
-        if no_proxy:
-            merged['no_proxy'] = no_proxy
-
-        merged.update(proxy_config)
-
-        return merged
-
-    def _sanitise_proxy_config(self, proxy_config):
-        """Parse the proxy configuration into something more usable."""
-        conf = namedtuple('ProxyConf', 'scheme username password hostport')
-
-        for proxy_type in ('http', 'https'):
-            # Parse the upstream proxy URL into (scheme, username, password, hostport)
-            # for ease of access.
-            if proxy_config.get(proxy_type) is not None:
-                proxy_config[proxy_type] = conf(*_parse_proxy(proxy_config[proxy_type]))
-
-        return proxy_config
-
     def shutdown(self):
         super().shutdown()
         super().server_close()  # Closes the server socket
