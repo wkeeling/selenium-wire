@@ -283,7 +283,7 @@ class AdminClientIntegrationTest(TestCase):
 
     def setUp(self):
         options = {}
-        if self._testMethodName == 'test_disable_encoding':  # yuck
+        if self._testMethodName == 'test_disable_encoding':
             options['disable_encoding'] = True
         self.client = AdminClient()
         host, port = self.client.create_proxy(options=options)
