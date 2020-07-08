@@ -8,11 +8,6 @@ from urllib.request import _parse_proxy
 
 log = logging.getLogger(__name__)
 
-ca_certs = {
-    'default': 'ca.crt',
-    'mitmproxy': 'mitmproxy.crt'
-}
-
 
 def get_upstream_proxy(options):
     """Get the upstream proxy configuration from the options dictionary.
@@ -58,23 +53,18 @@ def get_upstream_proxy(options):
     return merged
 
 
-def extract_cert(backend='default'):
+def extract_cert(cert_name='ca.crt'):
     """Extracts the root certificate to the current working directory."""
+
     try:
-        cert_name = ca_certs[backend]
-    except KeyError as e:
-        raise TypeError(
-            "Invalid backend '{}'. "
-            "Valid values are 'default' or 'mitmproxy'."
-            .format(backend)
-        ) from e
-    cert = pkgutil.get_data(__package__, cert_name)
-
-    with open(os.path.join(os.getcwd(), cert_name), 'wb') as out:
-        out.write(cert)
-
-    log.info('{} extracted. You can now import this into a browser.'.format(
-        cert_name))
+        cert = pkgutil.get_data(__package__, cert_name)
+    except FileNotFoundError:
+        log.error("Invalid certificate '{}'".format(cert_name))
+    else:
+        with open(os.path.join(os.getcwd(), cert_name), 'wb') as out:
+            out.write(cert)
+        log.info('{} extracted. You can now import this into a browser.'.format(
+            cert_name))
 
 
 def is_list_alike(container):
