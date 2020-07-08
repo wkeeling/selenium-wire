@@ -1,3 +1,4 @@
+import json
 from unittest import TestCase
 from unittest.mock import Mock, call
 
@@ -392,7 +393,15 @@ class AdminMixinTest(TestCase):
         self.mock_send_response.assert_called_once_with(status)
         self.mock_send_header.assert_has_calls([call(k, v) for k, v in headers])
         self.mock_end_headers.assert_called_once_with()
-        self.mock_wfile.write.assert_called_once_with(body)
+        self.mock_wfile.write.assert_called_once()
+        try:
+            body = json.loads(body.decode('utf-8'))
+            rbody = json.loads(self.rbody.decode('utf-8'))
+        except json.decoder.JSONDecodeError:
+            rbody = self.rbody
+        # Compare the dictionaries rather than the JSON strings which is
+        # more reliable when dictionary insertion order isn't preserved.
+        self.assertEqual(body, rbody)
 
     def setUp(self):
         CaptureRequestHandler.__init__ = Mock(return_value=None)
@@ -404,6 +413,7 @@ class AdminMixinTest(TestCase):
         self.mock_rfile = Mock()
         self.mock_rfile.read.return_value = b'the body'
         self.mock_wfile = Mock()
+        self.mock_wfile.write.side_effect = lambda body: setattr(self, 'rbody', body)
 
         self.handler = CaptureRequestHandler()
         self.handler.server = Mock()

@@ -60,14 +60,14 @@ class RequestTest(TestCase):
     def test_request_repr(self):
         request = self._create_request()
 
-        self.assertEqual(
-            "Request(method='GET', "
-            "path='http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', "
-            "headers={'Accept': '*/*', 'Host': 'www.example.com', 'User-Agent': 'Mozilla/5.0 "
-            "(X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}, "
-            "body=b'')",
-            repr(request)
-        )
+        request2 = eval(repr(request))
+
+        self.assertEqual('GET', request2.method)
+        self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', request2.path)
+        self.assertEqual({'Accept': '*/*', 'Host': 'www.example.com',
+                          'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'},
+                         request2.headers)
+        self.assertEqual(b'', request2.body)
 
     def test_request_str(self):
         request = self._create_request()
