@@ -127,6 +127,13 @@ class MitmProxyRequestHandler(AdminMixin, CaptureMixin):
         self.scopes = []
 
     def initialise(self, options):
+        """Initialise this add-on with the selenium wire options.
+
+        This method must be called before the add-on starts handling requests.
+
+        Args:
+            options: The selenium wire options.
+        """
         self.options = options
         self.storage = RequestStorage(
             base_dir=options.get('request_storage_base_dir')
