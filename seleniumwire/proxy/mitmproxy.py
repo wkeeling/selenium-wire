@@ -159,6 +159,7 @@ class MitmProxyRequestHandler(AdminMixin, CaptureMixin):
             self.capture_request(request)
             flow.request.id = request.id
 
+            # Could possibly use mitmproxy's 'anticomp' option instead of this
             if self.options.get('disable_encoding') is True:
                 flow.request.headers['Accept-Encoding'] = 'identity'
 
@@ -167,13 +168,13 @@ class MitmProxyRequestHandler(AdminMixin, CaptureMixin):
             # Request was not stored
             return
 
-        # Convert the implementation specific response to one of our responses
+        # Convert the mitmproxy specific response to one of our responses
         # for handling.
         response = Response(
             status_code=flow.response.status_code,
             reason=flow.response.reason,
             headers=dict(flow.response.headers),
-            body=flow.response.content
+            body=flow.response.raw_content
         )
 
         self.capture_response(flow.request.id, flow.request.url, response)
@@ -193,7 +194,7 @@ class MitmProxyRequestHandler(AdminMixin, CaptureMixin):
             method=flow.request.method,
             path=flow.request.url,
             headers=dict(flow.request.headers),
-            body=flow.request.content
+            body=flow.request.raw_content
         )
 
         return request
