@@ -77,12 +77,20 @@ class InspectRequestsMixin:
     def header_overrides(self):
         """The header overrides for outgoing browser requests.
 
-        The value of the headers should be a dictionary. Where a header in
-        the dictionary exists in the request, the dictionary value will
-        overwrite the one in the request. Where a header in the dictionary
+        The value of the headers can be a dictionary or list of sublists,
+        with each sublist having two elements - a URL pattern and headers.
+        Where a header in the dictionary exists in the request, the dictionary
+        value will overwrite the one in the request. Where a header in the dictionary
         does not exist in the request, it will be added to the request as a
         new header. To filter out a header from the request, set that header
-        in the dictionary with a value of None. Header names are case insensitive.
+        in the dictionary to None. Header names are case insensitive.
+
+        For example:
+            header_overrides = {'User-Agent': 'Firefox'}
+            header_overrides = [
+                ('.*somewhere.com.*', {'User-Agent': 'Firefox'}),
+                ('*.somewhere-else.com.*', {'User-Agent': 'Chrome'}),
+            ]
         """
         return self._client.get_header_overrides()
 
@@ -95,16 +103,75 @@ class InspectRequestsMixin:
         self._client.clear_header_overrides()
 
     @property
+    def param_overrides(self):
+        """The parameter overrides for outgoing browser requests.
+
+        For POST requests, the parameters are assumed to be encoded in the
+        request body.
+
+        The value of the params can be a dictionary or list of sublists,
+        with each sublist having two elements - a URL pattern and params.
+        Where a param in the dictionary exists in the request, the dictionary
+        value will overwrite the one in the request. Where a param in the dictionary
+        does not exist in the request, it will be added to the request as a
+        new param. To filter out a param from the request, set that param
+        in the dictionary to None.
+
+        For example:
+            param_overrides = {'foo': 'bar'}
+            param_overrides = [
+                ('.*somewhere.com.*', {'foo': 'bar'}),
+                ('*.somewhere-else.com.*', {'x': 'y'}),
+            ]
+        """
+        return self._client.get_param_overrides()
+
+    @param_overrides.setter
+    def param_overrides(self, params):
+        self._client.set_param_overrides(params)
+
+    @param_overrides.deleter
+    def param_overrides(self):
+        self._client.clear_param_overrides()
+
+    @property
+    def querystring_overrides(self):
+        """The querystring overrides for outgoing browser requests.
+
+        The value of the querystring override can be a string or a list of sublists,
+        with each sublist having two elements, a URL pattern and the querystring.
+        The querystring override will overwrite the querystring in the request
+        or will be added to the request if the request has no querystring. To
+        remove a querystring from the request, set the value to None.
+
+        For example:
+            querystring_overrides = 'foo=bar&x=y'
+            querystring_overrides = [
+                ('.*somewhere.com.*', 'foo=bar&x=y'),
+                ('*.somewhere-else.com.*', 'a=b&c=d'),
+            ]
+        """
+        return self._client.get_querystring_overrides()
+
+    @querystring_overrides.setter
+    def querystring_overrides(self, querystrings):
+        self._client.set_querystring_overrides(querystrings)
+
+    @querystring_overrides.deleter
+    def querystring_overrides(self):
+        self._client.clear_querystring_overrides()
+
+    @property
     def rewrite_rules(self):
         """The rules used to rewrite request URLs.
 
         The value of the rewrite rules should be a list of sublists (or tuples)
         with each sublist containing the pattern and replacement.
 
-        i.e:
+        For example:
             rewrite_rules = [
-                ('pattern', 'replacement'),
-                ('pattern', 'replacement'),
+                (r'(https?://)www.google.com/', r'\1www.bing.com/'),
+                (r'https://docs.python.org/2/', r'https://docs.python.org/3/'),
             ]
         """
         return self._client.get_rewrite_rules()

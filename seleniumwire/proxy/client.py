@@ -173,12 +173,7 @@ class AdminClient:
         return self._make_request('GET', '/response_body?request_id={}'.format(request_id))
 
     def set_header_overrides(self, headers):
-        """Sets the header overrides.
-
-        Args:
-            headers: A dictionary of headers to be used as overrides. Where the value
-                of a header is set to None, this header will be filtered out.
-        """
+        """Sets the header overrides."""
         self._make_request('POST', '/header_overrides', data=headers)
 
     def clear_header_overrides(self):
@@ -189,13 +184,32 @@ class AdminClient:
         """Gets any previously set header overrides"""
         return self._make_request('GET', '/header_overrides')
 
-    def set_rewrite_rules(self, rewrite_rules):
-        """Sets the rewrite rules.
+    def set_param_overrides(self, params):
+        """Set the param overrides."""
+        self._make_request('POST', '/param_overrides', data=params)
 
-        Args:
-            rewrite_rules: A list of rewrite rules. Each rule is a sublist (or 2-tuple)
-                containing the pattern and replacement.
-        """
+    def clear_param_overrides(self):
+        """Clears any previously set param overrides."""
+        self._make_request('DELETE', '/param_overrides')
+
+    def get_param_overrides(self):
+        """Gets any previously set param overrides"""
+        return self._make_request('GET', '/param_overrides')
+
+    def set_querystring_overrides(self, overrides):
+        """Set the querystring overrides."""
+        self._make_request('POST', '/querystring_overrides', data=overrides)
+
+    def clear_querystring_overrides(self):
+        """Clears any previously set querystring overrides."""
+        self._make_request('DELETE', '/querystring_overrides')
+
+    def get_querystring_overrides(self):
+        """Gets any previously set querystring overrides"""
+        return self._make_request('GET', '/querystring_overrides')
+
+    def set_rewrite_rules(self, rewrite_rules):
+        """Sets the rewrite rules."""
         self._make_request('POST', '/rewrite_rules', data=rewrite_rules)
 
     def clear_rewrite_rules(self):
@@ -207,11 +221,7 @@ class AdminClient:
         return self._make_request('GET', '/rewrite_rules')
 
     def set_scopes(self, scopes):
-        """Sets the scopes for the seleniumwire to log/modify request and response.
-
-        Args:
-            scopes: a regex string or list of regex string.
-        """
+        """Sets the scopes for the seleniumwire to log/modify request and response."""
         self._make_request('POST', '/scopes', data=scopes)
 
     def reset_scopes(self):
@@ -219,7 +229,7 @@ class AdminClient:
         self._make_request('DELETE', '/scopes')
 
     def get_scopes(self):
-        """Gets any previously set scopes"""
+        """Gets any previously set scopes."""
         return self._make_request('GET', '/scopes')
 
     def _make_request(self, command, path, data=None):

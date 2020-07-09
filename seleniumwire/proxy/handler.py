@@ -28,68 +28,79 @@ class AdminMixin:
         """
         parse_result = urlparse(request.path)
         path, params = parse_result.path, parse_qs(parse_result.query)
-        response = None
 
-        if path == '/requests':
-            if request.method == 'GET':
-                response = self._get_requests()
-            elif request.method == 'DELETE':
-                response = self._clear_requests()
-        elif path == '/last_request':
-            response = self._get_last_request()
-        elif path == '/request_body':
-            response = self._get_request_body(**params)
-        elif path == '/response_body':
-            response = self._get_response_body(**params)
-        elif path == '/find':
-            response = self._find_request(**params)
-        elif path == '/header_overrides':
-            if request.method == 'POST':
-                response = self._set_header_overrides(request)
-            elif request.method == 'DELETE':
-                response = self._clear_header_overrides()
-            elif request.method == 'GET':
-                response = self._get_header_overrides()
-        elif path == '/rewrite_rules':
-            if request.method == 'POST':
-                response = self._set_rewrite_rules(request)
-            elif request.method == 'DELETE':
-                response = self._clear_rewrite_rules()
-            elif request.method == 'GET':
-                response = self._get_rewrite_rules()
-        elif path == '/scopes':
-            if request.method == 'POST':
-                response = self._set_scopes(request)
-            elif request.method == 'DELETE':
-                response = self._reset_scopes()
-            elif request.method == 'GET':
-                response = self._get_scopes()
-        elif path == '/initialise':
-            return self._initialise(request)
+        request_mappings = {
+            '/requests': {
+                'GET': self._get_requests,
+                'DELETE': self._clear_requests
+            },
+            '/last_request': {
+                'GET': self._get_last_request
+            },
+            '/request_body': {
+                'GET': self._get_request_body
+            },
+            '/response_body': {
+                'GET': self._get_response_body
+            },
+            '/find': {
+                'GET': self._find_request
+            },
+            '/header_overrides': {
+                'GET': self._get_header_overrides,
+                'POST': self._set_header_overrides,
+                'DELETE': self._clear_header_overrides
+            },
+            '/param_overrides': {
+                'GET': self._get_param_overrides,
+                'POST': self._set_param_overrides,
+                'DELETE': self._clear_param_overrides
+            },
+            '/querystring_overrides': {
+                'GET': self._get_querystring_overrides,
+                'POST': self._set_querystring_overrides,
+                'DELETE': self._clear_querystring_overrides
+            },
+            '/rewrite_rules': {
+                'GET': self._get_rewrite_rules,
+                'POST': self._set_rewrite_rules,
+                'DELETE': self._clear_rewrite_rules
+            },
+            '/scopes': {
+                'GET': self._get_scopes,
+                'POST': self._set_scopes,
+                'DELETE': self._reset_scopes
+            },
+            '/initialise': {
+                'POST': self._initialise
+            }
+        }
 
-        if response is None:
+        try:
+            func = request_mappings[path][request.method]
+        except KeyError:
             raise RuntimeError(
                 'No handler configured for: {} {}'.format(request.method, request.path)
             )
 
-        return response
+        return func(request, **params)
 
-    def _get_requests(self):
+    def _get_requests(self, *_):
         return self._create_response(json.dumps(
             [r.to_dict() for r in self.storage.load_requests()]
         ).encode('utf-8'))
 
-    def _get_last_request(self):
+    def _get_last_request(self, *_):
         request = self.storage.load_last_request()
         if request is not None:
             request = request.to_dict()
         return self._create_response(json.dumps(request).encode('utf-8'))
 
-    def _clear_requests(self):
+    def _clear_requests(self, *_):
         self.storage.clear_requests()
         return self._create_response(json.dumps({'status': 'ok'}).encode('utf-8'))
 
-    def _get_request_body(self, request_id):
+    def _get_request_body(self, _, request_id):
         body = self.storage.load_request_body(request_id[0])
         return self._create_response(body, 'application/octet-stream')
 
