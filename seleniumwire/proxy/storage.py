@@ -194,17 +194,21 @@ class RequestStorage:
 
     def _decode_body(self, data, encoding):
         if encoding != 'identity':
-            if encoding in ('gzip', 'x-gzip'):
-                io = BytesIO(data)
-                with gzip.GzipFile(fileobj=io) as f:
-                    data = f.read()
-            elif encoding == 'deflate':
-                try:
-                    data = zlib.decompress(data)
-                except zlib.error:
-                    data = zlib.decompress(data, -zlib.MAX_WBITS)
-            else:
-                log.debug("Unknown Content-Encoding: %s", encoding)
+            try:
+                if encoding in ('gzip', 'x-gzip'):
+                    io = BytesIO(data)
+                    with gzip.GzipFile(fileobj=io) as f:
+                        data = f.read()
+                elif encoding == 'deflate':
+                    try:
+                        data = zlib.decompress(data)
+                    except zlib.error:
+                        data = zlib.decompress(data, -zlib.MAX_WBITS)
+                else:
+                    log.debug("Unknown Content-Encoding: %s", encoding)
+            except (OSError, EOFError, zlib.error) as e:
+                # Log a message and return the data untouched
+                log.debug('Unable to decode body: %s', str(e))
         return data
 
     def load_last_request(self):

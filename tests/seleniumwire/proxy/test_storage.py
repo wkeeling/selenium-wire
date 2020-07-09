@@ -198,6 +198,19 @@ class RequestStorageTest(TestCase):
 
         self.assertEqual(body, response_body)
 
+    def test_load_response_body_encoded_error(self):
+        body = b'test response body'
+        request = self._create_request()
+        storage = RequestStorage(base_dir=self.base_dir)
+        storage.save_request(request)
+        response = self._create_response(body=body)
+        response.headers['Content-Encoding'] = 'gzip'
+        storage.save_response(request.id, response)
+
+        response_body = storage.load_response_body(request.id)
+
+        self.assertEqual(body, response_body)
+
     def test_load_last_request(self):
         request_1 = self._create_request()
         request_2 = self._create_request()
