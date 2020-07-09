@@ -19,6 +19,11 @@ from seleniumwire.proxy.storage import RequestStorage
 from seleniumwire.proxy.utils import get_upstream_proxy
 
 DEFAULT_LISTEN_PORT = 9950
+DEFAULT_CONFDIR = '~/.mitmproxy'
+DEFAULT_UPSTREAM_CERT = 'false'
+DEFAULT_STREAM_WEBSOCKETS = 'true'
+DEFAULT_TERMLOG_VERBOSITY = 'error'
+DEFAULT_FLOW_DETAIL = 0
 
 
 def start(host, port, options, timeout=10):
@@ -40,19 +45,21 @@ def start(host, port, options, timeout=10):
 
     proxy = subprocess.Popen([
         'mitmdump',
+        *_get_upstream_proxy_args(options),
+        '--set',
+        'confdir={}'.format(options.get('mitmproxy_confdir', DEFAULT_CONFDIR)),
         '--set',
         'listen_port={}'.format(port),
         '--set',
         'ssl_insecure={}'.format(str(options.get('verify_ssl', 'true')).lower()),
         '--set',
-        'upstream_cert=false',
+        'upstream_cert={}'.format(DEFAULT_UPSTREAM_CERT),
         '--set',
-        'stream_websockets=true',
+        'stream_websockets={}'.format(DEFAULT_STREAM_WEBSOCKETS),
         '--set',
-        'termlog_verbosity=error',
+        'termlog_verbosity={}'.format(DEFAULT_TERMLOG_VERBOSITY),
         '--set',
-        'flow_detail=0',
-        *_get_upstream_proxy_args(options),
+        'flow_detail={}'.format(DEFAULT_FLOW_DETAIL),
         '-s',
         __file__
     ])
@@ -61,8 +68,10 @@ def start(host, port, options, timeout=10):
 
     while time.time() - start_time < timeout:
         with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+            # Try and connect to mitmproxy to determine whether it's started up
             if sock.connect_ex((host, port)) == 0:
                 return MitmProxy(host, port, proxy)
+            # Hasn't yet started so wait a bit and try again
             time.sleep(0.5)
 
     raise TimeoutError('mitmproxy did not start within {} seconds'.format(timeout))
@@ -77,8 +86,10 @@ def _get_upstream_proxy_args(options):
     conf = None
 
     if http_proxy and https_proxy:
-        if http_proxy != https_proxy:
-            raise ValueError('http and https proxy must be the same for the mitmproxy backend')
+        if http_proxy.hostport != https_proxy.hostport:
+            # We only support a single upstream proxy server
+            raise ValueError('Cannot specify both http AND https '
+                             'proxy settings with mitmproxy backend')
 
         conf = https_proxy
     elif http_proxy:
