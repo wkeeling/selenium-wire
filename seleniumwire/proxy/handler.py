@@ -159,7 +159,7 @@ class AdminMixin:
         return response
 
     def initialise(self, options):
-        """Perform any initialisation actions before any admin requests are served.
+        """Perform any initialisation actions.
 
         Args:
             options: The selenium wire options.
