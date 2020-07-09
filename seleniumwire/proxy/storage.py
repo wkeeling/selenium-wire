@@ -61,7 +61,7 @@ class RequestStorage:
         os.mkdir(request_dir)
 
         body = request.body
-        request.body = None  # The request body is stored separately to the request itself
+        request.body = b''  # The request body is stored separately to the request itself
 
         self._save(request, request_dir, 'request')
 
@@ -102,7 +102,7 @@ class RequestStorage:
         request_dir = self._get_request_dir(request_id)
 
         body = response.body
-        response.body = None  # The response body is stored separately to the response itself
+        response.body = b''  # The response body is stored separately to the response itself
 
         self._save(response, request_dir, 'response')
 
@@ -169,7 +169,7 @@ class RequestStorage:
         try:
             return self._load_body(request_id, 'requestbody')
         except FileNotFoundError:
-            return None
+            return b''
 
     def load_response_body(self, request_id):
         """Loads the body of the response corresponding to the request with the specified id.
@@ -183,9 +183,8 @@ class RequestStorage:
             raw_body = self._load_body(request_id, 'responsebody')
             request = self._load_request(request_id)
             return self._decode_body(raw_body, request.response.headers.get('Content-Encoding', 'identity'))
-
         except FileNotFoundError:
-            return None
+            return b''
 
     def _load_body(self, request_id, name):
         request_dir = self._get_request_dir(request_id)
