@@ -22,8 +22,8 @@ class RequestModifier:
     def headers(self):
         """The headers that should be used to override the request headers.
 
-        The value of the headers could be a dictionary or list of sublists,
-        with each sublist having two elements - the pattern and headers.
+        The value of the headers can be a dictionary or list of sublists,
+        with each sublist having two elements - a URL pattern and headers.
         Where a header in the dictionary exists in the request, the dictionary
         value will overwrite the one in the request. Where a header in the
         dictionary does not exist in the request, it will be added to the
@@ -32,10 +32,10 @@ class RequestModifier:
         Header names are case insensitive.
 
         For example:
-            headers = {'User-Agent':'Firefox'}
+            headers = {'User-Agent': 'Firefox'}
             headers = [
-                ('.*google.com.*', {'User-Agent':'Firefox'}),
-                ('url2', {'User-Agent':'IE'}),
+                ('.*somewhere.com.*', {'User-Agent': 'Firefox'}),
+                ('*.somewhere-else.com.*', {'User-Agent': 'Chrome'}),
             ]
         """
         with self._lock:
@@ -74,8 +74,8 @@ class RequestModifier:
 
         For example:
             rewrite_rules = [
-                ('pattern', 'replacement'),
-                ('pattern', 'replacement'),
+                (r'(https?://)www.google.com/', r'\1www.bing.com/'),
+                (r'https://docs.python.org/2/', r'https://docs.python.org/3/'),
             ]
         """
         with self._lock:
