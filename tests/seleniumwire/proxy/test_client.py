@@ -87,7 +87,7 @@ class AdminClientIntegrationTest(TestCase):
 
         body = self.client.get_request_body(last_request['id'])
 
-        self.assertIsNone(body)
+        self.assertEqual(b'', body)
 
     def test_get_response_body(self):
         self._make_request('https://www.wikipedia.org')
@@ -122,7 +122,7 @@ class AdminClientIntegrationTest(TestCase):
 
         body = self.client.get_response_body(redirect_request['id'])
 
-        self.assertIsNone(body)
+        self.assertEqual(b'', body)
 
     def test_set_header_overrides(self):
         self.client.set_header_overrides({

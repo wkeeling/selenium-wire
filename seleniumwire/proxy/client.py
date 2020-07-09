@@ -157,9 +157,9 @@ class AdminClient:
         Args:
             request_id: The request identifier.
         Returns:
-            The binary request body, or None if the request has no body.
+            The binary request body.
         """
-        return self._make_request('GET', '/request_body?request_id={}'.format(request_id)) or None
+        return self._make_request('GET', '/request_body?request_id={}'.format(request_id))
 
     def get_response_body(self, request_id):
         """Returns the body of the response associated with the request with the
@@ -168,9 +168,9 @@ class AdminClient:
         Args:
             request_id: The request identifier.
         Returns:
-            The binary response body, or None if the response has no body.
+            The binary response body.
         """
-        return self._make_request('GET', '/response_body?request_id={}'.format(request_id)) or None
+        return self._make_request('GET', '/response_body?request_id={}'.format(request_id))
 
     def set_header_overrides(self, headers):
         """Sets the header overrides.
