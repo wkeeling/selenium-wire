@@ -137,9 +137,15 @@ class ResponseTest(TestCase):
     def test_response_repr(self):
         response = self._create_response()
 
-        self.assertEqual("Response(status_code=200, reason='OK', headers={"
-                         "'Content-Type': 'application/json', 'Content-Length': 120"
-                         "}, body=b'')", repr(response))
+        response2 = eval(repr(response))
+
+        self.assertEqual(200, response2.status_code)
+        self.assertEqual('OK', response2.reason)
+        self.assertEqual({
+            'Content-Type': 'application/json',
+            'Content-Length': 120
+        }, response2.headers)
+        self.assertEqual(b'', response2.body)
 
     def test_response_str(self):
         response = self._create_response()
