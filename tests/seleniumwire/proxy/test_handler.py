@@ -15,7 +15,7 @@ class CaptureRequestHandlerTest(TestCase):
         self.handler.handle_request(self.handler, self.body)
 
         self.assertEqual(1, len(modified))
-        self.assertEqual('https://www.google.com/foo/bar?x=y', modified[0].path)
+        self.assertEqual('https://www.google.com/foo/bar?x=y', modified[0].url)
 
     def test_save_request_called(self):
         saved = []
@@ -24,7 +24,7 @@ class CaptureRequestHandlerTest(TestCase):
         self.handler.handle_request(self.handler, self.body)
 
         self.assertEqual(1, len(saved))
-        self.assertEqual('https://www.google.com/foo/bar?x=y', saved[0].path)
+        self.assertEqual('https://www.google.com/foo/bar?x=y', saved[0].url)
 
     def test_ignores_options(self):
         self.handler.command = 'OPTIONS'
@@ -88,7 +88,7 @@ class CaptureRequestHandlerTest(TestCase):
         self.handler.options = {}
         self.handler.scopes = []
         self.handler.headers = {}
-        self.handler.path = 'https://www.google.com/foo/bar?x=y'
+        self.handler.url = 'https://www.google.com/foo/bar?x=y'
         self.handler.command = 'GET'
         self.body = None
 
@@ -97,9 +97,9 @@ class AdminMixinTest(TestCase):
 
     def test_get_requests(self):
         self.handler.path = 'http://seleniumwire/requests'
-        request_1 = Request(method='GET', path='http://somewhere.com/foo', headers={})
+        request_1 = Request(method='GET', url='http://somewhere.com/foo', headers={})
         request_1.id = '12345'
-        request_2 = Request(method='GET', path='http://somewhere.com/bar', headers={})
+        request_2 = Request(method='GET', url='http://somewhere.com/bar', headers={})
         request_2.id = '67890'
         self.mock_storage.load_requests.return_value = [request_1, request_2]
 
@@ -110,7 +110,7 @@ class AdminMixinTest(TestCase):
             status=200,
             headers=[('Content-Type', 'application/json'),
                      ('Content-Length', 206)],
-            body=b'[{"id": "12345", "method": "GET", "path": "http://somewhere.com/foo", "headers": {}, '
+            body=b'[{"id": "12345", "method": "GET", "url": "http://somewhere.com/foo", "headers": {}, '
                  b'"response": null}, {"id": "67890", "method": "GET", '
                  b'"path": "http://somewhere.com/bar", "headers": {}, "response": null}]'
         )
@@ -132,7 +132,7 @@ class AdminMixinTest(TestCase):
 
     def test_get_last_request(self):
         self.handler.path = 'http://seleniumwire/last_request'
-        request = Request(method='GET', path='http://somewhere.com/foo', headers={})
+        request = Request(method='GET', url='http://somewhere.com/foo', headers={})
         request.id = '12345'
         self.mock_storage.load_last_request.return_value = request
 
@@ -144,7 +144,7 @@ class AdminMixinTest(TestCase):
             status=200,
             headers=[('Content-Type', 'application/json'),
                      ('Content-Length', 101)],
-            body=b'{"id": "12345", "method": "GET", "path": "http://somewhere.com/foo", "headers": {}, '
+            body=b'{"id": "12345", "method": "GET", "url": "http://somewhere.com/foo", "headers": {}, '
                  b'"response": null}'
         )
 
@@ -192,7 +192,7 @@ class AdminMixinTest(TestCase):
 
     def test_find(self):
         self.handler.path = 'http://seleniumwire/find?path=/foo/bar'
-        request = Request(method='GET', path='http://somewhere.com/foo', headers={})
+        request = Request(method='GET', url='http://somewhere.com/foo', headers={})
         request.id = '12345'
         self.mock_storage.find.return_value = request
 
@@ -203,7 +203,7 @@ class AdminMixinTest(TestCase):
             status=200,
             headers=[('Content-Type', 'application/json'),
                      ('Content-Length', 101)],
-            body=b'{"id": "12345", "method": "GET", "path": "http://somewhere.com/foo", "headers": {}, '
+            body=b'{"id": "12345", "method": "GET", "url": "http://somewhere.com/foo", "headers": {}, '
                  b'"response": null}'
         )
 

@@ -73,7 +73,7 @@ class RequestStorage:
 
         with self._lock:
             self._index.append(_IndexedRequest(id=request_id,
-                                               path=request.path,
+                                               url=request.url,
                                                has_response=False))
 
         return request_id

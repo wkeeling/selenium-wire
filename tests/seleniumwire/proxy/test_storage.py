@@ -63,7 +63,7 @@ class RequestStorageTest(TestCase):
             loaded_request = pickle.load(loaded)
 
         self.assertEqual(request.id, loaded_request.id)
-        self.assertEqual('http://www.example.com/test/path/', loaded_request.path)
+        self.assertEqual('http://www.example.com/test/path/', loaded_request.url)
         self.assertEqual('GET', loaded_request.method)
         self.assertEqual({
             'Host': 'www.example.com',
@@ -272,12 +272,12 @@ class RequestStorageTest(TestCase):
         return glob.glob(os.path.join(self.base_dir, '.seleniumwire', 'storage-*',
                                       'request-{}'.format(request_id), filename))
 
-    def _create_request(self, path='http://www.example.com/test/path/', body=None):
+    def _create_request(self, url='http://www.example.com/test/path/', body=None):
         headers = {
             'Host': 'www.example.com',
             'Accept': '*/*'
         }
-        return Request(method='GET', path=path, headers=headers, body=body)
+        return Request(method='GET', url=url, headers=headers, body=body)
 
     def _create_response(self, body=None):
         headers = {

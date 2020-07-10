@@ -1,3 +1,4 @@
+import os
 import ssl
 import urllib.error
 import urllib.request
@@ -27,7 +28,7 @@ class AdminClientIntegrationTest(TestCase):
         self.assertEqual(len(requests), 1)
         request = requests[0]
         self.assertEqual('GET', request['method'])
-        self.assertEqual('https://www.python.org/', request['path'])
+        self.assertEqual('https://www.python.org/', request['url'])
         self.assertEqual('identity', request['headers']['Accept-Encoding'])
         self.assertEqual(200, request['response']['status_code'])
         self.assertEqual( 'text/html; charset=utf-8', request['response']['headers']['Content-Type'])
@@ -46,7 +47,7 @@ class AdminClientIntegrationTest(TestCase):
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual('https://www.bbc.co.uk/', last_request['path'])
+        self.assertEqual('https://www.bbc.co.uk/', last_request['url'])
 
     def test_get_last_request_none(self):
         last_request = self.client.get_last_request()
@@ -70,15 +71,15 @@ class AdminClientIntegrationTest(TestCase):
 
         self.assertEqual(
             'https://stackoverflow.com/questions/tagged/django?page=2&sort=newest&pagesize=15',
-            self.client.find('/questions/tagged/django')['path']
+            self.client.find('/questions/tagged/django')['url']
         )
         self.assertEqual(
             'https://docs.python.org/3.4/library/http.client.html',
-            self.client.find('/3.4/library/http.client.html')['path']
+            self.client.find('/3.4/library/http.client.html')['url']
         )
         self.assertEqual(
             'https://www.google.com/',
-            self.client.find('https://www.google.com')['path']
+            self.client.find('https://www.google.com')['url']
         )
 
     def test_get_request_body_empty(self):
@@ -191,7 +192,7 @@ class AdminClientIntegrationTest(TestCase):
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual('https://github.com/', last_request['path'])
+        self.assertEqual('https://github.com/', last_request['url'])
         self.assertEqual('github.com', last_request['headers']['Host'])
 
     def test_clear_rewrite_rules(self):
@@ -204,7 +205,7 @@ class AdminClientIntegrationTest(TestCase):
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual('https://stackoverflow.com/', last_request['path'])
+        self.assertEqual('https://stackoverflow.com/', last_request['url'])
         self.assertEqual('stackoverflow.com', last_request['headers']['Host'])
 
     def test_get_rewrite_rules(self):
@@ -223,16 +224,16 @@ class AdminClientIntegrationTest(TestCase):
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual('https://stackoverflow.com/', last_request['path'])
+        self.assertEqual('https://stackoverflow.com/', last_request['url'])
         self.assertEqual('stackoverflow.com', last_request['headers']['Host'])
 
         self._make_request('https://github.com')
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual('https://stackoverflow.com/', last_request['path'])
+        self.assertEqual('https://stackoverflow.com/', last_request['url'])
         self.assertEqual('stackoverflow.com', last_request['headers']['Host'])
-        self.assertNotEqual('https://github.com/', last_request['path'])
+        self.assertNotEqual('https://github.com/', last_request['url'])
         self.assertNotEqual('github.com', last_request['headers']['Host'])
 
     def test_set_multiples_scopes(self):
@@ -240,17 +241,17 @@ class AdminClientIntegrationTest(TestCase):
 
         self._make_request('https://stackoverflow.com')
         last_request = self.client.get_last_request()
-        self.assertEqual('https://stackoverflow.com/', last_request['path'])
+        self.assertEqual('https://stackoverflow.com/', last_request['url'])
         self.assertEqual('stackoverflow.com', last_request['headers']['Host'])
 
         self._make_request('https://github.com')
         last_request = self.client.get_last_request()
-        self.assertEqual('https://github.com/', last_request['path'])
+        self.assertEqual('https://github.com/', last_request['url'])
         self.assertEqual('github.com', last_request['headers']['Host'])
 
         self._make_request('https://google.com')
         last_request = self.client.get_last_request()
-        self.assertNotEqual('https://google.com/', last_request['path'])
+        self.assertNotEqual('https://google.com/', last_request['url'])
         self.assertNotEqual('google.com', last_request['headers']['Host'])
 
     def test_reset_scopes(self):
@@ -282,7 +283,7 @@ class AdminClientIntegrationTest(TestCase):
         )
 
     def setUp(self):
-        options = {}
+        options = {'backend': os.environ.get('SW_TEST_BACKEND', 'default')}
         if self._testMethodName == 'test_disable_encoding':
             options['disable_encoding'] = True
         self.client = AdminClient()

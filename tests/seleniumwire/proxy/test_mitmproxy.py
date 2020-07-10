@@ -183,7 +183,7 @@ class MitmProxyRequestHandlerTest(TestCase):
         self.handler.request(mock_flow)
 
         self.assertEqual('GET', captured_request.method)
-        self.assertEqual('http://seleniumwire/requests', captured_request.path)
+        self.assertEqual('http://seleniumwire/requests', captured_request.url)
         self.assertEqual({'Accept-Encoding': 'application/json'}, captured_request.headers)
         self.assertEqual(b'', captured_request.body)
         self.assertEqual('flowresponse', mock_flow.response)
@@ -202,7 +202,7 @@ class MitmProxyRequestHandlerTest(TestCase):
 
         self.handler.request(mock_flow)
 
-        self.mock_modifier.modify.assert_called_once_with(mock_flow.request, path_attr='url')
+        self.mock_modifier.modify.assert_called_once_with(mock_flow.request)
 
     def test_capture_request_called(self):
         mock_flow = Mock()
@@ -223,7 +223,7 @@ class MitmProxyRequestHandlerTest(TestCase):
 
         self.assertEqual(1, self.mock_capture_request.call_count)
         self.assertEqual('GET', captured_request.method)
-        self.assertEqual('http://somewhere.com/some/path', captured_request.path)
+        self.assertEqual('http://somewhere.com/some/path', captured_request.url)
         self.assertEqual({'Accept-Encoding': 'identity'}, captured_request.headers)
         self.assertEqual(b'foobar', captured_request.body)
         self.assertEqual('12345', captured_request.id)

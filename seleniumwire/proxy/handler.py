@@ -85,18 +85,18 @@ class AdminMixin:
 
         return func(request, **params)
 
-    def _get_requests(self, *_):
+    def _get_requests(self, _):
         return self._create_response(json.dumps(
             [r.to_dict() for r in self.storage.load_requests()]
         ).encode('utf-8'))
 
-    def _get_last_request(self, *_):
+    def _get_last_request(self, _):
         request = self.storage.load_last_request()
         if request is not None:
             request = request.to_dict()
         return self._create_response(json.dumps(request).encode('utf-8'))
 
-    def _clear_requests(self, *_):
+    def _clear_requests(self, _):
         self.storage.clear_requests()
         return self._create_response(json.dumps({'status': 'ok'}).encode('utf-8'))
 
@@ -104,11 +104,11 @@ class AdminMixin:
         body = self.storage.load_request_body(request_id[0])
         return self._create_response(body, 'application/octet-stream')
 
-    def _get_response_body(self, request_id):
+    def _get_response_body(self, _, request_id):
         body = self.storage.load_response_body(request_id[0])
         return self._create_response(body, 'application/octet-stream')
 
-    def _find_request(self, path):
+    def _find_request(self, _, path):
         request = self.storage.find(path[0])
         if request is not None:
             request = request.to_dict()
@@ -119,23 +119,47 @@ class AdminMixin:
         self.modifier.headers = headers
         return self._create_response(json.dumps({'status': 'ok'}).encode('utf-8'))
 
-    def _clear_header_overrides(self):
+    def _clear_header_overrides(self, _):
         del self.modifier.headers
         return self._create_response(json.dumps({'status': 'ok'}).encode('utf-8'))
 
-    def _get_header_overrides(self):
+    def _get_header_overrides(self, _):
         return self._create_response(json.dumps(self.modifier.headers).encode('utf-8'))
+
+    def _set_param_overrides(self, request):
+        params = json.loads(request.body.decode('utf-8'))
+        self.modifier.params = params
+        return self._create_response(json.dumps({'status': 'ok'}).encode('utf-8'))
+
+    def _clear_param_overrides(self, _):
+        del self.modifier.params
+        return self._create_response(json.dumps({'status': 'ok'}).encode('utf-8'))
+
+    def _get_param_overrides(self, _):
+        return self._create_response(json.dumps(self.modifier.params).encode('utf-8'))
+
+    def _set_querystring_overrides(self, request):
+        querystring = json.loads(request.body.decode('utf-8'))
+        self.modifier.querystring = querystring
+        return self._create_response(json.dumps({'status': 'ok'}).encode('utf-8'))
+
+    def _clear_querystring_overrides(self, _):
+        del self.modifier.querystring
+        return self._create_response(json.dumps({'status': 'ok'}).encode('utf-8'))
+
+    def _get_querystring_overrides(self, _):
+        return self._create_response(json.dumps(self.modifier.querystring).encode('utf-8'))
 
     def _set_rewrite_rules(self, request):
         rewrite_rules = json.loads(request.body.decode('utf-8'))
         self.modifier.rewrite_rules = rewrite_rules
         return self._create_response(json.dumps({'status': 'ok'}).encode('utf-8'))
 
-    def _clear_rewrite_rules(self):
+    def _clear_rewrite_rules(self, _):
         del self.modifier.rewrite_rules
         return self._create_response(json.dumps({'status': 'ok'}).encode('utf-8'))
 
-    def _get_rewrite_rules(self):
+    def _get_rewrite_rules(self, _):
         return self._create_response(json.dumps(self.modifier.rewrite_rules).encode('utf-8'))
 
     def _set_scopes(self, request):
@@ -143,11 +167,11 @@ class AdminMixin:
         self.scopes = scopes
         return self._create_response(json.dumps({'status': 'ok'}).encode('utf-8'))
 
-    def _reset_scopes(self):
+    def _reset_scopes(self, _):
         self.scopes = []
         return self._create_response(json.dumps({'status': 'ok'}).encode('utf-8'))
 
-    def _get_scopes(self):
+    def _get_scopes(self, _):
         return self._create_response(json.dumps(self.scopes).encode('utf-8'))
 
     def _initialise(self, request):
@@ -204,24 +228,24 @@ class CaptureMixin:
         # Save the request to our storage
         self.storage.save_request(request)
 
-    def capture_response(self, request_id, path, response):
+    def capture_response(self, request_id, url, response):
         """Capture a response and its body that relate to a previous request.
 
         Args:
             request_id: The id of the original request.
-            path: The request path.
+            url: The request url.
             response: The response to capture.
         """
-        log.info('Capturing response: %s %s %s', path, response.status_code, response.reason)
+        log.info('Capturing response: %s %s %s', url, response.status_code, response.reason)
         self.storage.save_response(request_id, response)
 
-    def _in_scope(self, scopes, path):
+    def _in_scope(self, scopes, url):
         if not scopes:
             return True
         elif not is_list_alike(scopes):
             scopes = [scopes]
         for scope in scopes:
-            match = re.search(scope, path)
+            match = re.search(scope, url)
             if match:
                 return True
         return False
@@ -253,7 +277,7 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
             req_body: The binary request body.
         """
         # First make any modifications to the request
-        self.modifier.modify(req)
+        self.modifier.modify(req, url_attr='path')
 
         # Convert the implementation specific request to one of our requests
         # for handling.
@@ -305,7 +329,7 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
     def _create_request(self, req, req_body):
         request = Request(
             method=req.command,
-            path=req.path,
+            url=req.path,
             headers=dict(req.headers),
             body=req_body
         )

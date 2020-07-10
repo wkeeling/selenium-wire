@@ -8,18 +8,18 @@ from .utils import CaseInsensitiveDict
 class Request:
     """Represents an HTTP request."""
 
-    def __init__(self, *, method, path, headers, body=b''):
+    def __init__(self, *, method, url, headers, body=b''):
         """Initialise a new Request object.
 
         Args:
             method: The request method - GET, POST etc.
-            path: The request path.
+            url: The request URL.
             headers: The request headers as a dictionary.
             body: The request body as bytes.
         """
         self.id = None  # The id is set for captured requests
         self.method = method
-        self.path = path
+        self.url = url
         self.headers = CaseInsensitiveDict(headers)
         self.body = body
         self.response = None
@@ -71,6 +71,12 @@ class Request:
         return {name: val[0] if len(val) == 1 else val
                 for name, val in parse_qs(qs, keep_blank_values=True).items()}
 
+    @property
+    def path(self):
+        # TODO: this should return just the path, but for backwards compatibility
+        # it returns the full URL for the time being.
+        return self.url
+
     def to_dict(self):
         """Return a dictionary representation of the request, without the body.
 
@@ -86,11 +92,11 @@ class Request:
         return d
 
     def __repr__(self):
-        return 'Request(method={method!r}, path={path!r}, headers={headers!r}, body={_body!r})' \
+        return 'Request(method={method!r}, url={url!r}, headers={headers!r}, body={_body!r})' \
             .format(**vars(self))
 
     def __str__(self):
-        return self.path
+        return self.url
 
 
 class Response:

@@ -9,7 +9,7 @@ class RequestTest(TestCase):
         request = self._create_request()
 
         self.assertEqual('GET', request.method),
-        self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', request.path)
+        self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', request.url)
         self.assertEqual(3, len(request.headers))
         self.assertEqual('www.example.com', request.headers['Host'])
         self.assertIsNone(request.response)
@@ -49,7 +49,7 @@ class RequestTest(TestCase):
     def test_POST_params(self):
         request = self._create_request(body=b'foo=bar&hello=world&foo=baz&other=')
         request.method = 'POST'
-        request.path = 'http://www.example.com/some/path/'
+        request.url = 'http://www.example.com/some/path/'
         request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
 
         params = request.params
@@ -63,7 +63,7 @@ class RequestTest(TestCase):
         request2 = eval(repr(request))
 
         self.assertEqual('GET', request2.method)
-        self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', request2.path)
+        self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', request2.url)
         self.assertEqual({'Accept': '*/*', 'Host': 'www.example.com',
                           'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'},
                          request2.headers)
@@ -81,7 +81,7 @@ class RequestTest(TestCase):
         self.assertEqual({
             'id': '12345',
             'method': 'GET',
-            'path': 'http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
+            'url': 'http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
             'headers': {
                 'Accept': '*/*',
                 'Host': 'www.example.com',
@@ -93,7 +93,7 @@ class RequestTest(TestCase):
     def _create_request(self, body=None):
         request = Request(
             method='GET',
-            path='http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
+            url='http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
             headers={
                 'Accept': '*/*',
                 'Host': 'www.example.com',
