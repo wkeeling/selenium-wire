@@ -50,7 +50,7 @@ class Request:
         Returns:
             The query string.
         """
-        return urlsplit(self.path).query
+        return urlsplit(self.url).query
 
     @property
     def params(self):
@@ -73,9 +73,7 @@ class Request:
 
     @property
     def path(self):
-        # TODO: this should return just the path, but for backwards compatibility
-        # it returns the full URL for the time being.
-        return self.url
+        return urlsplit(self.url).path
 
     def to_dict(self):
         """Return a dictionary representation of the request, without the body.

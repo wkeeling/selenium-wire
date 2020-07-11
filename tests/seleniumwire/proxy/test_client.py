@@ -173,6 +173,44 @@ class AdminClientIntegrationTest(TestCase):
 
         self.assertEqual({'User-Agent': 'Test_User_Agent_String'}, self.client.get_header_overrides())
 
+    def test_set_header_overrides(self):
+        self.client.set_header_overrides({
+            'User-Agent': 'Test_User_Agent_String'
+        })
+        self._make_request('https://www.github.com')
+
+        last_request = self.client.get_last_request()
+
+        self.assertEqual('Test_User_Agent_String', last_request['headers']['User-Agent'])
+
+    def test_set_header_overrides_filters_out_header(self):
+        self.client.set_header_overrides({
+            'User-Agent': None
+        })
+        self._make_request('https://www.wikipedia.org')
+
+        last_request = self.client.get_last_request()
+
+        self.assertNotIn('User-Agent', last_request['headers'])
+
+    def test_clear_header_overrides(self):
+        self.client.set_header_overrides({
+            'User-Agent': 'Test_User_Agent_String'
+        })
+        self.client.clear_header_overrides()
+        self._make_request('https://www.stackoverflow.com')
+
+        last_request = self.client.get_last_request()
+
+        self.assertNotEqual(
+            'Test_User_Agent_String', last_request['headers']['User-Agent']
+        )
+
+    def test_get_header_overrides(self):
+        self.client.set_header_overrides({'User-Agent': 'Test_User_Agent_String'})
+
+        self.assertEqual({'User-Agent': 'Test_User_Agent_String'}, self.client.get_header_overrides())
+
     def test_get_url_match_header_overrides(self):
         self.client.set_header_overrides([['host1', {
             'User-Agent': 'Test_User_Agent_String'

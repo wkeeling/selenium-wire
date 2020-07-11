@@ -268,6 +268,100 @@ class AdminMixinTest(TestCase):
             body=b'{"User-Agent": "useragent"}'
         )
 
+    def test_set_param_overrides(self):
+        self.handler.path = 'http://seleniumwire/param_overrides'
+        self.handler.command = 'POST'
+        self.handler.headers = {
+            'Content-Length': 14
+        }
+        self.mock_rfile.read.return_value = b'{"foo": "bar"}'
+
+        self.handler.handle_admin()
+
+        self.mock_rfile.read.assert_called_once_with(14)
+        self.assertEqual(self.mock_modifier.params, {'foo': 'bar'})
+        self.assert_response_mocks_called(
+            status=200,
+            headers=[('Content-Type', 'application/json'),
+                     ('Content-Length', 16)],
+            body=b'{"status": "ok"}'
+        )
+
+    def test_delete_param_overrides(self):
+        self.handler.path = 'http://seleniumwire/param_overrides'
+        self.handler.command = 'DELETE'
+        self.mock_modifier.params = {'foo': 'bar'}
+
+        self.handler.handle_admin()
+
+        self.assertFalse(hasattr(self.mock_modifier, 'params'))
+        self.assert_response_mocks_called(
+            status=200,
+            headers=[('Content-Type', 'application/json'),
+                     ('Content-Length', 16)],
+            body=b'{"status": "ok"}'
+        )
+
+    def test_get_param_overrides(self):
+        self.handler.path = 'http://seleniumwire/param_overrides'
+        self.mock_modifier.params = {'foo': 'bar'}
+
+        self.handler.handle_admin()
+
+        self.assert_response_mocks_called(
+            status=200,
+            headers=[('Content-Type', 'application/json'),
+                     ('Content-Length', 14)],
+            body=b'{"foo": "bar"}'
+        )
+
+    def test_set_querystring_overrides(self):
+        self.handler.path = 'http://seleniumwire/querystring_overrides'
+        self.handler.command = 'POST'
+        self.handler.headers = {
+            'Content-Length': 36
+        }
+        self.mock_rfile.read.return_value = b'{"overrides": "foo=bar&hello=world"}'
+
+        self.handler.handle_admin()
+
+        self.mock_rfile.read.assert_called_once_with(36)
+        self.assertEqual(self.mock_modifier.querystring, 'foo=bar&hello=world')
+        self.assert_response_mocks_called(
+            status=200,
+            headers=[('Content-Type', 'application/json'),
+                     ('Content-Length', 16)],
+            body=b'{"status": "ok"}'
+        )
+
+    def test_delete_querystring_overrides(self):
+        self.handler.path = 'http://seleniumwire/querystring_overrides'
+        self.handler.command = 'DELETE'
+        self.mock_modifier.querystring = 'foo=bar&hello=world'
+
+        self.handler.handle_admin()
+
+        self.assertFalse(hasattr(self.mock_modifier, 'querystring'))
+        self.assert_response_mocks_called(
+            status=200,
+            headers=[('Content-Type', 'application/json'),
+                     ('Content-Length', 16)],
+            body=b'{"status": "ok"}'
+        )
+
+    def test_get_querystring_overrides(self):
+        self.handler.path = 'http://seleniumwire/querystring_overrides'
+        self.mock_modifier.querystring = 'foo=bar&hello=world'
+
+        self.handler.handle_admin()
+
+        self.assert_response_mocks_called(
+            status=200,
+            headers=[('Content-Type', 'application/json'),
+                     ('Content-Length', 36)],
+            body=b'{"overrides": "foo=bar&hello=world"}'
+        )
+
     def test_set_rewrite_rules(self):
         self.handler.path = 'http://seleniumwire/rewrite_rules'
         self.handler.command = 'POST'

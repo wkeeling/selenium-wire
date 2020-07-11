@@ -149,6 +149,56 @@ class InspectRequestsMixinTest(TestCase):
 
         mock_client.get_header_overrides.assert_called_once_with()
 
+    def test_set_param_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+        param_overrides = {'foo': 'bar'}
+
+        driver.param_overrides = param_overrides
+
+        mock_client.set_param_overrides.assert_called_once_with(param_overrides)
+
+    def test_delete_param_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        del driver.param_overrides
+
+        mock_client.clear_param_overrides.assert_called_once_with()
+
+    def test_get_param_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        driver.param_overrides
+
+        mock_client.get_param_overrides.assert_called_once_with()
+
+    def test_set_querystring_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+        querystring_overrides = 'foo=bar&hello=world'
+
+        driver.querystring_overrides = querystring_overrides
+
+        mock_client.set_querystring_overrides.assert_called_once_with(querystring_overrides)
+
+    def test_delete_querystring_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        del driver.querystring_overrides
+
+        mock_client.clear_querystring_overrides.assert_called_once_with()
+
+    def test_get_querystring_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        driver.querystring_overrides
+
+        mock_client.get_querystring_overrides.assert_called_once_with()
+
     def test_set_rewrite_rules(self):
         mock_client = Mock()
         driver = Driver(mock_client)

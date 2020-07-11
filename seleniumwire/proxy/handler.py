@@ -139,7 +139,7 @@ class AdminMixin:
         return self._create_response(json.dumps(self.modifier.params).encode('utf-8'))
 
     def _set_querystring_overrides(self, request):
-        querystring = json.loads(request.body.decode('utf-8'))
+        querystring = json.loads(request.body.decode('utf-8'))['overrides']
         self.modifier.querystring = querystring
         return self._create_response(json.dumps({'status': 'ok'}).encode('utf-8'))
 
@@ -148,7 +148,9 @@ class AdminMixin:
         return self._create_response(json.dumps({'status': 'ok'}).encode('utf-8'))
 
     def _get_querystring_overrides(self, _):
-        return self._create_response(json.dumps(self.modifier.querystring).encode('utf-8'))
+        return self._create_response(json.dumps({
+            'overrides': self.modifier.querystring}
+        ).encode('utf-8'))
 
     def _set_rewrite_rules(self, request):
         rewrite_rules = json.loads(request.body.decode('utf-8'))

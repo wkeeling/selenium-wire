@@ -415,47 +415,146 @@ class RequestModifierTest(TestCase):
             {'foo': 'baz', 'spam': 'ham'}, self.modifier.params
         )
 
-    def test_rewrite_url(self):
-        self.modifier.rewrite_rules = [
-            (r'(https?://)prod1.server.com(.*)', r'\1prod2.server.com\2/foo/'),
+    def test_override_querystring(self):
+        self.modifier.querystring = 'foo=baz'
+        mock_request = self._create_mock_request()
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(
+            'https://prod1.server.com/some/path/12345?foo=baz',
+            mock_request.url
+        )
+
+    def test_override_querystring_with_single_url_matching(self):
+        self.modifier.querystring = [
+            (".*prod1.server.com.*", 'foo=baz')
         ]
         mock_request = self._create_mock_request()
 
         self.modifier.modify(mock_request)
 
         self.assertEqual(
-            'https://prod2.server.com/some/path/12345/foo/', mock_request.url
+            'https://prod1.server.com/some/path/12345?foo=baz',
+            mock_request.url
+        )
+
+    def test_override_querystring_with_multiple_url_matching(self):
+        self.modifier.querystring = [
+            (".*prod1.server.com.*", 'foo=baz'),
+            (".*prod2.server.com.*", 'spam=ham')
+        ]
+
+        # Modify a request that matches the first pattern
+        url = 'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs'
+        mock_request = self._create_mock_request(url)
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(
+            'https://prod1.server.com/some/path/12345?foo=baz',
+            mock_request.url
+        )
+
+        # Modify a request that matches the second pattern
+        url = 'https://prod2.server.com/some/path/12345?foo=bar&spam=eggs'
+        mock_request = self._create_mock_request(url)
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(
+            'https://prod2.server.com/some/path/12345?spam=ham',
+            mock_request.url
+        )
+
+    def test_override_querystring_with_url_not_matching(self):
+        self.modifier.querystring = [
+            (".*prod.server.com.*", 'foo=baz')
+        ]
+        mock_request = self._create_mock_request()
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(
+            'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs',
+            mock_request.url
+        )
+
+    def test_add_new_querystring(self):
+        self.modifier.querystring = 'foo=baz'
+        mock_request = self._create_mock_request('https://prod1.server.com/some/path/12345')
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(
+            'https://prod1.server.com/some/path/12345?foo=baz',
+            mock_request.url
+        )
+
+    def test_remove_querystring(self):
+        self.modifier.querystring = ''
+        mock_request = self._create_mock_request()
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(
+            'https://prod1.server.com/some/path/12345',
+            mock_request.url
+        )
+
+    def test_clear_querystring_overrides(self):
+        self.modifier.querystring = 'foo=baz'
+        mock_request = self._create_mock_request()
+
+        del self.modifier.querystring
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(
+            'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs',
+            mock_request.url
+        )
+
+    def test_rewrite_url(self):
+        self.modifier.rewrite_rules = [
+            (r'(https?://)prod1.server.com(.*)(\?.*)', r'\1prod2.server.com\2/foo/\3'),
+        ]
+        mock_request = self._create_mock_request()
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(
+            'https://prod2.server.com/some/path/12345/foo/?foo=bar&spam=eggs', mock_request.url
         )
 
     def test_rewrite_url_first_match(self):
         self.modifier.rewrite_rules = [
-            (r'(https?://)prod1.server.com(.*)', r'\1prod2.server.com\2/foo/'),
-            (r'(https?://)prod1.server.com(.*)', r'\1prod2.server.com\2/bar/'),
+            (r'(https?://)prod1.server.com(.*)(\?.*)', r'\1prod2.server.com\2/foo/\3'),
+            (r'(https?://)prod1.server.com(.*)(\?.*)', r'\1prod2.server.com\2/bar/\3'),
         ]
         mock_request = self._create_mock_request()
 
         self.modifier.modify(mock_request)
 
         self.assertEqual(
-            'https://prod2.server.com/some/path/12345/foo/', mock_request.url
+            'https://prod2.server.com/some/path/12345/foo/?foo=bar&spam=eggs', mock_request.url
         )
 
     def test_does_not_rewrite_url(self):
         self.modifier.rewrite_rules = [
-            (r'(https?://)prod1.server.com(.*)', r'\1prod2.server.com\2/foo/'),
+            (r'(https?://)prod1.server.com(.*)(\?.*)', r'\1prod2.server.com\2/foo/\3'),
         ]
         mock_request = self._create_mock_request()
-        mock_request.url = 'https://prod3.server.com/some/path/12345'
+        mock_request.url = 'https://prod3.server.com/some/path/12345?foo=bar&spam=eggs'
 
         self.modifier.modify(mock_request)
 
         self.assertEqual(
-            'https://prod3.server.com/some/path/12345', mock_request.url
+            'https://prod3.server.com/some/path/12345?foo=bar&spam=eggs', mock_request.url
         )
 
     def test_rewrite_url_updates_host_header(self):
         self.modifier.rewrite_rules = [
-            (r'(https?://)prod1.server.com(.*)', r'\1prod2.server.com\2/foo/'),
+            (r'(https?://)prod1.server.com(.*)(\?.*)', r'\1prod2.server.com\2/foo/\3'),
         ]
         mock_request = self._create_mock_request()
         mock_request.headers['Host'] = 'prod1.server.com'
@@ -467,7 +566,7 @@ class RequestModifierTest(TestCase):
     def test_rewrite_url_does_not_update_host_header(self):
         """Should not update the Host header if it does not already exist."""
         self.modifier.rewrite_rules = [
-            (r'(https?://)prod1.server.com(.*)', r'\1prod2.server.com\2/foo/'),
+            (r'(https?://)prod1.server.com(.*)(\?.*)', r'\1prod2.server.com\2/foo/\3'),
         ]
         mock_request = self._create_mock_request()
 

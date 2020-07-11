@@ -15,8 +15,7 @@ DEFAULT_ATTRS_MAP = {
 
 
 class RequestModifier:
-    """This class is responsible for modifying the URL and headers
-    of a request.
+    """This class is responsible for modifying request and response attributes.
 
     Instances of this class are designed to be stateful and threadsafe.
     """
@@ -143,10 +142,7 @@ class RequestModifier:
             ]
         """
         with self._lock:
-            if is_list_alike(self._querystring):
-                return self._querystring
-            else:
-                return dict(self._querystring)
+            return self._querystring
 
     @querystring.setter
     def querystring(self, querystring):
@@ -162,7 +158,7 @@ class RequestModifier:
     def querystring(self):
         """Clears the querystring being used to override request querystring."""
         with self._lock:
-            self.querystring.clear()
+            self._querystring = None
 
     @property
     def rewrite_rules(self):
@@ -208,6 +204,17 @@ class RequestModifier:
     def modify(self, request, *attr_names):
         """Performs modifications to the request.
 
+        Request attribute names can be passed if they deviate from the
+        defaults. The defaults are:
+
+        {
+            'url': 'url',
+            'method': 'method',
+            'headers': 'headers',
+            'path': 'path',
+            'body': 'body'
+        }
+
         Args:
             request: The request to modify.
             attr_names: The names of request attributes being modified.
@@ -215,11 +222,12 @@ class RequestModifier:
         if not attr_names:
             attr_map = DEFAULT_ATTRS_MAP
         else:
-            # Overwrite the defaults with what we've been passed
+            # Update the defaults with what we've been passed
             attr_map = dict(DEFAULT_ATTRS_MAP).update(attr_names)
 
         self._modify_headers(request, attr_map)
         self._modify_params(request, attr_map)
+        self._modify_querystring(request, attr_map)
         self._rewrite_url(request, attr_map)
 
     def _modify_headers(self, request, attr_map):
@@ -229,7 +237,7 @@ class RequestModifier:
         with self._lock:
             # If self._headers is tuple or list, need to use pattern matching
             if is_list_alike(self._headers):
-                headers = self._match_values(self._headers, request_url)
+                headers = self._get_matching_overrides(self._headers, request_url)
             else:
                 headers = self._headers
 
@@ -259,7 +267,7 @@ class RequestModifier:
         with self._lock:
             # If self._params is tuple or list, need to use pattern matching
             if is_list_alike(self._params):
-                params = self._match_values(self._params, request_url)
+                params = self._get_matching_overrides(self._params, request_url)
             else:
                 params = self._params
 
@@ -295,6 +303,22 @@ class RequestModifier:
             scheme, netloc, path, _, fragment = urlsplit(request_url)
             setattr(request, attr_map['url'], urlunsplit((scheme, netloc, path, query, fragment)))
 
+    def _modify_querystring(self, request, attr_map):
+        request_url = getattr(request, attr_map['url'])
+
+        with self._lock:
+            # If self._querystring is tuple or list, need to use pattern matching
+            if is_list_alike(self._querystring):
+                querystring = self._get_matching_overrides(self._querystring, request_url)
+            else:
+                querystring = self._querystring
+
+            if querystring is None:
+                return
+
+        scheme, netloc, path, _, fragment = urlsplit(request_url)
+        setattr(request, attr_map['url'], urlunsplit((scheme, netloc, path, querystring or '', fragment)))
+
     def _rewrite_url(self, request, attr_map):
         request_headers = getattr(request, attr_map['headers'])
         request_url = getattr(request, attr_map['url'])
@@ -319,10 +343,8 @@ class RequestModifier:
             if 'Host' in request_headers:
                 request_headers['Host'] = modified_netloc
 
-    def _match_values(self, rules, url):
-        results = {}
-        for pattern, headers in rules:
+    def _get_matching_overrides(self, rules, url):
+        for pattern, overrides in rules:
             match = re.search(pattern, url)
             if match:
-                results.update(headers)
-        return results
+                return overrides

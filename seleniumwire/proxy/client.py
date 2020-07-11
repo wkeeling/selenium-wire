@@ -198,7 +198,9 @@ class AdminClient:
 
     def set_querystring_overrides(self, overrides):
         """Set the querystring overrides."""
-        self._make_request('POST', '/querystring_overrides', data=overrides)
+        self._make_request('POST', '/querystring_overrides', data={
+            'overrides': overrides  # Wrap in outer dict to ensure json compatible
+        })
 
     def clear_querystring_overrides(self):
         """Clears any previously set querystring overrides."""
@@ -206,7 +208,7 @@ class AdminClient:
 
     def get_querystring_overrides(self):
         """Gets any previously set querystring overrides"""
-        return self._make_request('GET', '/querystring_overrides')
+        return self._make_request('GET', '/querystring_overrides')['overrides']
 
     def set_rewrite_rules(self, rewrite_rules):
         """Sets the rewrite rules."""
