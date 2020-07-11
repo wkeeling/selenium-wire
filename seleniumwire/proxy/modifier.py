@@ -132,7 +132,7 @@ class RequestModifier:
         with each sublist having two elements, a URL pattern and the querystring.
         The querystring override will overwrite the querystring in the request
         or will be added to the request if the request has no querystring. To
-        remove a querystring from the request, set the value to None.
+        remove a querystring from the request, set the value to empty string.
 
         For example:
             querystring = 'foo=bar&x=y'
