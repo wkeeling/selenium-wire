@@ -123,7 +123,7 @@ class RequestModifier:
         After this is called, request params will pass through unmodified.
         """
         with self._lock:
-            self.params.clear()
+            self._params.clear()
 
     @property
     def querystring(self):
@@ -274,17 +274,14 @@ class RequestModifier:
         if method == 'POST' and is_form_data:
             query = getattr(request, attr_map['body']).decode('utf-8', errors='replace')
 
-        if not query:
-            return
-
         request_params = parse_qs(query, keep_blank_values=True)
 
         with self._lock:
             # Override the params in the request
-            request_params.update(self._params)
+            request_params.update(params)
 
         # Remove existing params where they have a 'None' value
-        for name, value in request_params.items():
+        for name, value in list(request_params.items()):
             if value is None:
                 request_params.pop(name)
 

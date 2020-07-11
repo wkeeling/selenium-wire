@@ -76,7 +76,7 @@ class RequestModifierTest(TestCase):
         self.assertEqual(url, mock_request.url)
         self.assertFalse('New-Header' in mock_request.headers)
 
-    def test_not_override_header_withurl_matching(self):
+    def test_override_header_with_url_not_matching(self):
         self.modifier.headers = [
             (".*prod.server.com.*", {'User-Agent': 'Test_User_Agent_String'})
         ]
@@ -169,7 +169,7 @@ class RequestModifierTest(TestCase):
 
     def test_override_param_body(self):
         self.modifier.params = {
-            'foo': 'baz'
+            'foo': 'bazz'
         }
         mock_request = self._create_mock_request(
             url='https://prod1.server.com/some/path/12345',
@@ -180,8 +180,35 @@ class RequestModifierTest(TestCase):
 
         self.modifier.modify(mock_request)
 
-        self.assertEqual(b'foo=baz&spam=eggs', mock_request.body)
-        self.assertEqual(17, mock_request.headers['Content-Length'])
+        self.assertEqual(b'foo=bazz&spam=eggs', mock_request.body)
+        self.assertEqual(18, mock_request.headers['Content-Length'])
+
+    def test_override_multiple_params(self):
+        self.modifier.params = {
+            'foo': 'baz',
+            'spam': 'ham'
+        }
+        mock_request = self._create_mock_request()
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(
+            'https://prod1.server.com/some/path/12345?foo=baz&spam=ham',
+            mock_request.url
+        )
+
+    def test_override_param_multiple_values(self):
+        self.modifier.params = {
+            'foo': ['a', 'b']
+        }
+        mock_request = self._create_mock_request()
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(
+            'https://prod1.server.com/some/path/12345?foo=a&foo=b&spam=eggs',
+            mock_request.url
+        )
 
     def test_override_param_body_no_content_type(self):
         self.modifier.params = {
@@ -197,133 +224,195 @@ class RequestModifierTest(TestCase):
 
         self.assertEqual(b'foo=bar&spam=eggs', mock_request.body)
 
-    def test_override_header_with_single_url_matching(self):
-        self.modifier.headers = [
-            (".*prod1.server.com.*", {'User-Agent': 'Test_User_Agent_String'})]
-        mock_request = self._create_mock_request()
-
-        self.modifier.modify(mock_request)
-
-        self.assertEqual(
-            'Test_User_Agent_String', mock_request.headers['User-Agent']
-        )
-
-    def test_override_multiple_headers_with_single_url_matching(self):
-        self.modifier.headers = [
-            (".*prod1.server.com.*", {'User-Agent': 'Test_User_Agent_String',
-                                      'New-Header': 'HeaderValue'})]
-        mock_request = self._create_mock_request()
-
-        self.modifier.modify(mock_request)
-
-        self.assertEqual(
-            'Test_User_Agent_String', mock_request.headers['User-Agent']
-        )
-        self.assertEqual(
-            'HeaderValue', mock_request.headers['New-Header']
-        )
-
-    def test_override_headers_with_multiple_url_matching(self):
-        self.modifier.headers = [
-            (".*prod1.server.com.*", {'User-Agent': 'Test_User_Agent_String',
-                                      'New-Header': 'HeaderValue'}),
-            (".*prod2.server.com.*", {'User-Agent2': 'Test_User_Agent_String2',
-                                      'New-Header2': 'HeaderValue'})
-        ]
-        url = "https://prod1.server.com/some/path/12345"
-        mock_request = self._create_mock_request(url)
-
-        self.modifier.modify(mock_request)
-
-        self.assertEqual(
-            'Test_User_Agent_String', mock_request.headers['User-Agent']
-        )
-        self.assertEqual(url, mock_request.url)
-        self.assertFalse('User-Agent2' in mock_request.headers
-                         or 'New-Header2' in mock_request.headers)
-
-        url = "https://prod2.server.com/some/path/12345"
-        mock_request = self._create_mock_request(url)
-
-        self.modifier.modify(mock_request)
-        self.assertEqual(
-            'HeaderValue', mock_request.headers['New-Header2']
-        )
-        self.assertEqual(url, mock_request.url)
-        self.assertFalse('New-Header' in mock_request.headers)
-
-    def test_not_override_header_withurl_matching(self):
-        self.modifier.headers = [
-            (".*prod.server.com.*", {'User-Agent': 'Test_User_Agent_String'})
+    def test_override_param_with_single_url_matching(self):
+        self.modifier.params = [
+            (".*prod1.server.com.*", {'foo': 'baz'})
         ]
         mock_request = self._create_mock_request()
 
         self.modifier.modify(mock_request)
 
         self.assertEqual(
-            'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 '
-            'Firefox/10.0',
-            mock_request.headers['User-Agent'],
+            'https://prod1.server.com/some/path/12345?foo=baz&spam=eggs',
+            mock_request.url
         )
 
-    def test_override_header_case_insensitive(self):
-        self.modifier.headers = {
-            'user-agent': 'Test_User_Agent_String'
-        }
+    def test_override_multiple_params_with_single_url_matching(self):
+        self.modifier.params = [
+            (".*prod1.server.com.*", {'foo': 'baz', 'spam': 'ham'})]
         mock_request = self._create_mock_request()
 
         self.modifier.modify(mock_request)
 
         self.assertEqual(
-            'Test_User_Agent_String', mock_request.headers['User-Agent']
+            'https://prod1.server.com/some/path/12345?foo=baz&spam=ham',
+            mock_request.url
+        )
+
+    def test_override_params_with_multiple_url_matching(self):
+        self.modifier.params = [
+            (".*prod1.server.com.*", {'foo': 'baz', 'spam': 'ham'}),
+            (".*prod2.server.com.*", {'foo': 'baz2', 'spam': 'ham2'})
+        ]
+
+        # Modify a request that matches the first pattern
+        url = 'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs'
+        mock_request = self._create_mock_request(url)
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(
+            'https://prod1.server.com/some/path/12345?foo=baz&spam=ham',
+            mock_request.url
+        )
+
+        # Modify a request that matches the second pattern
+        url = 'https://prod2.server.com/some/path/12345?foo=bar&spam=eggs'
+        mock_request = self._create_mock_request(url)
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(
+            'https://prod2.server.com/some/path/12345?foo=baz2&spam=ham2',
+            mock_request.url
+        )
+
+    def test_override_param_with_url_not_matching(self):
+        self.modifier.params = [
+            (".*prod.server.com.*", {'foo': 'baz'})
+        ]
+        mock_request = self._create_mock_request()
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(
+            'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs',
+            mock_request.url
         )
 
     def test_add_new_param_qs(self):
-        self.fail('implement')
+        self.modifier.params = {
+            'foo': 'baz'
+        }
+        mock_request = self._create_mock_request('https://prod1.server.com/some/path/12345?spam=eggs')
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(
+            'https://prod1.server.com/some/path/12345?spam=eggs&foo=baz',
+            mock_request.url
+        )
 
     def test_add_new_param_body(self):
-        self.fail('implement')
+        self.modifier.params = {
+            'foo': 'bazz'
+        }
+        mock_request = self._create_mock_request(
+            url='https://prod1.server.com/some/path/12345',
+            method='POST',
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
+            body=b'spam=eggs'
+        )
 
-    def test_filter_out_header(self):
-        self.modifier.headers = {
-            'User-Agent': None
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(b'spam=eggs&foo=bazz', mock_request.body)
+        self.assertEqual(18, mock_request.headers['Content-Length'])
+
+    def test_add_param_no_qs(self):
+        self.modifier.params = {
+            'foo': 'baz'
+        }
+        mock_request = self._create_mock_request('https://prod1.server.com/some/path/12345')
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(
+            'https://prod1.server.com/some/path/12345?foo=baz',
+            mock_request.url
+        )
+
+    def test_add_param_no_body(self):
+        self.modifier.params = {
+            'foo': 'bazz'
+        }
+        mock_request = self._create_mock_request(
+            url='https://prod1.server.com/some/path/12345',
+            method='POST',
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
+            body=b''
+        )
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(b'foo=bazz', mock_request.body)
+        self.assertEqual(8, mock_request.headers['Content-Length'])
+
+    def test_filter_out_param_qs(self):
+        self.modifier.params = {
+            'foo': None
         }
         mock_request = self._create_mock_request()
 
         self.modifier.modify(mock_request)
 
-        self.assertNotIn('User-Agent', mock_request.headers)
+        self.assertEqual(
+            'https://prod1.server.com/some/path/12345?spam=eggs',
+            mock_request.url
+        )
 
-    def test_filter_out_non_existent_header(self):
-        self.modifier.headers = {
-            'Host': None  # Does not exist in the request
+    def test_filter_out_param_body(self):
+        self.modifier.params = {
+            'foo': None
+        }
+        mock_request = self._create_mock_request(
+            url='https://prod1.server.com/some/path/12345',
+            method='POST',
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
+            body=b'foo=bar&spam=eggs'
+        )
+
+        self.modifier.modify(mock_request)
+
+        self.assertEqual(b'spam=eggs', mock_request.body)
+        self.assertEqual(9, mock_request.headers['Content-Length'])
+
+    def test_filter_out_non_existent_param(self):
+        self.modifier.params = {
+            'hello': None  # Does not exist in the request
         }
         mock_request = self._create_mock_request()
 
         self.modifier.modify(mock_request)
 
-        self.assertNotIn('Host', mock_request.headers)
+        self.assertEqual(
+            'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs',
+            mock_request.url
+        )
 
-    def test_clear_header_overrides(self):
-        self.modifier.headers = {
-            'User-Agent': 'Test_User_Agent_String'
+    def test_clear_param_overrides(self):
+        self.modifier.params = {
+            'foo': 'baz',
+            'spam': 'ham'
         }
         mock_request = self._create_mock_request()
 
-        del self.modifier.headers
+        del self.modifier.params
         self.modifier.modify(mock_request)
 
-        self.assertEqual('Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/'
-                         '20100101 Firefox/10.0',
-                         mock_request.headers['User-Agent'])
+        self.assertEqual(
+            'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs',
+            mock_request.url
+        )
 
-    def test_get_header_overrides(self):
-        self.modifier.headers = {
-            'User-Agent': 'Test_User_Agent_String'
+    def test_get_param_overrides(self):
+        self.modifier.params = {
+            'foo': 'baz',
+            'spam': 'ham'
         }
 
         self.assertEqual(
-            {'User-Agent': 'Test_User_Agent_String'}, self.modifier.headers
+            {'foo': 'baz', 'spam': 'ham'}, self.modifier.params
         )
 
     def test_rewrite_url(self):
