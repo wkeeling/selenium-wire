@@ -2,6 +2,7 @@ import os
 import ssl
 import urllib.error
 import urllib.request
+from urllib.parse import urlsplit
 from unittest import TestCase
 
 from seleniumwire.proxy.client import AdminClient
@@ -173,44 +174,6 @@ class AdminClientIntegrationTest(TestCase):
 
         self.assertEqual({'User-Agent': 'Test_User_Agent_String'}, self.client.get_header_overrides())
 
-    def test_set_header_overrides(self):
-        self.client.set_header_overrides({
-            'User-Agent': 'Test_User_Agent_String'
-        })
-        self._make_request('https://www.github.com')
-
-        last_request = self.client.get_last_request()
-
-        self.assertEqual('Test_User_Agent_String', last_request['headers']['User-Agent'])
-
-    def test_set_header_overrides_filters_out_header(self):
-        self.client.set_header_overrides({
-            'User-Agent': None
-        })
-        self._make_request('https://www.wikipedia.org')
-
-        last_request = self.client.get_last_request()
-
-        self.assertNotIn('User-Agent', last_request['headers'])
-
-    def test_clear_header_overrides(self):
-        self.client.set_header_overrides({
-            'User-Agent': 'Test_User_Agent_String'
-        })
-        self.client.clear_header_overrides()
-        self._make_request('https://www.stackoverflow.com')
-
-        last_request = self.client.get_last_request()
-
-        self.assertNotEqual(
-            'Test_User_Agent_String', last_request['headers']['User-Agent']
-        )
-
-    def test_get_header_overrides(self):
-        self.client.set_header_overrides({'User-Agent': 'Test_User_Agent_String'})
-
-        self.assertEqual({'User-Agent': 'Test_User_Agent_String'}, self.client.get_header_overrides())
-
     def test_get_url_match_header_overrides(self):
         self.client.set_header_overrides([['host1', {
             'User-Agent': 'Test_User_Agent_String'
@@ -221,6 +184,90 @@ class AdminClientIntegrationTest(TestCase):
             ['host1', {'User-Agent': 'Test_User_Agent_String'}],
             ['host2', {'User-Agent2': 'Test_User_Agent_String'}]
         ], self.client.get_header_overrides())
+
+    def test_get_param_overrides(self):
+        self.client.set_param_overrides({'foo': 'bar'})
+
+        self.assertEqual({'foo': 'bar'}, self.client.get_param_overrides())
+
+    def test_set_param_overrides(self):
+        self.client.set_param_overrides({'foo': 'baz'})
+
+        self._make_request('https://httpbin.org/?foo=bar&spam=eggs')
+
+        last_request = self.client.get_last_request()
+
+        query = urlsplit(last_request['url'])[3]
+        self.assertEqual('foo=baz&spam=eggs', query)
+
+    def test_set_param_overrides_post(self):
+        self.client.set_param_overrides({'foo': 'baz'})
+
+        self._make_request(
+            'https://httpbin.org/post',
+            method='POST',
+            data=b'foo=baz&spam=eggs'
+        )
+
+        last_request = self.client.get_last_request()
+        body = self.client.get_request_body(last_request['id'])
+
+        self.assertEqual(b'foo=baz&spam=eggs', body)
+
+    def test_set_param_overrides_filters_out_param(self):
+        self.client.set_param_overrides({'foo': None})
+
+        self._make_request('https://httpbin.org/?foo=bar&spam=eggs')
+
+        last_request = self.client.get_last_request()
+
+        query = urlsplit(last_request['url'])[3]
+        self.assertEqual('spam=eggs', query)
+
+    def test_clear_param_overrides(self):
+        self.client.set_param_overrides({'foo': 'baz'})
+        self.client.clear_param_overrides()
+        self._make_request('https://www.stackoverflow.com')
+
+        last_request = self.client.get_last_request()
+
+        query = urlsplit(last_request['url'])[3]
+        self.assertEqual('', query)
+
+    def test_get_querystring_overrides(self):
+        self.client.set_querystring_overrides('foo=bar')
+
+        self.assertEqual('foo=bar', self.client.get_querystring_overrides())
+
+    def test_set_querystring_overrides(self):
+        self.client.set_querystring_overrides('foo=baz')
+
+        self._make_request('https://httpbin.org/?foo=bar&spam=eggs')
+
+        last_request = self.client.get_last_request()
+
+        query = urlsplit(last_request['url'])[3]
+        self.assertEqual('foo=baz', query)
+
+    def test_set_querystring_overrides_filters(self):
+        self.client.set_querystring_overrides('')  # Empty string to filter a querystring (not None)
+
+        self._make_request('https://httpbin.org/?foo=bar&spam=eggs')
+
+        last_request = self.client.get_last_request()
+
+        query = urlsplit(last_request['url'])[3]
+        self.assertEqual('', query)
+
+    def test_clear_querystring_overrides(self):
+        self.client.set_querystring_overrides('foo=baz')
+        self.client.clear_querystring_overrides()
+        self._make_request('https://www.stackoverflow.com')
+
+        last_request = self.client.get_last_request()
+
+        query = urlsplit(last_request['url'])[3]
+        self.assertEqual('', query)
 
     def test_set_rewrite_rules(self):
         self.client.set_rewrite_rules([
@@ -322,6 +369,9 @@ class AdminClientIntegrationTest(TestCase):
 
     def setUp(self):
         options = {'backend': os.environ.get('SW_TEST_BACKEND', 'default')}
+        # options['proxy'] = {
+        #     'https': 'https://localhost:8080'
+        # }
         if self._testMethodName == 'test_disable_encoding':
             options['disable_encoding'] = True
         self.client = AdminClient()
@@ -343,11 +393,11 @@ class AdminClientIntegrationTest(TestCase):
         opener = urllib.request.build_opener(https_handler, proxy_handler)
         urllib.request.install_opener(opener)
 
-    def _make_request(self, url):
-        request = urllib.request.Request(url)
+    def _make_request(self, url, method='GET', data=None):
+        request = urllib.request.Request(url, method=method, data=data)
         request.add_header('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 '
                                          '(KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36')
-        with urllib.request.urlopen(request, timeout=5) as response:
+        with urllib.request.urlopen(request, timeout=500) as response:
             html = response.read()
 
         return html

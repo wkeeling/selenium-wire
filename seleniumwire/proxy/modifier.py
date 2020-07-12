@@ -9,7 +9,6 @@ DEFAULT_ATTRS_MAP = {
     'url': 'url',
     'method': 'method',
     'headers': 'headers',
-    'path': 'path',
     'body': 'body'
 }
 
@@ -201,7 +200,7 @@ class RequestModifier:
         with self._lock:
             self._rewrite_rules.clear()
 
-    def modify(self, request, *attr_names):
+    def modify(self, request, **attr_names):
         """Performs modifications to the request.
 
         Request attribute names can be passed if they deviate from the
@@ -211,7 +210,6 @@ class RequestModifier:
             'url': 'url',
             'method': 'method',
             'headers': 'headers',
-            'path': 'path',
             'body': 'body'
         }
 
@@ -219,11 +217,9 @@ class RequestModifier:
             request: The request to modify.
             attr_names: The names of request attributes being modified.
         """
-        if not attr_names:
-            attr_map = DEFAULT_ATTRS_MAP
-        else:
-            # Update the defaults with what we've been passed
-            attr_map = dict(DEFAULT_ATTRS_MAP).update(attr_names)
+        attr_map = dict(DEFAULT_ATTRS_MAP)
+        # Update the defaults with what we've been passed
+        attr_map.update(attr_names)
 
         self._modify_headers(request, attr_map)
         self._modify_params(request, attr_map)
@@ -297,7 +293,7 @@ class RequestModifier:
 
         if method == 'POST' and is_form_data:
             query = query.encode('utf-8')
-            headers['Content-Length'] = len(query)
+            headers['Content-Length'] = str(len(query))
             setattr(request, attr_map['body'], query)
         else:
             scheme, netloc, path, _, fragment = urlsplit(request_url)

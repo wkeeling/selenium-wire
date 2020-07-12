@@ -181,7 +181,7 @@ class RequestModifierTest(TestCase):
         self.modifier.modify(mock_request)
 
         self.assertEqual(b'foo=bazz&spam=eggs', mock_request.body)
-        self.assertEqual(18, mock_request.headers['Content-Length'])
+        self.assertEqual('18', mock_request.headers['Content-Length'])
 
     def test_override_multiple_params(self):
         self.modifier.params = {
@@ -317,7 +317,7 @@ class RequestModifierTest(TestCase):
         self.modifier.modify(mock_request)
 
         self.assertEqual(b'spam=eggs&foo=bazz', mock_request.body)
-        self.assertEqual(18, mock_request.headers['Content-Length'])
+        self.assertEqual('18', mock_request.headers['Content-Length'])
 
     def test_add_param_no_qs(self):
         self.modifier.params = {
@@ -346,7 +346,7 @@ class RequestModifierTest(TestCase):
         self.modifier.modify(mock_request)
 
         self.assertEqual(b'foo=bazz', mock_request.body)
-        self.assertEqual(8, mock_request.headers['Content-Length'])
+        self.assertEqual('8', mock_request.headers['Content-Length'])
 
     def test_filter_out_param_qs(self):
         self.modifier.params = {
@@ -375,7 +375,7 @@ class RequestModifierTest(TestCase):
         self.modifier.modify(mock_request)
 
         self.assertEqual(b'spam=eggs', mock_request.body)
-        self.assertEqual(9, mock_request.headers['Content-Length'])
+        self.assertEqual('9', mock_request.headers['Content-Length'])
 
     def test_filter_out_non_existent_param(self):
         self.modifier.params = {

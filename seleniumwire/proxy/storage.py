@@ -256,7 +256,7 @@ class RequestStorage:
         for indexed_request in index:
             match_url = urlparse(path).geturl()
 
-            if match_url in indexed_request.path:
+            if match_url in indexed_request.url:
                 if (check_response and indexed_request.has_response) or not check_response:
                     return self._load_request(indexed_request.id)
 

@@ -96,7 +96,17 @@ class InspectRequestsMixin:
 
     @header_overrides.setter
     def header_overrides(self, headers):
+        if isinstance(headers, list):
+            for _, h in headers:
+                self._validate_headers(h)
+        else:
+            self._validate_headers(headers)
+
         self._client.set_header_overrides(headers)
+
+    def _validate_headers(self, headers):
+        for v in headers.values():
+            assert isinstance(v, str), 'Header values must be strings'
 
     @header_overrides.deleter
     def header_overrides(self):

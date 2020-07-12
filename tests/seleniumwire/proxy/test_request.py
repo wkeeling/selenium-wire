@@ -57,6 +57,11 @@ class RequestTest(TestCase):
         self.assertEqual(params['foo'], ['bar', 'baz'])
         self.assertEqual(params['other'], '')
 
+    def test_path(self):
+        request = self._create_request()
+
+        self.assertEqual('/some/path/', request.path)
+
     def test_request_repr(self):
         request = self._create_request()
 

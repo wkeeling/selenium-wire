@@ -151,7 +151,7 @@ class MitmProxyRequestHandler(AdminMixin, CaptureMixin):
             self.handle_admin(flow)
         else:
             # Make any modifications to the original request
-            self.modifier.modify(flow.request)
+            self.modifier.modify(flow.request, body='raw_content')
 
             # Convert to one of our requests for handling
             request = self._create_request(flow)

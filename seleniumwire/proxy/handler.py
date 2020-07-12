@@ -26,7 +26,7 @@ class AdminMixin:
             request: The request object.
         Returns: A response object.
         """
-        parse_result = urlparse(request.path)
+        parse_result = urlparse(request.url)
         path, params = parse_result.path, parse_qs(parse_result.query)
 
         request_mappings = {
@@ -191,7 +191,7 @@ class AdminMixin:
             body=body
         )
 
-        response.headers['Content-Length'] = len(response.body)
+        response.headers['Content-Length'] = str(len(response.body))
 
         return response
 
@@ -220,9 +220,9 @@ class CaptureMixin:
         """
         ignore_method = request.method in self.options.get(
             'ignore_http_methods', ['OPTIONS'])
-        not_in_scope = not self._in_scope(self.scopes, request.path)
+        not_in_scope = not self._in_scope(self.scopes, request.url)
         if ignore_method or not_in_scope:
-            log.debug('Not capturing %s request: %s', request.method, request.path)
+            log.debug('Not capturing %s request: %s', request.method, request.url)
             return
 
         log.info('Capturing request: %s', request.path)
@@ -279,7 +279,9 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
             req_body: The binary request body.
         """
         # First make any modifications to the request
-        self.modifier.modify(req, url_attr='path')
+        req.body = req_body  # Temporarily attach the body to the request for modification
+        self.modifier.modify(req, url='path', method='command')
+        req_body = req.body
 
         # Convert the implementation specific request to one of our requests
         # for handling.
@@ -287,6 +289,8 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
 
         self.capture_request(request)
         req.id = request.id
+
+        return req.body
 
     def handle_response(self, req, req_body, res, res_body):
         """Captures a response and its body that relate to a previous request.

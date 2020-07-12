@@ -20,7 +20,7 @@ class InspectRequestsMixinTest(TestCase):
         self.mock_client.get_requests.return_value = [{
             'id': '12345',
             'method': 'GET',
-            'path': 'http://www.example.com/some/path',
+            'url': 'http://www.example.com/some/path',
             'headers': {
                 'Accept': '*/*',
                 'Host': 'www.example.com'
@@ -39,7 +39,7 @@ class InspectRequestsMixinTest(TestCase):
 
         self.mock_client.get_requests.assert_called_once_with()
         self.assertEqual(1, len(requests))
-        self.assertEqual(requests[0].path, 'http://www.example.com/some/path')
+        self.assertEqual(requests[0].url, 'http://www.example.com/some/path')
         self.assertEqual(requests[0].response.headers['Content-Type'], 'text/plain')
 
     def test_set_requests(self):
@@ -58,7 +58,7 @@ class InspectRequestsMixinTest(TestCase):
     def test_last_request(self):
         self.mock_client.get_last_request.return_value = {
             'method': 'GET',
-            'path': 'http://www.example.com/different/path?foo=bar',
+            'url': 'http://www.example.com/different/path?foo=bar',
             'headers': {
                 'Accept': '*/*',
                 'Host': 'www.example.com'
@@ -76,7 +76,7 @@ class InspectRequestsMixinTest(TestCase):
         last_request = self.driver.last_request
 
         self.mock_client.get_last_request.assert_called_once_with()
-        self.assertEqual(last_request.path, 'http://www.example.com/different/path?foo=bar')
+        self.assertEqual(last_request.url, 'http://www.example.com/different/path?foo=bar')
         self.assertEqual(last_request.response.headers['Content-Length'], '98425')
 
     def test_last_request_none(self):
@@ -91,7 +91,7 @@ class InspectRequestsMixinTest(TestCase):
         mock_client = Mock()
         mock_client.find.return_value = {
             'method': 'GET',
-            'path': 'http://www.example.com/some/path?foo=bar',
+            'url': 'http://www.example.com/some/path?foo=bar',
             'headers': {
                 'Accept': '*/*',
                 'Host': 'www.example.com'
@@ -110,7 +110,7 @@ class InspectRequestsMixinTest(TestCase):
         request = driver.wait_for_request('/some/path')
 
         mock_client.find.assert_called_once_with('/some/path')
-        self.assertEqual(request.path, 'http://www.example.com/some/path?foo=bar')
+        self.assertEqual(request.url, 'http://www.example.com/some/path?foo=bar')
 
     def test_wait_for_request_timeout(self):
         mock_client = Mock()
@@ -273,7 +273,7 @@ class LazyRequestTest(TestCase):
         request = LazyRequest.from_dict({
             'id': '12345',
             'method': 'GET',
-            'path': 'http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
+            'url': 'http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
             'headers': {
                 'Accept': '*/*',
                 'Host': 'www.example.com',
@@ -291,7 +291,7 @@ class LazyRequestTest(TestCase):
 
         self.assertEqual('12345', request.id)
         self.assertEqual('GET', request.method)
-        self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', request.path)
+        self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', request.url)
         self.assertEqual({
                 'Accept': '*/*',
                 'Host': 'www.example.com',
@@ -303,7 +303,7 @@ class LazyRequestTest(TestCase):
         request = LazyRequest(
             client,
             method='GET',
-            path='http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
+            url='http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
             headers={
                 'Accept': '*/*',
                 'Host': 'www.example.com',

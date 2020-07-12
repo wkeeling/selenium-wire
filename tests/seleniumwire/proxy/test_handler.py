@@ -10,12 +10,14 @@ class CaptureRequestHandlerTest(TestCase):
 
     def test_request_modifier_called(self):
         modified = []
-        self.mock_modifier.modify.side_effect = lambda r: modified.append(r)
+        self.mock_modifier.modify.side_effect = lambda r, **kwargs: modified.append((r, kwargs))
 
         self.handler.handle_request(self.handler, self.body)
 
         self.assertEqual(1, len(modified))
-        self.assertEqual('https://www.google.com/foo/bar?x=y', modified[0].url)
+        request, attrs = modified[0]
+        self.assertEqual('https://www.google.com/foo/bar?x=y', request.path)
+        self.assertEqual({'url': 'path'}, attrs)
 
     def test_save_request_called(self):
         saved = []
@@ -88,7 +90,7 @@ class CaptureRequestHandlerTest(TestCase):
         self.handler.options = {}
         self.handler.scopes = []
         self.handler.headers = {}
-        self.handler.url = 'https://www.google.com/foo/bar?x=y'
+        self.handler.path = 'https://www.google.com/foo/bar?x=y'
         self.handler.command = 'GET'
         self.body = None
 
@@ -109,10 +111,10 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 206)],
+                     ('Content-Length', '204')],
             body=b'[{"id": "12345", "method": "GET", "url": "http://somewhere.com/foo", "headers": {}, '
                  b'"response": null}, {"id": "67890", "method": "GET", '
-                 b'"path": "http://somewhere.com/bar", "headers": {}, "response": null}]'
+                 b'"url": "http://somewhere.com/bar", "headers": {}, "response": null}]'
         )
 
     def test_delete_requests(self):
@@ -126,7 +128,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 16)],
+                     ('Content-Length', '16')],
             body=b'{"status": "ok"}'
         )
 
@@ -143,7 +145,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 101)],
+                     ('Content-Length', '100')],
             body=b'{"id": "12345", "method": "GET", "url": "http://somewhere.com/foo", "headers": {}, '
                  b'"response": null}'
         )
@@ -158,7 +160,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/octet-stream'),
-                     ('Content-Length', 11)],
+                     ('Content-Length', '11')],
             body=b'bodycontent'
         )
 
@@ -172,7 +174,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/octet-stream'),
-                     ('Content-Length', 11)],
+                     ('Content-Length', '11')],
             body=b'bodycontent'
         )
 
@@ -186,15 +188,15 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/octet-stream'),
-                     ('Content-Length', 11)],
+                     ('Content-Length', '11')],
             body=b'bodycontent'
         )
 
     def test_find(self):
         self.handler.path = 'http://seleniumwire/find?path=/foo/bar'
-        request = Request(method='GET', url='http://somewhere.com/foo', headers={})
-        request.id = '12345'
-        self.mock_storage.find.return_value = request
+        stored_request = Request(method='GET', url='http://somewhere.com/foo', headers={})
+        stored_request.id = '12345'
+        self.mock_storage.find.return_value = stored_request
 
         self.handler.handle_admin()
 
@@ -202,7 +204,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 101)],
+                     ('Content-Length', '100')],
             body=b'{"id": "12345", "method": "GET", "url": "http://somewhere.com/foo", "headers": {}, '
                  b'"response": null}'
         )
@@ -217,7 +219,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 4)],
+                     ('Content-Length', '4')],
             body=b'null'
         )
 
@@ -236,7 +238,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 16)],
+                     ('Content-Length', '16')],
             body=b'{"status": "ok"}'
         )
 
@@ -251,7 +253,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 16)],
+                     ('Content-Length', '16')],
             body=b'{"status": "ok"}'
         )
 
@@ -264,7 +266,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 27)],
+                     ('Content-Length', '27')],
             body=b'{"User-Agent": "useragent"}'
         )
 
@@ -283,7 +285,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 16)],
+                     ('Content-Length', '16')],
             body=b'{"status": "ok"}'
         )
 
@@ -298,7 +300,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 16)],
+                     ('Content-Length', '16')],
             body=b'{"status": "ok"}'
         )
 
@@ -311,7 +313,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 14)],
+                     ('Content-Length', '14')],
             body=b'{"foo": "bar"}'
         )
 
@@ -330,7 +332,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 16)],
+                     ('Content-Length', '16')],
             body=b'{"status": "ok"}'
         )
 
@@ -345,7 +347,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 16)],
+                     ('Content-Length', '16')],
             body=b'{"status": "ok"}'
         )
 
@@ -358,7 +360,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 36)],
+                     ('Content-Length', '36')],
             body=b'{"overrides": "foo=bar&hello=world"}'
         )
 
@@ -378,7 +380,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 16)],
+                     ('Content-Length', '16')],
             body=b'{"status": "ok"}'
         )
 
@@ -393,7 +395,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 16)],
+                     ('Content-Length', '16')],
             body=b'{"status": "ok"}'
         )
 
@@ -406,7 +408,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 62)],
+                     ('Content-Length', '62')],
             body=b'[["https?://)prod1.server.com(.*)", "\\\\1prod2.server.com\\\\2"]]'
         )
 
@@ -425,7 +427,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 16)],
+                     ('Content-Length', '16')],
             body=b'{"status": "ok"}'
         )
 
@@ -440,7 +442,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 16)],
+                     ('Content-Length', '16')],
             body=b'{"status": "ok"}'
         )
 
@@ -453,7 +455,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 35)],
+                     ('Content-Length', '35')],
             body=b'[".*stackoverflow.*", ".*github.*"]'
         )
 
@@ -473,7 +475,7 @@ class AdminMixinTest(TestCase):
         self.assert_response_mocks_called(
             status=200,
             headers=[('Content-Type', 'application/json'),
-                     ('Content-Length', 16)],
+                     ('Content-Length', '16')],
             body=b'{"status": "ok"}'
         )
 
