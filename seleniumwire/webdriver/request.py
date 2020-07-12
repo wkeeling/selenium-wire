@@ -106,7 +106,8 @@ class InspectRequestsMixin:
 
     def _validate_headers(self, headers):
         for v in headers.values():
-            assert isinstance(v, str), 'Header values must be strings'
+            if v is not None:
+                assert isinstance(v, str), 'Header values must be strings'
 
     @header_overrides.deleter
     def header_overrides(self):

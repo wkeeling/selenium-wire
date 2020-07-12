@@ -126,12 +126,23 @@ class InspectRequestsMixinTest(TestCase):
         mock_client = Mock()
         driver = Driver(mock_client)
         header_overrides = {
-            'User-Agent': 'Test_User_Agent_String'
+            'User-Agent': 'Test_User_Agent_String',
+            'Accept-Encoding': None
         }
 
         driver.header_overrides = header_overrides
 
         mock_client.set_header_overrides.assert_called_once_with(header_overrides)
+
+    def test_set_header_overrides_non_str(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+        header_overrides = {
+            'MyHeader': 99
+        }
+
+        with self.assertRaises(AssertionError):
+            driver.header_overrides = header_overrides
 
     def test_delete_header_overrides(self):
         mock_client = Mock()

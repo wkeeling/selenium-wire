@@ -17,7 +17,7 @@ class CaptureRequestHandlerTest(TestCase):
         self.assertEqual(1, len(modified))
         request, attrs = modified[0]
         self.assertEqual('https://www.google.com/foo/bar?x=y', request.path)
-        self.assertEqual({'url': 'path'}, attrs)
+        self.assertEqual({'url': 'path', 'method': 'command'}, attrs)
 
     def test_save_request_called(self):
         saved = []

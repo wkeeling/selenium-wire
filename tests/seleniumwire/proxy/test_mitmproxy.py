@@ -202,7 +202,7 @@ class MitmProxyRequestHandlerTest(TestCase):
 
         self.handler.request(mock_flow)
 
-        self.mock_modifier.modify.assert_called_once_with(mock_flow.request)
+        self.mock_modifier.modify.assert_called_once_with(mock_flow.request, body='raw_content')
 
     def test_capture_request_called(self):
         mock_flow = Mock()
