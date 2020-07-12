@@ -4,14 +4,6 @@ from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 from .utils import is_list_alike
 
-# Map of default attribute names on request/response objects.
-DEFAULT_ATTRS_MAP = {
-    'url': 'url',
-    'method': 'method',
-    'headers': 'headers',
-    'body': 'body'
-}
-
 
 class RequestModifier:
     """This class is responsible for modifying request and response attributes.
@@ -200,35 +192,24 @@ class RequestModifier:
         with self._lock:
             self._rewrite_rules.clear()
 
-    def modify(self, request, **attr_names):
+    def modify(self, request, urlattr='url', methodattr='method', headersattr='headers', bodyattr='body'):
         """Performs modifications to the request.
-
-        Request attribute names can be passed if they deviate from the
-        defaults. The defaults are:
-
-        {
-            'url': 'url',
-            'method': 'method',
-            'headers': 'headers',
-            'body': 'body'
-        }
 
         Args:
             request: The request to modify.
-            attr_names: The names of request attributes being modified.
+            urlattr: The name of the url attribute on the request/response object.
+            methodattr: The name of the method attribute on the request/response object.
+            headersattr: The name of the headers attribute on the request/response object.
+            bodyattr: The name of the body attribute on the request/response object.
         """
-        attr_map = dict(DEFAULT_ATTRS_MAP)
-        # Update the defaults with what we've been passed
-        attr_map.update(attr_names)
+        self._modify_headers(request, urlattr, headersattr)
+        self._modify_params(request, urlattr, methodattr, headersattr, bodyattr)
+        self._modify_querystring(request, urlattr)
+        self._rewrite_url(request, urlattr, headersattr)
 
-        self._modify_headers(request, attr_map)
-        self._modify_params(request, attr_map)
-        self._modify_querystring(request, attr_map)
-        self._rewrite_url(request, attr_map)
-
-    def _modify_headers(self, request, attr_map):
-        request_headers = getattr(request, attr_map['headers'])
-        request_url = getattr(request, attr_map['url'])
+    def _modify_headers(self, request, urlattr, headersattr):
+        request_headers = getattr(request, headersattr)
+        request_url = getattr(request, urlattr)
 
         with self._lock:
             # If self._headers is tuple or list, need to use pattern matching
@@ -257,8 +238,8 @@ class RequestModifier:
             if value is not None:
                 request_headers[header] = value
 
-    def _modify_params(self, request, attr_map):
-        request_url = getattr(request, attr_map['url'])
+    def _modify_params(self, request, urlattr, methodattr, headersattr, bodyattr):
+        request_url = getattr(request, urlattr)
 
         with self._lock:
             # If self._params is tuple or list, need to use pattern matching
@@ -270,13 +251,13 @@ class RequestModifier:
             if not params:
                 return
 
-        method = getattr(request, attr_map['method'])
-        headers = getattr(request, attr_map['headers'])
+        method = getattr(request, methodattr)
+        headers = getattr(request, headersattr)
         query = urlsplit(request_url).query
         is_form_data = headers.get('Content-Type') == 'application/x-www-form-urlencoded'
 
         if method == 'POST' and is_form_data:
-            query = getattr(request, attr_map['body']).decode('utf-8', errors='replace')
+            query = getattr(request, bodyattr).decode('utf-8', errors='replace')
 
         request_params = parse_qs(query, keep_blank_values=True)
 
@@ -294,13 +275,13 @@ class RequestModifier:
         if method == 'POST' and is_form_data:
             query = query.encode('utf-8')
             headers['Content-Length'] = str(len(query))
-            setattr(request, attr_map['body'], query)
+            setattr(request, bodyattr, query)
         else:
             scheme, netloc, path, _, fragment = urlsplit(request_url)
-            setattr(request, attr_map['url'], urlunsplit((scheme, netloc, path, query, fragment)))
+            setattr(request, urlattr, urlunsplit((scheme, netloc, path, query, fragment)))
 
-    def _modify_querystring(self, request, attr_map):
-        request_url = getattr(request, attr_map['url'])
+    def _modify_querystring(self, request, urlattr):
+        request_url = getattr(request, urlattr)
 
         with self._lock:
             # If self._querystring is tuple or list, need to use pattern matching
@@ -313,11 +294,11 @@ class RequestModifier:
                 return
 
         scheme, netloc, path, _, fragment = urlsplit(request_url)
-        setattr(request, attr_map['url'], urlunsplit((scheme, netloc, path, querystring or '', fragment)))
+        setattr(request, urlattr, urlunsplit((scheme, netloc, path, querystring or '', fragment)))
 
-    def _rewrite_url(self, request, attr_map):
-        request_headers = getattr(request, attr_map['headers'])
-        request_url = getattr(request, attr_map['url'])
+    def _rewrite_url(self, request, urlattr, headersattr):
+        request_headers = getattr(request, headersattr)
+        request_url = getattr(request, urlattr)
 
         with self._lock:
             rewrite_rules = self._rewrite_rules[:]
@@ -328,10 +309,10 @@ class RequestModifier:
             modified, count = pattern.subn(replacement, request_url)
 
             if count > 0:
-                setattr(request, attr_map['url'], modified)
+                setattr(request, urlattr, modified)
                 break
 
-        request_url = getattr(request, attr_map['url'])
+        request_url = getattr(request, urlattr)
         modified_netloc = urlsplit(request_url).netloc
 
         if original_netloc != modified_netloc:

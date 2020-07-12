@@ -280,7 +280,7 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
         """
         # First make any modifications to the request
         req.body = req_body  # Temporarily attach the body to the request for modification
-        self.modifier.modify(req, url='path', method='command')
+        self.modifier.modify(req, urlattr='path', methodattr='command')
         req_body = req.body
 
         # Convert the implementation specific request to one of our requests
