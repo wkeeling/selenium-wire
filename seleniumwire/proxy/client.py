@@ -46,7 +46,7 @@ class AdminClient:
 
         if options.get('backend', 'default') == 'default':
             # Use the default backend
-            custom_response_handler = options.get('custom_response_handler')
+            custom_response_handler = options.pop('custom_response_handler', None)
             if custom_response_handler is not None:
                 self._capture_request_handler = create_custom_capture_request_handler(custom_response_handler)
             else:
