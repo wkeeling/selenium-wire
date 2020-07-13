@@ -59,7 +59,7 @@ Features
 
 * Pure Python, user-friendly API
 * HTTP and HTTPS requests captured
-* Access headers, body, parameters
+* Access headers, parameters, body
 * Modify headers, parameters
 * Rewrite URLs
 * Proxy server support
@@ -192,7 +192,7 @@ Creating the Webdriver
 
 For Firefox and Chrome, you don't need to do anything special. Just instantiate the webdriver as you would normally, passing in Selenium specific options if you have any. Selenium Wire also has it's `own options`_ that can be passed in the ``seleniumwire_options`` attribute.
 
-.. _`own options`: #other-options
+.. _`own options`: #all-options
 
 **Firefox**
 
@@ -402,9 +402,9 @@ Header overrides can also be applied on a per-URL basis using a regex to match t
 
     driver.header_overrides = [
         ('.*prod1.server.com.*', {'User-Agent': 'Test_User_Agent_String',
-                                  'New-Header': 'HeaderValue'}),
-        ('.*prod2.server.com.*', {'User-Agent': 'Test_User_Agent_String',
-                                  'New-Header': 'HeaderValue'})
+                                  'response:New-Header': 'HeaderValue'}),
+        ('.*prod2.server.com.*', {'User-Agent': 'Test_User_Agent_String2',
+                                  'response:New-Header': 'HeaderValue2'})
     ]
 
     # Only requests/responses to prod1.server.com or prod2.server.com will have their headers modified
@@ -420,7 +420,7 @@ Modifying Parameters
 
 The ``driver.param_overrides`` attribute is used for modifying request parameters. Parameters are modified *after* the browser sends them.
 
-For GET requests the querystring is modified. For POST requests that have a content type of ``application/x-www-form-urlencoded`` the body of the request is modified.
+For GET requests the query string is modified. For POST requests that have a content type of ``application/x-www-form-urlencoded`` the body of the request is modified.
 
 To add one or more new parameters to a request, create a dictionary containing those parameters and set it as the value of ``param_overrides``.
 
@@ -599,7 +599,7 @@ As well as ``socks5``, the schemes ``socks4`` and ``socks5h`` are supported. Use
 Backends
 ~~~~~~~~
 
-Selenium Wire allows you to change backend component that performs request capture. Currently two backends are supported: the backend that ships with Selenium Wire (the default) and the mitmproxy backend.
+Selenium Wire allows you to change the backend component that performs request capture. Currently two backends are supported: the backend that ships with Selenium Wire (the default) and the mitmproxy backend.
 
 The default backend is adequate for most purposes. However, in certain cases you may find you get better performance with the mitmproxy backend.
 
@@ -624,36 +624,27 @@ Once installed, set the ``backend`` option in Selenium Wire's options to ``mitmp
 
 **Mitmproxy backend limitations**
 
-* You must be running Pythom 3.6 or higher.
+* You must be running Python 3.6 or higher.
 * The mitmproxy backend won't work with upstream SOCKS proxies.
 
 All Options
-~~~~~~~~~~~~~
+~~~~~~~~~~~
 
-All options that can be passed to Selenium Wire via the ``seleniumwire_options`` webdriver attribute:
+A summary of all options that can be passed to Selenium Wire via the ``seleniumwire_options`` webdriver attribute:
 
-``request_storage_base_dir``
-    Captured requests and responses are stored in the current user's home folder by default. If you want to use a different folder, you can specify that here.
-
-.. code:: python
-
-    options = {
-        'request_storage_base_dir': '/tmp'  # Use /tmp to store captured data
-    }
-    driver = webdriver.Firefox(seleniumwire_options=options)
-
-``connection_timeout``
-    The number of seconds Selenium Wire should wait before timing out requests. The default is 5 seconds. Increase this value if you're working with a slow server that needs more time to respond. Set to ``None`` for no timeout.
+``backend``
+    The backend component that Selenium Wire will use to capture requests. The currently supported values are ``default`` (same as not specifying) or ``mitmproxy``.
 
 .. code:: python
 
     options = {
-        'connection_timeout': None  # Never timeout
+        'backend': 'mitmproxy'  # Use the mitmproxy backend
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
 ``connection_keep_alive``
     Whether connections should be reused across requests. The default is ``False``.
+    *Applies to the default backend only.*
 
 .. code:: python
 
@@ -662,28 +653,21 @@ All options that can be passed to Selenium Wire via the ``seleniumwire_options``
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
-``max_threads``
-    The maximum allowed number threads that will be used to handle requests. The default is 9999.
+``connection_timeout``
+    The number of seconds Selenium Wire should wait before timing out requests. The default is 5 seconds. Increase this value if you're working with a slow server that needs more time to respond. Set to ``None`` for no timeout.
+    *Applies to the default backend only.*
 
 .. code:: python
 
     options = {
-        'max_threads': 3  # Allow a maximum of 3 threads to handle requests.
+        'connection_timeout': None  # Never timeout
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
-``verify_ssl``
-    Whether SSL certificates should be verified. The default is ``False`` which prevents errors with self-signed certificates.
-
-.. code:: python
-
-    options = {
-        'verify_ssl': True  # Verify SSL certificates but beware of errors with self-signed certificates.
-    }
-    driver = webdriver.Firefox(seleniumwire_options=options)
 
 ``custom_response_handler``
     This function that should be passed in custom response handlers should maintain a signature that it compatible with ``CaptureRequestHandler.response_handler``, as all arguments passed to that function will in turn be passed to your function. In order to modify the response data, you will need to return it from your function (the response data for the request is given in the ``res_body`` argument).
+    *Applies to the default backend only.*
 
 .. code:: python
 
@@ -703,16 +687,6 @@ The code above will print something like this to the console (loading a page wil
     res_body length: 471
     res_body length: 606
 
-``ignore_http_methods``
-    A list of HTTP methods (specified as uppercase strings) that should be ignored by Selenium Wire and not captured. The default is ``['OPTIONS']`` which ignores all OPTIONS requests. To capture all request methods, set ``ignore_http_methods`` to an empty list:
-
-.. code:: python
-
-    options = {
-        'ignore_http_methods': []  # Capture all requests, including OPTIONS requests
-    }
-    driver = webdriver.Firefox(seleniumwire_options=options)
-
 ``disable_encoding``
     Whether to disable content encoding. When set to ``True``, the ``Accept-Encoding`` header will be set to ``identity`` for all requests. This tells the server to not compress/modify the response. The default is ``False``.
 
@@ -723,13 +697,101 @@ The code above will print something like this to the console (loading a page wil
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
+``ignore_http_methods``
+    A list of HTTP methods (specified as uppercase strings) that should be ignored by Selenium Wire and not captured. The default is ``['OPTIONS']`` which ignores all OPTIONS requests. To capture all request methods, set ``ignore_http_methods`` to an empty list:
+
+.. code:: python
+
+    options = {
+        'ignore_http_methods': []  # Capture all requests, including OPTIONS requests
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``max_threads``
+    The maximum allowed number threads that will be used to handle requests. The default is 9999.
+    *Applies to the default backend only.*
+
+.. code:: python
+
+    options = {
+        'max_threads': 3  # Allow a maximum of 3 threads to handle requests.
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``mitmproxy_log_level``
+    Set the log level that the mitmproxy backend will use. The default is ``ERROR``.
+    *Applies to the mitmproxy backend only.*
+
+.. code:: python
+
+    options = {
+        'mitmproxy_log_level': 'INFO'  # Increase the log level to INFO for the mitmproxy backend
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``mitmproxy_confdir``
+    The location of the mitmproxy configuration directory. The default is ``~/.mitmproxy``. You might want to change this if you're running in an environment where you don't have access to the user's home folder.
+    *Applies to the mitmproxy backend only.*
+
+.. code:: python
+
+    options = {
+        'mitmproxy_confdir': '/tmp/.mitmproxy'  # Switch the location to /tmp
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``port``
+    The port number that Selenium Wire's backend listens on. If you're using the default backend, you don't normally need to specify a port and a random port number is chosen automatically. If you're using the mitmproxy backend, the port number defaults to 9950.
+
+.. code:: python
+
+    options = {
+        'port': 9999  # Tell the backend to listen on port 9999 (not normally necessary to set this)
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``proxy``
+    The upstream proxy server configuration (if you're using a proxy).
+
+.. code:: python
+
+    options = {
+        'proxy': {
+            'http': 'http://user:pass@192.168.10.100:8888',
+            'https': 'https://user:pass@192.168.10.100:8889',
+            'no_proxy': 'localhost,127.0.0.1'
+        }
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``request_storage_base_dir``
+    Captured requests and responses are stored in the current user's home folder by default. You might want to change this if you're running in an environment where you don't have access to the user's home folder.
+
+.. code:: python
+
+    options = {
+        'request_storage_base_dir': '/tmp'  # Use /tmp to store captured data
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
 ``suppress_connection_errors``
     Whether to suppress connection related tracebacks. The default is ``True`` so that harmless errors that commonly occur at browser shutdown do not alarm users. When suppressed, the connection error message is logged at DEBUG level without a traceback. Set to ``False`` to allow exception propagation and see full tracebacks.
+    *Applies to the default backend only.*
 
 .. code:: python
 
     options = {
         'suppress_connection_errors': False  # Show full tracebacks for any connection errors
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``verify_ssl``
+    Whether SSL certificates should be verified. The default is ``False`` which prevents errors with self-signed certificates.
+
+.. code:: python
+
+    options = {
+        'verify_ssl': True  # Verify SSL certificates but beware of errors with self-signed certificates.
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
