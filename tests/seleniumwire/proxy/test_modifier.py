@@ -1,5 +1,6 @@
 from unittest import TestCase
 from unittest.mock import Mock
+from urllib.parse import parse_qs, urlsplit
 
 from seleniumwire.proxy.modifier import RequestModifier
 
@@ -241,10 +242,10 @@ class RequestModifierTest(TestCase):
 
         self.modifier.modify_request(mock_request)
 
-        self.assertEqual(
-            'https://prod1.server.com/some/path/12345?foo=baz&spam=eggs',
-            mock_request.url
-        )
+        self.assertEqual({
+            'foo': 'baz',
+            'spam': 'eggs'
+        }, self._extract_params(mock_request.url))
 
     def test_override_param_body(self):
         self.modifier.params = {
@@ -259,7 +260,9 @@ class RequestModifierTest(TestCase):
 
         self.modifier.modify_request(mock_request)
 
-        self.assertEqual(b'foo=bazz&spam=eggs', mock_request.body)
+        qs = parse_qs(mock_request.body.decode('utf-8'))
+        self.assertEqual('bazz', qs['foo'][0])
+        self.assertEqual('eggs', qs['spam'][0])
         self.assertEqual('18', mock_request.headers['Content-Length'])
 
     def test_override_multiple_params(self):
@@ -271,10 +274,10 @@ class RequestModifierTest(TestCase):
 
         self.modifier.modify_request(mock_request)
 
-        self.assertEqual(
-            'https://prod1.server.com/some/path/12345?foo=baz&spam=ham',
-            mock_request.url
-        )
+        self.assertEqual({
+            'foo': 'baz',
+            'spam': 'ham'
+        }, self._extract_params(mock_request.url))
 
     def test_override_param_multiple_values(self):
         self.modifier.params = {
@@ -284,10 +287,9 @@ class RequestModifierTest(TestCase):
 
         self.modifier.modify_request(mock_request)
 
-        self.assertEqual(
-            'https://prod1.server.com/some/path/12345?foo=a&foo=b&spam=eggs',
-            mock_request.url
-        )
+        params = self._extract_params(mock_request.url, flatten=False)
+        self.assertEqual(['a', 'b'], params['foo'])
+        self.assertEqual(['eggs'], params['spam'])
 
     def test_override_param_body_no_content_type(self):
         self.modifier.params = {
@@ -311,10 +313,10 @@ class RequestModifierTest(TestCase):
 
         self.modifier.modify_request(mock_request)
 
-        self.assertEqual(
-            'https://prod1.server.com/some/path/12345?foo=baz&spam=eggs',
-            mock_request.url
-        )
+        self.assertEqual({
+            'foo': 'baz',
+            'spam': 'eggs'
+        }, self._extract_params(mock_request.url))
 
     def test_override_multiple_params_with_single_url_matching(self):
         self.modifier.params = [
@@ -323,10 +325,10 @@ class RequestModifierTest(TestCase):
 
         self.modifier.modify_request(mock_request)
 
-        self.assertEqual(
-            'https://prod1.server.com/some/path/12345?foo=baz&spam=ham',
-            mock_request.url
-        )
+        self.assertEqual({
+            'foo': 'baz',
+            'spam': 'ham'
+        }, self._extract_params(mock_request.url))
 
     def test_override_params_with_multiple_url_matching(self):
         self.modifier.params = [
@@ -340,10 +342,10 @@ class RequestModifierTest(TestCase):
 
         self.modifier.modify_request(mock_request)
 
-        self.assertEqual(
-            'https://prod1.server.com/some/path/12345?foo=baz&spam=ham',
-            mock_request.url
-        )
+        self.assertEqual({
+            'foo': 'baz',
+            'spam': 'ham'
+        }, self._extract_params(mock_request.url))
 
         # Modify a request that matches the second pattern
         url = 'https://prod2.server.com/some/path/12345?foo=bar&spam=eggs'
@@ -351,10 +353,10 @@ class RequestModifierTest(TestCase):
 
         self.modifier.modify_request(mock_request)
 
-        self.assertEqual(
-            'https://prod2.server.com/some/path/12345?foo=baz2&spam=ham2',
-            mock_request.url
-        )
+        self.assertEqual({
+            'foo': 'baz2',
+            'spam': 'ham2'
+        }, self._extract_params(mock_request.url))
 
     def test_override_param_with_url_not_matching(self):
         self.modifier.params = [
@@ -364,10 +366,10 @@ class RequestModifierTest(TestCase):
 
         self.modifier.modify_request(mock_request)
 
-        self.assertEqual(
-            'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs',
-            mock_request.url
-        )
+        self.assertEqual({
+            'foo': 'bar',
+            'spam': 'eggs'
+        }, self._extract_params(mock_request.url))
 
     def test_add_new_param_qs(self):
         self.modifier.params = {
@@ -377,10 +379,10 @@ class RequestModifierTest(TestCase):
 
         self.modifier.modify_request(mock_request)
 
-        self.assertEqual(
-            'https://prod1.server.com/some/path/12345?spam=eggs&foo=baz',
-            mock_request.url
-        )
+        self.assertEqual({
+            'foo': 'baz',
+            'spam': 'eggs'
+        }, self._extract_params(mock_request.url))
 
     def test_add_new_param_body(self):
         self.modifier.params = {
@@ -395,7 +397,9 @@ class RequestModifierTest(TestCase):
 
         self.modifier.modify_request(mock_request)
 
-        self.assertEqual(b'spam=eggs&foo=bazz', mock_request.body)
+        qs = parse_qs(mock_request.body.decode('utf-8'))
+        self.assertEqual('bazz', qs['foo'][0])
+        self.assertEqual('eggs', qs['spam'][0])
         self.assertEqual('18', mock_request.headers['Content-Length'])
 
     def test_add_param_no_qs(self):
@@ -406,10 +410,9 @@ class RequestModifierTest(TestCase):
 
         self.modifier.modify_request(mock_request)
 
-        self.assertEqual(
-            'https://prod1.server.com/some/path/12345?foo=baz',
-            mock_request.url
-        )
+        self.assertEqual({
+            'foo': 'baz',
+        }, self._extract_params(mock_request.url))
 
     def test_add_param_no_body(self):
         self.modifier.params = {
@@ -435,10 +438,9 @@ class RequestModifierTest(TestCase):
 
         self.modifier.modify_request(mock_request)
 
-        self.assertEqual(
-            'https://prod1.server.com/some/path/12345?spam=eggs',
-            mock_request.url
-        )
+        self.assertEqual({
+            'spam': 'eggs'
+        }, self._extract_params(mock_request.url))
 
     def test_filter_out_param_body(self):
         self.modifier.params = {
@@ -464,10 +466,10 @@ class RequestModifierTest(TestCase):
 
         self.modifier.modify_request(mock_request)
 
-        self.assertEqual(
-            'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs',
-            mock_request.url
-        )
+        self.assertEqual({
+            'foo': 'bar',
+            'spam': 'eggs'
+        }, self._extract_params(mock_request.url))
 
     def test_clear_param_overrides(self):
         self.modifier.params = {
@@ -479,10 +481,10 @@ class RequestModifierTest(TestCase):
         del self.modifier.params
         self.modifier.modify_request(mock_request)
 
-        self.assertEqual(
-            'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs',
-            mock_request.url
-        )
+        self.assertEqual({
+            'foo': 'bar',
+            'spam': 'eggs'
+        }, self._extract_params(mock_request.url))
 
     def test_get_param_overrides(self):
         self.modifier.params = {
@@ -676,3 +678,6 @@ class RequestModifierTest(TestCase):
         mock_response = Mock()
         mock_response.headers = headers
         return mock_response
+
+    def _extract_params(self, url, flatten=True):
+        return {k: v[0] if flatten else v for k, v in parse_qs(urlsplit(url).query).items()}
