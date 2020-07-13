@@ -2,7 +2,7 @@ import os
 import ssl
 import urllib.error
 import urllib.request
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 from unittest import TestCase
 
 from seleniumwire.proxy.client import AdminClient
@@ -197,8 +197,11 @@ class AdminClientIntegrationTest(TestCase):
 
         last_request = self.client.get_last_request()
 
-        query = urlsplit(last_request['url'])[3]
-        self.assertEqual('foo=baz&spam=eggs', query)
+        params = {k: v[0] for k, v in parse_qs(urlsplit(last_request['url']).query).items()}
+        self.assertEqual({
+            'foo': 'baz',
+            'spam': 'eggs'
+        }, params)
 
     def test_set_param_overrides_post(self):
         self.client.set_param_overrides({'foo': 'baz'})
@@ -212,7 +215,10 @@ class AdminClientIntegrationTest(TestCase):
         last_request = self.client.get_last_request()
         body = self.client.get_request_body(last_request['id'])
 
-        self.assertEqual(b'foo=baz&spam=eggs', body)
+        qs = parse_qs(body.decode('utf-8'))
+        self.assertEqual(2, len(qs))
+        self.assertEqual('baz', qs['foo'][0])
+        self.assertEqual('eggs', qs['spam'][0])
 
     def test_set_param_overrides_filters_out_param(self):
         self.client.set_param_overrides({'foo': None})
@@ -221,7 +227,7 @@ class AdminClientIntegrationTest(TestCase):
 
         last_request = self.client.get_last_request()
 
-        query = urlsplit(last_request['url'])[3]
+        query = urlsplit(last_request['url']).query
         self.assertEqual('spam=eggs', query)
 
     def test_clear_param_overrides(self):
@@ -231,7 +237,7 @@ class AdminClientIntegrationTest(TestCase):
 
         last_request = self.client.get_last_request()
 
-        query = urlsplit(last_request['url'])[3]
+        query = urlsplit(last_request['url']).query
         self.assertEqual('', query)
 
     def test_get_querystring_overrides(self):

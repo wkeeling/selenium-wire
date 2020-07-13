@@ -261,6 +261,7 @@ class RequestModifierTest(TestCase):
         self.modifier.modify_request(mock_request)
 
         qs = parse_qs(mock_request.body.decode('utf-8'))
+        self.assertEqual(2, len(qs))
         self.assertEqual('bazz', qs['foo'][0])
         self.assertEqual('eggs', qs['spam'][0])
         self.assertEqual('18', mock_request.headers['Content-Length'])
@@ -398,6 +399,7 @@ class RequestModifierTest(TestCase):
         self.modifier.modify_request(mock_request)
 
         qs = parse_qs(mock_request.body.decode('utf-8'))
+        self.assertEqual(2, len(qs))
         self.assertEqual('bazz', qs['foo'][0])
         self.assertEqual('eggs', qs['spam'][0])
         self.assertEqual('18', mock_request.headers['Content-Length'])
