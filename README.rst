@@ -103,7 +103,9 @@ Table of Contents
 
   * `SOCKS`_
 
-- `Other Options`_
+- `Backends`_
+
+- `All Options`_
 
 - `Limitations`_
 
@@ -309,7 +311,7 @@ Requests have the following attributes.
     The HTTP method type, e.g. ``GET`` or ``POST``.
 
 ``url``
-    The request URL, e.g. ``https://server/some/path/index.html``
+    The request URL, e.g. ``https://server/some/path/index.html?foo=bar&spam=eggs``
 
 ``path``
     The request path, e.g. ``/some/path/index.html``
@@ -344,13 +346,13 @@ The response can be retrieved from a request via the ``response`` attribute. A r
      A case-insensitive dictionary of response headers. Asking for ``response.headers['content-length']`` will return the value of the ``Content-Length`` header.
 
 ``body``
-    The response body as ``bytes``. If the response has no body the value of ``body`` will be empty, i.e. ``b''``.
+    The response body as ``bytes``. If the response has no body the value of ``body`` will be empty, i.e. ``b''``. If the body was compressed (zipped) by the server it will automatically be uncompressed.
 
 
 Modifying Requests and Responses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Selenium Wire allows you to modify requests and responses. Requests are modified *after* the browser sends them and responses *before* the browser receives them.
+Selenium Wire allows you to modify requests and responses. Requests are modified *after* the browser sends them and responses are modified *before* the browser receives them.
 
 Modifying Headers
 -----------------
@@ -370,7 +372,7 @@ To add one or more new headers to a request, create a dictionary containing thos
 
 If a header already exists in a request it will be overwritten by the one in the dictionary. Header names are case-insensitive.
 
-For response headers, just prefix the header name with ``response:``.
+For response headers, just prefix the header name with ``response:``
 
 .. code:: python
 
@@ -394,7 +396,7 @@ To remove one or more headers from a request or response, set the value of those
     # All subsequent requests will *not* contain Existing-Header1
     # All responses will *not* contain Existing-Header2
 
-Header overrides can also be applied on a per-URL basis using a regex to match the appropriate URL:
+Header overrides can also be applied on a per-URL basis using a regex to match the appropriate request URL:
 
 .. code:: python
 
@@ -444,7 +446,7 @@ To remove one or more parameters from a request, set the value of those paramete
 
     # All subsequent requests will *not* contain existing_param1 or existing_param2
 
-Perhaps more usefully, parameter overrides can be applied on a per-URL basis using a regex to match the appropriate URL:
+Perhaps more usefully, parameter overrides can be applied on a per-URL basis using a regex to match the appropriate request URL:
 
 .. code:: python
 
@@ -485,7 +487,7 @@ To remove a query string from a request, set the value to empty string.
 
     # All subsequent requests will *not* contain a query string
 
-Perhaps more usefully, query string overrides can be applied on a per-URL basis using a regex to match the appropriate URL:
+Perhaps more usefully, query string overrides can be applied on a per-URL basis using a regex to match the appropriate request URL:
 
 .. code:: python
 
@@ -597,14 +599,38 @@ As well as ``socks5``, the schemes ``socks4`` and ``socks5h`` are supported. Use
 Backends
 ~~~~~~~~
 
-Selenium Wire allows you to change backend component (the "backend") that performs request capture. The default backend that ships with Selenium Wire is adequate for most purposes, however if you're experiencing performance problems you can switch the backend to "mitmproxy".
+Selenium Wire allows you to change backend component that performs request capture. Currently two backends are supported: the backend that ships with Selenium Wire (the default) and the mitmproxy backend.
 
-Mitmproxy is an open source proxy server 
+The default backend is adequate for most purposes. However, in certain cases you may find you get better performance with the mitmproxy backend.
 
-Other Options
+The mitmproxy backend relies upon the powerful open source `mitmproxy proxy server`_ being installed in your environment.
+
+.. _`mitmproxy proxy server`: https://mitmproxy.org/
+
+To switch to the mitmproxy backend, first install the mitmproxy package:
+
+.. code:: bash
+
+    pip install mitmproxy
+
+Once installed, set the ``backend`` option in Selenium Wire's options to ``mitmproxy``:
+
+.. code:: python
+
+    options = {
+        'backend': 'mitmproxy'
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+**Mitmproxy backend limitations**
+
+* You must be running Pythom 3.6 or higher.
+* The mitmproxy backend won't work with upstream SOCKS proxies.
+
+All Options
 ~~~~~~~~~~~~~
 
-Other options that can be passed to Selenium Wire via the ``seleniumwire_options`` webdriver attribute:
+All options that can be passed to Selenium Wire via the ``seleniumwire_options`` webdriver attribute:
 
 ``request_storage_base_dir``
     Captured requests and responses are stored in the current user's home folder by default. If you want to use a different folder, you can specify that here.
