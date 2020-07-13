@@ -14,8 +14,8 @@ class RequestModifier:
     def __init__(self):
         """Initialise a new RequestModifier."""
         self._lock = threading.Lock()
-        self._headers = []
-        self._params = []
+        self._headers = {}
+        self._params = {}
         self._querystring = None
         self._rewrite_rules = []
 
@@ -234,7 +234,8 @@ class RequestModifier:
 
         # We're only interested in response headers
         override_headers = {name.split(':', maxsplit=1)[1]: value
-                            for name, value in override_headers.items() if name.lower().startswith('response:')}
+                            for name, value in (override_headers or {}).items()
+                            if name.lower().startswith('response:')}
 
         if override_headers:
             self._modify_headers(getattr(response, headersattr), override_headers)

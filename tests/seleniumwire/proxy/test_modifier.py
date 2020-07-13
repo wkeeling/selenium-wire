@@ -147,6 +147,19 @@ class RequestModifierTest(TestCase):
             'max-age=2592000', mock_response.headers['Cache-Control']
         )
 
+    def test_override_response_header_with_url_not_matching(self):
+        self.modifier.headers = [
+            (".*prod.server.com.*", {'response:Cache-Control': 'max-age=2592000'})
+        ]
+        mock_request = self._create_mock_request()
+        mock_response = self._create_mock_response()
+
+        self.modifier.modify_response(mock_response, mock_request)
+
+        self.assertEqual(
+            'none', mock_response.headers['Cache-Control']
+        )
+
     def test_override_response_header_case_insensitive(self):
         self.modifier.headers = {
             'User-Agent': 'Test_User_Agent_String',

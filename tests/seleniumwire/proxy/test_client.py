@@ -369,9 +369,6 @@ class AdminClientIntegrationTest(TestCase):
 
     def setUp(self):
         options = {'backend': os.environ.get('SW_TEST_BACKEND', 'default')}
-        # options['proxy'] = {
-        #     'https': 'https://localhost:8080'
-        # }
         if self._testMethodName == 'test_disable_encoding':
             options['disable_encoding'] = True
         self.client = AdminClient()
@@ -397,7 +394,7 @@ class AdminClientIntegrationTest(TestCase):
         request = urllib.request.Request(url, method=method, data=data)
         request.add_header('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 '
                                          '(KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36')
-        with urllib.request.urlopen(request, timeout=500) as response:
+        with urllib.request.urlopen(request, timeout=5) as response:
             html = response.read()
 
         return html
