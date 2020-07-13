@@ -280,7 +280,7 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
         """
         # First make any modifications to the request
         req.body = req_body  # Temporarily attach the body to the request for modification
-        self.modifier.modify(req, urlattr='path', methodattr='command')
+        self.modifier.modify_request(req, urlattr='path', methodattr='command')
         req_body = req.body
 
         # Convert the implementation specific request to one of our requests
@@ -290,7 +290,7 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
         self.capture_request(request)
         req.id = request.id
 
-        return req.body
+        return req_body
 
     def handle_response(self, req, req_body, res, res_body):
         """Captures a response and its body that relate to a previous request.
@@ -304,6 +304,9 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
         if not hasattr(req, 'id'):
             # Request was not stored
             return
+
+        # Make any modifications to the response
+        self.modifier.modify_response(res, req, urlattr='path')
 
         # Convert the implementation specific response to one of our responses
         # for handling.

@@ -15,7 +15,7 @@ class RequestModifierTest(TestCase):
         }
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'Test_User_Agent_String', mock_request.headers['User-Agent']
@@ -26,7 +26,7 @@ class RequestModifierTest(TestCase):
             (".*prod1.server.com.*", {'User-Agent': 'Test_User_Agent_String'})]
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'Test_User_Agent_String', mock_request.headers['User-Agent']
@@ -38,7 +38,7 @@ class RequestModifierTest(TestCase):
                                       'New-Header': 'HeaderValue'})]
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'Test_User_Agent_String', mock_request.headers['User-Agent']
@@ -57,7 +57,7 @@ class RequestModifierTest(TestCase):
         url = "https://prod1.server.com/some/path/12345"
         mock_request = self._create_mock_request(url)
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'Test_User_Agent_String', mock_request.headers['User-Agent']
@@ -69,7 +69,7 @@ class RequestModifierTest(TestCase):
         url = "https://prod2.server.com/some/path/12345"
         mock_request = self._create_mock_request(url)
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
         self.assertEqual(
             'HeaderValue', mock_request.headers['New-Header2']
         )
@@ -82,7 +82,7 @@ class RequestModifierTest(TestCase):
         ]
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 '
@@ -96,7 +96,7 @@ class RequestModifierTest(TestCase):
         }
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'Test_User_Agent_String', mock_request.headers['User-Agent']
@@ -108,7 +108,7 @@ class RequestModifierTest(TestCase):
         }
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual('Some-Value', mock_request.headers['New-Header'])
 
@@ -118,7 +118,7 @@ class RequestModifierTest(TestCase):
         }
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertNotIn('User-Agent', mock_request.headers)
 
@@ -128,9 +128,75 @@ class RequestModifierTest(TestCase):
         }
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertNotIn('Host', mock_request.headers)
+
+    def test_override_response_header(self):
+        self.modifier.headers = {
+            'User-Agent': 'Test_User_Agent_String',
+            'response:Cache-Control': 'max-age=2592000'
+        }
+        mock_request = self._create_mock_request()
+        mock_response = self._create_mock_response()
+
+        self.modifier.modify_response(mock_response, mock_request)
+
+        self.assertEqual(1, len(mock_response.headers))
+        self.assertEqual(
+            'max-age=2592000', mock_response.headers['Cache-Control']
+        )
+
+    def test_override_response_header_case_insensitive(self):
+        self.modifier.headers = {
+            'User-Agent': 'Test_User_Agent_String',
+            'respoNse:cache-control': 'max-age=2592000'
+        }
+        mock_request = self._create_mock_request()
+        mock_response = self._create_mock_response()
+
+        self.modifier.modify_response(mock_response, mock_request)
+
+        self.assertEqual(1, len(mock_response.headers))
+        self.assertEqual(
+            'max-age=2592000', mock_response.headers['Cache-Control']
+        )
+
+    def test_add_new_response_header(self):
+        self.modifier.headers = {
+            'User-Agent': 'Test_User_Agent_String',
+            'response:New-Header': 'Some-Value'
+        }
+        mock_request = self._create_mock_request()
+        mock_response = self._create_mock_response()
+
+        self.modifier.modify_response(mock_response, mock_request)
+
+        self.assertEqual(2, len(mock_response.headers))
+        self.assertEqual('Some-Value', mock_response.headers['New-Header'])
+
+    def test_filter_out_response_header(self):
+        self.modifier.headers = {
+            'User-Agent': 'Test_User_Agent_String',
+            'response:Cache-Control': None
+        }
+        mock_request = self._create_mock_request()
+        mock_response = self._create_mock_response()
+
+        self.modifier.modify_response(mock_response, mock_request)
+
+        self.assertNotIn('Cache-Control', mock_response.headers)
+
+    def test_filter_out_non_existent_response_header(self):
+        self.modifier.headers = {
+            'response:Host': None  # Does not exist in the response
+        }
+        mock_request = self._create_mock_request()
+        mock_response = self._create_mock_response()
+
+        self.modifier.modify_response(mock_response, mock_request)
+
+        self.assertNotIn('Host', mock_response.headers)
 
     def test_clear_header_overrides(self):
         self.modifier.headers = {
@@ -139,7 +205,7 @@ class RequestModifierTest(TestCase):
         mock_request = self._create_mock_request()
 
         del self.modifier.headers
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual('Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/'
                          '20100101 Firefox/10.0',
@@ -160,7 +226,7 @@ class RequestModifierTest(TestCase):
         }
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?foo=baz&spam=eggs',
@@ -178,7 +244,7 @@ class RequestModifierTest(TestCase):
             body=b'foo=bar&spam=eggs'
         )
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(b'foo=bazz&spam=eggs', mock_request.body)
         self.assertEqual('18', mock_request.headers['Content-Length'])
@@ -190,7 +256,7 @@ class RequestModifierTest(TestCase):
         }
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?foo=baz&spam=ham',
@@ -203,7 +269,7 @@ class RequestModifierTest(TestCase):
         }
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?foo=a&foo=b&spam=eggs',
@@ -220,7 +286,7 @@ class RequestModifierTest(TestCase):
             body=b'foo=bar&spam=eggs'
         )
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(b'foo=bar&spam=eggs', mock_request.body)
 
@@ -230,7 +296,7 @@ class RequestModifierTest(TestCase):
         ]
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?foo=baz&spam=eggs',
@@ -242,7 +308,7 @@ class RequestModifierTest(TestCase):
             (".*prod1.server.com.*", {'foo': 'baz', 'spam': 'ham'})]
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?foo=baz&spam=ham',
@@ -259,7 +325,7 @@ class RequestModifierTest(TestCase):
         url = 'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs'
         mock_request = self._create_mock_request(url)
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?foo=baz&spam=ham',
@@ -270,7 +336,7 @@ class RequestModifierTest(TestCase):
         url = 'https://prod2.server.com/some/path/12345?foo=bar&spam=eggs'
         mock_request = self._create_mock_request(url)
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod2.server.com/some/path/12345?foo=baz2&spam=ham2',
@@ -283,7 +349,7 @@ class RequestModifierTest(TestCase):
         ]
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs',
@@ -296,7 +362,7 @@ class RequestModifierTest(TestCase):
         }
         mock_request = self._create_mock_request('https://prod1.server.com/some/path/12345?spam=eggs')
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?spam=eggs&foo=baz',
@@ -314,7 +380,7 @@ class RequestModifierTest(TestCase):
             body=b'spam=eggs'
         )
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(b'spam=eggs&foo=bazz', mock_request.body)
         self.assertEqual('18', mock_request.headers['Content-Length'])
@@ -325,7 +391,7 @@ class RequestModifierTest(TestCase):
         }
         mock_request = self._create_mock_request('https://prod1.server.com/some/path/12345')
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?foo=baz',
@@ -343,7 +409,7 @@ class RequestModifierTest(TestCase):
             body=b''
         )
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(b'foo=bazz', mock_request.body)
         self.assertEqual('8', mock_request.headers['Content-Length'])
@@ -354,7 +420,7 @@ class RequestModifierTest(TestCase):
         }
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?spam=eggs',
@@ -372,7 +438,7 @@ class RequestModifierTest(TestCase):
             body=b'foo=bar&spam=eggs'
         )
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(b'spam=eggs', mock_request.body)
         self.assertEqual('9', mock_request.headers['Content-Length'])
@@ -383,7 +449,7 @@ class RequestModifierTest(TestCase):
         }
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs',
@@ -398,7 +464,7 @@ class RequestModifierTest(TestCase):
         mock_request = self._create_mock_request()
 
         del self.modifier.params
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs',
@@ -419,7 +485,7 @@ class RequestModifierTest(TestCase):
         self.modifier.querystring = 'foo=baz'
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?foo=baz',
@@ -432,7 +498,7 @@ class RequestModifierTest(TestCase):
         ]
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?foo=baz',
@@ -449,7 +515,7 @@ class RequestModifierTest(TestCase):
         url = 'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs'
         mock_request = self._create_mock_request(url)
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?foo=baz',
@@ -460,7 +526,7 @@ class RequestModifierTest(TestCase):
         url = 'https://prod2.server.com/some/path/12345?foo=bar&spam=eggs'
         mock_request = self._create_mock_request(url)
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod2.server.com/some/path/12345?spam=ham',
@@ -473,7 +539,7 @@ class RequestModifierTest(TestCase):
         ]
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs',
@@ -484,7 +550,7 @@ class RequestModifierTest(TestCase):
         self.modifier.querystring = 'foo=baz'
         mock_request = self._create_mock_request('https://prod1.server.com/some/path/12345')
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?foo=baz',
@@ -495,7 +561,7 @@ class RequestModifierTest(TestCase):
         self.modifier.querystring = ''
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345',
@@ -507,7 +573,7 @@ class RequestModifierTest(TestCase):
         mock_request = self._create_mock_request()
 
         del self.modifier.querystring
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs',
@@ -520,7 +586,7 @@ class RequestModifierTest(TestCase):
         ]
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod2.server.com/some/path/12345/foo/?foo=bar&spam=eggs', mock_request.url
@@ -533,7 +599,7 @@ class RequestModifierTest(TestCase):
         ]
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod2.server.com/some/path/12345/foo/?foo=bar&spam=eggs', mock_request.url
@@ -546,7 +612,7 @@ class RequestModifierTest(TestCase):
         mock_request = self._create_mock_request()
         mock_request.url = 'https://prod3.server.com/some/path/12345?foo=bar&spam=eggs'
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual(
             'https://prod3.server.com/some/path/12345?foo=bar&spam=eggs', mock_request.url
@@ -559,7 +625,7 @@ class RequestModifierTest(TestCase):
         mock_request = self._create_mock_request()
         mock_request.headers['Host'] = 'prod1.server.com'
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertEqual('prod2.server.com', mock_request.headers['Host'])
 
@@ -570,7 +636,7 @@ class RequestModifierTest(TestCase):
         ]
         mock_request = self._create_mock_request()
 
-        self.modifier.modify(mock_request)
+        self.modifier.modify_request(mock_request)
 
         self.assertNotIn('Host', mock_request.headers)
 
@@ -587,3 +653,13 @@ class RequestModifierTest(TestCase):
         mock_request.body = body
         mock_request.headers = headers
         return mock_request
+
+    def _create_mock_response(self, headers=None):
+        if headers is None:
+            headers = {
+                'Cache-Control': 'none'
+            }
+
+        mock_response = Mock()
+        mock_response.headers = headers
+        return mock_response

@@ -21,23 +21,26 @@ class RequestModifier:
 
     @property
     def headers(self):
-        """The headers that should be used to override the request headers.
+        """The header overrides for outgoing browser requests.
 
         The value of the headers can be a dictionary or list of sublists,
         with each sublist having two elements - a URL pattern and headers.
         Where a header in the dictionary exists in the request, the dictionary
-        value will overwrite the one in the request. Where a header in the
-        dictionary does not exist in the request, it will be added to the
-        request as a new header. To filter out a header from the request,
-        set that header in the dictionary with a value of None.
-        Header names are case insensitive.
+        value will overwrite the one in the request. Where a header in the dictionary
+        does not exist in the request, it will be added to the request as a
+        new header. To filter out a header from the request, set that header
+        in the dictionary to None. Header names are case insensitive.
+        For response headers, prefix the header name with 'response:'.
 
         For example:
-            headers = {'User-Agent': 'Firefox'}
+
+            headers = {
+                'User-Agent': 'Firefox',
+                'response:Cache-Control': 'none'
+            }
             headers = [
-                ('.*somewhere.com.*', {'User-Agent': 'Firefox'}),
-                ('*.somewhere-else.com.*', {'User-Agent': 'Chrome'}),
-            ]
+                ('.*somewhere.com.*', {'User-Agent': 'Firefox', 'response:Cache-Control': 'none'}),
+                ('*.somewhere-else.com.*', {'User-Agent': 'Chrome'})
         """
         with self._lock:
             if is_list_alike(self._headers):
@@ -192,64 +195,75 @@ class RequestModifier:
         with self._lock:
             self._rewrite_rules.clear()
 
-    def modify(self, request, urlattr='url', methodattr='method', headersattr='headers', bodyattr='body'):
+    def modify_request(self,
+                       request,
+                       urlattr='url',
+                       methodattr='method',
+                       headersattr='headers',
+                       bodyattr='body'):
         """Performs modifications to the request.
 
         Args:
             request: The request to modify.
-            urlattr: The name of the url attribute on the request/response object.
-            methodattr: The name of the method attribute on the request/response object.
-            headersattr: The name of the headers attribute on the request/response object.
-            bodyattr: The name of the body attribute on the request/response object.
+            urlattr: The name of the url attribute on the request object.
+            methodattr: The name of the method attribute on the request object.
+            headersattr: The name of the headers attribute on the request object.
+            bodyattr: The name of the body attribute on the request object.
         """
-        self._modify_headers(request, urlattr, headersattr)
+        override_headers = self._get_matching_overrides(self._headers, getattr(request, urlattr))
+        if override_headers:
+            self._modify_headers(getattr(request, headersattr), override_headers)
         self._modify_params(request, urlattr, methodattr, headersattr, bodyattr)
         self._modify_querystring(request, urlattr)
         self._rewrite_url(request, urlattr, headersattr)
 
-    def _modify_headers(self, request, urlattr, headersattr):
-        request_headers = getattr(request, headersattr)
-        request_url = getattr(request, urlattr)
+    def modify_response(self,
+                        response,
+                        request,
+                        urlattr='url',
+                        headersattr='headers'):
+        """Performs modifications to the response.
 
-        with self._lock:
-            # If self._headers is tuple or list, need to use pattern matching
-            if is_list_alike(self._headers):
-                headers = self._get_matching_overrides(self._headers, request_url)
-            else:
-                headers = self._headers
+        Args:
+            response: The response to modify.
+            request: The original request.
+            urlattr: The name of the url attribute on the response object.
+            headersattr: The name of the headers attribute on the response object.
+        """
+        override_headers = self._get_matching_overrides(self._headers, getattr(request, urlattr))
 
-            if not headers:
-                return
-            headers_lc = {h.lower(): (h, v) for h, v in headers.items()}
+        # We're only interested in response headers
+        override_headers = {name.split(':', maxsplit=1)[1]: value
+                            for name, value in override_headers.items() if name.lower().startswith('response:')}
 
-        # Remove/replace any header that already exists in the request
-        for header in list(request_headers):
+        if override_headers:
+            self._modify_headers(getattr(response, headersattr), override_headers)
+
+    def _modify_headers(self, headers, override_headers):
+        headers_lc = {h.lower(): (h, v) for h, v in override_headers.items()}
+
+        # Remove/replace any header that already exists in the request/response
+        for header in list(headers):
             try:
                 value = headers_lc.pop(header.lower())[1]
             except KeyError:
                 pass
             else:
-                del request_headers[header]
+                del headers[header]
                 if value is not None:
-                    request_headers[header] = value
+                    headers[header] = value
 
-        # Add new headers to the request that don't already exist
+        # Add new headers to the request/response that don't already exist
         for header, value in headers_lc.values():
             if value is not None:
-                request_headers[header] = value
+                headers[header] = value
 
     def _modify_params(self, request, urlattr, methodattr, headersattr, bodyattr):
         request_url = getattr(request, urlattr)
+        params = self._get_matching_overrides(self._params, request_url)
 
-        with self._lock:
-            # If self._params is tuple or list, need to use pattern matching
-            if is_list_alike(self._params):
-                params = self._get_matching_overrides(self._params, request_url)
-            else:
-                params = self._params
-
-            if not params:
-                return
+        if not params:
+            return
 
         method = getattr(request, methodattr)
         headers = getattr(request, headersattr)
@@ -272,6 +286,7 @@ class RequestModifier:
 
         query = urlencode(request_params, doseq=True)
 
+        # Update the request with the new params
         if method == 'POST' and is_form_data:
             query = query.encode('utf-8')
             headers['Content-Length'] = str(len(query))
@@ -282,16 +297,10 @@ class RequestModifier:
 
     def _modify_querystring(self, request, urlattr):
         request_url = getattr(request, urlattr)
+        querystring = self._get_matching_overrides(self._querystring, request_url)
 
-        with self._lock:
-            # If self._querystring is tuple or list, need to use pattern matching
-            if is_list_alike(self._querystring):
-                querystring = self._get_matching_overrides(self._querystring, request_url)
-            else:
-                querystring = self._querystring
-
-            if querystring is None:
-                return
+        if querystring is None:
+            return
 
         scheme, netloc, path, _, fragment = urlsplit(request_url)
         setattr(request, urlattr, urlunsplit((scheme, netloc, path, querystring or '', fragment)))
@@ -320,8 +329,13 @@ class RequestModifier:
             if 'Host' in request_headers:
                 request_headers['Host'] = modified_netloc
 
-    def _get_matching_overrides(self, rules, url):
-        for pattern, overrides in rules:
-            match = re.search(pattern, url)
-            if match:
+    def _get_matching_overrides(self, overrides, url):
+        with self._lock:
+            # If the overrides is tuple or list, we need to match against the URL
+            if is_list_alike(overrides):
+                for pat, ov in overrides:
+                    match = re.search(pat, url)
+                    if match:
+                        return ov
+            else:
                 return overrides

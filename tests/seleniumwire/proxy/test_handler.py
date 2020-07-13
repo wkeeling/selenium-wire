@@ -9,15 +9,23 @@ from seleniumwire.proxy.request import Request
 class CaptureRequestHandlerTest(TestCase):
 
     def test_request_modifier_called(self):
+        self.handler.command = 'POST'
+        self.body = 'foobar'
         modified = []
-        self.mock_modifier.modify.side_effect = lambda r, **kwargs: modified.append((r, kwargs))
 
-        self.handler.handle_request(self.handler, self.body)
+        def modify_request(req, **kwargs):
+            modified.append((req, kwargs))
+            req.body = 'foobarbaz'
+
+        self.mock_modifier.modify_request.side_effect = modify_request
+
+        body = self.handler.handle_request(self.handler, self.body)
 
         self.assertEqual(1, len(modified))
         request, attrs = modified[0]
         self.assertEqual('https://www.google.com/foo/bar?x=y', request.path)
-        self.assertEqual({'url': 'path', 'method': 'command'}, attrs)
+        self.assertEqual({'urlattr': 'path', 'methodattr': 'command'}, attrs)
+        self.assertEqual('foobarbaz', body)
 
     def test_save_request_called(self):
         saved = []
@@ -48,7 +56,7 @@ class CaptureRequestHandlerTest(TestCase):
 
         self.handler.handle_request(self.handler, self.body)
 
-        self.assertTrue(self.mock_modifier.modify.called)
+        self.assertTrue(self.mock_modifier.modify_request.called)
 
     def test_not_in_scope(self):
         self.handler.scopes = ['http://www.somewhere.com']
@@ -56,6 +64,23 @@ class CaptureRequestHandlerTest(TestCase):
         self.handler.handle_request(self.handler, self.body)
 
         self.assertFalse(self.mock_storage.save_request.called)
+
+    def test_response_modifier_called(self):
+        modified = []
+
+        def modify_response(res, req, **kwargs):
+            modified.append((res, req, kwargs))
+
+        self.mock_modifier.modify_response.side_effect = modify_response
+        res, res_body = Mock(status=200, reason='OK', headers={}), b'the body'
+
+        self.handler.handle_response(self.handler, self.body, res, res_body)
+
+        self.assertEqual(1, len(modified))
+        response, request, attrs = modified[0]
+        self.assertEqual('200 OK', '{} {}'.format(response.status, response.reason))
+        self.assertEqual('https://www.google.com/foo/bar?x=y', request.path)
+        self.assertEqual({'urlattr': 'path'}, attrs)
 
     def test_save_response_called(self):
         saved = []

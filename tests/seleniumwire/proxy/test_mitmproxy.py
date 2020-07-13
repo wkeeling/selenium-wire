@@ -202,7 +202,7 @@ class MitmProxyRequestHandlerTest(TestCase):
 
         self.handler.request(mock_flow)
 
-        self.mock_modifier.modify.assert_called_once_with(mock_flow.request, body='raw_content')
+        self.mock_modifier.modify_request.assert_called_once_with(mock_flow.request, bodyattr='raw_content')
 
     def test_capture_request_called(self):
         mock_flow = Mock()
@@ -240,6 +240,19 @@ class MitmProxyRequestHandlerTest(TestCase):
         self.handler.request(mock_flow)
 
         self.assertEqual({'Accept-Encoding': 'identity'}, mock_flow.request.headers)
+
+    def test_response_modifier_called(self):
+        mock_flow = Mock()
+        mock_flow.request.id = '12345'
+        mock_flow.request.url = 'http://somewhere.com/some/path'
+        mock_flow.response.status_code = 200
+        mock_flow.response.reason = 'OK'
+        mock_flow.response.headers = {'Content-Length': 6}
+        mock_flow.response.raw_content = b'foobar'
+
+        self.handler.response(mock_flow)
+
+        self.mock_modifier.modify_response.assert_called_once_with(mock_flow.response, mock_flow.request)
 
     def test_capture_response_called(self):
         mock_flow = Mock()

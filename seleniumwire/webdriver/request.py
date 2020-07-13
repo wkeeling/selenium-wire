@@ -84,12 +84,17 @@ class InspectRequestsMixin:
         does not exist in the request, it will be added to the request as a
         new header. To filter out a header from the request, set that header
         in the dictionary to None. Header names are case insensitive.
+        For response headers, prefix the header name with 'response:'.
 
         For example:
-            header_overrides = {'User-Agent': 'Firefox'}
+
+            header_overrides = {
+                'User-Agent': 'Firefox',
+                'response:Cache-Control': 'none'
+            }
             header_overrides = [
-                ('.*somewhere.com.*', {'User-Agent': 'Firefox'}),
-                ('*.somewhere-else.com.*', {'User-Agent': 'Chrome'}),
+                ('.*somewhere.com.*', {'User-Agent': 'Firefox', 'response:Cache-Control': 'none'}),
+                ('*.somewhere-else.com.*', {'User-Agent': 'Chrome'})
             ]
         """
         return self._client.get_header_overrides()
