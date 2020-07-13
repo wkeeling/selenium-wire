@@ -80,7 +80,7 @@ class AdminMixin:
             func = request_mappings[path][request.method]
         except KeyError:
             raise RuntimeError(
-                'No handler configured for: {} {}'.format(request.method, request.path)
+                'No handler configured for: {} {}'.format(request.method, request.url)
             )
 
         return func(request, **params)
@@ -225,7 +225,7 @@ class CaptureMixin:
             log.debug('Not capturing %s request: %s', request.method, request.url)
             return
 
-        log.info('Capturing request: %s', request.path)
+        log.info('Capturing request: %s', request.url)
 
         # Save the request to our storage
         self.storage.save_request(request)
