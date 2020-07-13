@@ -212,6 +212,9 @@ class RequestModifier:
         """
         override_headers = self._get_matching_overrides(self._headers, getattr(request, urlattr))
         if override_headers:
+            # We're only interested in request headers
+            override_headers = {name: value for name, value in (override_headers or {}).items()
+                                if not name.lower().startswith('response:')}
             self._modify_headers(getattr(request, headersattr), override_headers)
         self._modify_params(request, urlattr, methodattr, headersattr, bodyattr)
         self._modify_querystring(request, urlattr)
@@ -233,7 +236,7 @@ class RequestModifier:
         override_headers = self._get_matching_overrides(self._headers, getattr(request, urlattr))
 
         # We're only interested in response headers
-        override_headers = {name.split(':', maxsplit=1)[1]: value
+        override_headers = {name.split(':', maxsplit=1)[1].strip(): value
                             for name, value in (override_headers or {}).items()
                             if name.lower().startswith('response:')}
 

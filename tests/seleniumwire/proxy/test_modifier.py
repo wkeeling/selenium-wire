@@ -22,6 +22,20 @@ class RequestModifierTest(TestCase):
             'Test_User_Agent_String', mock_request.headers['User-Agent']
         )
 
+    def test_override_header_ignore_response_header(self):
+        self.modifier.headers = {
+            'User-Agent': 'Test_User_Agent_String',
+            'response:Cache-Control': 'none'
+        }
+        mock_request = self._create_mock_request()
+
+        self.modifier.modify_request(mock_request)
+
+        self.assertEqual(
+            'Test_User_Agent_String', mock_request.headers['User-Agent']
+        )
+        self.assertNotIn('response:Cache-Control', mock_request.headers)
+
     def test_override_header_with_single_url_matching(self):
         self.modifier.headers = [
             (".*prod1.server.com.*", {'User-Agent': 'Test_User_Agent_String'})]
