@@ -1,6 +1,16 @@
 History
 ~~~~~~~
 
+2.0.0 (2020-07-14)
+------------------
+
+* Introduce the mitmproxy backend
+* Support for modifying response headers
+* Support for modifying request parameters and the query string
+* Breaking API changes:
+    * the request.path attribute now returns the path rather than the full URL. To retrieve the URL, use request.url.
+    * empty request and response bodies are now returned as empty bytes `b''` rather than `None`.
+
 1.2.3 (2020-06-19)
 ------------------
 
