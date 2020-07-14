@@ -1,7 +1,7 @@
 import os
-from subprocess import PIPE, Popen
 import threading
 import time
+from subprocess import PIPE, Popen
 
 
 def _currentdir(path):

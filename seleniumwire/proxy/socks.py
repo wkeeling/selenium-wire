@@ -1,18 +1,18 @@
+import functools
+import logging
+import os
+import socket
+import struct
+import sys
 from base64 import b64encode
+from errno import EAGAIN, EINVAL, EOPNOTSUPP
+from io import BytesIO
+from os import SEEK_CUR
 
 try:
     from collections.abc import Callable
 except ImportError:
     from collections import Callable
-from errno import EOPNOTSUPP, EINVAL, EAGAIN
-import functools
-from io import BytesIO
-import logging
-import os
-from os import SEEK_CUR
-import socket
-import struct
-import sys
 
 __version__ = "1.7.1"
 

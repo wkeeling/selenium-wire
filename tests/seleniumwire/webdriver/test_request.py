@@ -1,8 +1,8 @@
-import uuid
 from unittest import TestCase
-from unittest.mock import call, Mock
+from unittest.mock import Mock, call
 
-from seleniumwire.webdriver.request import InspectRequestsMixin, Request, Response, TimeoutException
+from seleniumwire.webdriver.request import (InspectRequestsMixin, LazyRequest, LazyResponse,
+                                            TimeoutException)
 
 
 class Driver(InspectRequestsMixin):
@@ -20,7 +20,7 @@ class InspectRequestsMixinTest(TestCase):
         self.mock_client.get_requests.return_value = [{
             'id': '12345',
             'method': 'GET',
-            'path': 'http://www.example.com/some/path',
+            'url': 'http://www.example.com/some/path',
             'headers': {
                 'Accept': '*/*',
                 'Host': 'www.example.com'
@@ -38,7 +38,8 @@ class InspectRequestsMixinTest(TestCase):
         requests = self.driver.requests
 
         self.mock_client.get_requests.assert_called_once_with()
-        self.assertEqual(requests[0].path, 'http://www.example.com/some/path')
+        self.assertEqual(1, len(requests))
+        self.assertEqual(requests[0].url, 'http://www.example.com/some/path')
         self.assertEqual(requests[0].response.headers['Content-Type'], 'text/plain')
 
     def test_set_requests(self):
@@ -56,9 +57,8 @@ class InspectRequestsMixinTest(TestCase):
 
     def test_last_request(self):
         self.mock_client.get_last_request.return_value = {
-            'id': '98765',
             'method': 'GET',
-            'path': 'http://www.example.com/different/path?foo=bar',
+            'url': 'http://www.example.com/different/path?foo=bar',
             'headers': {
                 'Accept': '*/*',
                 'Host': 'www.example.com'
@@ -76,7 +76,7 @@ class InspectRequestsMixinTest(TestCase):
         last_request = self.driver.last_request
 
         self.mock_client.get_last_request.assert_called_once_with()
-        self.assertEqual(last_request.path, 'http://www.example.com/different/path?foo=bar')
+        self.assertEqual(last_request.url, 'http://www.example.com/different/path?foo=bar')
         self.assertEqual(last_request.response.headers['Content-Length'], '98425')
 
     def test_last_request_none(self):
@@ -90,9 +90,8 @@ class InspectRequestsMixinTest(TestCase):
     def test_wait_for_request(self):
         mock_client = Mock()
         mock_client.find.return_value = {
-            'id': '98765',
             'method': 'GET',
-            'path': 'http://www.example.com/some/path?foo=bar',
+            'url': 'http://www.example.com/some/path?foo=bar',
             'headers': {
                 'Accept': '*/*',
                 'Host': 'www.example.com'
@@ -111,7 +110,7 @@ class InspectRequestsMixinTest(TestCase):
         request = driver.wait_for_request('/some/path')
 
         mock_client.find.assert_called_once_with('/some/path')
-        self.assertEqual(request.path, 'http://www.example.com/some/path?foo=bar')
+        self.assertEqual(request.url, 'http://www.example.com/some/path?foo=bar')
 
     def test_wait_for_request_timeout(self):
         mock_client = Mock()
@@ -127,12 +126,23 @@ class InspectRequestsMixinTest(TestCase):
         mock_client = Mock()
         driver = Driver(mock_client)
         header_overrides = {
-            'User-Agent': 'Test_User_Agent_String'
+            'User-Agent': 'Test_User_Agent_String',
+            'Accept-Encoding': None
         }
 
         driver.header_overrides = header_overrides
 
         mock_client.set_header_overrides.assert_called_once_with(header_overrides)
+
+    def test_set_header_overrides_non_str(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+        header_overrides = {
+            'MyHeader': 99
+        }
+
+        with self.assertRaises(AssertionError):
+            driver.header_overrides = header_overrides
 
     def test_delete_header_overrides(self):
         mock_client = Mock()
@@ -149,6 +159,56 @@ class InspectRequestsMixinTest(TestCase):
         driver.header_overrides
 
         mock_client.get_header_overrides.assert_called_once_with()
+
+    def test_set_param_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+        param_overrides = {'foo': 'bar'}
+
+        driver.param_overrides = param_overrides
+
+        mock_client.set_param_overrides.assert_called_once_with(param_overrides)
+
+    def test_delete_param_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        del driver.param_overrides
+
+        mock_client.clear_param_overrides.assert_called_once_with()
+
+    def test_get_param_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        driver.param_overrides
+
+        mock_client.get_param_overrides.assert_called_once_with()
+
+    def test_set_querystring_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+        querystring_overrides = 'foo=bar&hello=world'
+
+        driver.querystring_overrides = querystring_overrides
+
+        mock_client.set_querystring_overrides.assert_called_once_with(querystring_overrides)
+
+    def test_delete_querystring_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        del driver.querystring_overrides
+
+        mock_client.clear_querystring_overrides.assert_called_once_with()
+
+    def test_get_querystring_overrides(self):
+        mock_client = Mock()
+        driver = Driver(mock_client)
+
+        driver.querystring_overrides
+
+        mock_client.get_querystring_overrides.assert_called_once_with()
 
     def test_set_rewrite_rules(self):
         mock_client = Mock()
@@ -207,197 +267,104 @@ class InspectRequestsMixinTest(TestCase):
         mock_client.get_scopes.assert_called_once_with()
 
 
-class RequestTest(TestCase):
-
-    def test_create_request(self):
-        data = self._request_data()
-
-        request = Request(data, Mock())
-
-        self.assertEqual(request.method, 'GET'),
-        self.assertEqual(request.path, 'http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=')
-        self.assertEqual(len(request.headers), 3)
-        self.assertEqual(request.headers['Host'], 'www.example.com')
-        self.assertIsNone(request.response)
-
-    def test_get_header_case_insensitive(self):
-        data = self._request_data()
-
-        request = Request(data, Mock())
-
-        self.assertEqual(request.headers['host'], 'www.example.com')
-
-    def test_request_repr(self):
-        data = self._request_data()
-
-        request = Request(data, Mock())
-
-        self.assertEqual(repr(request), 'Request({})'.format(data))
-
-    def test_request_str(self):
-        data = self._request_data()
-
-        request = Request(data, Mock())
-
-        self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', str(request))
-
-    def test_create_request_with_response(self):
-        data = self._request_data()
-        data['response'] = self._response_data()
-
-        request = Request(data, Mock())
-
-        self.assertIsInstance(request.response, Response)
+class LazyRequestTest(TestCase):
 
     def test_load_request_body(self):
         mock_client = Mock()
         mock_client.get_request_body.return_value = b'the body'
-        data = self._request_data()
 
-        request = Request(data, mock_client)
+        request = self._create_request(mock_client)
         body = request.body
 
         self.assertEqual(body, b'the body')
-        mock_client.get_request_body.assert_called_once_with(data['id'])
+        mock_client.get_request_body.assert_called_once_with(request.id)
 
-    def test_load_request_body_uses_cached_data(self):
+    def test_from_dict(self):
         mock_client = Mock()
-        mock_client.get_request_body.return_value = b'the body'
-        data = self._request_data()
-
-        request = Request(data, mock_client)
-        request.body  # Retrieves the body
-        body = request.body  # Uses the previously retrieved body
-
-        self.assertEqual(body, b'the body')
-        mock_client.get_request_body.assert_called_once_with(data['id'])
-
-    def test_querystring(self):
-        data = self._request_data()
-
-        request = Request(data, Mock())
-
-        self.assertEqual(request.querystring, 'foo=bar&hello=world&foo=baz&other=')
-
-    def test_GET_params(self):
-        data = self._request_data()
-
-        request = Request(data, Mock())
-
-        params = request.params
-        self.assertEqual(params['hello'], 'world')
-        self.assertEqual(params['foo'], ['bar', 'baz'])
-        self.assertEqual(params['other'], '')
-
-    def test_POST_params(self):
-        data = self._request_data()
-        data['method'] = 'POST'
-        data['headers']['Content-Type'] = 'application/x-www-form-urlencoded'
-        mock_client = Mock()
-        mock_client.get_request_body.return_value = b'foo=bar&hello=world&foo=baz&other='
-
-        request = Request(data, mock_client)
-
-        params = request.params
-        self.assertEqual(params['hello'], 'world')
-        self.assertEqual(params['foo'], ['bar', 'baz'])
-        self.assertEqual(params['other'], '')
-
-    def _request_data(self):
-        data = {
-            'id': uuid.uuid4(),
+        request = LazyRequest.from_dict({
+            'id': '12345',
             'method': 'GET',
-            'path': 'http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
+            'url': 'http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
             'headers': {
                 'Accept': '*/*',
                 'Host': 'www.example.com',
                 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
             },
-            'response': None
-        }
+            'response': {
+                'status_code': 200,
+                'reason': 'OK',
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Content-Length': 120
+                },
+            }
+        }, mock_client)
 
-        return data
+        self.assertEqual('12345', request.id)
+        self.assertEqual('GET', request.method)
+        self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', request.url)
+        self.assertEqual({
+                'Accept': '*/*',
+                'Host': 'www.example.com',
+                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
+            }, request.headers)
+        self.assertIsInstance(request.response, LazyResponse)
 
-    def _response_data(self):
-        data = {
-            'status_code': 200,
-            'reason': 'OK',
-            'headers': {
-                'Content-Type': 'application/json',
-                'Content-Length': 120
-            },
-        }
+    def _create_request(self, client):
+        request = LazyRequest(
+            client,
+            method='GET',
+            url='http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
+            headers={
+                'Accept': '*/*',
+                'Host': 'www.example.com',
+                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
+            }
+        )
 
-        return data
+        return request
 
 
 class ResponseTest(TestCase):
 
-    def test_create_response(self):
-        data = self._response_data()
-
-        response = Response(uuid.uuid4(), data, Mock())
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.reason, 'OK')
-        self.assertEqual(len(response.headers), 2)
-        self.assertEqual(response.headers['Content-Type'], 'application/json')
-
-    def test_get_header_case_insensitive(self):
-        data = self._response_data()
-
-        response = Response(uuid.uuid4(), data, Mock())
-
-        self.assertEqual(response.headers['content-type'], 'application/json')
-
-    def test_response_repr(self):
-        request_id = uuid.uuid4()
-        data = self._response_data()
-
-        response = Response(request_id, data, Mock())
-
-        self.assertEqual(repr(response), "Response('{}', {})".format(request_id, data))
-
-    def test_response_str(self):
-        data = self._response_data()
-
-        response = Response(uuid.uuid4(), data, Mock())
-
-        self.assertEqual(str(response), '200 OK'.format(data))
-
     def test_load_response_body(self):
         mock_client = Mock()
         mock_client.get_response_body.return_value = b'the body'
-        data = self._response_data()
-        request_id = uuid.uuid4()
 
-        response = Response(request_id, data, mock_client)
+        response = self._create_response('12345', mock_client)
         body = response.body
 
         self.assertEqual(body, b'the body')
-        mock_client.get_response_body.assert_called_once_with(request_id)
+        mock_client.get_response_body.assert_called_once_with('12345')
 
-    def test_load_response_body_uses_cached_data(self):
+    def test_from_dict(self):
         mock_client = Mock()
-        mock_client.get_response_body.return_value = b'the body'
-        data = self._response_data()
-        request_id = uuid.uuid4()
-
-        response = Response(request_id, data, mock_client)
-        response.body  # Retrieves the body
-        body = response.body  # Uses the previously retrieved body
-
-        self.assertEqual(body, b'the body')
-        mock_client.get_response_body.assert_called_once_with(request_id)
-
-    def _response_data(self):
-        data = {
+        response = LazyResponse.from_dict({
             'status_code': 200,
             'reason': 'OK',
             'headers': {
                 'Content-Type': 'application/json',
                 'Content-Length': 120
             },
-        }
+            'body': 'foobar'
+        }, mock_client, '12345')
 
-        return data
+        self.assertEqual(200, response.status_code)
+        self.assertEqual('OK', response.reason)
+        self.assertEqual({
+            'Content-Type': 'application/json',
+            'Content-Length': 120
+        }, response.headers)
+
+    def _create_response(self, request_id, client):
+        response = LazyResponse(
+            request_id,
+            client,
+            status_code=200,
+            reason='OK',
+            headers={
+                'Content-Type': 'application/json',
+                'Content-Length': 120
+            },
+        )
+        return response

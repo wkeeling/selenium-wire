@@ -1,10 +1,9 @@
 import logging
-import os
 from unittest import TestCase
 
-logging.basicConfig(level=logging.DEBUG)
-
 from seleniumwire import webdriver
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class BrowserIntegrationTest(TestCase):
@@ -12,6 +11,22 @@ class BrowserIntegrationTest(TestCase):
     def test_firefox_can_access_requests(self):
         url = 'https://www.python.org/'
         driver = webdriver.Firefox()
+        driver.get(url)
+
+        request = driver.wait_for_request(url)
+
+        self.assertEqual(request.response.status_code, 200)
+        self.assertIn('text/html', request.response.headers['Content-Type'])
+
+        driver.quit()
+
+    def test_firefox_can_access_requests_mitmproxy(self):
+        url = 'https://www.python.org/'
+        options = {
+            'backend': 'mitmproxy',
+            'mitmproxy_log_level': 'INFO',
+        }
+        driver = webdriver.Firefox(seleniumwire_options=options)
         driver.get(url)
 
         request = driver.wait_for_request(url)
@@ -75,7 +90,53 @@ class BrowserIntegrationTest(TestCase):
 
         request = driver.wait_for_request(url)
 
-        self.assertEqual(request.headers['User-Agent'], user_agent)
+        self.assertEqual(user_agent, request.headers['User-Agent'])
+
+        driver.quit()
+
+    def test_add_cache_control(self):
+        url = 'https://www.python.org/'
+        driver = webdriver.Firefox()
+        driver.header_overrides = {
+            'response:Cache-Control': 'none'
+        }
+        driver.get(url)
+
+        request = driver.wait_for_request(url)
+
+        self.assertEqual('none', request.response.headers['Cache-Control'])
+
+        driver.quit()
+
+    def test_modify_param(self):
+        driver = webdriver.Firefox()
+        driver.param_overrides = {
+            'foo': 'baz'
+        }
+        driver.get('https://httpbin.org/get?foo=bar')
+
+        request = driver.wait_for_request('https://httpbin.org/get?foo=baz')
+
+        self.assertEqual({'foo': 'baz'}, request.params)
+
+        driver.quit()
+
+    def test_modify_querystring(self):
+        options = {
+            'backend': 'mitmproxy',
+            'mitmproxy_log_level': 'INFO',
+            'disable_encoding': True,
+            'proxy': {
+                'https': 'https://localhost:8080'
+            }
+        }
+        driver = webdriver.Firefox(seleniumwire_options=options)
+        driver.querystring_overrides = 'foo=baz'
+        driver.get('https://httpbin.org/get?foo=bar')
+
+        request = driver.wait_for_request('https://httpbin.org/get?foo=baz')
+
+        self.assertEqual({'foo': 'baz'}, request.params)
 
         driver.quit()
 
@@ -90,33 +151,3 @@ class BrowserIntegrationTest(TestCase):
         driver.wait_for_request('https://www.wikipedia.org/')  # Should find www.wikipedia.org
 
         driver.quit()
-
-    def test_wait_for_request_headless_chrome(self):
-        # https://github.com/wkeeling/selenium-wire/issues/6
-        chrome_options = webdriver.ChromeOptions()
-        chrome_options.add_argument("--headless")
-
-        def get_page_response(url):
-
-            # check for current os
-            if os.name == 'posix':
-                # osx
-                driver_path = '/usr/local/bin/chromedriver'
-            elif os.name == 'nt':
-                # win32
-                driver_path = 'C:\chromedriver\chromedriver'
-            else:
-                print('Unknown operating system!!!')
-                exit()
-
-            driver = webdriver.Chrome(
-                chrome_options=chrome_options,
-                executable_path=driver_path
-            )
-            driver.get(url)
-            request = driver.wait_for_request(url, timeout=3)
-            print(request)
-
-            self.assertEqual(request.path, 'https://www.google.com/')
-
-        get_page_response('https://www.google.com')

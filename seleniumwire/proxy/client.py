@@ -24,7 +24,7 @@ class AdminClient:
         self._proxy_port = None
         self._capture_request_handler = None
 
-    def create_proxy(self, addr='127.0.0.1', port=0, proxy_config=None, options=None):
+    def create_proxy(self, addr='127.0.0.1', port=0, options=None):
         """Creates a new proxy server and returns the address and port number that the
         server was started on.
 
@@ -32,8 +32,6 @@ class AdminClient:
             addr: The address the proxy server will listen on. Default 127.0.0.1.
             port: The port the proxy server will listen on. Default 0 - which means
                 use the first available port.
-            proxy_config: The configuration for any upstream proxy server. Default
-                is None.
             options: Additional options to configure the proxy.
 
         Returns:
@@ -46,33 +44,56 @@ class AdminClient:
         if options is None:
             options = {}
 
-        custom_response_handler = options.get('custom_response_handler')
-        if custom_response_handler is not None:
-            self._capture_request_handler = create_custom_capture_request_handler(custom_response_handler)
+        if options.get('backend', 'default') == 'default':
+            # Use the default backend
+            custom_response_handler = options.pop('custom_response_handler', None)
+            if custom_response_handler is not None:
+                self._capture_request_handler = create_custom_capture_request_handler(custom_response_handler)
+            else:
+                self._capture_request_handler = CaptureRequestHandler
+                # Set the timeout here before the handler starts executing
+                self._capture_request_handler.timeout = options.get('connection_timeout', 5)
+            self._proxy = ProxyHTTPServer((addr, port), self._capture_request_handler, options=options)
+
+            t = threading.Thread(name='Selenium Wire Proxy Server', target=self._proxy.serve_forever)
+            t.daemon = not options.get('standalone')
+            t.start()
+
+            socketname = self._proxy.socket.getsockname()
+            self._proxy_addr = socketname[0]
+            self._proxy_port = socketname[1]
+        elif options.get('backend') == 'mitmproxy':
+            # Use mitmproxy if installed
+            from . import mitmproxy
+
+            self._proxy = mitmproxy.start(addr, port, options)
+            self._proxy_addr = self._proxy.host
+            self._proxy_port = self._proxy.port
         else:
-            self._capture_request_handler = CaptureRequestHandler
-        self._capture_request_handler.protocol_version = 'HTTP/1.1'
-        self._capture_request_handler.timeout = options.get('connection_timeout', 5)
-        self._proxy = ProxyHTTPServer((addr, port), self._capture_request_handler,
-                                      proxy_config=proxy_config, options=options)
+            raise TypeError(
+                "Invalid backend '{}'. "
+                "Valid values are 'default' or 'mitmproxy'."
+                .format(options['backend'])
+            )
 
-        t = threading.Thread(name='Selenium Wire Proxy Server', target=self._proxy.serve_forever)
-        t.daemon = not options.get('standalone')
-        t.start()
-
-        socketname = self._proxy.socket.getsockname()
-        self._proxy_addr = socketname[0]
-        self._proxy_port = socketname[1]
+        self.initialise_proxy(options)
 
         log.info('Created proxy listening on {}:{}'.format(self._proxy_addr, self._proxy_port))
         return self._proxy_addr, self._proxy_port
+
+    def initialise_proxy(self, options):
+        """Initialise the proxy with any options.
+
+        Args:
+            options: The selenium wire options.
+        """
+        self._make_request('POST', '/initialise', data=options)
 
     def destroy_proxy(self):
         """Stops the proxy server and performs any clean up actions."""
         log.info('Destroying proxy')
         # If proxy manager set, we would ask it to do this
         self._proxy.shutdown()
-        self._proxy.server_close()  # Closes the server socket
 
     def get_requests(self):
         """Returns the requests currently captured by the proxy server.
@@ -136,9 +157,9 @@ class AdminClient:
         Args:
             request_id: The request identifier.
         Returns:
-            The binary request body, or None if the request has no body.
+            The binary request body.
         """
-        return self._make_request('GET', '/request_body?request_id={}'.format(request_id)) or None
+        return self._make_request('GET', '/request_body?request_id={}'.format(request_id))
 
     def get_response_body(self, request_id):
         """Returns the body of the response associated with the request with the
@@ -147,17 +168,12 @@ class AdminClient:
         Args:
             request_id: The request identifier.
         Returns:
-            The binary response body, or None if the response has no body.
+            The binary response body.
         """
-        return self._make_request('GET', '/response_body?request_id={}'.format(request_id)) or None
+        return self._make_request('GET', '/response_body?request_id={}'.format(request_id))
 
     def set_header_overrides(self, headers):
-        """Sets the header overrides.
-
-        Args:
-            headers: A dictionary of headers to be used as overrides. Where the value
-                of a header is set to None, this header will be filtered out.
-        """
+        """Sets the header overrides."""
         self._make_request('POST', '/header_overrides', data=headers)
 
     def clear_header_overrides(self):
@@ -168,13 +184,34 @@ class AdminClient:
         """Gets any previously set header overrides"""
         return self._make_request('GET', '/header_overrides')
 
-    def set_rewrite_rules(self, rewrite_rules):
-        """Sets the rewrite rules.
+    def set_param_overrides(self, params):
+        """Set the param overrides."""
+        self._make_request('POST', '/param_overrides', data=params)
 
-        Args:
-            rewrite_rules: A list of rewrite rules. Each rule is a sublist (or 2-tuple)
-                containing the pattern and replacement.
-        """
+    def clear_param_overrides(self):
+        """Clears any previously set param overrides."""
+        self._make_request('DELETE', '/param_overrides')
+
+    def get_param_overrides(self):
+        """Gets any previously set param overrides"""
+        return self._make_request('GET', '/param_overrides')
+
+    def set_querystring_overrides(self, overrides):
+        """Set the querystring overrides."""
+        self._make_request('POST', '/querystring_overrides', data={
+            'overrides': overrides  # Wrap in outer dict to ensure json compatible
+        })
+
+    def clear_querystring_overrides(self):
+        """Clears any previously set querystring overrides."""
+        self._make_request('DELETE', '/querystring_overrides')
+
+    def get_querystring_overrides(self):
+        """Gets any previously set querystring overrides"""
+        return self._make_request('GET', '/querystring_overrides')['overrides']
+
+    def set_rewrite_rules(self, rewrite_rules):
+        """Sets the rewrite rules."""
         self._make_request('POST', '/rewrite_rules', data=rewrite_rules)
 
     def clear_rewrite_rules(self):
@@ -186,11 +223,7 @@ class AdminClient:
         return self._make_request('GET', '/rewrite_rules')
 
     def set_scopes(self, scopes):
-        """Sets the scopes for the seleniumwire to log/modify request and response.
-
-        Args:
-            scopes: a regex string or list of regex string.
-        """
+        """Sets the scopes for the seleniumwire to log/modify request and response."""
         self._make_request('POST', '/scopes', data=scopes)
 
     def reset_scopes(self):
@@ -198,7 +231,7 @@ class AdminClient:
         self._make_request('DELETE', '/scopes')
 
     def get_scopes(self):
-        """Gets any previously set scopes"""
+        """Gets any previously set scopes."""
         return self._make_request('GET', '/scopes')
 
     def _make_request(self, command, path, data=None):

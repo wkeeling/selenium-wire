@@ -1,14 +1,14 @@
-from datetime import datetime, timedelta
 import gzip
-from io import BytesIO
 import logging
 import os
 import pickle
 import shutil
 import threading
-from urllib.parse import urlparse
 import uuid
 import zlib
+from datetime import datetime, timedelta
+from io import BytesIO
+from urllib.parse import urlparse
 
 log = logging.getLogger(__name__)
 
@@ -19,6 +19,12 @@ REMOVE_DATA_OLDER_THAN_DAYS = 1
 class RequestStorage:
     """Responsible for saving request and response data that passes through the proxy server,
     and provding an API to retrieve that data.
+
+    Requests and responses are saved separately. However, when a request is loaded, the
+    response, if there is one, is automatically loaded and attached to the request. Furthermore,
+    when saving both requests and responses, the body is split out and saved separately.
+    Request/response bodies are not loaded automatically and must be retrieved via a separate
+    method call.
 
     This implementation writes the request and response data to disk, but keeps an in-memory
     index of what is on disk for fast retrieval. Instances are designed to be threadsafe.
@@ -43,39 +49,31 @@ class RequestStorage:
         self._index = []
         self._lock = threading.Lock()
 
-    def save_request(self, request, request_body=None):
-        """Saves the request (a BaseHTTPRequestHandler instance) to storage, and optionally
-        saves the request body data if supplied.
+    def save_request(self, request):
+        """Saves the request to storage.
 
         Args:
-            request: The BaseHTTPRequestHandler instance to save.
-            request_body: The request body binary data.
+            request: The request to save.
         """
         request_id = self._index_request(request)
+        request.id = request_id
         request_dir = self._get_request_dir(request_id)
         os.mkdir(request_dir)
 
-        request_data = {
-            'id': request_id,
-            'method': request.command,
-            'path': request.path,
-            'headers': dict(request.headers),
-            'response': None
-        }
+        body = request.body
+        request.body = b''  # The request body is stored separately to the request itself
 
-        self._save(request_data, request_dir, 'request')
-        if request_body is not None:
-            self._save(request_body, request_dir, 'requestbody')
+        self._save(request, request_dir, 'request')
 
-        return request_id
+        if body:
+            self._save(body, request_dir, 'requestbody')
 
     def _index_request(self, request):
         request_id = str(uuid.uuid4())
-        request.id = request_id
 
         with self._lock:
             self._index.append(_IndexedRequest(id=request_id,
-                                               path=request.path,
+                                               url=request.url,
                                                has_response=False))
 
         return request_id
@@ -86,15 +84,12 @@ class RequestStorage:
         with open(os.path.join(request_dir, filename), 'wb') as out:
             pickle.dump(obj, out)
 
-    def save_response(self, request_id, response, response_body=None):
-        """Saves the response (a http.client.HTTPResponse instance) to storage, and optionally
-        saves the request body data if supplied.
+    def save_response(self, request_id, response):
+        """Saves the response to storage.
 
         Args:
             request_id: The id of the original request.
-            response: The http.client.HTTPResponse instance to save.
-            response_body: The response body binary data.
-
+            response: The response to save.
         """
         indexed_request = self._get_indexed_request(request_id)
 
@@ -104,17 +99,15 @@ class RequestStorage:
             log.debug('Cannot save response as request {} is no longer stored'.format(request_id))
             return
 
-        response_data = {
-            'status_code': response.status,
-            'reason': response.reason,
-            'headers': dict(response.headers)
-        }
-
         request_dir = self._get_request_dir(request_id)
-        self._save(response_data, request_dir, 'response')
 
-        if response_body is not None:
-            self._save(response_body, request_dir, 'responsebody')
+        body = response.body
+        response.body = b''  # The response body is stored separately to the response itself
+
+        self._save(response, request_dir, 'response')
+
+        if body:
+            self._save(body, request_dir, 'responsebody')
 
         indexed_request.has_response = True
 
@@ -131,31 +124,13 @@ class RequestStorage:
     def load_requests(self):
         """Loads all previously saved requests known to the storage (known to its index).
 
-        The requests are returned as a list of dictionaries, in the format:
+        The requests are returned as a list of request objects.
 
-        [{
-            'id': 'request id',
-            'method': 'GET',
-            'path': 'http://www.example.com/some/path',
-            'headers': {
-                'Accept': '*/*',
-                'Host': 'www.example.com'
-            }
-            'response': {
-                'status_code': 200,
-                'reason': 'OK',
-                'headers': {
-                    'Content-Type': 'text/plain',
-                    'Content-Length': '15012'
-                }
-            }
-        }, ...]
-
-        Where a request does not have a corresponding response, a 'response' key will
-        still exist in the dictionary, but its value will be None.
+        Where a request does not have a corresponding response its 'response' attribute
+        will be None.
 
         Returns:
-            A list of dictionaries of previously saved requests.
+            A list of request objects.
         """
         with self._lock:
             index = self._index[:]
@@ -177,7 +152,7 @@ class RequestStorage:
             try:
                 with open(os.path.join(request_dir, 'response'), 'rb') as res:
                     response = pickle.load(res)
-                    request['response'] = response
+                    request.response = response
             except (FileNotFoundError, EOFError):
                 pass
 
@@ -194,7 +169,7 @@ class RequestStorage:
         try:
             return self._load_body(request_id, 'requestbody')
         except FileNotFoundError:
-            return None
+            return b''
 
     def load_response_body(self, request_id):
         """Loads the body of the response corresponding to the request with the specified id.
@@ -207,10 +182,9 @@ class RequestStorage:
         try:
             raw_body = self._load_body(request_id, 'responsebody')
             request = self._load_request(request_id)
-            return self._decode_body(raw_body, request['response']['headers'].get('Content-Encoding', 'identity'))
-
+            return self._decode_body(raw_body, request.response.headers.get('Content-Encoding', 'identity'))
         except FileNotFoundError:
-            return None
+            return b''
 
     def _load_body(self, request_id, name):
         request_dir = self._get_request_dir(request_id)
@@ -219,25 +193,29 @@ class RequestStorage:
 
     def _decode_body(self, data, encoding):
         if encoding != 'identity':
-            if encoding in ('gzip', 'x-gzip'):
-                io = BytesIO(data)
-                with gzip.GzipFile(fileobj=io) as f:
-                    data = f.read()
-            elif encoding == 'deflate':
-                try:
-                    data = zlib.decompress(data)
-                except zlib.error:
-                    data = zlib.decompress(data, -zlib.MAX_WBITS)
-            else:
-                log.debug("Unknown Content-Encoding: %s", encoding)
+            try:
+                if encoding in ('gzip', 'x-gzip'):
+                    io = BytesIO(data)
+                    with gzip.GzipFile(fileobj=io) as f:
+                        data = f.read()
+                elif encoding == 'deflate':
+                    try:
+                        data = zlib.decompress(data)
+                    except zlib.error:
+                        data = zlib.decompress(data, -zlib.MAX_WBITS)
+                else:
+                    log.debug("Unknown Content-Encoding: %s", encoding)
+            except (OSError, EOFError, zlib.error) as e:
+                # Log a message and return the data untouched
+                log.debug('Unable to decode body: %s', str(e))
         return data
 
     def load_last_request(self):
         """Loads the last saved request.
 
         Returns:
-            The last saved request dictionary (see load_requests() for dict structure).
-            If no requests have yet been stored, None is returned.
+            The last saved request dictionary or None if no requests
+            have yet been stored.
         """
         with self._lock:
             if self._index:
@@ -278,7 +256,7 @@ class RequestStorage:
         for indexed_request in index:
             match_url = urlparse(path).geturl()
 
-            if match_url in indexed_request.path:
+            if match_url in indexed_request.url:
                 if (check_response and indexed_request.has_response) or not check_response:
                     return self._load_request(indexed_request.id)
 

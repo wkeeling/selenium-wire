@@ -23,7 +23,6 @@ class Firefox(InspectRequestsMixin, _Firefox):
         self._client = AdminClient()
         addr, port = self._client.create_proxy(
             port=seleniumwire_options.pop('port', 0),
-            proxy_config=seleniumwire_options.pop('proxy', None),
             options=seleniumwire_options
         )
 
@@ -65,7 +64,6 @@ class Chrome(InspectRequestsMixin, _Chrome):
         self._client = AdminClient()
         addr, port = self._client.create_proxy(
             port=seleniumwire_options.pop('port', 0),
-            proxy_config=seleniumwire_options.pop('proxy', None),
             options=seleniumwire_options
         )
 
@@ -113,7 +111,6 @@ class Safari(InspectRequestsMixin, _Safari):
         self._client = AdminClient()
         self._client.create_proxy(
             port=seleniumwire_options.pop('port', 0),
-            proxy_config=seleniumwire_options.pop('proxy', None),
             options=seleniumwire_options
         )
 
@@ -145,7 +142,6 @@ class Edge(InspectRequestsMixin, _Edge):
         self._client = AdminClient()
         self._client.create_proxy(
             port=seleniumwire_options.pop('port', 0),
-            proxy_config=seleniumwire_options.pop('proxy', None),
             options=seleniumwire_options
         )
 

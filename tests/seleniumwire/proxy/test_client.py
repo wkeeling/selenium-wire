@@ -1,7 +1,9 @@
+import os
 import ssl
-from unittest import TestCase
 import urllib.error
 import urllib.request
+from urllib.parse import parse_qs, urlsplit
+from unittest import TestCase
 
 from seleniumwire.proxy.client import AdminClient
 
@@ -26,12 +28,11 @@ class AdminClientIntegrationTest(TestCase):
 
         self.assertEqual(len(requests), 1)
         request = requests[0]
-        self.assertEqual(request['method'], 'GET')
-        self.assertEqual(request['path'], 'https://www.python.org/')
-        self.assertEqual(request['headers']['Accept-Encoding'], 'identity')
-        self.assertEqual(request['response']['status_code'], 200)
-        self.assertEqual(request['response']['headers']
-                         ['Content-Type'], 'text/html; charset=utf-8')
+        self.assertEqual('GET', request['method'])
+        self.assertEqual('https://www.python.org/', request['url'])
+        self.assertEqual('identity', request['headers']['Accept-Encoding'])
+        self.assertEqual(200, request['response']['status_code'])
+        self.assertEqual( 'text/html; charset=utf-8', request['response']['headers']['Content-Type'])
 
     def test_get_requests_multiple(self):
         self._make_request('https://github.com/')
@@ -39,7 +40,7 @@ class AdminClientIntegrationTest(TestCase):
 
         requests = self.client.get_requests()
 
-        self.assertEqual(len(requests), 2)
+        self.assertEqual(2, len(requests))
 
     def test_get_last_request(self):
         self._make_request('https://python.org')
@@ -47,7 +48,7 @@ class AdminClientIntegrationTest(TestCase):
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual(last_request['path'], 'https://www.bbc.co.uk/')
+        self.assertEqual('https://www.bbc.co.uk/', last_request['url'])
 
     def test_get_last_request_none(self):
         last_request = self.client.get_last_request()
@@ -60,7 +61,7 @@ class AdminClientIntegrationTest(TestCase):
 
         self.client.clear_requests()
 
-        self.assertEqual(self.client.get_requests(), [])
+        self.assertEqual([], self.client.get_requests())
 
     def test_find(self):
         self._make_request(
@@ -70,16 +71,16 @@ class AdminClientIntegrationTest(TestCase):
         self._make_request('https://www.google.com')
 
         self.assertEqual(
-            self.client.find('/questions/tagged/django')['path'],
-            'https://stackoverflow.com/questions/tagged/django?page=2&sort=newest&pagesize=15'
+            'https://stackoverflow.com/questions/tagged/django?page=2&sort=newest&pagesize=15',
+            self.client.find('/questions/tagged/django')['url']
         )
         self.assertEqual(
-            self.client.find('/3.4/library/http.client.html')['path'],
-            'https://docs.python.org/3.4/library/http.client.html'
+            'https://docs.python.org/3.4/library/http.client.html',
+            self.client.find('/3.4/library/http.client.html')['url']
         )
         self.assertEqual(
-            self.client.find('https://www.google.com')['path'],
-            'https://www.google.com/'
+            'https://www.google.com/',
+            self.client.find('https://www.google.com')['url']
         )
 
     def test_get_request_body_empty(self):
@@ -88,7 +89,7 @@ class AdminClientIntegrationTest(TestCase):
 
         body = self.client.get_request_body(last_request['id'])
 
-        self.assertIsNone(body)
+        self.assertEqual(b'', body)
 
     def test_get_response_body(self):
         self._make_request('https://www.wikipedia.org')
@@ -123,7 +124,7 @@ class AdminClientIntegrationTest(TestCase):
 
         body = self.client.get_response_body(redirect_request['id'])
 
-        self.assertIsNone(body)
+        self.assertEqual(b'', body)
 
     def test_set_header_overrides(self):
         self.client.set_header_overrides({
@@ -133,8 +134,7 @@ class AdminClientIntegrationTest(TestCase):
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual(last_request['headers']
-                         ['User-Agent'], 'Test_User_Agent_String')
+        self.assertEqual('Test_User_Agent_String', last_request['headers']['User-Agent'])
 
     def test_set_header_overrides_case_insensitive(self):
         self.client.set_header_overrides({
@@ -144,8 +144,7 @@ class AdminClientIntegrationTest(TestCase):
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual(last_request['headers']
-                         ['User-Agent'], 'Test_User_Agent_String')
+        self.assertEqual('Test_User_Agent_String', last_request['headers']['User-Agent'])
 
     def test_set_header_overrides_filters_out_header(self):
         self.client.set_header_overrides({
@@ -167,16 +166,13 @@ class AdminClientIntegrationTest(TestCase):
         last_request = self.client.get_last_request()
 
         self.assertNotEqual(
-            last_request['headers']['User-Agent'], 'Test_User_Agent_String')
+            'Test_User_Agent_String', last_request['headers']['User-Agent']
+        )
 
     def test_get_header_overrides(self):
-        self.client.set_header_overrides({
-            'User-Agent': 'Test_User_Agent_String'
-        })
+        self.client.set_header_overrides({'User-Agent': 'Test_User_Agent_String'})
 
-        self.assertEqual(self.client.get_header_overrides(), {
-            'User-Agent': 'Test_User_Agent_String'
-        })
+        self.assertEqual({'User-Agent': 'Test_User_Agent_String'}, self.client.get_header_overrides())
 
     def test_get_url_match_header_overrides(self):
         self.client.set_header_overrides([['host1', {
@@ -184,21 +180,111 @@ class AdminClientIntegrationTest(TestCase):
         }], ['host2', {'User-Agent2': 'Test_User_Agent_String'
                        }]])
 
-        self.assertEqual(self.client.get_header_overrides(), [['host1', {
-            'User-Agent': 'Test_User_Agent_String'
-        }], ['host2', {'User-Agent2': 'Test_User_Agent_String'
-                       }]])
+        self.assertEqual([
+            ['host1', {'User-Agent': 'Test_User_Agent_String'}],
+            ['host2', {'User-Agent2': 'Test_User_Agent_String'}]
+        ], self.client.get_header_overrides())
 
-    def test_set_rewrite_rules(self):
-        self.client.set_rewrite_rules([
-            (r'http://stackoverflow.com(.*)', r'https://github.com\1'),
-        ])
-        self._make_request('http://stackoverflow.com')
+    def test_get_param_overrides(self):
+        self.client.set_param_overrides({'foo': 'bar'})
+
+        self.assertEqual({'foo': 'bar'}, self.client.get_param_overrides())
+
+    def test_set_param_overrides(self):
+        self.client.set_param_overrides({'foo': 'baz'})
+
+        self._make_request('https://httpbin.org/?foo=bar&spam=eggs')
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual(last_request['path'], 'https://github.com/')
-        self.assertEqual(last_request['headers']['Host'], 'github.com')
+        params = {k: v[0] for k, v in parse_qs(urlsplit(last_request['url']).query).items()}
+        self.assertEqual({
+            'foo': 'baz',
+            'spam': 'eggs'
+        }, params)
+
+    def test_set_param_overrides_post(self):
+        self.client.set_param_overrides({'foo': 'baz'})
+
+        self._make_request(
+            'https://httpbin.org/post',
+            method='POST',
+            data=b'foo=baz&spam=eggs'
+        )
+
+        last_request = self.client.get_last_request()
+        body = self.client.get_request_body(last_request['id'])
+
+        qs = parse_qs(body.decode('utf-8'))
+        self.assertEqual(2, len(qs))
+        self.assertEqual('baz', qs['foo'][0])
+        self.assertEqual('eggs', qs['spam'][0])
+
+    def test_set_param_overrides_filters_out_param(self):
+        self.client.set_param_overrides({'foo': None})
+
+        self._make_request('https://httpbin.org/?foo=bar&spam=eggs')
+
+        last_request = self.client.get_last_request()
+
+        query = urlsplit(last_request['url']).query
+        self.assertEqual('spam=eggs', query)
+
+    def test_clear_param_overrides(self):
+        self.client.set_param_overrides({'foo': 'baz'})
+        self.client.clear_param_overrides()
+        self._make_request('https://www.stackoverflow.com')
+
+        last_request = self.client.get_last_request()
+
+        query = urlsplit(last_request['url']).query
+        self.assertEqual('', query)
+
+    def test_get_querystring_overrides(self):
+        self.client.set_querystring_overrides('foo=bar')
+
+        self.assertEqual('foo=bar', self.client.get_querystring_overrides())
+
+    def test_set_querystring_overrides(self):
+        self.client.set_querystring_overrides('foo=baz')
+
+        self._make_request('https://httpbin.org/?foo=bar&spam=eggs')
+
+        last_request = self.client.get_last_request()
+
+        query = urlsplit(last_request['url'])[3]
+        self.assertEqual('foo=baz', query)
+
+    def test_set_querystring_overrides_filters(self):
+        self.client.set_querystring_overrides('')  # Empty string to filter a querystring (not None)
+
+        self._make_request('https://httpbin.org/?foo=bar&spam=eggs')
+
+        last_request = self.client.get_last_request()
+
+        query = urlsplit(last_request['url'])[3]
+        self.assertEqual('', query)
+
+    def test_clear_querystring_overrides(self):
+        self.client.set_querystring_overrides('foo=baz')
+        self.client.clear_querystring_overrides()
+        self._make_request('https://www.stackoverflow.com')
+
+        last_request = self.client.get_last_request()
+
+        query = urlsplit(last_request['url'])[3]
+        self.assertEqual('', query)
+
+    def test_set_rewrite_rules(self):
+        self.client.set_rewrite_rules([
+            (r'https://stackoverflow.com(.*)', r'https://github.com\1'),
+        ])
+        self._make_request('https://stackoverflow.com')
+
+        last_request = self.client.get_last_request()
+
+        self.assertEqual('https://github.com/', last_request['url'])
+        self.assertEqual('github.com', last_request['headers']['Host'])
 
     def test_clear_rewrite_rules(self):
         self.client.set_rewrite_rules([
@@ -210,17 +296,17 @@ class AdminClientIntegrationTest(TestCase):
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual(last_request['path'], 'https://stackoverflow.com/')
-        self.assertEqual(last_request['headers']['Host'], 'stackoverflow.com')
+        self.assertEqual('https://stackoverflow.com/', last_request['url'])
+        self.assertEqual('stackoverflow.com', last_request['headers']['Host'])
 
     def test_get_rewrite_rules(self):
         self.client.set_rewrite_rules([
             (r'http://www.stackoverflow.com(.*)', r'https://www.github.com\1'),
         ])
 
-        self.assertEqual(self.client.get_rewrite_rules(), [
+        self.assertEqual([
             [r'http://www.stackoverflow.com(.*)', r'https://www.github.com\1'],
-        ])
+        ], self.client.get_rewrite_rules())
 
     def test_set_single_scopes(self):
         self.client.set_scopes('.*stackoverflow.*')
@@ -229,35 +315,35 @@ class AdminClientIntegrationTest(TestCase):
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual(last_request['path'], 'https://stackoverflow.com/')
-        self.assertEqual(last_request['headers']['Host'], 'stackoverflow.com')
+        self.assertEqual('https://stackoverflow.com/', last_request['url'])
+        self.assertEqual('stackoverflow.com', last_request['headers']['Host'])
 
         self._make_request('https://github.com')
 
         last_request = self.client.get_last_request()
 
-        self.assertEqual(last_request['path'], 'https://stackoverflow.com/')
-        self.assertEqual(last_request['headers']['Host'], 'stackoverflow.com')
-        self.assertNotEqual(last_request['path'], 'https://github.com/')
-        self.assertNotEqual(last_request['headers']['Host'], 'github.com')
+        self.assertEqual('https://stackoverflow.com/', last_request['url'])
+        self.assertEqual('stackoverflow.com', last_request['headers']['Host'])
+        self.assertNotEqual('https://github.com/', last_request['url'])
+        self.assertNotEqual('github.com', last_request['headers']['Host'])
 
     def test_set_multiples_scopes(self):
         self.client.set_scopes(('.*stackoverflow.*', '.*github.*'))
 
         self._make_request('https://stackoverflow.com')
         last_request = self.client.get_last_request()
-        self.assertEqual(last_request['path'], 'https://stackoverflow.com/')
-        self.assertEqual(last_request['headers']['Host'], 'stackoverflow.com')
+        self.assertEqual('https://stackoverflow.com/', last_request['url'])
+        self.assertEqual('stackoverflow.com', last_request['headers']['Host'])
 
         self._make_request('https://github.com')
         last_request = self.client.get_last_request()
-        self.assertEqual(last_request['path'], 'https://github.com/')
-        self.assertEqual(last_request['headers']['Host'], 'github.com')
+        self.assertEqual('https://github.com/', last_request['url'])
+        self.assertEqual('github.com', last_request['headers']['Host'])
 
         self._make_request('https://google.com')
         last_request = self.client.get_last_request()
-        self.assertNotEqual(last_request['path'], 'https://google.com/')
-        self.assertNotEqual(last_request['headers']['Host'], 'google.com')
+        self.assertNotEqual('https://google.com/', last_request['url'])
+        self.assertNotEqual('google.com', last_request['headers']['Host'])
 
     def test_reset_scopes(self):
         self.client.set_scopes(('.*stackoverflow.*', '.*github.*'))
@@ -269,8 +355,7 @@ class AdminClientIntegrationTest(TestCase):
     def test_get_scopes(self):
         self.client.set_scopes(('.*stackoverflow.*', '.*github.*'))
 
-        self.assertEqual(self.client.get_scopes(), ['.*stackoverflow.*', '.*github.*'
-                                                    ])
+        self.assertEqual(['.*stackoverflow.*', '.*github.*'], self.client.get_scopes())
 
     def test_disable_encoding(self):
         # Explicitly set the accept-encoding to gzip
@@ -283,12 +368,14 @@ class AdminClientIntegrationTest(TestCase):
         requests = self.client.get_requests()
 
         # No Content-Encoding header implies 'identity'
-        self.assertEqual(requests[0]['response']['headers'].get(
-            'Content-Encoding', 'identity'), 'identity')
+        self.assertEqual(
+            'identity',
+            requests[0]['response']['headers'].get('Content-Encoding', 'identity')
+        )
 
     def setUp(self):
-        options = {}
-        if self._testMethodName == 'test_disable_encoding':  # yuck
+        options = {'backend': os.environ.get('SW_TEST_BACKEND', 'default')}
+        if self._testMethodName == 'test_disable_encoding':
             options['disable_encoding'] = True
         self.client = AdminClient()
         host, port = self.client.create_proxy(options=options)
@@ -309,8 +396,8 @@ class AdminClientIntegrationTest(TestCase):
         opener = urllib.request.build_opener(https_handler, proxy_handler)
         urllib.request.install_opener(opener)
 
-    def _make_request(self, url):
-        request = urllib.request.Request(url)
+    def _make_request(self, url, method='GET', data=None):
+        request = urllib.request.Request(url, method=method, data=data)
         request.add_header('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 '
                                          '(KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36')
         with urllib.request.urlopen(request, timeout=5) as response:

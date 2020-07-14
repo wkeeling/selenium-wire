@@ -37,7 +37,7 @@ Simple Example
     for request in driver.requests:
         if request.response:
             print(
-                request.path,
+                request.url,
                 request.response.status_code,
                 request.response.headers['Content-Type']
             )
@@ -57,12 +57,11 @@ Prints:
 Features
 ~~~~~~~~
 
-* Pure Python with user-friendly API
-* All HTTP/HTTPS requests captured
-* Access to request/response bodies
-* Modify responses
-* Header injection/filtering
-* URL rewriting
+* Pure Python, user-friendly API
+* HTTP and HTTPS requests captured
+* Access headers, parameters, body
+* Modify headers, parameters
+* Rewrite URLs
 * Proxy server support
 
 
@@ -93,16 +92,22 @@ Table of Contents
 
 - `Response Attributes`_
 
-- `Modifying Requests`_
+- `Modifying Requests and Responses`_
 
   * `Modifying Headers`_
+  * `Modifying Parameters`_
+  * `Modifying the Query String`_
   * `Rewriting URLs`_
 
 - `Proxies`_
 
   * `SOCKS`_
 
-- `Other Options`_
+- `Backends`_
+
+- `Certificates`_
+
+- `All Options`_
 
 - `Limitations`_
 
@@ -140,7 +145,7 @@ Selenium Wire requires OpenSSL for capturing HTTPS requests.
 
 **Windows**
 
-No installation is required. OpenSSL for Windows is bundled with Selenium Wire.
+No installation is required - OpenSSL for Windows is bundled with Selenium Wire.
 
 
 Browser Setup
@@ -189,7 +194,7 @@ Creating the Webdriver
 
 For Firefox and Chrome, you don't need to do anything special. Just instantiate the webdriver as you would normally, passing in Selenium specific options if you have any. Selenium Wire also has it's `own options`_ that can be passed in the ``seleniumwire_options`` attribute.
 
-.. _`own options`: #other-options
+.. _`own options`: #all-options
 
 **Firefox**
 
@@ -305,13 +310,16 @@ Request Attributes
 Requests have the following attributes.
 
 ``method``
-    The HTTP method type such as ``GET`` or ``POST``.
+    The HTTP method type, e.g. ``GET`` or ``POST``.
+
+``url``
+    The request URL, e.g. ``https://server/some/path/index.html?foo=bar&spam=eggs``
 
 ``path``
-    The request path.
+    The request path, e.g. ``/some/path/index.html``
 
 ``querystring``
-    The query string.
+    The query string, e.g. ``foo=bar&spam=eggs``
 
 ``params``
     A dictionary of request parameters. If a parameter with the same name appears more than once in the request, it's value in the dictionary will be a list.
@@ -320,7 +328,7 @@ Requests have the following attributes.
     A case-insensitive dictionary of request headers. Asking for ``request.headers['user-agent']`` will return the value of the ``User-Agent`` header.
 
 ``body``
-    The request body as ``bytes``. If the request has no body the value of ``body`` will be ``None``.
+    The request body as ``bytes``. If the request has no body the value of ``body`` will be empty, i.e. ``b''``.
 
 ``response``
    The response associated with the request. This will be ``None`` if the request has no response.
@@ -331,22 +339,22 @@ Response Attributes
 The response can be retrieved from a request via the ``response`` attribute. A response may be ``None`` if it was never captured, which may happen if you asked for it before it returned or if the server timed out etc. A response has the following attributes.
 
 ``status_code``
-    The status code of the response such as ``200`` or ``404``.
+    The status code of the response, e.g. ``200`` or ``404``.
 
 ``reason``
-    The reason phrase such as ``OK`` or ``Not Found``.
+    The reason phrase, e.g. ``OK`` or ``Not Found``.
 
 ``headers``
      A case-insensitive dictionary of response headers. Asking for ``response.headers['content-length']`` will return the value of the ``Content-Length`` header.
 
 ``body``
-    The response body as ``bytes``. If the response has no body the value of ``body`` will be ``None``.
+    The response body as ``bytes``. If the response has no body the value of ``body`` will be empty, i.e. ``b''``. If the body was compressed (zipped) by the server it will automatically be uncompressed.
 
 
-Modifying Requests
-~~~~~~~~~~~~~~~~~~
+Modifying Requests and Responses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Selenium Wire allows you to modify the request headers the browser sends as well as rewrite any part of the request URL.
+Selenium Wire allows you to modify requests and responses. Requests are modified *after* the browser sends them and responses are modified *before* the browser receives them.
 
 Modifying Headers
 -----------------
@@ -366,16 +374,42 @@ To add one or more new headers to a request, create a dictionary containing thos
 
 If a header already exists in a request it will be overwritten by the one in the dictionary. Header names are case-insensitive.
 
-To filter out one or more headers from a request, set the value of those headers to ``None``.
+For response headers, just prefix the header name with ``response:``
+
+.. code:: python
+
+    driver.header_overrides = {
+        'New-Header1': 'Some Value',
+        'response:New-Header2': 'Some Value'
+    }
+
+    # All subsequent requests will now contain New-Header1
+    # All responses will contain New-Header2
+
+To remove one or more headers from a request or response, set the value of those headers to ``None``.
 
 .. code:: python
 
     driver.header_overrides = {
         'Existing-Header1': None,
-        'Existing-Header2': None
+        'response:Existing-Header2': None
     }
 
-    # All subsequent requests will now *not* contain Existing-Header1 or Existing-Header2
+    # All subsequent requests will *not* contain Existing-Header1
+    # All responses will *not* contain Existing-Header2
+
+Header overrides can also be applied on a per-URL basis using a regex to match the appropriate request URL:
+
+.. code:: python
+
+    driver.header_overrides = [
+        ('.*prod1.server.com.*', {'User-Agent': 'Test_User_Agent_String',
+                                  'response:New-Header': 'HeaderValue'}),
+        ('.*prod2.server.com.*', {'User-Agent': 'Test_User_Agent_String2',
+                                  'response:New-Header': 'HeaderValue2'})
+    ]
+
+    # Only requests/responses to prod1.server.com or prod2.server.com will have their headers modified
 
 To clear the header overrides that you have set, use ``del``:
 
@@ -383,24 +417,100 @@ To clear the header overrides that you have set, use ``del``:
 
     del driver.header_overrides
 
-Header overrides can also be applied on a per-URL basis, in the following format:
+Modifying Parameters
+--------------------
+
+The ``driver.param_overrides`` attribute is used for modifying request parameters. Parameters are modified *after* the browser sends them.
+
+For GET requests the query string is modified. For POST requests that have a content type of ``application/x-www-form-urlencoded`` the body of the request is modified.
+
+To add one or more new parameters to a request, create a dictionary containing those parameters and set it as the value of ``param_overrides``.
 
 .. code:: python
 
-    driver.header_overrides = [
-        ('.*prod1.server.com.*', {'User-Agent': 'Test_User_Agent_String',
-                                  'New-Header': 'HeaderValue'}),
-        ('.*prod2.server.com.*', {'User-Agent2': 'Test_User_Agent_String2',
-                                  'New-Header2': 'HeaderValue'})
+    driver.param_overrides = {
+        'new_param1': 'val1',
+        'new_param2': 'val2'
+    }
+
+    # All subsequent requests will now contain new_param1 and new_param2
+
+If a parameter already exists in a request it will be overwritten by the one in the dictionary.
+
+To remove one or more parameters from a request, set the value of those parameters to ``None``.
+
+.. code:: python
+
+    driver.param_overrides = {
+        'existing_param1': None,
+        'existing_param2': None
+    }
+
+    # All subsequent requests will *not* contain existing_param1 or existing_param2
+
+Perhaps more usefully, parameter overrides can be applied on a per-URL basis using a regex to match the appropriate request URL:
+
+.. code:: python
+
+    driver.param_overrides = [
+        ('https://server/some/path.*', {'new_param1': 'val1',
+                                        'new_param2': 'val2'}),
+        ('https://server/some/other/path.*', {'new_param3': 'val3'})
     ]
 
-    # Only requests to prod1.server.com or prod2.server.com will have their headers modified
+    # Only requests starting https://server/some/path and https://server/some/other/path
+    # will have their parameters modified
 
+To clear the parameter overrides that you have set, use ``del``:
+
+.. code:: python
+
+    del driver.param_overrides
+
+Modifying the Query String
+---------------------------
+
+The ``driver.querystring_overrides`` attribute is used for modifying the whole request query string. The query string is modified *after* the browser sends the request.
+
+Specifying a query string override will replace any existing query string in the request, or will add it to the request if it doesn't already exist.
+
+.. code:: python
+
+    driver.querystring_overrides = 'foo=bar&spam=eggs'
+
+    # All subsequent requests will now have the query string foo=bar&spam=eggs
+    # e.g. http://server/some/path?foo=bar&spam=eggs
+
+To remove a query string from a request, set the value to empty string.
+
+.. code:: python
+
+    driver.querystring_overrides = ''
+
+    # All subsequent requests will *not* contain a query string
+
+Perhaps more usefully, query string overrides can be applied on a per-URL basis using a regex to match the appropriate request URL:
+
+.. code:: python
+
+    driver.querystring_overrides = [
+        ('https://server/some/path.*', 'foo=bar&spam=eggs'),
+        ('https://server/some/other/path.*', 'a=b&c=d&x=z')
+    ]
+
+    # Only requests starting https://server/some/path and https://server/some/other/path
+    # will have their query strings modified
+
+To clear the query string overrides that you have set, use ``del``:
+
+.. code:: python
+
+    del driver.querystring_overrides
 
 Rewriting URLs
 --------------
 
-The ``driver.rewrite_rules`` attribute is used for rewriting request URLs.
+The ``driver.rewrite_rules`` attribute is used for rewriting request URLs. URLs are rewritten *after* the browser sends the request.
 
 Each rewrite rule should be specified as a 2-tuple or list, the first element containing the URL pattern to match and the second element the replacement. One or more rewrite rules can be supplied.
 
@@ -460,6 +570,10 @@ For proxy authentication different to Basic, you can supply the full value for t
         }
     }
 
+Note that the ``custom_authorization`` option is only supported by the `default backend`_.
+
+.. _`default backend`: #backends
+
 The proxy configuration can also be loaded through environment variables called ``HTTP_PROXY``, ``HTTPS_PROXY`` and ``NO_PROXY``:
 
 .. code:: bash
@@ -488,34 +602,74 @@ You can leave out the ``user`` and ``pass`` if your proxy doesn't require authen
 
 As well as ``socks5``, the schemes ``socks4`` and ``socks5h`` are supported. Use ``socks5h`` when you want DNS resolution to happen on the proxy server rather than on the client.
 
+**Using Selenium Wire with Tor**
 
-Other Options
-~~~~~~~~~~~~~
+See `this example`_ if you want to run Selenium Wire with Tor.
 
-Other options that can be passed to Selenium Wire via the ``seleniumwire_options`` webdriver attribute:
+.. _`this example`: https://gist.github.com/woswos/38b921f0b82de009c12c6494db3f50c5
 
-``request_storage_base_dir``
-    Captured requests and responses are stored in the current user's home folder by default. If you want to use a different folder, you can specify that here.
+Backends
+~~~~~~~~
+
+Selenium Wire allows you to change the backend component that performs request capture. Currently two backends are supported: the backend that ships with Selenium Wire (the default) and the mitmproxy backend.
+
+The default backend is adequate for most purposes. However, in certain cases you may find you get better performance with the mitmproxy backend.
+
+The mitmproxy backend relies upon the powerful open source `mitmproxy proxy server`_ being installed in your environment.
+
+.. _`mitmproxy proxy server`: https://mitmproxy.org/
+
+To switch to the mitmproxy backend, first install the mitmproxy package:
+
+.. code:: bash
+
+    pip install mitmproxy
+
+Once installed, set the ``backend`` option in Selenium Wire's options to ``mitmproxy``:
 
 .. code:: python
 
     options = {
-        'request_storage_base_dir': '/tmp'  # Use /tmp to store captured data
+        'backend': 'mitmproxy'
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
-``connection_timeout``
-    The number of seconds Selenium Wire should wait before timing out requests. The default is 5 seconds. Increase this value if you're working with a slow server that needs more time to respond. Set to ``None`` for no timeout.
+**Mitmproxy backend limitations**
+
+* You must be running Python 3.6 or higher.
+* The mitmproxy backend won't work with upstream SOCKS proxies.
+
+Certificates
+~~~~~~~~~~~~
+
+Selenium Wire uses it's own CA certificate to decrypt HTTPS traffic. It is not normally necessary for the browser to trust this certificate because Selenium Wire tells the browser to add it as an exception. This will allow the browser to function normally, but it will display a "Not Secure" message in the address bar. If you wish to get rid of this message you can install the CA certificate manually.
+
+For the default backend, you can download the CA certificate `here`_. Once downloaded, navigate to "Certificates" in your browser settings and import the certificate in the "Authorities" section.
+
+.. _`here`: https://github.com/wkeeling/selenium-wire/raw/mitmproxy-backend/seleniumwire/proxy/ca.crt
+
+If you are using the mitmproxy backend, you can follow `these instructions`_ to install the CA certificate.
+
+.. _`these instructions`: https://docs.mitmproxy.org/stable/concepts-certificates/#installing-the-mitmproxy-ca-certificate-manually
+
+All Options
+~~~~~~~~~~~
+
+A summary of all options that can be passed to Selenium Wire via the ``seleniumwire_options`` webdriver attribute.
+
+``backend``
+    The backend component that Selenium Wire will use to capture requests. The currently supported values are ``default`` (same as not specifying) or ``mitmproxy``.
 
 .. code:: python
 
     options = {
-        'connection_timeout': None  # Never timeout
+        'backend': 'mitmproxy'  # Use the mitmproxy backend (see limitations above)
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
 ``connection_keep_alive``
     Whether connections should be reused across requests. The default is ``False``.
+    *Applies to the default backend only.*
 
 .. code:: python
 
@@ -524,28 +678,21 @@ Other options that can be passed to Selenium Wire via the ``seleniumwire_options
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
-``max_threads``
-    The maximum allowed number threads that will be used to handle requests. The default is 9999.
+``connection_timeout``
+    The number of seconds Selenium Wire should wait before timing out requests. The default is 5 seconds. Increase this value if you're working with a slow server that needs more time to respond. Set to ``None`` for no timeout.
+    *Applies to the default backend only.*
 
 .. code:: python
 
     options = {
-        'max_threads': 3  # Allow a maximum of 3 threads to handle requests.
+        'connection_timeout': None  # Never timeout
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
-``verify_ssl``
-    Whether SSL certificates should be verified. The default is ``False`` which prevents errors with self-signed certificates.
-
-.. code:: python
-
-    options = {
-        'verify_ssl': True  # Verify SSL certificates but beware of errors with self-signed certificates.
-    }
-    driver = webdriver.Firefox(seleniumwire_options=options)
 
 ``custom_response_handler``
-    This function that should be passed in custom response handlers should maintain a signature that it compatible with ``CaptureRequestHandler.response_handler``, as all arguments passed to that function will in turn be passed to your function. In order to modify the response data, you will need to return it from your function (the response data for the request is given in the ``res_body`` argument).
+    This function that should be passed in custom response handlers should maintain a signature that it compatible with ``CaptureRequestHandler.handle_response``, as all arguments passed to that function will in turn be passed to your function. In order to modify the response data, you will need to return it from your function (the response data for the request is given in the ``res_body`` argument).
+    *Applies to the default backend only.*
 
 .. code:: python
 
@@ -565,16 +712,6 @@ The code above will print something like this to the console (loading a page wil
     res_body length: 471
     res_body length: 606
 
-``ignore_http_methods``
-    A list of HTTP methods (specified as uppercase strings) that should be ignored by Selenium Wire and not captured. The default is ``['OPTIONS']`` which ignores all OPTIONS requests. To capture all request methods, set ``ignore_http_methods`` to an empty list:
-
-.. code:: python
-
-    options = {
-        'ignore_http_methods': []  # Capture all requests, including OPTIONS requests
-    }
-    driver = webdriver.Firefox(seleniumwire_options=options)
-
 ``disable_encoding``
     Whether to disable content encoding. When set to ``True``, the ``Accept-Encoding`` header will be set to ``identity`` for all requests. This tells the server to not compress/modify the response. The default is ``False``.
 
@@ -585,13 +722,101 @@ The code above will print something like this to the console (loading a page wil
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
+``ignore_http_methods``
+    A list of HTTP methods (specified as uppercase strings) that should be ignored by Selenium Wire and not captured. The default is ``['OPTIONS']`` which ignores all OPTIONS requests. To capture all request methods, set ``ignore_http_methods`` to an empty list:
+
+.. code:: python
+
+    options = {
+        'ignore_http_methods': []  # Capture all requests, including OPTIONS requests
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``max_threads``
+    The maximum allowed number threads that will be used to handle requests. The default is 9999.
+    *Applies to the default backend only.*
+
+.. code:: python
+
+    options = {
+        'max_threads': 3  # Allow a maximum of 3 threads to handle requests.
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``mitmproxy_log_level``
+    Set the log level that the mitmproxy backend will use. The default is ``ERROR``.
+    *Applies to the mitmproxy backend only.*
+
+.. code:: python
+
+    options = {
+        'mitmproxy_log_level': 'INFO'  # Increase the log level to INFO for the mitmproxy backend
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``mitmproxy_confdir``
+    The location of the mitmproxy configuration directory. The default is ``~/.mitmproxy``. You might want to change this if you're running in an environment where you don't have access to the user's home folder.
+    *Applies to the mitmproxy backend only.*
+
+.. code:: python
+
+    options = {
+        'mitmproxy_confdir': '/tmp/.mitmproxy'  # Switch the location to /tmp
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``port``
+    The port number that Selenium Wire's backend listens on. If you're using the default backend, you don't normally need to specify a port and a random port number is chosen automatically. If you're using the mitmproxy backend, the port number defaults to 9950.
+
+.. code:: python
+
+    options = {
+        'port': 9999  # Tell the backend to listen on port 9999 (not normally necessary to set this)
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``proxy``
+    The upstream proxy server configuration (if you're using a proxy).
+
+.. code:: python
+
+    options = {
+        'proxy': {
+            'http': 'http://user:pass@192.168.10.100:8888',
+            'https': 'https://user:pass@192.168.10.100:8889',
+            'no_proxy': 'localhost,127.0.0.1'
+        }
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``request_storage_base_dir``
+    Captured requests and responses are stored in the current user's home folder by default. You might want to change this if you're running in an environment where you don't have access to the user's home folder.
+
+.. code:: python
+
+    options = {
+        'request_storage_base_dir': '/tmp'  # Use /tmp to store captured data
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
 ``suppress_connection_errors``
     Whether to suppress connection related tracebacks. The default is ``True`` so that harmless errors that commonly occur at browser shutdown do not alarm users. When suppressed, the connection error message is logged at DEBUG level without a traceback. Set to ``False`` to allow exception propagation and see full tracebacks.
+    *Applies to the default backend only.*
 
 .. code:: python
 
     options = {
         'suppress_connection_errors': False  # Show full tracebacks for any connection errors
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+``verify_ssl``
+    Whether SSL certificates should be verified. The default is ``False`` which prevents errors with self-signed certificates.
+
+.. code:: python
+
+    options = {
+        'verify_ssl': True  # Verify SSL certificates but beware of errors with self-signed certificates
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
