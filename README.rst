@@ -105,6 +105,8 @@ Table of Contents
 
 - `Backends`_
 
+- `Certificates`_
+
 - `All Options`_
 
 - `Limitations`_
@@ -508,7 +510,7 @@ To clear the query string overrides that you have set, use ``del``:
 Rewriting URLs
 --------------
 
-The ``driver.rewrite_rules`` attribute is used for rewriting request URLs.
+The ``driver.rewrite_rules`` attribute is used for rewriting request URLs. URLs are rewritten *after* the browser sends the request.
 
 Each rewrite rule should be specified as a 2-tuple or list, the first element containing the URL pattern to match and the second element the replacement. One or more rewrite rules can be supplied.
 
@@ -568,6 +570,10 @@ For proxy authentication different to Basic, you can supply the full value for t
         }
     }
 
+Note that the ``custom_authorization`` option is only supported by the `default backend`_.
+
+.. _`default backend`: #backends
+
 The proxy configuration can also be loaded through environment variables called ``HTTP_PROXY``, ``HTTPS_PROXY`` and ``NO_PROXY``:
 
 .. code:: bash
@@ -595,6 +601,12 @@ Using a SOCKS proxy is the same as using an HTTP based one:
 You can leave out the ``user`` and ``pass`` if your proxy doesn't require authentication.
 
 As well as ``socks5``, the schemes ``socks4`` and ``socks5h`` are supported. Use ``socks5h`` when you want DNS resolution to happen on the proxy server rather than on the client.
+
+**Using Selenium Wire with Tor**
+
+See `this example`_ if you want to run Selenium Wire with Tor.
+
+.. _`this example`: https://gist.github.com/woswos/38b921f0b82de009c12c6494db3f50c5
 
 Backends
 ~~~~~~~~
@@ -627,10 +639,23 @@ Once installed, set the ``backend`` option in Selenium Wire's options to ``mitmp
 * You must be running Python 3.6 or higher.
 * The mitmproxy backend won't work with upstream SOCKS proxies.
 
+Certificates
+~~~~~~~~~~~~
+
+Selenium Wire uses it's own CA certificate to decrypt HTTPS traffic. It is not normally necessary for the browser to trust this certificate because Selenium Wire tells the browser to add it as an exception. This will allow the browser to function normally, but it will display a "Not Secure" message in the address bar. If you wish to get rid of this message you can install the CA certificate manually.
+
+For the default backend, you can download the CA certificate `here`_. Once downloaded, navigate to "Certificates" in your browser settings and import the certificate in the "Authorities" section.
+
+.. _`here`: https://github.com/wkeeling/selenium-wire/raw/mitmproxy-backend/seleniumwire/proxy/ca.crt
+
+If you are using the mitmproxy backend, you can follow `these instructions`_ to install the CA certificate.
+
+.. _`these instructions`: https://docs.mitmproxy.org/stable/concepts-certificates/#installing-the-mitmproxy-ca-certificate-manually
+
 All Options
 ~~~~~~~~~~~
 
-A summary of all options that can be passed to Selenium Wire via the ``seleniumwire_options`` webdriver attribute:
+A summary of all options that can be passed to Selenium Wire via the ``seleniumwire_options`` webdriver attribute.
 
 ``backend``
     The backend component that Selenium Wire will use to capture requests. The currently supported values are ``default`` (same as not specifying) or ``mitmproxy``.
@@ -638,7 +663,7 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
 .. code:: python
 
     options = {
-        'backend': 'mitmproxy'  # Use the mitmproxy backend
+        'backend': 'mitmproxy'  # Use the mitmproxy backend (see limitations above)
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
@@ -666,7 +691,7 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
 
 
 ``custom_response_handler``
-    This function that should be passed in custom response handlers should maintain a signature that it compatible with ``CaptureRequestHandler.response_handler``, as all arguments passed to that function will in turn be passed to your function. In order to modify the response data, you will need to return it from your function (the response data for the request is given in the ``res_body`` argument).
+    This function that should be passed in custom response handlers should maintain a signature that it compatible with ``CaptureRequestHandler.handle_response``, as all arguments passed to that function will in turn be passed to your function. In order to modify the response data, you will need to return it from your function (the response data for the request is given in the ``res_body`` argument).
     *Applies to the default backend only.*
 
 .. code:: python
@@ -791,7 +816,7 @@ The code above will print something like this to the console (loading a page wil
 .. code:: python
 
     options = {
-        'verify_ssl': True  # Verify SSL certificates but beware of errors with self-signed certificates.
+        'verify_ssl': True  # Verify SSL certificates but beware of errors with self-signed certificates
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
