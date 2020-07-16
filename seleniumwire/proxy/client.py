@@ -142,12 +142,12 @@ class AdminClient:
         self._make_request('DELETE', '/requests')
 
     def find(self, path):
-        """Find the first request that contains the specified path.
+        """Find the first request that matches the specified path.
 
         Requests are searched in chronological order.
 
         Args:
-            path: The request path which can be any part of the request URL.
+            path: A regex that will be searched for in the request URL.
         """
         return self._make_request('GET', '/find?path={}'.format(quote_plus(str(path))))
 

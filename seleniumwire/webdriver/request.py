@@ -47,12 +47,13 @@ class InspectRequestsMixin:
         """Wait up to the timeout period for a request with the specified
         path to be seen.
 
-        The path can be can be any substring of the full request URL.
-        If a request is not seen before the timeout then a TimeoutException
-        is raised. Only requests with corresponding responses are considered.
+        The path attribute can be can be a regex that will be searched in the
+        full request URL. If a request is not seen before the timeout then a
+        TimeoutException is raised. Only requests with corresponding responses
+        are considered.
 
         Args:
-            path: The path of the request to look for.
+            path: The path of the request to look for. A regex can be supplied.
             timeout: The maximum time to wait in seconds. Default 10s.
 
         Returns:

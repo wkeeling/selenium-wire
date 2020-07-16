@@ -254,9 +254,9 @@ Waiting for a Request
 
 When you ask for captured requests using ``driver.requests`` or ``driver.last_request`` you have to be sure that the requests you're interested in have actually been captured. If you ask too soon, then you may find that a request is not yet present, or is present but has no associated response.
 
-**driver.wait_for_request()**
+**driver.wait_for_request(path)**
 
-This method will wait for a previous request with a specific path to complete before allowing the test to continue. The path can be a unique part of the URL or the full URL itself.
+This method will wait for a previous request with a specific URL to complete before allowing the test to continue. The ``path`` attribute can be a regex that will be searched within the request URL.
 
 For example, to wait for an AJAX request to return after a button is clicked:
 
@@ -269,6 +269,7 @@ For example, to wait for an AJAX request to return after a button is clicked:
     request = driver.wait_for_request('/api/products/12345/')
 
 * Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action.
+* Note that because the ``path`` can be a regex, you must escape special characters such as question marks with a slash.
 
 The ``wait_for_request()`` method will return the first *fully completed* request it finds that matches the supplied path. Fully completed meaning that the response must have returned. The method will wait up to 10 seconds by default but you can vary that with the ``timeout`` argument:
 
