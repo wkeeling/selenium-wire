@@ -266,7 +266,7 @@ For example, to wait for an AJAX request to return after a button is clicked:
     button_element.click()
 
     # Wait for the request/response to complete
-    request = driver.wait_for_request('/api/products/12345/')
+    request = driver.wait_for_request('/api/products/12345/$')
 
 * Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action.
 * Note that because the ``path`` can be a regex, you must escape special characters such as question marks with a slash.
@@ -276,7 +276,7 @@ The ``wait_for_request()`` method will return the first *fully completed* reques
 .. code:: python
 
     # Wait up to 30 seconds for a request/response
-    request = driver.wait_for_request('/api/products/12345/', timeout=30)
+    request = driver.wait_for_request('/api/products/12345/$', timeout=30)
 
 If a fully completed request is not seen within the timeout period a ``TimeoutException`` is raised.
 
