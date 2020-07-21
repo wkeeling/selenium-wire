@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+2.1.0 (2020-07-21)
+------------------
+
+* Support regular expressions in driver.wait_for_request().
+
 2.0.0 (2020-07-14)
 ------------------
 
