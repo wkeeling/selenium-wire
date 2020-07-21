@@ -258,15 +258,28 @@ class RequestStorageTest(TestCase):
         storage.save_request(request_2)
 
         self.assertEqual(request_1.id, storage.find('/test/path/').id)
-        self.assertEqual(request_1.id, storage.find('/test/path/?foo=bar').id)
-        self.assertEqual(request_1.id, storage.find('http://www.example.com/test/path/?foo=bar').id)
+        self.assertEqual(request_1.id, storage.find('/test/path/\?foo=bar').id)
+        self.assertEqual(request_1.id, storage.find('http://www.example.com/test/path/\?foo=bar').id)
         self.assertEqual(request_1.id, storage.find('http://www.example.com/test/path/').id)
 
         self.assertIsNone(storage.find('/different/path'))
         self.assertIsNone(storage.find('/test/path/?x=y'))
-        self.assertIsNone(storage.find('http://www.example.com/different/path/?foo=bar'))
-        self.assertIsNone(storage.find('http://www.different.com/test/path/?foo=bar'))
-        self.assertIsNone(storage.find('http://www.example.com/test/path/?x=y'))
+        self.assertIsNone(storage.find('http://www.example.com/different/path/\?foo=bar'))
+        self.assertIsNone(storage.find('http://www.different.com/test/path/\?foo=bar'))
+        self.assertIsNone(storage.find('http://www.example.com/test/path/\?x=y'))
+
+    def test_find_similar_urls(self):
+        request_1 = self._create_request('https://192.168.1.1/redfish/v1')
+        request_2 = self._create_request('https://192.168.1.1/redfish')
+        mock_response = self._create_response()
+        storage = RequestStorage(base_dir=self.base_dir)
+        storage.save_request(request_1)
+        storage.save_response(request_1.id, mock_response)
+        storage.save_request(request_2)
+        storage.save_response(request_2.id, mock_response)
+
+        self.assertEqual(request_1.id, storage.find('.*v1').id)
+        self.assertEqual(request_2.id, storage.find('https://192.168.1.1/redfish$').id)
 
     def _get_stored_path(self, request_id, filename):
         return glob.glob(os.path.join(self.base_dir, '.seleniumwire', 'storage-*',

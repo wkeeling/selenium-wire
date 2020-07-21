@@ -2,13 +2,13 @@ import gzip
 import logging
 import os
 import pickle
+import re
 import shutil
 import threading
 import uuid
 import zlib
 from datetime import datetime, timedelta
 from io import BytesIO
-from urllib.parse import urlparse
 
 log = logging.getLogger(__name__)
 
@@ -235,7 +235,7 @@ class RequestStorage:
             shutil.rmtree(self._get_request_dir(indexed_request.id), ignore_errors=True)
 
     def find(self, path, check_response=True):
-        """Find the first request that contains the specified path.
+        """Find the first request that matches the specified path.
 
         Requests are searched in chronological order.
 
@@ -254,9 +254,7 @@ class RequestStorage:
             index = self._index[:]
 
         for indexed_request in index:
-            match_url = urlparse(path).geturl()
-
-            if match_url in indexed_request.url:
+            if re.search(path, indexed_request.url):
                 if (check_response and indexed_request.has_response) or not check_response:
                     return self._load_request(indexed_request.id)
 
