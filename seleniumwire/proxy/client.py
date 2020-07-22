@@ -256,7 +256,6 @@ class AdminClient:
                     data = json.loads(data.decode(encoding='utf-8'))
             except (UnicodeDecodeError, ValueError):
                 pass
-            return data
         except ProxyException:
             raise
         except Exception as e:
@@ -266,6 +265,7 @@ class AdminClient:
                 conn.close()
             except ConnectionError:
                 pass
+        return data
 
 
 class ProxyException(Exception):
