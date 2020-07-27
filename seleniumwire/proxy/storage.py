@@ -318,8 +318,19 @@ class InMemoryRequestStorage(RequestStorage):
 
     def _load_body(self, request_id, name):
         request_dir = self._get_request_dir(request_id)
-        return self.dirname_obj_map[(dirname, name)]
+        return self.dirname_obj_map[(request_dir, name)]
 
+
+    def _load_request(self, request_id):
+        request_dir = self._get_request_dir(request_id)
+        request = self.dirname_obj_map[(request_dir, 'request')]
+        try:
+            response = self.dirname_obj_map[(request_dir, 'response')]
+            request.response = response
+        except KeyError:
+            pass
+
+        return request
 
     def _get_request_dir(self, request_id):
         return 'request-{}'.format(request_id)
