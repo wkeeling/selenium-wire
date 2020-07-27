@@ -227,7 +227,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                     server_sock.close()
                 if self.connection:
                     self.connection.close()
-            print('done', id(messages))
 
         t = threading.Thread(target=server_read, args=(messages,), daemon=True)
         t.start()
