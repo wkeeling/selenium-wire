@@ -242,6 +242,21 @@ def test_find_similar_urls(base_dir, storage_cls):
     assert request_1.id == storage.find('.*v1').id
     assert request_2.id == storage.find('https://192.168.1.1/redfish$').id
 
+@pytest.mark.parametrize("storage_cls", [RequestStorage, InMemoryRequestStorage])
+def test_save_request_load_request_with_body(base_dir, storage_cls):
+    request = _create_request('https://192.168.1.1/redfish/v1', b'mockrequestbody')
+    response = _create_response(b'mockresponsebody')
+
+    storage = storage_cls(base_dir=base_dir)
+
+    storage.save_request(request)
+    storage.save_response(request.id, response)
+
+    requests = storage.load_requests()
+    assert storage.load_request_body(request.id) == b'mockrequestbody'
+    assert storage.load_response_body(request.id) == b'mockresponsebody'
+
+    storage.load_requests()
 
 # these tests check disk, only apply to RequestStorage:
 def test_save_request(base_dir):
