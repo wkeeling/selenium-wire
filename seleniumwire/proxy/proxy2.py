@@ -207,7 +207,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
     def _handle_websocket(self, server_sock, response):
         self.connection.settimeout(None)
         server_sock.settimeout(None)
-
+        print('handling websocket')
         def server_read(messages):
             try:
                 while True:
@@ -215,6 +215,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                     messages.append(serverdata)
                     if not serverdata:
                         break
+                    print('adding ws message')
                     self.connection.sendall(serverdata)
             except socket.error:
                 self.log_message('Ending websocket server connection')
