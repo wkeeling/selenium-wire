@@ -301,6 +301,7 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
             res: The response (a http.client.HTTPResponse instance) that corresponds to the request.
             res_body: The binary response body.
         """
+        print('here')
         if messages is list:
             print('handler.handle_response', id(messages))
         if not hasattr(req, 'id'):
