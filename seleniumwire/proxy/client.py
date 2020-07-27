@@ -258,7 +258,7 @@ class AdminClient:
                 pass
         except ProxyException:
             raise
-        except Exception as e:
+        except TypeError as e:
             raise ProxyException('Unable to retrieve data from proxy: {}'.format(e))
         finally:
             try:
