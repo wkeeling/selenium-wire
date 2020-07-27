@@ -16,6 +16,14 @@ log = logging.getLogger(__name__)
 REMOVE_DATA_OLDER_THAN_DAYS = 1
 
 
+
+def print_args(fn):
+    def new_fn(*args, **kwargs):
+        print(fn, *args, **kwargs)
+        return fn(*args, **kwargs)
+    return new_fn
+
+
 class RequestStorage:
     """Responsible for saving request and response data that passes through the proxy server,
     and provding an API to retrieve that data.
@@ -49,6 +57,7 @@ class RequestStorage:
         self._index = []
         self._lock = threading.Lock()
 
+    @print_args
     def save_request(self, request):
         """Saves the request to storage.
 
@@ -84,6 +93,7 @@ class RequestStorage:
         with open(os.path.join(request_dir, filename), 'wb') as out:
             pickle.dump(obj, out)
 
+    @print_args
     def save_response(self, request_id, response):
         """Saves the response to storage.
 
@@ -121,6 +131,7 @@ class RequestStorage:
 
         return None
 
+    @print_args
     def load_requests(self):
         """Loads all previously saved requests known to the storage (known to its index).
 
@@ -158,6 +169,7 @@ class RequestStorage:
 
         return request
 
+    @print_args
     def load_request_body(self, request_id):
         """Loads the body of the request with the specified id.
 
@@ -170,7 +182,7 @@ class RequestStorage:
             return self._load_body(request_id, 'requestbody')
         except FileNotFoundError:
             return b''
-
+    @print_args
     def load_response_body(self, request_id):
         """Loads the body of the response corresponding to the request with the specified id.
 
@@ -209,7 +221,7 @@ class RequestStorage:
                 # Log a message and return the data untouched
                 log.debug('Unable to decode body: %s', str(e))
         return data
-
+    @print_args
     def load_last_request(self):
         """Loads the last saved request.
 
@@ -224,7 +236,7 @@ class RequestStorage:
                 return None
 
         return self._load_request(last_request.id)
-
+    @print_args
     def clear_requests(self):
         """Clears all requests currently known to this storage."""
         with self._lock:
@@ -233,7 +245,7 @@ class RequestStorage:
 
         for indexed_request in index:
             shutil.rmtree(self._get_request_dir(indexed_request.id), ignore_errors=True)
-
+    @print_args
     def find(self, path, check_response=True):
         """Find the first request that matches the specified path.
 
@@ -259,7 +271,7 @@ class RequestStorage:
                     return self._load_request(indexed_request.id)
 
         return None
-
+    @print_args
     def get_cert_dir(self):
         """Returns a storage-specific path to a directory where the SSL certificates are stored.
 
@@ -272,7 +284,7 @@ class RequestStorage:
 
     def _get_request_dir(self, request_id):
         return os.path.join(self._storage_dir, 'request-{}'.format(request_id))
-
+    @print_args
     def cleanup(self):
         """Removes all stored requests, the storage directory containing those
         requests, and if that is the only storage directory, also removes the
