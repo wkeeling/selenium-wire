@@ -127,7 +127,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         self.wfile.flush()
 
         if self.websocket:
-            self._handle_websocket(conn.sock)
+            self._handle_websocket(conn.sock, res)
             self.close_connection = True
         elif not self._keepalive():
             self.close_connection = True
@@ -204,14 +204,15 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         return self.server.options.get('connection_keep_alive', False) \
                and self.headers.get('Connection', '').lower() != 'close'
 
-    def _handle_websocket(self, server_sock):
+    def _handle_websocket(self, server_sock, response):
         self.connection.settimeout(None)
         server_sock.settimeout(None)
 
-        def server_read():
+        def server_read(messages):
             try:
                 while True:
                     serverdata = server_sock.recv(4096)
+                    messages.append(serverdata)
                     if not serverdata:
                         break
                     self.connection.sendall(serverdata)
@@ -223,7 +224,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 if self.connection:
                     self.connection.close()
 
-        t = threading.Thread(target=server_read, daemon=True)
+        response.messages = []
+        t = threading.Thread(target=server_read, args=(response.messages) daemon=True)
         t.start()
 
         try:
