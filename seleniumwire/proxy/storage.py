@@ -307,7 +307,7 @@ class RequestStorage:
 class InMemoryRequestStorage(RequestStorage):
     """RequestStorage with all disk operations swapped out"""
     def __init__(self, base_dir=None):
-        super().__init__(*args, **kwargs)
+        super().__init__(base_dir=none)
         # for everything except certs
         self.dirname_obj_map = {}
 
@@ -337,7 +337,7 @@ class InMemoryRequestStorage(RequestStorage):
     def cleanup(self):
         self.dirname_obj_map = {}
         # cleanup certs
-        super().cleanup(*args, **kwargs)
+        super().cleanup()
 
 
 class _IndexedRequest(dict):
