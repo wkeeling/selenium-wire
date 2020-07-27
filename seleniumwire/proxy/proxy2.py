@@ -93,6 +93,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
             if res.headers.get('Upgrade') == 'websocket':
                 self.websocket = True
+                messages = []
+                setattr(res, 'ws_messages', messages)
 
             version_table = {10: 'HTTP/1.0', 11: 'HTTP/1.1'}
             setattr(res, 'headers', res.msg)
@@ -127,7 +129,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         self.wfile.flush()
 
         if self.websocket:
-            self._handle_websocket(conn.sock, res)
+            self._handle_websocket(conn.sock, ws_messages)
             self.close_connection = True
         elif not self._keepalive():
             self.close_connection = True
@@ -204,18 +206,17 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         return self.server.options.get('connection_keep_alive', False) \
                and self.headers.get('Connection', '').lower() != 'close'
 
-    def _handle_websocket(self, server_sock, response):
+    def _handle_websocket(self, server_sock, messages):
         self.connection.settimeout(None)
         server_sock.settimeout(None)
-        print('handling websocket')
+
         def server_read(messages):
             try:
                 while True:
                     serverdata = server_sock.recv(4096)
-                    messages.append(serverdata)
                     if not serverdata:
                         break
-                    print('adding ws message')
+                    messages.append(serverdata)
                     self.connection.sendall(serverdata)
             except socket.error:
                 self.log_message('Ending websocket server connection')
@@ -225,8 +226,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                 if self.connection:
                     self.connection.close()
 
-        response.messages = []
-        t = threading.Thread(target=server_read, args=(response.messages,), daemon=True)
+        t = threading.Thread(target=server_read, args=(messages,), daemon=True)
         t.start()
 
         try:
