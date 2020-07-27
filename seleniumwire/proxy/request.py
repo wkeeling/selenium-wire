@@ -115,6 +115,7 @@ class Response:
         self.headers = CaseInsensitiveDict(headers)
         self.body = body
         self.messages = messages
+        print(self)
 
     @property
     def body(self):
@@ -148,7 +149,7 @@ class Response:
 
     def __repr__(self):
         return 'Response(status_code={status_code!r}, reason={reason!r}, headers={headers!r}, ' \
-               'body={_body!r})'.format(**vars(self))
+               'body={_body!r}, messages={messages!r})'.format(**vars(self))
 
     def __str__(self):
         return '{} {}'.format(self.status_code, self.reason)
