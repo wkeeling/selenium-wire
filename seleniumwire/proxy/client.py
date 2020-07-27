@@ -259,6 +259,7 @@ class AdminClient:
         except ProxyException:
             raise
         except Exception as e:
+            import pdb;pdb.set_trace()
             raise ProxyException('Unable to retrieve data from proxy: {}'.format(e))
         finally:
             try:
