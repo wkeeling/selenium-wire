@@ -129,7 +129,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         self.wfile.flush()
 
         if self.websocket:
-            self._handle_websocket(conn.sock, ws_messages)
+            self._handle_websocket(conn.sock, messages)
             self.close_connection = True
         elif not self._keepalive():
             self.close_connection = True
