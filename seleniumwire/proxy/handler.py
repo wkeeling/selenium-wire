@@ -315,7 +315,7 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
             reason=res.reason,
             headers=dict(res.headers),
             body=res_body,
-            messages,
+            messages=messages,
         )
 
         self.capture_response(req.id, req.path, response)
