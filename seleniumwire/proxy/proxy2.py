@@ -125,16 +125,17 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             self.send_header(header, val)
         self.end_headers()
 
-        if res_body:
-            self.wfile.write(res_body)
-
-        self.wfile.flush()
-
         if self.websocket:
             self._handle_websocket(conn.sock, ws_messages)
             self.close_connection = True
         elif not self._keepalive():
             self.close_connection = True
+
+        if res_body:
+            self.wfile.write(res_body)
+
+        self.wfile.flush()
+
 
     def _create_connection(self, origin):
         scheme, netloc = origin
