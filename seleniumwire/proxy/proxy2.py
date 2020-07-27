@@ -126,6 +126,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
         if res_body:
+            if self.websocket:
+                import pdb;pdb.set_trace()
             self.wfile.write(res_body)
 
         self.wfile.flush()
