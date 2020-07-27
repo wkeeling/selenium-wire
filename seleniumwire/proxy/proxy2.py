@@ -225,7 +225,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                     self.connection.close()
 
         response.messages = []
-        t = threading.Thread(target=server_read, args=(response.messages), daemon=True)
+        t = threading.Thread(target=server_read, args=(response.messages,), daemon=True)
         t.start()
 
         try:
