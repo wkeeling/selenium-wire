@@ -292,7 +292,7 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
 
         return req_body
 
-    def handle_response(self, req, req_body, res, res_body):
+    def handle_response(self, req, req_body, res, res_body, messages=None):
         """Captures a response and its body that relate to a previous request.
 
         Args:
@@ -314,7 +314,8 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
             status_code=res.status,
             reason=res.reason,
             headers=dict(res.headers),
-            body=res_body
+            body=res_body,
+            messages,
         )
 
         self.capture_response(req.id, req.path, response)

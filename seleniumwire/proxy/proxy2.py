@@ -85,6 +85,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             req.headers['Host'] = netloc
         setattr(req, 'headers', self._filter_headers(req.headers))
 
+        ws_messages = None
+
         origin = (scheme, netloc)
         try:
             conn = self._create_connection(origin)
@@ -93,8 +95,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
             if res.headers.get('Upgrade') == 'websocket':
                 self.websocket = True
-                messages = []
-                setattr(res, 'messages', messages)
+                ws_messages = []
+                setattr(res, 'messages', ws_messages)
 
             version_table = {10: 'HTTP/1.0', 11: 'HTTP/1.1'}
             setattr(res, 'headers', res.msg)
@@ -106,7 +108,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             self.close_connection = True
             return
 
-        res_body_modified = self.handle_response(req, req_body, res, res_body)
+        res_body_modified = self.handle_response(req, req_body, res, res_body, ws_messages)
         if res_body_modified is False:
             self.send_error(403)
             return
@@ -129,7 +131,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         self.wfile.flush()
 
         if self.websocket:
-            self._handle_websocket(conn.sock, messages)
+            self._handle_websocket(conn.sock, ws_messages)
             self.close_connection = True
         elif not self._keepalive():
             self.close_connection = True
@@ -264,7 +266,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         """
         pass
 
-    def handle_response(self, req, req_body, res, res_body):
+    def handle_response(self, req, req_body, res, res_body, messages=None):
         """Hook method that subclasses should override to process a response.
 
         Args:
