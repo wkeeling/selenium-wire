@@ -307,7 +307,7 @@ class RequestStorage:
 class InMemoryRequestStorage(RequestStorage):
     """RequestStorage with all disk operations swapped out"""
     def __init__(self, base_dir=None):
-        super().__init__(base_dir=none)
+        super().__init__(base_dir=base_dir)
         # for everything except certs
         self.dirname_obj_map = {}
 
