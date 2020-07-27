@@ -100,7 +100,7 @@ class Request:
 class Response:
     """Represents an HTTP response."""
 
-    def __init__(self, *, status_code, reason, headers, body=b''):
+    def __init__(self, *, status_code, reason, headers, body=b'', messages=None):
         """Initialise a new Response object.
 
         Args:
@@ -108,11 +108,13 @@ class Response:
             reason: The reason message (e.g. "OK" or "Not Found").
             headers: The response headers as a dictionary.
             body: The response body as bytes.
+            messages: Websocket messages list
         """
         self.status_code = status_code
         self.reason = reason
         self.headers = CaseInsensitiveDict(headers)
         self.body = body
+        self.messages = messages
 
     @property
     def body(self):

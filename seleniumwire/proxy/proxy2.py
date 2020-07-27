@@ -94,7 +94,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             if res.headers.get('Upgrade') == 'websocket':
                 self.websocket = True
                 messages = []
-                setattr(res, 'ws_messages', messages)
+                setattr(res, 'messages', messages)
 
             version_table = {10: 'HTTP/1.0', 11: 'HTTP/1.1'}
             setattr(res, 'headers', res.msg)
