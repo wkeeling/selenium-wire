@@ -115,7 +115,7 @@ class Response:
         self.headers = CaseInsensitiveDict(headers)
         self.body = body
         self.messages = messages
-        print(self)
+        print(repr(self))
 
     @property
     def body(self):
