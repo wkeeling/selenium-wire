@@ -220,7 +220,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
                     serverdata = server_sock.recv(4096)
                     if not serverdata:
                         break
-                    print('appending', serverdata, id(messages))
                     messages.append(serverdata)
                     self.connection.sendall(serverdata)
             except socket.error:

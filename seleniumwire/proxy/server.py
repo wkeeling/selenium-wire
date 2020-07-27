@@ -10,7 +10,7 @@ from urllib.request import _parse_proxy
 
 from . import utils
 from .modifier import RequestModifier
-from .storage import RequestStorage
+from .storage import RequestStorage, InMemoryRequestStorage
 
 
 class BoundedThreadingMixin(ThreadingMixIn):
@@ -48,9 +48,12 @@ class ProxyHTTPServer(BoundedThreadingMixin, HTTPServer):
         self.options = options or {}
 
         # Used to stored captured requests
-        self.storage = RequestStorage(
-            base_dir=self.options.pop('request_storage_base_dir', None)
-        )
+        if self.options.pop('in_memory_mode', None):
+            self.storage = InMemoryRequestStorage()
+        else:
+            self.storage = RequestStorage(
+                base_dir=self.options.pop('request_storage_base_dir', None)
+            )
 
         # Used to modify requests/responses passing through the server
         self.modifier = RequestModifier()

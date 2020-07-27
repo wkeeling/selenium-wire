@@ -304,6 +304,35 @@ class RequestStorage:
                 pass
 
 
+class InMemoryRequestStorage(RequestStorage):
+    """RequestStorage with all disk operations swapped out"""
+    def __init__(self):
+        self.dirname_obj_map = {}
+
+
+    def _save(self, obj, dirname, filename):
+        self.dirname_obj_map[(dirname, filename)] = obj
+
+
+    def _load_body(self, request_id, name):
+        request_dir = self._get_request_dir(request_id)
+        return self.dirname_obj_map[(dirname, name)]
+
+
+    def _get_request_dir(self, request_id):
+        return 'request-{}'.format(request_id)
+
+
+    def _get_indexed_request(self, request_id):
+        index = self._index[:]
+
+        for indexed_request in index:
+            if indexed_request.id == request_id:
+                return indexed_request
+
+        return None
+
+
 class _IndexedRequest(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
