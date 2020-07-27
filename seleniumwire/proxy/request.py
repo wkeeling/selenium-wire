@@ -140,7 +140,7 @@ class Response:
 
         Returns: A dictionary.
         """
-        d = vars(self)
+        d = dict(vars(self))
         d.pop('_body')
         d['headers'] = dict(d['headers'])
 
