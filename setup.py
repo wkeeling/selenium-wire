@@ -35,7 +35,7 @@ setup(
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     setup_requires=[],
     test_suite='nose.collector',
-    tests_require=['nose'],
+    tests_require=['nose', 'pytest'],
     url='https://github.com/wkeeling/selenium-wire',
     version='2.1.0',
     zip_safe=False,
