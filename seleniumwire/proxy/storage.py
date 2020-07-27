@@ -330,7 +330,6 @@ class InMemoryRequestStorage(RequestStorage):
         except KeyError:
             pass
 
-        print(request)
         return request
 
     def _get_request_dir(self, request_id):

@@ -163,6 +163,7 @@ class ResponseTest(TestCase):
         self.assertEqual({
             'status_code': 200,
             'reason': 'OK',
+            'messages': None,
             'headers': {
                 'Content-Type': 'application/json',
                 'Content-Length': 120
