@@ -86,9 +86,12 @@ class AdminMixin:
         return func(request, **params)
 
     def _get_requests(self, _):
-        return self._create_response(json.dumps(
-            [r.to_dict() for r in self.storage.load_requests()]
-        ).encode('utf-8'))
+        try:
+            return self._create_response(json.dumps(
+                [r.to_dict() for r in self.storage.load_requests()]
+            ).encode('utf-8'))
+        except:
+            import pdb;pdb.set_trace()
 
     def _get_last_request(self, _):
         request = self.storage.load_last_request()
