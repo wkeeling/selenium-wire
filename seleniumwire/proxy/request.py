@@ -142,7 +142,10 @@ class Response:
         Returns: A dictionary.
         """
         d = dict(vars(self))
-        d.pop('_body')
+        if '_body' in d:
+            d.pop('_body')
+        else:
+            d.pop('body')
         d['headers'] = dict(d['headers'])
 
         return d
