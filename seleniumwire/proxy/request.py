@@ -81,7 +81,10 @@ class Request:
         Returns: A dictionary.
         """
         d = vars(self)
-        d.pop('_body')
+        if '_body' in d:
+            d.pop('_body')
+        else:
+            d.pop('body')
         d['headers'] = dict(d['headers'])
 
         if self.response is not None:
