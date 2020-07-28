@@ -81,10 +81,7 @@ class Request:
         Returns: A dictionary.
         """
         d = vars(self)
-        if '_body' in d:
-            d.pop('_body')
-        else:
-            d.pop('body')
+        d.pop('_body', None)
         d['headers'] = dict(d['headers'])
 
         if self.response is not None:
@@ -145,10 +142,7 @@ class Response:
         Returns: A dictionary.
         """
         d = dict(vars(self))
-        if '_body' in d:
-            d.pop('_body')
-        else:
-            d.pop('body')
+        d.pop('_body', None)
         d['headers'] = dict(d['headers'])
 
         return d
