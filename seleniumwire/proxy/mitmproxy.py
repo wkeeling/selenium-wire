@@ -157,19 +157,20 @@ class MitmProxyRequestHandler(AdminMixin, CaptureMixin):
             request = self._create_request(flow)
 
             self.capture_request(request)
-            flow.request.id = request.id
+            if request.id is not None:  # Will not be None when captured
+                flow.request.id = request.id
 
             # Could possibly use mitmproxy's 'anticomp' option instead of this
             if self.options.get('disable_encoding') is True:
                 flow.request.headers['Accept-Encoding'] = 'identity'
 
     def response(self, flow):
+        # Make any modifications to the response
+        self.modifier.modify_response(flow.response, flow.request)
+
         if not hasattr(flow.request, 'id'):
             # Request was not stored
             return
-
-        # Make any modifications to the response
-        self.modifier.modify_response(flow.response, flow.request)
 
         # Convert the mitmproxy specific response to one of our responses
         # for handling.

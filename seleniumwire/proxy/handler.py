@@ -288,7 +288,8 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
         request = self._create_request(req, req_body)
 
         self.capture_request(request)
-        req.id = request.id
+        if request.id is not None:  # Will not be None when captured
+            req.id = request.id
 
         return req_body
 
@@ -301,12 +302,12 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
             res: The response (a http.client.HTTPResponse instance) that corresponds to the request.
             res_body: The binary response body.
         """
-        if not hasattr(req, 'id'):
-            # Request was not stored
-            return
-
         # Make any modifications to the response
         self.modifier.modify_response(res, req, urlattr='path')
+
+        if not hasattr(req, 'id'):
+            # Request was not captured
+            return
 
         # Convert the implementation specific response to one of our responses
         # for handling.
