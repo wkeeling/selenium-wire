@@ -1,12 +1,9 @@
-import os
 import socket
 import ssl
 import sys
 import threading
-from collections import namedtuple
 from http.server import HTTPServer
 from socketserver import ThreadingMixIn
-from urllib.request import _parse_proxy
 
 from . import utils
 from .modifier import RequestModifier
