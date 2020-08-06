@@ -1,57 +1,64 @@
+import subprocess
 from unittest import TestCase
 from unittest.mock import ANY, Mock, patch
 
 from seleniumwire.proxy import mitmproxy
 
 
-@patch('seleniumwire.proxy.mitmproxy.socket')
-@patch('seleniumwire.proxy.mitmproxy.subprocess')
 class StartMitmproxyTest(TestCase):
 
-    def test_popen_defaults(self, mock_subprocess, mock_socket):
-        mock_socket.socket.return_value.connect_ex.return_value = 0
+    def setUp(self):
+        patcher = patch('seleniumwire.proxy.mitmproxy.subprocess')
+        self.mock_subprocess = patcher.start()
+        self.addCleanup(patcher.stop)
 
-        mitmproxy.start('127.0.0.1', 9950, {})
+        patcher = patch('seleniumwire.proxy.mitmproxy.socket')
+        self.mock_socket = patcher.start()
+        self.addCleanup(patcher.stop)
 
-        mock_subprocess.Popen.assert_called_once_with([
+        self.mock_subprocess.TimeoutExpired = subprocess.TimeoutExpired
+        self.mock_subprocess.Popen.return_value.wait.side_effect = subprocess.TimeoutExpired('cmd', 2)
+
+        self.mock_socket.socket.return_value.connect_ex.return_value = 0
+
+        mitmproxy.MitmProxy.__del__ = Mock()
+
+    def test_popen_defaults(self):
+        p = mitmproxy.start('127.0.0.1', 0, {})
+
+        self.mock_subprocess.Popen.assert_called_once_with([
             'mitmdump',
-            *self._popen_args()
+            *self._popen_args(port=p.port)
         ])
+        self.assertTrue(mitmproxy.PORT_RANGE_START <= p.port <= mitmproxy.PORT_RANGE_END)
 
-    def test_port(self, mock_subprocess, mock_socket):
+    def test_port(self):
         port = 8888
-        mock_socket.socket.return_value.connect_ex.return_value = 0
-
         mitmproxy.start('127.0.0.1', port, {})
 
-        mock_subprocess.Popen.assert_called_once_with([
+        self.mock_subprocess.Popen.assert_called_once_with([
             'mitmdump',
             *self._popen_args(port=port)
         ])
 
-    def test_confdir(self, mock_subprocess, mock_socket):
+    def test_confdir(self):
         confdir = '/tmp/.mitmproxy'
-        mock_socket.socket.return_value.connect_ex.return_value = 0
-
         mitmproxy.start('127.0.0.1', 9950, {'mitmproxy_confdir': confdir})
 
-        mock_subprocess.Popen.assert_called_once_with([
+        self.mock_subprocess.Popen.assert_called_once_with([
             'mitmdump',
             *self._popen_args(confdir=confdir)
         ])
 
-    def test_ssl_insecure(self, mock_subprocess, mock_socket):
-        mock_socket.socket.return_value.connect_ex.return_value = 0
-
+    def test_ssl_insecure(self):
         mitmproxy.start('127.0.0.1', 9950, {'verify_ssl': False})
 
-        mock_subprocess.Popen.assert_called_once_with([
+        self.mock_subprocess.Popen.assert_called_once_with([
             'mitmdump',
             *self._popen_args(ssl_insecure=False)
         ])
 
-    def test_upstream_proxy(self, mock_subprocess, mock_socket):
-        mock_socket.socket.return_value.connect_ex.return_value = 0
+    def test_upstream_proxy(self):
         options = {
             'proxy': {
                 'http': 'http://proxyserver:8080',
@@ -62,15 +69,14 @@ class StartMitmproxyTest(TestCase):
 
         mitmproxy.start('127.0.0.1', 9950, options)
 
-        mock_subprocess.Popen.assert_called_once_with([
+        self.mock_subprocess.Popen.assert_called_once_with([
             'mitmdump',
             '--set',
             'mode=upstream:https://proxyserver:8080',
             *self._popen_args()
         ])
 
-    def test_upstream_proxy_single(self, mock_subprocess, mock_socket):
-        mock_socket.socket.return_value.connect_ex.return_value = 0
+    def test_upstream_proxy_single(self):
         options = {
             'proxy': {
                 'http': 'http://proxyserver:8080',
@@ -79,15 +85,14 @@ class StartMitmproxyTest(TestCase):
 
         mitmproxy.start('127.0.0.1', 9950, options)
 
-        mock_subprocess.Popen.assert_called_once_with([
+        self.mock_subprocess.Popen.assert_called_once_with([
             'mitmdump',
             '--set',
             'mode=upstream:http://proxyserver:8080',
             *self._popen_args()
         ])
 
-    def test_upstream_proxy_auth(self, mock_subprocess, mock_socket):
-        mock_socket.socket.return_value.connect_ex.return_value = 0
+    def test_upstream_proxy_auth(self):
         options = {
             'proxy': {
                 'https': 'https://user:pass@proxyserver:8080'
@@ -96,7 +101,7 @@ class StartMitmproxyTest(TestCase):
 
         mitmproxy.start('127.0.0.1', 9950, options)
 
-        mock_subprocess.Popen.assert_called_once_with([
+        self.mock_subprocess.Popen.assert_called_once_with([
             'mitmdump',
             '--set',
             'mode=upstream:https://proxyserver:8080',
@@ -105,8 +110,7 @@ class StartMitmproxyTest(TestCase):
             *self._popen_args()
         ])
 
-    def test_upstream_proxy_different(self, mock_subprocess, mock_socket):
-        mock_socket.socket.return_value.connect_ex.return_value = 0
+    def test_upstream_proxy_different(self):
         options = {
             'proxy': {
                 'http': 'http://proxyserver1:8080',
@@ -117,7 +121,27 @@ class StartMitmproxyTest(TestCase):
         with self.assertRaises(ValueError):
             mitmproxy.start('127.0.0.1', 9950, options)
 
-        self.assertEqual(0, mock_subprocess.Popen.call_count)
+        self.assertEqual(0, self.mock_subprocess.Popen.call_count)
+
+    def test_retry_when_failed_start(self):
+        self.mock_subprocess.Popen.return_value.wait.side_effect = [
+            lambda **kwargs: None,  # Indicates a problem, as wait() immediately returns
+            subprocess.TimeoutExpired('cmd', 2)  # Success as wait() times out
+        ]
+
+        mitmproxy.start('127.0.0.1', 0, {})
+
+        # Mitmproxy took two attempts to start
+        self.assertEqual(2, self.mock_subprocess.Popen.call_count)
+
+    def test_exceed_max_retries(self):
+        # Indicates a problem, as wait() immediately returns
+        self.mock_subprocess.Popen.return_value.wait.side_effect = lambda **kwargs: None
+
+        with self.assertRaises(RuntimeError):
+            mitmproxy.start('127.0.0.1', 0, {})
+
+        self.assertEqual(mitmproxy.RETRIES, self.mock_subprocess.Popen.call_count)
 
     def _popen_args(self, confdir='~/.mitmproxy', port=9950, ssl_insecure=True):
         return [

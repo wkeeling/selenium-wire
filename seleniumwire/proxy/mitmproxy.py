@@ -1,6 +1,7 @@
 """This module manages the integraton with mitmproxy."""
 
 import logging
+import random
 import socket
 import subprocess
 import time
@@ -18,7 +19,10 @@ from seleniumwire.proxy.request import Request, Response
 from seleniumwire.proxy.storage import RequestStorage
 from seleniumwire.proxy.utils import get_upstream_proxy
 
-DEFAULT_LISTEN_PORT = 9950
+RETRIES = 3
+PORT_RANGE_START = 9000
+PORT_RANGE_END = 9999
+
 DEFAULT_CONFDIR = '~/.mitmproxy'
 DEFAULT_UPSTREAM_CERT = 'false'
 DEFAULT_STREAM_WEBSOCKETS = 'true'
@@ -31,7 +35,8 @@ def start(host, port, options, timeout=10):
 
     Args:
         host: The host running mitmproxy.
-        port: The port mitmproxy will listen on.
+        port: The port mitmproxy will listen on. Pass 0 for automatic
+            selection.
         options: The selenium wire options.
         timeout: The number of seconds to wait for the server to start.
             Default 10 seconds.
@@ -40,29 +45,40 @@ def start(host, port, options, timeout=10):
     Raises:
         TimeoutException: if the mitmproxy server did not start in the
             timout period.
+        RuntimeError: if there was some unknown error starting the
+            mitmproxy server.
     """
-    port = port or DEFAULT_LISTEN_PORT
+    for _ in range(RETRIES):
+        port = port or random.randint(PORT_RANGE_START, PORT_RANGE_END)
 
-    proxy = subprocess.Popen([
-        'mitmdump',
-        *_get_upstream_proxy_args(options),
-        '--set',
-        'confdir={}'.format(options.get('mitmproxy_confdir', DEFAULT_CONFDIR)),
-        '--set',
-        'listen_port={}'.format(port),
-        '--set',
-        'ssl_insecure={}'.format(str(options.get('verify_ssl', 'true')).lower()),
-        '--set',
-        'upstream_cert={}'.format(DEFAULT_UPSTREAM_CERT),
-        '--set',
-        'stream_websockets={}'.format(DEFAULT_STREAM_WEBSOCKETS),
-        '--set',
-        'termlog_verbosity={}'.format(DEFAULT_TERMLOG_VERBOSITY),
-        '--set',
-        'flow_detail={}'.format(DEFAULT_FLOW_DETAIL),
-        '-s',
-        __file__
-    ])
+        proxy = subprocess.Popen([
+            'mitmdump',
+            *_get_upstream_proxy_args(options),
+            '--set',
+            'confdir={}'.format(options.get('mitmproxy_confdir', DEFAULT_CONFDIR)),
+            '--set',
+            'listen_port={}'.format(port),
+            '--set',
+            'ssl_insecure={}'.format(str(options.get('verify_ssl', 'true')).lower()),
+            '--set',
+            'upstream_cert={}'.format(DEFAULT_UPSTREAM_CERT),
+            '--set',
+            'stream_websockets={}'.format(DEFAULT_STREAM_WEBSOCKETS),
+            '--set',
+            'termlog_verbosity={}'.format(DEFAULT_TERMLOG_VERBOSITY),
+            '--set',
+            'flow_detail={}'.format(DEFAULT_FLOW_DETAIL),
+            '-s',
+            __file__
+        ])
+
+        try:
+            proxy.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            # Subprocess has started
+            break
+    else:
+        raise RuntimeError('Error starting mitmproxy - check console output')
 
     start_time = time.time()
 
