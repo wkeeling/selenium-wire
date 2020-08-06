@@ -767,7 +767,7 @@ The code above will print something like this to the console (loading a page wil
     driver = webdriver.Firefox(seleniumwire_options=options)
 
 ``port``
-    The port number that Selenium Wire's backend listens on. If you're using the default backend, you don't normally need to specify a port and a random port number is chosen automatically. If you're using the mitmproxy backend, the port number defaults to 9950.
+    The port number that Selenium Wire's backend listens on. You don't normally need to specify a port as a random port number is chosen automatically.
 
 .. code:: python
 
