@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+2.1.1 (2020-08-10)
+------------------
+
+* Automatic port number selection for mitmproxy backend.
+
 2.1.0 (2020-07-21)
 ------------------
 
