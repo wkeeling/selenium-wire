@@ -196,6 +196,18 @@ class AdminClient:
         """Gets any previously set param overrides"""
         return self._make_request('GET', '/param_overrides')
 
+    def set_body_overrides(self, bodies):
+        """Set the body overrides."""
+        self._make_request('POST', '/body_overrides', data=bodies)
+
+    def clear_body_overrides(self):
+        """Clears any previously set body overrides."""
+        self._make_request('DELETE', '/body_overrides')
+
+    def get_body_overrides(self):
+        """Gets any previously set body overrides"""
+        return self._make_request('GET', '/body_overrides')
+
     def set_querystring_overrides(self, overrides):
         """Set the querystring overrides."""
         self._make_request('POST', '/querystring_overrides', data={

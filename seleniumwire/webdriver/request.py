@@ -152,6 +152,18 @@ class InspectRequestsMixin:
         self._client.clear_param_overrides()
 
     @property
+    def body_overrides(self):
+        return self._client.get_body_overrides()
+
+    @body_overrides.setter
+    def body_overrides(self, bodies):
+        self._client.set_body_overrides(bodies)
+
+    @body_overrides.deleter
+    def body_overrides(self):
+        self._client.clear_body_overrides()
+
+    @property
     def querystring_overrides(self):
         """The querystring overrides for outgoing browser requests.
 

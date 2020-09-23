@@ -61,6 +61,11 @@ class AdminMixin:
                 'POST': self._set_querystring_overrides,
                 'DELETE': self._clear_querystring_overrides
             },
+            '/body_overrides': {
+                'GET': self._get_body_overrides,
+                'POST': self._set_body_overrides,
+                'DELETE': self._clear_body_overrides
+            },
             '/rewrite_rules': {
                 'GET': self._get_rewrite_rules,
                 'POST': self._set_rewrite_rules,
@@ -137,6 +142,18 @@ class AdminMixin:
 
     def _get_param_overrides(self, _):
         return self._create_response(json.dumps(self.modifier.params).encode('utf-8'))
+
+    def _get_body_overrides(self, _):
+        return self._create_response(json.dumps(self.modifier.bodies).encode('utf-8'))
+
+    def _set_body_overrides(self, request):
+        bodies = json.loads(request.body.decode('utf-8'))
+        self.modifier.bodies = bodies
+        return self._create_response(json.dumps({'status': 'ok'}).encode('utf-8'))
+
+    def _clear_body_overrides(self, _):
+        del self.modifier.bodies
+        return self._create_response(json.dumps({'status': 'ok'}).encode('utf-8'))
 
     def _set_querystring_overrides(self, request):
         querystring = json.loads(request.body.decode('utf-8'))['overrides']

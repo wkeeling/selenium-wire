@@ -1,5 +1,6 @@
 import os
 import ssl
+import json
 import urllib.error
 import urllib.request
 from urllib.parse import parse_qs, urlsplit
@@ -209,7 +210,7 @@ class AdminClientIntegrationTest(TestCase):
         self._make_request(
             'https://httpbin.org/post',
             method='POST',
-            data=b'foo=baz&spam=eggs'
+            data=b'foo=bazzz&spam=eggs'
         )
 
         last_request = self.client.get_last_request()
@@ -239,6 +240,31 @@ class AdminClientIntegrationTest(TestCase):
 
         query = urlsplit(last_request['url']).query
         self.assertEqual('', query)
+
+    def test_set_body_overrides(self):
+        fakeData = json.dumps({'foo': 'baz'})
+        self.client.set_body_overrides(fakeData)
+
+        self._make_request(
+            'https://httpbin.org/post',
+            method='POST',
+            data=b'foo=baz&spam=eggs'
+        )
+
+        last_request = self.client.get_last_request()
+        body = self.client.get_request_body(last_request['id'])
+        self.assertEquals(fakeData, body.decode('utf-8'))
+
+    def test_clear__overrides(self):
+        fakeData = json.dumps({'foo': 'baz'})
+        self.client.set_body_overrides(fakeData)
+        self.client.clear_body_overrides()
+        self._make_request('https://www.stackoverflow.com')
+
+        last_request = self.client.get_last_request()
+        body = self.client.get_request_body(last_request['id'])
+        print(body.decode('utf-8'))
+        self.assertEqual('', body.decode('utf-8'))
 
     def test_get_querystring_overrides(self):
         self.client.set_querystring_overrides('foo=bar')
@@ -374,7 +400,7 @@ class AdminClientIntegrationTest(TestCase):
         )
 
     def setUp(self):
-        options = {'backend': os.environ.get('SW_TEST_BACKEND', 'default')}
+        options = {'backend': os.environ.get('SW_TEST_BACKEND', 'mitmproxy')}
         if self._testMethodName == 'test_disable_encoding':
             options['disable_encoding'] = True
         self.client = AdminClient()
