@@ -400,7 +400,7 @@ class AdminClientIntegrationTest(TestCase):
         )
 
     def setUp(self):
-        options = {'backend': os.environ.get('SW_TEST_BACKEND', 'mitmproxy')}
+        options = {'backend': os.environ.get('SW_TEST_BACKEND', 'default')}
         if self._testMethodName == 'test_disable_encoding':
             options['disable_encoding'] = True
         self.client = AdminClient()
