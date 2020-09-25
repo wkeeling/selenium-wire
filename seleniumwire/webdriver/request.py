@@ -159,12 +159,12 @@ class InspectRequestsMixin:
         request body.
 
         The value of the body can be a string value or list of sublists,
-        with each sublist having two elements - a URL pattern and body string value.
+        with each sublist having two elements - a URL pattern and string value.
         The string value will be encoded, then replace whole http body.
         And body_overrides has higher priority than param_overrides When they conflict.
         For example:
-            param_overrides = '{"foo":"bar"}'
-            param_overrides = [
+            body_overrides = '{"foo":"bar"}'
+            body_overrides = [
                 ('.*somewhere.com.*', '{"foo":"bar"}'),
                 ('*.somewhere-else.com.*', '{"x":"y"}'),
             ]
