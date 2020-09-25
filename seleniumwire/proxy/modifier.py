@@ -16,6 +16,7 @@ class RequestModifier:
         self._lock = threading.Lock()
         self._headers = {}
         self._params = {}
+        self._bodies = {}
         self._querystring = None
         self._rewrite_rules = []
 
@@ -119,6 +120,24 @@ class RequestModifier:
             self._params.clear()
 
     @property
+    def bodies(self):
+        with self._lock:
+            if is_list_alike(self._bodies):
+                return self._bodies
+            else:
+                return dict(self._bodies)
+
+    @bodies.setter
+    def bodies(self, bodies):
+        with self._lock:
+            self._bodies = bodies
+
+    @bodies.deleter
+    def bodies(self):
+        with self._lock:
+            self._params.clear()
+
+    @property
     def querystring(self):
         """The querystring overrides for outgoing browser requests.
 
@@ -218,6 +237,7 @@ class RequestModifier:
             self._modify_headers(getattr(request, headersattr), override_headers)
         self._modify_params(request, urlattr, methodattr, headersattr, bodyattr)
         self._modify_querystring(request, urlattr)
+        self._modify_bodies(request, urlattr, methodattr, headersattr, bodyattr)
         self._rewrite_url(request, urlattr, headersattr)
 
     def modify_response(self,
@@ -298,6 +318,19 @@ class RequestModifier:
         else:
             scheme, netloc, path, _, fragment = urlsplit(request_url)
             setattr(request, urlattr, urlunsplit((scheme, netloc, path, query, fragment)))
+
+    def _modify_bodies(self, request, urlattr, methodattr, headersattr, bodyattr):
+        request_url = getattr(request, urlattr)
+        body = self._get_matching_overrides(self._bodies, request_url)
+        if not body:
+            return
+        method = getattr(request, methodattr)
+        if method == 'GET':
+            return
+        headers = getattr(request, headersattr)
+        body = body.encode('utf-8')
+        headers['Content-Length'] = str(len(body))
+        setattr(request, bodyattr, body)
 
     def _modify_querystring(self, request, urlattr):
         request_url = getattr(request, urlattr)
