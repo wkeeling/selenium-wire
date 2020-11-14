@@ -12,9 +12,9 @@ from seleniumwire.proxy.client import AdminClient
 class AdminClientIntegrationTest(TestCase):
 
     def test_create_proxy(self):
-        html = self._make_request('http://www.wikipedia.org')
+        html = self._make_request('http://python.org')
 
-        self.assertIn(b'The Free Encyclopedia', html)
+        self.assertIn(b'Welcome to Python.org', html)
 
     def test_destroy_proxy(self):
         self.client.destroy_proxy()
@@ -120,7 +120,7 @@ class AdminClientIntegrationTest(TestCase):
 
     def test_get_response_body_empty(self):
         # Redirects to https with empty body
-        self._make_request('http://www.wikipedia.org')
+        self._make_request('http://www.python.org')
         redirect_request = self.client.get_requests()[0]
 
         body = self.client.get_response_body(redirect_request['id'])
