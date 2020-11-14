@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+2.1.2 (2020-11-14)
+------------------
+
+* Prevent Chrome from bypassing Selenium Wire for localhost addresses.
+
 2.1.1 (2020-08-10)
 ------------------
 
