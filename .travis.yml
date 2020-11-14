@@ -17,13 +17,12 @@ after_success:
   - pip install codecov
   - codecov
 
-deploy:
-  provider: pypi
-  distributions: sdist bdist_wheel
-  user: wkeeling
-  password:
-    secure: bzT0rdXaqIIEEpDXGgOD7BFJsGZhMfyDBOCQWB5lNPmd+UdVNjgfPRRCsPOwmo8ng9nALnh5pyPJ4L5H7fHrXp4N1V4P9zEvucRCIRCPgSzjJ7nyFNXAcXk3xTfVhihXE+NX+oMNPSE7pIaEPIVJqsScCrovMiPndSpJNeoZjq5CEP0F08aP00pokbyQzwz4xsW7Un2eZrpw/VriquR5xpGXocMbNSsdNExDcSeOHD/4J6/gpIdGfovqDp5aZXIGhZ5LcGVDRreGQHF+bGn9/hayJhyA74rhTE+dnxZdLmYgLcC5gmBdR/jzYLtVfSf6e8uLLiaC2SL1DOoKjBxltBzMclbnf8JwUZyeskvG1zeS4NGg2UCUKzc/eJA/1SKcl9F9rsRI71aGA2D53CQhTfh5lVbusFBHlFk8x/pi3M+jgzqmP8DLrCG7xR/2czQXwSEPLt5eTk4LVdFcD3odCGyLaJyrGMZDBqgOLg0MLiGxLaxoMOkT5IaMxW3lWxBCnA2C/YxhJhNjBirXNHAiB8lu6a9XkGxz21evijYq9L3s1sPIpk+r6UkcVqz7y+k4d5k8wASre25/xgoRKIuL8pvI2B5qkU/sZgbva/+SdP1Of6Qk5E9JgVlTdDTOh+esQFb18FASH7OnXLnzwOVEd8oaCXq1pbOnySDxGXfIDSw=
-  on:
-    tags: true
-    repo: wkeeling/selenium-wire
-    python: 3.6
+#deploy:
+#  provider: pypi
+#  distributions: sdist bdist_wheel
+#  username: __token__
+#  password: pypi-AgEIcHlwaS5vcmcCJDczMzM0YmVhLWE2YzQtNDVlYi1hOWFhLTQ1Mzc5Y2ZhNGQxYgACPnsicGVybWlzc2lvbnMiOiB7InByb2plY3RzIjogWyJzZWxlbml1bS13aXJlIl19LCAidmVyc2lvbiI6IDF9AAAGIOVHya-3eHDWBgsP9opVrRqiK3fXR7OAqjIsVaXEX0M4
+#  on:
+#    tags: true
+#    repo: wkeeling/selenium-wire
+#    python: 3.6
