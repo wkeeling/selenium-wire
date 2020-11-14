@@ -1,4 +1,4 @@
-from selenium.webdriver import Chrome as _Chrome
+from selenium.webdriver import Chrome as _Chrome, ChromeOptions
 from selenium.webdriver import Edge as _Edge
 from selenium.webdriver import Firefox as _Firefox
 from selenium.webdriver import Safari as _Safari
@@ -82,6 +82,16 @@ class Chrome(InspectRequestsMixin, _Chrome):
             capabilities['acceptInsecureCerts'] = True
 
             kwargs['desired_capabilities'] = capabilities
+
+        try:
+            chrome_options = kwargs.pop('options')
+        except KeyError:
+            chrome_options = ChromeOptions()
+
+        # Prevent Chrome from bypassing the Selenium Wire proxy
+        # for localhost addresses.
+        chrome_options.add_argument('proxy-bypass-list=<-loopback>')
+        kwargs['options'] = chrome_options
 
         super().__init__(*args, **kwargs)
 
