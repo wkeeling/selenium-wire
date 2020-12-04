@@ -2,6 +2,7 @@ from selenium.webdriver import Chrome as _Chrome, ChromeOptions
 from selenium.webdriver import Edge as _Edge
 from selenium.webdriver import Firefox as _Firefox
 from selenium.webdriver import Safari as _Safari
+from selenium.webdriver import Remote as _Remote
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from ..proxy.client import AdminClient
@@ -160,3 +161,49 @@ class Edge(InspectRequestsMixin, _Edge):
     def quit(self):
         self._client.destroy_proxy()
         super().quit()
+
+
+class Remote(InspectRequestsMixin, _Remote):
+    """Extends the Remote webdriver to provide additional methods for inspecting requests."""
+
+    def __init__(self, *args, seleniumwire_options=None, **kwargs):
+        """Initialise a new Firefox WebDriver instance.
+
+        Args:
+            seleniumwire_options: The seleniumwire options dictionary.
+        """
+        if seleniumwire_options is None:
+            seleniumwire_options = {}
+
+        self._client = AdminClient()
+        addr, port = self._client.create_proxy(
+            # Passing address is necessary cause it won't work 
+            # since we are launching firefox on a container (which is running on a different network)
+            addr=seleniumwire_options.pop("addr"),
+            port=seleniumwire_options.pop("port", 0),
+            options=seleniumwire_options,
+        )
+
+        if "port" not in seleniumwire_options:  # Auto config mode
+            try:
+                capabilities = kwargs.pop("desired_capabilities")
+            except KeyError:
+                capabilities = DesiredCapabilities.FIREFOX.copy()
+
+            capabilities["proxy"] = {
+                "proxyType": "manual",
+                "httpProxy": "{}:{}".format(addr, port),
+                "sslProxy": "{}:{}".format(addr, port),
+                "noProxy": [],
+            }
+            capabilities["acceptInsecureCerts"] = True
+
+            kwargs["desired_capabilities"] = capabilities
+
+            # (self, command_executor=f'http://{firefox_host}:{firefox_port}/wd/hub', desired_capabilities=DesiredCapabilities.FIREFOX)
+        super().__init__(*args, **kwargs)
+
+    def quit(self):
+        self._client.destroy_proxy()
+        super().quit()
+
