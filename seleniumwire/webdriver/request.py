@@ -273,6 +273,7 @@ class LazyRequest(Request):
     def from_dict(cls, d, client):
         response = d.pop('response', None)
         request_id = d.pop('id', None)
+        time_ = d.pop('time', None)
         request = cls(client, **d)
 
         if request_id is not None:

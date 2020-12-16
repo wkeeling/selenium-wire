@@ -1,5 +1,7 @@
 """Houses the classes used to transfer request and response data between components. """
 
+import time
+
 from urllib.parse import parse_qs, urlsplit
 
 from .utils import CaseInsensitiveDict
@@ -23,6 +25,7 @@ class Request:
         self.headers = CaseInsensitiveDict(headers)
         self.body = body
         self.response = None
+        self.time = time.time()
 
     @property
     def body(self):
