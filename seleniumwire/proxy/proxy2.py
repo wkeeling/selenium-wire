@@ -167,6 +167,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             'keep-alive',
             'proxy-authenticate',
             'proxy-authorization',
+            'proxy-connection',
             'te',
             'trailers',
             'transfer-encoding',
