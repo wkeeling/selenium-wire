@@ -37,7 +37,7 @@ class ProxyHTTPServer(BoundedThreadingMixin, HTTPServer):
     address_family = socket.AF_INET
     daemon_threads = True
 
-    def __init__(self, *args, options=None, **kwargs):
+    def __init__(self, host, port, *args, options=None, **kwargs):
         # The server's upstream proxy configuration (if any)
         self.proxy_config = utils.get_upstream_proxy(options)
 
@@ -55,7 +55,11 @@ class ProxyHTTPServer(BoundedThreadingMixin, HTTPServer):
         # The scope of requests we're interested in capturing.
         self.scopes = []
 
-        super().__init__(self.options.get('max_threads', 9999), *args, **kwargs)
+        super().__init__(self.options.get('max_threads', 9999), (host, port), *args, **kwargs)
+
+    def address(self):
+        """Get a tuple of the address and port the server is listening on."""
+        return self.socket.getsockname()
 
     def shutdown(self):
         super().shutdown()

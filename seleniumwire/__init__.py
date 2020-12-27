@@ -3,4 +3,4 @@
 """Top-level package for Selenium Wire."""
 
 __author__ = """Will Keeling"""
-__version__ = '2.1.2'
+__version__ = '3.0.0'

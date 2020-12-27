@@ -53,22 +53,25 @@ class AdminClient:
                 self._capture_request_handler = CaptureRequestHandler
                 # Set the timeout here before the handler starts executing
                 self._capture_request_handler.timeout = options.get('connection_timeout', 5)
-            self._proxy = ProxyHTTPServer((addr, port), self._capture_request_handler, options=options)
+
+            self._proxy = ProxyHTTPServer(addr, port, self._capture_request_handler, options=options)
 
             t = threading.Thread(name='Selenium Wire Proxy Server', target=self._proxy.serve_forever)
             t.daemon = not options.get('standalone')
             t.start()
 
-            socketname = self._proxy.socket.getsockname()
-            self._proxy_addr = socketname[0]
-            self._proxy_port = socketname[1]
+            self._proxy_addr, self._proxy_port = self._proxy.address()
         elif options.get('backend') == 'mitmproxy':
             # Use mitmproxy if installed
             from . import mitmproxy
 
-            self._proxy = mitmproxy.start(addr, port, options)
-            self._proxy_addr = self._proxy.host
-            self._proxy_port = self._proxy.port
+            self._proxy = mitmproxy.MitmProxy(addr, port, options)
+
+            t = threading.Thread(name='Selenium Wire Proxy Server', target=self._proxy.serve)
+            t.daemon = not options.get('standalone')
+            t.start()
+
+            self._proxy_addr, self._proxy_port = self._proxy.address()
         else:
             raise TypeError(
                 "Invalid backend '{}'. "

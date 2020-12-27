@@ -24,7 +24,6 @@ class BrowserIntegrationTest(TestCase):
         url = 'https://www.python.org/'
         options = {
             'backend': 'mitmproxy',
-            'mitmproxy_log_level': 'INFO',
         }
         driver = webdriver.Firefox(seleniumwire_options=options)
         driver.get(url)
@@ -115,7 +114,7 @@ class BrowserIntegrationTest(TestCase):
         }
         driver.get('https://httpbin.org/get?foo=bar')
 
-        request = driver.wait_for_request('https://httpbin.org/get?foo=baz')
+        request = driver.wait_for_request(r'https://httpbin.org/get\?foo=baz')
 
         self.assertEqual({'foo': 'baz'}, request.params)
 
@@ -124,7 +123,6 @@ class BrowserIntegrationTest(TestCase):
     def test_modify_querystring(self):
         options = {
             'backend': 'mitmproxy',
-            'mitmproxy_log_level': 'INFO',
             'disable_encoding': True,
             'proxy': {
                 'https': 'https://localhost:8080'
@@ -134,7 +132,7 @@ class BrowserIntegrationTest(TestCase):
         driver.querystring_overrides = 'foo=baz'
         driver.get('https://httpbin.org/get?foo=bar')
 
-        request = driver.wait_for_request('https://httpbin.org/get?foo=baz')
+        request = driver.wait_for_request(r'https://httpbin.org/get\?foo=baz')
 
         self.assertEqual({'foo': 'baz'}, request.params)
 

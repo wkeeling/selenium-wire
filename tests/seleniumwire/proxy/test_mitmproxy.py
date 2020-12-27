@@ -1,188 +1,10 @@
-import subprocess
 from unittest import TestCase
-from unittest.mock import ANY, Mock, patch
+from unittest.mock import ANY, call, Mock, patch
 
-from seleniumwire.proxy import mitmproxy
-
-
-class StartMitmproxyTest(TestCase):
-
-    def setUp(self):
-        patcher = patch('seleniumwire.proxy.mitmproxy.subprocess')
-        self.mock_subprocess = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = patch('seleniumwire.proxy.mitmproxy.socket')
-        self.mock_socket = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        self.mock_subprocess.TimeoutExpired = subprocess.TimeoutExpired
-        self.mock_subprocess.Popen.return_value.wait.side_effect = subprocess.TimeoutExpired('cmd', 2)
-
-        self.mock_socket.socket.return_value.connect_ex.return_value = 0
-
-        mitmproxy.MitmProxy.__del__ = Mock()
-
-    def test_popen_defaults(self):
-        p = mitmproxy.start('127.0.0.1', 0, {})
-
-        self.mock_subprocess.Popen.assert_called_once_with([
-            'mitmdump',
-            *self._popen_args(port=p.port)
-        ])
-        self.assertTrue(mitmproxy.PORT_RANGE_START <= p.port <= mitmproxy.PORT_RANGE_END)
-
-    def test_port(self):
-        port = 8888
-        mitmproxy.start('127.0.0.1', port, {})
-
-        self.mock_subprocess.Popen.assert_called_once_with([
-            'mitmdump',
-            *self._popen_args(port=port)
-        ])
-
-    def test_confdir(self):
-        confdir = '/tmp/.mitmproxy'
-        mitmproxy.start('127.0.0.1', 9950, {'mitmproxy_confdir': confdir})
-
-        self.mock_subprocess.Popen.assert_called_once_with([
-            'mitmdump',
-            *self._popen_args(confdir=confdir)
-        ])
-
-    def test_ssl_insecure(self):
-        mitmproxy.start('127.0.0.1', 9950, {'verify_ssl': False})
-
-        self.mock_subprocess.Popen.assert_called_once_with([
-            'mitmdump',
-            *self._popen_args(ssl_insecure=False)
-        ])
-
-    def test_upstream_proxy(self):
-        options = {
-            'proxy': {
-                'http': 'http://proxyserver:8080',
-                # We pick https when both are specified and the same
-                'https': 'https://proxyserver:8080'
-            }
-        }
-
-        mitmproxy.start('127.0.0.1', 9950, options)
-
-        self.mock_subprocess.Popen.assert_called_once_with([
-            'mitmdump',
-            '--set',
-            'mode=upstream:https://proxyserver:8080',
-            *self._popen_args()
-        ])
-
-    def test_upstream_proxy_single(self):
-        options = {
-            'proxy': {
-                'http': 'http://proxyserver:8080',
-            }
-        }
-
-        mitmproxy.start('127.0.0.1', 9950, options)
-
-        self.mock_subprocess.Popen.assert_called_once_with([
-            'mitmdump',
-            '--set',
-            'mode=upstream:http://proxyserver:8080',
-            *self._popen_args()
-        ])
-
-    def test_upstream_proxy_auth(self):
-        options = {
-            'proxy': {
-                'https': 'https://user:pass@proxyserver:8080'
-            }
-        }
-
-        mitmproxy.start('127.0.0.1', 9950, options)
-
-        self.mock_subprocess.Popen.assert_called_once_with([
-            'mitmdump',
-            '--set',
-            'mode=upstream:https://proxyserver:8080',
-            '--set',
-            'upstream_auth=user:pass',
-            *self._popen_args()
-        ])
-
-    def test_upstream_proxy_different(self):
-        options = {
-            'proxy': {
-                'http': 'http://proxyserver1:8080',
-                'https': 'https://proxyserver2:8080'
-            }
-        }
-
-        with self.assertRaises(ValueError):
-            mitmproxy.start('127.0.0.1', 9950, options)
-
-        self.assertEqual(0, self.mock_subprocess.Popen.call_count)
-
-    def test_retry_when_failed_start(self):
-        self.mock_subprocess.Popen.return_value.wait.side_effect = [
-            lambda **kwargs: None,  # Indicates a problem, as wait() immediately returns
-            subprocess.TimeoutExpired('cmd', 2)  # Success as wait() times out
-        ]
-
-        mitmproxy.start('127.0.0.1', 0, {})
-
-        # Mitmproxy took two attempts to start
-        self.assertEqual(2, self.mock_subprocess.Popen.call_count)
-
-    def test_exceed_max_retries(self):
-        # Indicates a problem, as wait() immediately returns
-        self.mock_subprocess.Popen.return_value.wait.side_effect = lambda **kwargs: None
-
-        with self.assertRaises(RuntimeError):
-            mitmproxy.start('127.0.0.1', 0, {})
-
-        self.assertEqual(mitmproxy.RETRIES, self.mock_subprocess.Popen.call_count)
-
-    def _popen_args(self, confdir='~/.mitmproxy', port=9950, ssl_insecure=True):
-        return [
-            '--set',
-            'confdir={}'.format(confdir),
-            '--set',
-            'listen_port={}'.format(port),
-            '--set',
-            'ssl_insecure={}'.format(str(ssl_insecure).lower()),
-            '--set',
-            'upstream_cert=false',
-            '--set',
-            'stream_websockets=true',
-            '--set',
-            'termlog_verbosity=error',
-            '--set',
-            'flow_detail=0',
-            '-s',
-            mitmproxy.__file__
-        ]
+from seleniumwire.proxy.mitmproxy import MitmProxy, MitmProxyRequestHandler
 
 
 class MitmProxyRequestHandlerTest(TestCase):
-
-    @patch('seleniumwire.proxy.mitmproxy.logging')
-    @patch('seleniumwire.proxy.mitmproxy.RequestStorage')
-    def test_initialise(self, mock_storage, mock_logging):
-        mock_logging.INFO = 'INFO'
-
-        self.handler.initialise(options={
-            'request_storage_base_dir': '/tmp',
-            'mitmproxy_log_level': 'INFO'
-        })
-
-        self.assertEqual({
-            'request_storage_base_dir': '/tmp',
-            'mitmproxy_log_level': 'INFO'
-        }, self.handler.options)
-
-        mock_storage.assert_called_once_with(base_dir='/tmp')
-        mock_logging.basicConfig.assert_called_once_with(level='INFO')
 
     @patch('seleniumwire.proxy.mitmproxy.mitmproxy')
     def test_handle_admin(self, mock_mitmproxy):
@@ -310,15 +132,53 @@ class MitmProxyRequestHandlerTest(TestCase):
 
         self.assertEqual(0, self.mock_capture_response.call_count)
 
+    def test_stream_request_out_of_scope(self):
+        mock_flow = Mock()
+        mock_flow.request.url = 'https://server/some/path'
+        mock_flow.request.stream = True
+
+        self.handler.scopes = ['https://server']
+
+        self.handler.requestheaders(mock_flow)
+
+        self.assertFalse(mock_flow.request.stream)
+
+    def test_stream_request_admin(self):
+        mock_flow = Mock()
+        mock_flow.request.url = 'http://seleniumwire/some/path'
+        mock_flow.request.stream = True
+
+        self.handler.requestheaders(mock_flow)
+
+        self.assertFalse(mock_flow.request.stream)
+
+    def test_stream_response_out_of_scope(self):
+        mock_flow = Mock()
+        mock_flow.request.url = 'https://server/some/path'
+        mock_flow.response.stream = True
+
+        self.handler.scopes = ['https://server']
+
+        self.handler.responseheaders(mock_flow)
+
+        self.assertFalse(mock_flow.response.stream)
+
+    def test_stream_response_admin(self):
+        mock_flow = Mock()
+        mock_flow.request.url = 'http://seleniumwire/some/path'
+        mock_flow.response.stream = True
+
+        self.handler.responseheaders(mock_flow)
+
+        self.assertFalse(mock_flow.response.stream)
+
     def setUp(self):
         self.mock_storage = Mock()
         self.mock_modifier = Mock()
         self.mock_dispatch_admin = Mock()
         self.mock_capture_request = Mock()
         self.mock_capture_response = Mock()
-        self.handler = mitmproxy.MitmProxyRequestHandler()
-        self.handler.options = {}
-        self.handler.storage = self.mock_storage
+        self.handler = MitmProxyRequestHandler(self.mock_storage, {})
         self.handler.modifier = self.mock_modifier
         self.handler.dispatch_admin = self.mock_dispatch_admin
         self.handler.capture_request = self.mock_capture_request
@@ -327,11 +187,175 @@ class MitmProxyRequestHandlerTest(TestCase):
 
 class MitmProxyTest(TestCase):
 
+    def test_creates_storage(self):
+        proxy = MitmProxy('somehost', 12345, {
+            'request_storage_base_dir': '/some/dir',
+        })
+
+        self.assertEqual(self.mock_storage.return_value, proxy.storage)
+        self.mock_storage.assert_called_once_with(base_dir='/some/dir')
+
+    def test_creates_master(self):
+        proxy = MitmProxy('somehost', 12345, {
+            'request_storage_base_dir': '/some/dir',
+        })
+        self.assertEqual(self.mock_master.return_value, proxy._master)
+        self.mock_options.assert_called_once_with(
+            listen_host='somehost',
+            listen_port=12345
+        )
+        self.mock_master.assert_called_once_with(self.mock_options.return_value)
+        self.assertEqual(self.mock_proxy_server.return_value, self.mock_master.return_value.server)
+        self.mock_proxy_config.assert_called_once_with(self.mock_options.return_value)
+        self.mock_proxy_server.assert_called_once_with(self.mock_proxy_config.return_value)
+        self.mock_master.return_value.addons.add.assert_has_calls([
+            call(),
+            call(self.mock_handler.return_value)
+        ])
+        self.mock_addons.default_addons.assert_called_once_with()
+        self.mock_handler.assert_called_once_with(self.mock_storage.return_value, {})
+
+    def test_update_mitmproxy_options(self):
+        MitmProxy('somehost', 12345, {
+            'request_storage_base_dir': '/some/dir',
+            'mitm_test': 'foobar'
+        })
+
+        self.mock_options.return_value.update.assert_called_once_with(
+            confdir='~/.mitmproxy',
+            ssl_insecure=True,
+            upstream_cert=False,
+            stream_websockets=True,
+            test='foobar'
+        )
+
+    def test_upstream_proxy(self):
+        MitmProxy('somehost', 12345, {
+            'request_storage_base_dir': '/some/dir',
+            'proxy': {
+                'http': 'http://proxyserver:8080',
+                # We pick https when both are specified and the same
+                'https': 'https://proxyserver:8080'
+            }
+        })
+
+        self.mock_options.return_value.update.assert_called_once_with(
+            confdir='~/.mitmproxy',
+            ssl_insecure=True,
+            upstream_cert=False,
+            stream_websockets=True,
+            mode='upstream:https://proxyserver:8080'
+        )
+
+    def test_upstream_proxy_single(self):
+        MitmProxy('somehost', 12345, {
+            'request_storage_base_dir': '/some/dir',
+            'proxy': {
+                'http': 'http://proxyserver:8080',
+            }
+        })
+
+        self.mock_options.return_value.update.assert_called_once_with(
+            confdir='~/.mitmproxy',
+            ssl_insecure=True,
+            upstream_cert=False,
+            stream_websockets=True,
+            mode='upstream:http://proxyserver:8080'
+        )
+
+    def test_upstream_proxy_auth(self):
+        MitmProxy('somehost', 12345, {
+            'request_storage_base_dir': '/some/dir',
+            'proxy': {
+                'https': 'https://user:pass@proxyserver:8080',
+            }
+        })
+
+        self.mock_options.return_value.update.assert_called_once_with(
+            confdir='~/.mitmproxy',
+            ssl_insecure=True,
+            upstream_cert=False,
+            stream_websockets=True,
+            mode='upstream:https://proxyserver:8080',
+            upstream_auth='user:pass'
+        )
+
+    def test_upstream_proxy_different(self):
+        with self.assertRaises(ValueError):
+            MitmProxy('somehost', 12345, {
+                'request_storage_base_dir': '/some/dir',
+                'proxy': {
+                    'http': 'http://proxyserver1:8080',
+                    'https': 'https://proxyserver2:8080'
+                }
+            })
+
+    def test_get_event_loop(self):
+        proxy = MitmProxy('somehost', 12345, {
+            'request_storage_base_dir': '/some/dir',
+        })
+
+        self.assertEqual(self.mock_asyncio.get_event_loop.return_value, proxy._event_loop)
+        self.mock_asyncio.get_event_loop.assert_called_once_with()
+
+    def test_serve(self):
+        proxy = MitmProxy('somehost', 12345, {
+            'request_storage_base_dir': '/some/dir',
+        })
+
+        proxy.serve()
+
+        self.mock_asyncio.set_event_loop.assert_called_once_with(proxy._event_loop)
+        self.mock_master.return_value.run_loop.assert_called_once_with(proxy._event_loop.run_forever)
+
+    def test_address(self):
+        self.mock_proxy_server.return_value.address = ('somehost', 12345)
+        proxy = MitmProxy('somehost', 12345, {
+            'request_storage_base_dir': '/some/dir',
+        })
+
+        self.assertEqual(('somehost', 12345), proxy.address())
+
     def test_shutdown(self):
-        mock_proc = Mock()
-        proxy = mitmproxy.MitmProxy('somehost', 9950, mock_proc)
+        proxy = MitmProxy('somehost', 12345, {
+            'request_storage_base_dir': '/some/dir',
+        })
 
         proxy.shutdown()
 
-        mock_proc.terminate.assert_called_once_with()
-        mock_proc.wait.assert_called_once_with(timeout=10)
+        self.mock_master.return_value.shutdown.assert_called_once_with()
+        self.mock_storage.return_value.cleanup.assert_called_once_with()
+
+    def setUp(self):
+        patcher = patch('seleniumwire.proxy.mitmproxy.RequestStorage')
+        self.mock_storage = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = patch('seleniumwire.proxy.mitmproxy.Options')
+        self.mock_options = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = patch('seleniumwire.proxy.mitmproxy.Master')
+        self.mock_master = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = patch('seleniumwire.proxy.mitmproxy.ProxyConfig')
+        self.mock_proxy_config = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = patch('seleniumwire.proxy.mitmproxy.ProxyServer')
+        self.mock_proxy_server = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = patch('seleniumwire.proxy.mitmproxy.addons')
+        self.mock_addons = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = patch('seleniumwire.proxy.mitmproxy.MitmProxyRequestHandler')
+        self.mock_handler = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = patch('seleniumwire.proxy.mitmproxy.asyncio')
+        self.mock_asyncio = patcher.start()
+        self.addCleanup(patcher.stop)
+

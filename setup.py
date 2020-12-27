@@ -19,8 +19,6 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
@@ -37,6 +35,6 @@ setup(
     test_suite='nose.collector',
     tests_require=['nose'],
     url='https://github.com/wkeeling/selenium-wire',
-    version='2.1.2',
+    version='3.0.0',
     zip_safe=False,
 )

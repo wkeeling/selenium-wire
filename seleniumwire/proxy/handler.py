@@ -215,6 +215,8 @@ class AdminMixin:
     def initialise(self, options):
         """Perform any initialisation actions.
 
+        DEPRECATED
+
         Args:
             options: The selenium wire options.
         """
@@ -237,7 +239,7 @@ class CaptureMixin:
         """
         ignore_method = request.method in self.options.get(
             'ignore_http_methods', ['OPTIONS'])
-        not_in_scope = not self._in_scope(self.scopes, request.url)
+        not_in_scope = not self.in_scope(self.scopes, request.url)
         if ignore_method or not_in_scope:
             log.debug('Not capturing %s request: %s', request.method, request.url)
             return
@@ -258,7 +260,7 @@ class CaptureMixin:
         log.info('Capturing response: %s %s %s', url, response.status_code, response.reason)
         self.storage.save_response(request_id, response)
 
-    def _in_scope(self, scopes, url):
+    def in_scope(self, scopes, url):
         if not scopes:
             return True
         elif not is_list_alike(scopes):
@@ -366,10 +368,10 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
     @property
     def options(self):
         return self.server.options
-
-    @options.setter
-    def options(self, options):
-        self.server.options = options
+    #
+    # @options.setter
+    # def options(self, options):
+    #     self.server.options = options
 
     @property
     def scopes(self):
@@ -382,18 +384,18 @@ class CaptureRequestHandler(CaptureMixin, AdminMixin, ProxyRequestHandler):
     @property
     def modifier(self):
         return self.server.modifier
-
-    @modifier.setter
-    def modifier(self, modifier):
-        self.server.modifier = modifier
+    #
+    # @modifier.setter
+    # def modifier(self, modifier):
+    #     self.server.modifier = modifier
 
     @property
     def storage(self):
         return self.server.storage
-
-    @storage.setter
-    def storage(self, storage):
-        self.server.storage = storage
+    #
+    # @storage.setter
+    # def storage(self, storage):
+    #     self.server.storage = storage
 
     @property
     def certdir(self):

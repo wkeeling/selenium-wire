@@ -1,17 +1,17 @@
 """This module manages the integraton with mitmproxy."""
-
-import logging
-import random
-import socket
-import subprocess
-import time
-from contextlib import closing
+import asyncio
 
 try:
     import mitmproxy
 except ImportError as e:
     raise ImportError("To use the mitmproxy backend you must first "
                       "install mitmproxy with 'pip install mitmproxy'.") from e
+
+from mitmproxy import addons
+from mitmproxy.master import Master
+from mitmproxy.options import Options
+from mitmproxy.proxy.config import ProxyConfig
+from mitmproxy.proxy.server import ProxyServer
 
 from seleniumwire.proxy.handler import ADMIN_PATH, AdminMixin, CaptureMixin
 from seleniumwire.proxy.modifier import RequestModifier
@@ -24,143 +24,23 @@ PORT_RANGE_START = 9000
 PORT_RANGE_END = 9999
 
 DEFAULT_CONFDIR = '~/.mitmproxy'
-DEFAULT_UPSTREAM_CERT = 'false'
-DEFAULT_STREAM_WEBSOCKETS = 'true'
-DEFAULT_TERMLOG_VERBOSITY = 'error'
-DEFAULT_FLOW_DETAIL = 0
-
-
-def start(host, port, options, timeout=10):
-    """Start an instance of mitmproxy server in a subprocess.
-
-    Args:
-        host: The host running mitmproxy.
-        port: The port mitmproxy will listen on. Pass 0 for automatic
-            selection.
-        options: The selenium wire options.
-        timeout: The number of seconds to wait for the server to start.
-            Default 10 seconds.
-
-    Returns: A MitmProxy object representing the server.
-    Raises:
-        TimeoutException: if the mitmproxy server did not start in the
-            timout period.
-        RuntimeError: if there was some unknown error starting the
-            mitmproxy server.
-    """
-    for _ in range(RETRIES):
-        port = port or random.randint(PORT_RANGE_START, PORT_RANGE_END)
-
-        proxy = subprocess.Popen([
-            'mitmdump',
-            *_get_upstream_proxy_args(options),
-            '--set',
-            'confdir={}'.format(options.get('mitmproxy_confdir', DEFAULT_CONFDIR)),
-            '--set',
-            'listen_port={}'.format(port),
-            '--set',
-            'ssl_insecure={}'.format(str(options.get('verify_ssl', 'true')).lower()),
-            '--set',
-            'upstream_cert={}'.format(DEFAULT_UPSTREAM_CERT),
-            '--set',
-            'stream_websockets={}'.format(DEFAULT_STREAM_WEBSOCKETS),
-            '--set',
-            'termlog_verbosity={}'.format(DEFAULT_TERMLOG_VERBOSITY),
-            '--set',
-            'flow_detail={}'.format(DEFAULT_FLOW_DETAIL),
-            '-s',
-            __file__
-        ])
-
-        try:
-            proxy.wait(timeout=2)
-        except subprocess.TimeoutExpired:
-            # Subprocess has started
-            break
-    else:
-        raise RuntimeError('Error starting mitmproxy - check console output')
-
-    start_time = time.time()
-
-    while time.time() - start_time < timeout:
-        with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
-            # Try and connect to mitmproxy to determine whether it's started up
-            if sock.connect_ex((host, port)) == 0:
-                return MitmProxy(host, port, proxy)
-            # Hasn't yet started so wait a bit and try again
-            time.sleep(0.5)
-
-    raise TimeoutError('mitmproxy did not start within {} seconds'.format(timeout))
-
-
-def _get_upstream_proxy_args(options):
-    args = []
-    proxy_config = get_upstream_proxy(options)
-
-    http_proxy = proxy_config.get('http')
-    https_proxy = proxy_config.get('https')
-    conf = None
-
-    if http_proxy and https_proxy:
-        if http_proxy.hostport != https_proxy.hostport:
-            # We only support a single upstream proxy server
-            raise ValueError('Cannot specify both http AND https '
-                             'proxy settings with mitmproxy backend')
-
-        conf = https_proxy
-    elif http_proxy:
-        conf = http_proxy
-    elif https_proxy:
-        conf = https_proxy
-
-    if conf:
-        scheme, username, password, hostport = conf
-
-        args += [
-            '--set',
-            'mode=upstream:{}://{}'.format(scheme, hostport)
-        ]
-
-        if username and password:
-            args += [
-                '--set',
-                'upstream_auth={}:{}'.format(username, password)
-            ]
-
-    return args
+DEFAULT_UPSTREAM_CERT = False
+DEFAULT_STREAM_WEBSOCKETS = True
 
 
 class MitmProxyRequestHandler(AdminMixin, CaptureMixin):
-    """Mitmproxy add-on which provides request modification and capture.
+    """Mitmproxy add-on which provides request modification and capture."""
 
-    Clients do not import this class. Mitmproxy will automatically load it
-    when this module is passed as a script to the mitmproxy subprocesss.
-    """
-    def __init__(self):
-        self.options = None
-        self.storage = None
-        self.modifier = RequestModifier()
-        self.scopes = []
-
-    def initialise(self, options):
-        """Initialise this add-on with the selenium wire options.
-
-        This method must be called before the add-on starts handling requests.
-
-        Args:
-            options: The selenium wire options.
-        """
+    def __init__(self, storage, options):
+        self.storage = storage
         self.options = options
-        self.storage = RequestStorage(
-            base_dir=options.get('request_storage_base_dir')
-        )
+        self.scopes = []
+        self.modifier = RequestModifier()
 
-        # The logging in this add-on is not controlled by the logging
-        # in the selenium test because we're running in a subprocess.
-        # For the time being, configure basic logging using a config option.
-        logging.basicConfig(
-            level=getattr(logging, options.get('mitmproxy_log_level', 'ERROR'))
-        )
+    def requestheaders(self, flow):
+        # Requests that are being captured or are admin requests are not streamed.
+        if self.in_scope(self.scopes, flow.request.url) or flow.request.url.startswith(ADMIN_PATH):
+            flow.request.stream = False
 
     def request(self, flow):
         if flow.request.url.startswith(ADMIN_PATH):
@@ -199,6 +79,11 @@ class MitmProxyRequestHandler(AdminMixin, CaptureMixin):
 
         self.capture_response(flow.request.id, flow.request.url, response)
 
+    def responseheaders(self, flow):
+        # Responses that are being captured or are admin responses are not streamed.
+        if self.in_scope(self.scopes, flow.request.url) or flow.request.url.startswith(ADMIN_PATH):
+            flow.response.stream = False
+
     def handle_admin(self, flow):
         request = self._create_request(flow)
         response = self.dispatch_admin(request)
@@ -221,21 +106,81 @@ class MitmProxyRequestHandler(AdminMixin, CaptureMixin):
 
 
 class MitmProxy:
-    """Wrapper class that provides access to a running mitmproxy subprocess."""
+    """Run and manage a mitmproxy server instance."""
 
-    def __init__(self, host, port, proc):
-        self.host = host
-        self.port = port
-        self.proc = proc
+    def __init__(self, host, port, options):
+        # Used to stored captured requests
+        self.storage = RequestStorage(
+            base_dir=options.pop('request_storage_base_dir', None)
+        )
+
+        # mitmproxy specific options
+        mitmproxy_opts = Options(
+            listen_host=host,
+            listen_port=port,
+        )
+
+        # Create an instance of the mitmproxy server
+        self._master = Master(mitmproxy_opts)
+        self._master.server = ProxyServer(ProxyConfig(mitmproxy_opts))
+        self._master.addons.add(*addons.default_addons())
+        self._master.addons.add(MitmProxyRequestHandler(self.storage, options))
+
+        # Update the options now all addons have been added
+        mitmproxy_opts.update(
+            confdir=DEFAULT_CONFDIR,
+            ssl_insecure=options.get('verify_ssl', True),
+            upstream_cert=DEFAULT_UPSTREAM_CERT,
+            stream_websockets=DEFAULT_STREAM_WEBSOCKETS,
+            **self._get_upstream_proxy_args(options),
+            # Options that are prefixed mitm_ are passed through to mitmproxy
+            **{k[5:]: v for k, v in options.items() if k.startswith('mitm_')}
+        )
+
+        self._event_loop = asyncio.get_event_loop()
+
+    def serve(self):
+        """Run the server."""
+        asyncio.set_event_loop(self._event_loop)
+        self._master.run_loop(self._event_loop.run_forever)
+
+    def address(self):
+        """Get a tuple of the address and port the mitmproxy server
+        is listening on.
+        """
+        return self._master.server.address
 
     def shutdown(self):
-        self.proc.terminate()
-        self.proc.wait(timeout=10)
+        """Shutdown the server and perform any cleanup."""
+        self._master.shutdown()
+        self.storage.cleanup()
 
-    def __del__(self):
-        self.shutdown()
+    def _get_upstream_proxy_args(self, options):
+        proxy_config = get_upstream_proxy(options)
+        http_proxy = proxy_config.get('http')
+        https_proxy = proxy_config.get('https')
+        conf = None
 
+        if http_proxy and https_proxy:
+            if http_proxy.hostport != https_proxy.hostport:
+                # We only support a single upstream proxy server
+                raise ValueError('Cannot specify both http AND https '
+                                 'proxy settings with mitmproxy backend')
 
-addons = [
-    MitmProxyRequestHandler()
-]
+            conf = https_proxy
+        elif http_proxy:
+            conf = http_proxy
+        elif https_proxy:
+            conf = https_proxy
+
+        args = {}
+
+        if conf:
+            scheme, username, password, hostport = conf
+
+            args['mode'] = 'upstream:{}://{}'.format(scheme, hostport)
+
+            if username and password:
+                args['upstream_auth'] = '{}:{}'.format(username, password)
+
+        return args

@@ -11,7 +11,7 @@ With Selenium Wire, you author your tests in just the same way as you do with Se
 .. image:: https://codecov.io/gh/wkeeling/selenium-wire/branch/master/graph/badge.svg
         :target: https://codecov.io/gh/wkeeling/selenium-wire
 
-.. image:: https://img.shields.io/badge/python-3.4%2C%203.5%2C%203.6%2C%203.7%2C%203.8-blue.svg
+.. image:: https://img.shields.io/badge/python-3.6%2C%203.7%2C%203.8-blue.svg
         :target: https://pypi.python.org/pypi/selenium-wire
 
 .. image:: https://img.shields.io/pypi/v/selenium-wire.svg
@@ -68,7 +68,7 @@ Features
 Compatibilty
 ~~~~~~~~~~~~
 
-* Python 3.4+
+* Python 3.6+
 * Selenium 3.4.0+
 * Firefox, Chrome, Safari and Edge are supported
 
@@ -741,28 +741,6 @@ The code above will print something like this to the console (loading a page wil
 
     options = {
         'max_threads': 3  # Allow a maximum of 3 threads to handle requests.
-    }
-    driver = webdriver.Firefox(seleniumwire_options=options)
-
-``mitmproxy_log_level``
-    Set the log level that the mitmproxy backend will use. The default is ``ERROR``.
-    *Applies to the mitmproxy backend only.*
-
-.. code:: python
-
-    options = {
-        'mitmproxy_log_level': 'INFO'  # Increase the log level to INFO for the mitmproxy backend
-    }
-    driver = webdriver.Firefox(seleniumwire_options=options)
-
-``mitmproxy_confdir``
-    The location of the mitmproxy configuration directory. The default is ``~/.mitmproxy``. You might want to change this if you're running in an environment where you don't have access to the user's home folder.
-    *Applies to the mitmproxy backend only.*
-
-.. code:: python
-
-    options = {
-        'mitmproxy_confdir': '/tmp/.mitmproxy'  # Switch the location to /tmp
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
