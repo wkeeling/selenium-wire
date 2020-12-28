@@ -122,32 +122,6 @@ Install using pip:
 
     pip install selenium-wire
 
-OpenSSL
--------
-
-Selenium Wire requires OpenSSL for capturing HTTPS requests.
-
-**Linux**
-
-.. code:: bash
-
-    # For apt based Linux systems
-    sudo apt install openssl
-
-    # For RPM based Linux systems
-    sudo yum install openssl
-
-**MacOS**
-
-.. code:: bash
-
-    brew install openssl
-
-**Windows**
-
-No installation is required - OpenSSL for Windows is bundled with Selenium Wire.
-
-
 Browser Setup
 -------------
 
@@ -635,10 +609,19 @@ Once installed, set the ``backend`` option in Selenium Wire's options to ``mitmp
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
-**Mitmproxy backend limitations**
+You can pass `mitmproxy specific options`_ to the mitmproxy backend by prefixing them with **mitm_**. For example, to change the location of the mitmproxy configuration directory which lives in your home folder by default:
 
-* You must be running Python 3.6 or higher.
-* The mitmproxy backend won't work with upstream SOCKS proxies.
+.. _`mitmproxy specific options`: https://docs.mitmproxy.org/stable/concepts-options/
+
+.. code:: python
+
+    options = {
+        'backend': 'mitmproxy',
+        'mitm_confdir': '/tmp/.mitmproxy'  # Switch the location to /tmp
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+*Note that the mitmproxy backend won't work with upstream SOCKS proxies.*
 
 Certificates
 ~~~~~~~~~~~~
