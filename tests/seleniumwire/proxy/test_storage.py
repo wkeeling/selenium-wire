@@ -1,11 +1,9 @@
 import glob
-import gzip
 import os
 import pickle
 import shutil
 from datetime import datetime, timedelta
 from fnmatch import fnmatch
-from io import BytesIO
 from unittest import TestCase
 
 from seleniumwire.proxy.request import Request, Response
@@ -78,12 +76,12 @@ class RequestStorageTest(TestCase):
 
         storage.save_request(request)
 
-        request_body_path = self._get_stored_path(request.id, 'requestbody')
+        request_file_path = self._get_stored_path(request.id, 'request')
 
-        with open(request_body_path[0], 'rb') as loaded:
-            loaded_body = pickle.load(loaded)
+        with open(request_file_path[0], 'rb') as loaded:
+            loaded_request = pickle.load(loaded)
 
-        self.assertEqual(body, loaded_body)
+        self.assertEqual(body, loaded_request.body)
 
     def test_save_response(self):
         request = self._create_request()
@@ -114,12 +112,12 @@ class RequestStorageTest(TestCase):
 
         storage.save_response(request.id, response)
 
-        response_body_path = self._get_stored_path(request.id, 'responsebody')
+        response_file_path = self._get_stored_path(request.id, 'response')
 
-        with open(response_body_path[0], 'rb') as loaded:
-            loaded_body = pickle.load(loaded)
+        with open(response_file_path[0], 'rb') as loaded:
+            loaded_response = pickle.load(loaded)
 
-        self.assertEqual(b'some response body', loaded_body)
+        self.assertEqual(b'some response body', loaded_response.body)
 
     def test_save_response_no_request(self):
         request = self._create_request()
@@ -159,57 +157,6 @@ class RequestStorageTest(TestCase):
         requests = storage.load_requests()
 
         self.assertIsNotNone(requests[0].response)
-
-    def test_load_request_body(self):
-        body = b'test request body'
-        request = self._create_request(body=body)
-        storage = RequestStorage(base_dir=self.base_dir)
-        storage.save_request(request)
-
-        request_body = storage.load_request_body(request.id)
-
-        self.assertEqual(body, request_body)
-
-    def test_load_response_body(self):
-        body = b'test response body'
-        request = self._create_request()
-        storage = RequestStorage(base_dir=self.base_dir)
-        storage.save_request(request)
-        mock_response = self._create_response(body=body)
-        storage.save_response(request.id, mock_response)
-
-        response_body = storage.load_response_body(request.id)
-
-        self.assertEqual(body, response_body)
-
-    def test_load_response_body_encoded(self):
-        body = b'test response body'
-        io = BytesIO()
-        with gzip.GzipFile(fileobj=io, mode='wb') as f:
-            f.write(body)
-        request = self._create_request()
-        storage = RequestStorage(base_dir=self.base_dir)
-        storage.save_request(request)
-        response = self._create_response(body=io.getvalue())
-        response.headers['Content-Encoding'] = 'gzip'
-        storage.save_response(request.id, response)
-
-        response_body = storage.load_response_body(request.id)
-
-        self.assertEqual(body, response_body)
-
-    def test_load_response_body_encoded_error(self):
-        body = b'test response body'
-        request = self._create_request()
-        storage = RequestStorage(base_dir=self.base_dir)
-        storage.save_request(request)
-        response = self._create_response(body=body)
-        response.headers['Content-Encoding'] = 'gzip'
-        storage.save_response(request.id, response)
-
-        response_body = storage.load_response_body(request.id)
-
-        self.assertEqual(body, response_body)
 
     def test_load_last_request(self):
         request_1 = self._create_request()
@@ -285,14 +232,14 @@ class RequestStorageTest(TestCase):
         return glob.glob(os.path.join(self.base_dir, '.seleniumwire', 'storage-*',
                                       'request-{}'.format(request_id), filename))
 
-    def _create_request(self, url='http://www.example.com/test/path/', body=None):
+    def _create_request(self, url='http://www.example.com/test/path/', body=b''):
         headers = {
             'Host': 'www.example.com',
             'Accept': '*/*'
         }
         return Request(method='GET', url=url, headers=headers, body=body)
 
-    def _create_response(self, body=None):
+    def _create_response(self, body=b''):
         headers = {
             'Content-Type': 'application/json',
             'Content-Length': 500

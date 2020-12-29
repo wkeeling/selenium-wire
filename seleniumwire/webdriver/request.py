@@ -1,15 +1,16 @@
 import time
+from typing import List, Union
 
 from selenium.common.exceptions import TimeoutException
 
-from ..proxy.request import Request, Response
+from ..proxy.request import Request
 
 
 class InspectRequestsMixin:
     """Mixin class that provides functions to inspect and modify browser requests."""
 
     @property
-    def requests(self):
+    def requests(self) -> List[Request]:
         """Retrieves the requests made between the browser and server.
 
         Captured requests can be cleared with 'del', e.g:
@@ -20,14 +21,14 @@ class InspectRequestsMixin:
             A list of Request instances representing the requests made
             between the browser and server.
         """
-        return [LazyRequest.from_dict(r, self._client) for r in self._client.get_requests()]
+        return self.proxy.storage.load_requests()
 
     @requests.deleter
     def requests(self):
-        self._client.clear_requests()
+        self.proxy.storage.clear_requests()
 
     @property
-    def last_request(self):
+    def last_request(self) -> Union[Request, None]:
         """Retrieve the last request made between the browser and server.
 
         Note that this is more efficient than running requests[-1]
@@ -36,14 +37,9 @@ class InspectRequestsMixin:
             A Request instance representing the last request made, or
             None if no requests have been made.
         """
-        data = self._client.get_last_request()
+        return self.proxy.storage.load_last_request()
 
-        if data is not None:
-            return LazyRequest.from_dict(data, self._client)
-
-        return None
-
-    def wait_for_request(self, path, timeout=10):
+    def wait_for_request(self, path: str, timeout: int = 10) -> Request:
         """Wait up to the timeout period for a request with the specified
         path to be seen.
 
@@ -51,6 +47,9 @@ class InspectRequestsMixin:
         full request URL. If a request is not seen before the timeout then a
         TimeoutException is raised. Only requests with corresponding responses
         are considered.
+
+        Given that path can be a regex, ensure that any special characters
+        (e.g. question marks) are escaped.
 
         Args:
             path: The path of the request to look for. A regex can be supplied.
@@ -65,18 +64,20 @@ class InspectRequestsMixin:
         start = time.time()
 
         while time.time() - start < timeout:
-            data = self._client.find(path)
+            request = self.proxy.storage.find(path)
 
-            if data is not None:
-                return LazyRequest.from_dict(data, self._client)
-            else:
+            if request is None:
                 time.sleep(0.2)
+            else:
+                return request
 
         raise TimeoutException('Timed out after {}s waiting for request {}'.format(timeout, path))
 
     @property
     def header_overrides(self):
         """The header overrides for outgoing browser requests.
+
+        DEPRECATED. Use request_interceptor and response_interceptor.
 
         The value of the headers can be a dictionary or list of sublists,
         with each sublist having two elements - a URL pattern and headers.
@@ -98,7 +99,7 @@ class InspectRequestsMixin:
                 ('*.somewhere-else.com.*', {'User-Agent': 'Chrome'})
             ]
         """
-        return self._client.get_header_overrides()
+        return self.proxy.modifier.headers
 
     @header_overrides.setter
     def header_overrides(self, headers):
@@ -108,7 +109,7 @@ class InspectRequestsMixin:
         else:
             self._validate_headers(headers)
 
-        self._client.set_header_overrides(headers)
+        self.proxy.modifier.headers = headers
 
     def _validate_headers(self, headers):
         for v in headers.values():
@@ -117,11 +118,13 @@ class InspectRequestsMixin:
 
     @header_overrides.deleter
     def header_overrides(self):
-        self._client.clear_header_overrides()
+        del self.proxy.modifier.headers
 
     @property
     def param_overrides(self):
         """The parameter overrides for outgoing browser requests.
+
+        DEPRECATED. Use request_interceptor.
 
         For POST requests, the parameters are assumed to be encoded in the
         request body.
@@ -141,19 +144,21 @@ class InspectRequestsMixin:
                 ('*.somewhere-else.com.*', {'x': 'y'}),
             ]
         """
-        return self._client.get_param_overrides()
+        return self.proxy.modifier.params
 
     @param_overrides.setter
     def param_overrides(self, params):
-        self._client.set_param_overrides(params)
+        self.proxy.modifier.params = params
 
     @param_overrides.deleter
     def param_overrides(self):
-        self._client.clear_param_overrides()
+        del self.proxy.modifier.params
 
     @property
     def body_overrides(self):
         """The body overrides for outgoing browser requests.
+
+        DEPRECATED. Use request_interceptor and response_interceptor.
 
         For 'not GET' requests, the parameters are assumed to be encoded in the
         request body.
@@ -169,19 +174,21 @@ class InspectRequestsMixin:
                 ('*.somewhere-else.com.*', '{"x":"y"}'),
             ]
         """
-        return self._client.get_body_overrides()
+        return self.proxy.modifier.bodies
 
     @body_overrides.setter
     def body_overrides(self, bodies):
-        self._client.set_body_overrides(bodies)
+        self.proxy.modifier.bodies = bodies
 
     @body_overrides.deleter
     def body_overrides(self):
-        self._client.clear_body_overrides()
+        del self.proxy.modifier.bodies
 
     @property
     def querystring_overrides(self):
         """The querystring overrides for outgoing browser requests.
+
+        DEPRECATED. Use request_interceptor.
 
         The value of the querystring override can be a string or a list of sublists,
         with each sublist having two elements, a URL pattern and the querystring.
@@ -196,19 +203,21 @@ class InspectRequestsMixin:
                 ('*.somewhere-else.com.*', 'a=b&c=d'),
             ]
         """
-        return self._client.get_querystring_overrides()
+        return self.proxy.modifier.querystring
 
     @querystring_overrides.setter
     def querystring_overrides(self, querystrings):
-        self._client.set_querystring_overrides(querystrings)
+        self.proxy.modifier.querystring = querystrings
 
     @querystring_overrides.deleter
     def querystring_overrides(self):
-        self._client.clear_querystring_overrides()
+        del self.proxy.modifier.querystring
 
     @property
     def rewrite_rules(self):
         """The rules used to rewrite request URLs.
+
+        DEPRECATED. Use request_interceptor.
 
         The value of the rewrite rules should be a list of sublists (or tuples)
         with each sublist containing the pattern and replacement.
@@ -219,18 +228,18 @@ class InspectRequestsMixin:
                 (r'https://docs.python.org/2/', r'https://docs.python.org/3/'),
             ]
         """
-        return self._client.get_rewrite_rules()
+        return self.proxy.modifier.rewrite_rules
 
     @rewrite_rules.setter
     def rewrite_rules(self, rewrite_rules):
-        self._client.set_rewrite_rules(rewrite_rules)
+        self.proxy.modifier.rewrite_rules = rewrite_rules
 
     @rewrite_rules.deleter
     def rewrite_rules(self):
-        self._client.clear_rewrite_rules()
+        del self.proxy.modifier.rewrite_rules
 
     @property
-    def scopes(self):
+    def scopes(self) -> List[str]:
         """The URL patterns used to scope request capture.
 
         The value of the scopes should be a list (or tuple) of
@@ -242,65 +251,46 @@ class InspectRequestsMixin:
                 '.*github.*'
             ]
         """
-        return self._client.get_scopes()
+        return self.proxy.scopes
 
     @scopes.setter
-    def scopes(self, scopes):
-        self._client.set_scopes(scopes)
+    def scopes(self, scopes: List[str]):
+        self.proxy.scopes = scopes
 
     @scopes.deleter
     def scopes(self):
-        self._client.reset_scopes()
+        self.proxy.scopes = []
 
+    @property
+    def request_interceptor(self) -> callable:
+        """A callable that will be used to intercept/modify requests.
 
-class LazyRequest(Request):
-    """Specialisation of Request that allows for lazy retrieval of the request body."""
-
-    def __init__(self, client, **kwargs):
-        super().__init__(**kwargs)
-        self._client = client
-
-    @Request.body.getter
-    def body(self):
-        """Lazily retrieves the request body when it is asked for.
-
-        Returns:
-            The request body as bytes.
+        The callable must accept a single argument for the request
+        being intercepted.
         """
-        return self._client.get_request_body(self.id)
+        return self.proxy.request_interceptor
 
-    @classmethod
-    def from_dict(cls, d, client):
-        response = d.pop('response', None)
-        request_id = d.pop('id', None)
-        request = cls(client, **d)
+    @request_interceptor.setter
+    def request_interceptor(self, interceptor: callable):
+        self.proxy.request_interceptor = interceptor
 
-        if request_id is not None:
-            request.id = request_id
+    @request_interceptor.deleter
+    def request_interceptor(self):
+        self.proxy.request_interceptor = None
 
-        if response is not None:
-            request.response = LazyResponse.from_dict(response, client, request_id)
+    @property
+    def response_interceptor(self) -> callable:
+        """A callable that will be used to intercept/modify responses.
 
-        return request
-
-
-class LazyResponse(Response):
-    """Specialisation of Response that allows for lazy retrieval of the response body."""
-
-    def __init__(self, request_id, client, **kwargs):
-        super().__init__(**kwargs)
-        self._request_id = request_id
-        self._client = client
-
-    @Request.body.getter
-    def body(self):
-        """Lazily retrieves the response body when it is asked for.
-
-        Returns:
-            The response body as bytes.
+        The callable must accept two arguments: the response being
+        intercepted and the originating request.
         """
-        return self._client.get_response_body(self._request_id)
+        return self.proxy.response_interceptor
 
-    @classmethod
-    def from_dict(cls, d, client, request_id):
-        return cls(request_id, client, **d)
+    @response_interceptor.setter
+    def response_interceptor(self, interceptor: callable):
+        self.proxy.response_interceptor = interceptor
+
+    @response_interceptor.deleter
+    def response_interceptor(self):
+        self.proxy.response_interceptor = None

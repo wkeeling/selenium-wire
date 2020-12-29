@@ -77,6 +77,43 @@ class BrowserIntegrationTest(TestCase):
 
         driver.quit()
 
+    def test_intercept_request(self):
+        url = 'https://www.python.org'
+        user_agent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) ' \
+                     'Chrome/28.0.1500.52 Safari/537.36 OPR/15.0.1147.100'
+        driver = webdriver.Firefox()
+
+        def intercept(req):
+            req.headers['User-Agent'] = user_agent
+            req.params = {**req.params, 'foo': 'bar'}
+
+        driver.request_interceptor = intercept
+
+        driver.get(url)
+
+        request = driver.wait_for_request(url)
+
+        self.assertEqual(user_agent, request.headers['User-Agent'])
+
+        driver.quit()
+
+    def test_intercept_response(self):
+        url = 'https://www.guardian.co.uk'
+        driver = webdriver.Firefox()
+
+        def intercept(res, req):
+            res.headers['X-Foo'] = 'bar'
+
+        driver.response_interceptor = intercept
+
+        driver.get(url)
+
+        request = driver.wait_for_request(url)
+
+        self.assertEqual('bar', request.response.headers['X-Foo'])
+
+        driver.quit()
+
     def test_modify_user_agent(self):
         user_agent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) ' \
                      'Chrome/28.0.1500.52 Safari/537.36 OPR/15.0.1147.100'
@@ -149,3 +186,19 @@ class BrowserIntegrationTest(TestCase):
         driver.wait_for_request('https://www.wikipedia.org/')  # Should find www.wikipedia.org
 
         driver.quit()
+
+    def test_custom_response_handler(self):
+        """NOTE: this is being deprecated. Use driver.response_interceptor."""
+        def custom(req, req_body, res, res_body):
+            print(f'res_body length: {len(res_body)}')
+
+        options = {
+            'custom_response_handler': custom
+        }
+
+        driver = webdriver.Firefox(seleniumwire_options=options)
+
+        driver.get('https://www.python.org/')
+
+        driver.quit()
+

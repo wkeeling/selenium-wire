@@ -21,7 +21,6 @@ from . import cert, socks
 
 class ProxyRequestHandler(BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
-    admin_path = None
     # Path to the directory used to store the generated certificates.
     # Subclasses can override certdir
     certdir = cert.CERTDIR
@@ -54,10 +53,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             self.close_connection = True
 
     def proxy_request(self):
-        if self.admin_path and self.path.startswith(self.admin_path):
-            self.handle_admin()
-            return
-
         req = self
         content_length = int(req.headers.get('Content-Length', 0))
         req_body = self.rfile.read(content_length) if content_length else None
@@ -271,20 +266,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             res: The response (a http.client.HTTPResponse instance) that corresponds to the
                 request.
             res_body: The response body as bytes.
-        """
-        pass
-
-    def handle_admin(self):
-        """Subclasses should override this to process administration requests.
-
-        Administration requests are requests targeted at the proxy server itself
-        rather than a remote server.
-
-        Note that subclasses must set the admin_path class-level attribute to
-        a URL prefix that identifies administration requests. For example:
-            admin_path = 'http://myserver'
-        This method will then fire for any request with a URL path that starts
-        with http://myserver...
         """
         pass
 

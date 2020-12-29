@@ -50,10 +50,14 @@ class ProxyHTTPServer(BoundedThreadingMixin, HTTPServer):
         )
 
         # Used to modify requests/responses passing through the server
+        # Deprecated. Will be superceded by request/response interceptors.
         self.modifier = RequestModifier()
 
         # The scope of requests we're interested in capturing.
         self.scopes = []
+
+        self.request_interceptor = None
+        self.response_interceptor = None
 
         super().__init__(self.options.get('max_threads', 9999), (host, port), *args, **kwargs)
 

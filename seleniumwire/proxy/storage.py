@@ -1,4 +1,3 @@
-import gzip
 import logging
 import os
 import pickle
@@ -6,9 +5,7 @@ import re
 import shutil
 import threading
 import uuid
-import zlib
 from datetime import datetime, timedelta
-from io import BytesIO
 
 log = logging.getLogger(__name__)
 
@@ -21,10 +18,7 @@ class RequestStorage:
     and provding an API to retrieve that data.
 
     Requests and responses are saved separately. However, when a request is loaded, the
-    response, if there is one, is automatically loaded and attached to the request. Furthermore,
-    when saving both requests and responses, the body is split out and saved separately.
-    Request/response bodies are not loaded automatically and must be retrieved via a separate
-    method call.
+    response, if there is one, is automatically loaded and attached to the request.
 
     This implementation writes the request and response data to disk, but keeps an in-memory
     index of what is on disk for fast retrieval. Instances are designed to be threadsafe.
@@ -60,13 +54,7 @@ class RequestStorage:
         request_dir = self._get_request_dir(request_id)
         os.mkdir(request_dir)
 
-        body = request.body
-        request.body = b''  # The request body is stored separately to the request itself
-
         self._save(request, request_dir, 'request')
-
-        if body:
-            self._save(body, request_dir, 'requestbody')
 
     def _index_request(self, request):
         request_id = str(uuid.uuid4())
@@ -101,13 +89,7 @@ class RequestStorage:
 
         request_dir = self._get_request_dir(request_id)
 
-        body = response.body
-        response.body = b''  # The response body is stored separately to the response itself
-
         self._save(response, request_dir, 'response')
-
-        if body:
-            self._save(body, request_dir, 'responsebody')
 
         indexed_request.has_response = True
 
@@ -157,58 +139,6 @@ class RequestStorage:
                 pass
 
         return request
-
-    def load_request_body(self, request_id):
-        """Loads the body of the request with the specified id.
-
-        Args:
-            request_id: The id of the request.
-        Returns:
-            The binary data request body.
-        """
-        try:
-            return self._load_body(request_id, 'requestbody')
-        except FileNotFoundError:
-            return b''
-
-    def load_response_body(self, request_id):
-        """Loads the body of the response corresponding to the request with the specified id.
-
-        Args:
-            request_id: The id of the request.
-        Returns:
-            The binary data response body.
-        """
-        try:
-            raw_body = self._load_body(request_id, 'responsebody')
-            request = self._load_request(request_id)
-            return self._decode_body(raw_body, request.response.headers.get('Content-Encoding', 'identity'))
-        except FileNotFoundError:
-            return b''
-
-    def _load_body(self, request_id, name):
-        request_dir = self._get_request_dir(request_id)
-        with open(os.path.join(request_dir, name), 'rb') as body:
-            return pickle.load(body)
-
-    def _decode_body(self, data, encoding):
-        if encoding != 'identity':
-            try:
-                if encoding in ('gzip', 'x-gzip'):
-                    io = BytesIO(data)
-                    with gzip.GzipFile(fileobj=io) as f:
-                        data = f.read()
-                elif encoding == 'deflate':
-                    try:
-                        data = zlib.decompress(data)
-                    except zlib.error:
-                        data = zlib.decompress(data, -zlib.MAX_WBITS)
-                else:
-                    log.debug("Unknown Content-Encoding: %s", encoding)
-            except (OSError, EOFError, zlib.error) as e:
-                # Log a message and return the data untouched
-                log.debug('Unable to decode body: %s', str(e))
-        return data
 
     def load_last_request(self):
         """Loads the last saved request.

@@ -5,7 +5,7 @@ from selenium.webdriver import Safari as _Safari
 from selenium.webdriver import Remote as _Remote
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
-from ..proxy.client import AdminClient
+from ..proxy import backend
 from .request import InspectRequestsMixin
 
 
@@ -21,17 +21,18 @@ class Firefox(InspectRequestsMixin, _Firefox):
         if seleniumwire_options is None:
             seleniumwire_options = {}
 
-        self._client = AdminClient()
-        addr, port = self._client.create_proxy(
-            port=seleniumwire_options.pop('port', 0),
+        self.proxy = backend.create(
+            port=seleniumwire_options.get('port', 0),
             options=seleniumwire_options
         )
 
         if 'port' not in seleniumwire_options:  # Auto config mode
             try:
-                capabilities = kwargs.pop('desired_capabilities')
+                capabilities = dict(kwargs.pop('desired_capabilities'))
             except KeyError:
                 capabilities = DesiredCapabilities.FIREFOX.copy()
+
+            addr, port = self.proxy.address()
 
             capabilities['proxy'] = {
                 'proxyType': 'manual',
@@ -46,7 +47,7 @@ class Firefox(InspectRequestsMixin, _Firefox):
         super().__init__(*args, **kwargs)
 
     def quit(self):
-        self._client.destroy_proxy()
+        self.proxy.shutdown()
         super().quit()
 
 
@@ -62,17 +63,18 @@ class Chrome(InspectRequestsMixin, _Chrome):
         if seleniumwire_options is None:
             seleniumwire_options = {}
 
-        self._client = AdminClient()
-        addr, port = self._client.create_proxy(
-            port=seleniumwire_options.pop('port', 0),
+        self.proxy = backend.create(
+            port=seleniumwire_options.get('port', 0),
             options=seleniumwire_options
         )
 
         if 'port' not in seleniumwire_options:  # Auto config mode
             try:
-                capabilities = kwargs.pop('desired_capabilities')
+                capabilities = dict(kwargs.pop('desired_capabilities'))
             except KeyError:
                 capabilities = DesiredCapabilities.CHROME.copy()
+
+            addr, port = self.proxy.address()
 
             capabilities['proxy'] = {
                 'proxyType': 'manual',
@@ -97,7 +99,7 @@ class Chrome(InspectRequestsMixin, _Chrome):
         super().__init__(*args, **kwargs)
 
     def quit(self):
-        self._client.destroy_proxy()
+        self.proxy.shutdown()
         super().quit()
 
 
@@ -119,8 +121,7 @@ class Safari(InspectRequestsMixin, _Safari):
         # be passed in the options.
         assert 'port' in seleniumwire_options, 'You must set a port number in the seleniumwire_options'
 
-        self._client = AdminClient()
-        self._client.create_proxy(
+        self.proxy = backend.create(
             port=seleniumwire_options.pop('port', 0),
             options=seleniumwire_options
         )
@@ -128,7 +129,7 @@ class Safari(InspectRequestsMixin, _Safari):
         super().__init__(*args, **kwargs)
 
     def quit(self):
-        self._client.destroy_proxy()
+        self.proxy.shutdown()
         super().quit()
 
 
@@ -150,8 +151,7 @@ class Edge(InspectRequestsMixin, _Edge):
         # be passed in the options.
         assert 'port' in seleniumwire_options, 'You must set a port number in the seleniumwire_options'
 
-        self._client = AdminClient()
-        self._client.create_proxy(
+        self.proxy = backend.create(
             port=seleniumwire_options.pop('port', 0),
             options=seleniumwire_options
         )
@@ -159,7 +159,7 @@ class Edge(InspectRequestsMixin, _Edge):
         super().__init__(*args, **kwargs)
 
     def quit(self):
-        self._client.destroy_proxy()
+        self.proxy.shutdown()
         super().quit()
 
 
@@ -175,20 +175,19 @@ class Remote(InspectRequestsMixin, _Remote):
         if seleniumwire_options is None:
             seleniumwire_options = {}
 
-        self._client = AdminClient()
-        addr, port = self._client.create_proxy(
-            # Passing address is necessary cause it won't work 
-            # since we are launching firefox on a container (which is running on a different network)
-            addr=seleniumwire_options.pop("addr"),
-            port=seleniumwire_options.pop("port", 0),
-            options=seleniumwire_options,
+        self.proxy = backend.create(
+            addr=seleniumwire_options.pop('addr'),
+            port=seleniumwire_options.get('port', 0),
+            options=seleniumwire_options
         )
 
         if "port" not in seleniumwire_options:  # Auto config mode
             try:
-                capabilities = kwargs.pop("desired_capabilities")
+                capabilities = dict(kwargs.pop("desired_capabilities"))
             except KeyError:
                 capabilities = DesiredCapabilities.FIREFOX.copy()
+
+            addr, port = self.proxy.address()
 
             capabilities["proxy"] = {
                 "proxyType": "manual",
@@ -200,10 +199,9 @@ class Remote(InspectRequestsMixin, _Remote):
 
             kwargs["desired_capabilities"] = capabilities
 
-            # (self, command_executor=f'http://{firefox_host}:{firefox_port}/wd/hub', desired_capabilities=DesiredCapabilities.FIREFOX)
         super().__init__(*args, **kwargs)
 
     def quit(self):
-        self._client.destroy_proxy()
+        self.proxy.shutdown()
         super().quit()
 

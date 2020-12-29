@@ -611,7 +611,7 @@ Once installed, set the ``backend`` option in Selenium Wire's options to ``mitmp
 
 You can pass `mitmproxy specific options`_ to the mitmproxy backend by prefixing them with **mitm_**. For example, to change the location of the mitmproxy configuration directory which lives in your home folder by default:
 
-.. _`mitmproxy specific options`: https://docs.mitmproxy.org/stable/concepts-options/
+.. _`mitmproxy specific options`: https://docs.mitmproxy.org/stable/concepts-options/#available-options
 
 .. code:: python
 

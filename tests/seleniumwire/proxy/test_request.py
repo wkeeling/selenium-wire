@@ -38,6 +38,14 @@ class RequestTest(TestCase):
 
         self.assertEqual('foo=bar&hello=world&foo=baz&other=', request.querystring)
 
+    def test_set_querystring(self):
+        qs = 'x=y&a=b'
+        request = self._create_request()
+
+        request.querystring = qs
+
+        self.assertEqual(qs, request.querystring)
+
     def test_GET_params(self):
         request = self._create_request()
 
@@ -57,10 +65,34 @@ class RequestTest(TestCase):
         self.assertEqual(params['foo'], ['bar', 'baz'])
         self.assertEqual(params['other'], '')
 
+    def test_set_GET_params(self):
+        request = self._create_request()
+
+        request.params = {'a': 'b'}
+
+        self.assertEqual('a=b', request.querystring)
+
+    def test_set_POST_params(self):
+        request = self._create_request()
+        request.method = 'POST'
+        request.url = 'http://www.example.com/some/path/'
+        request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+
+        request.params = {'a': 'b'}
+
+        self.assertEqual('a=b', request.body.decode('utf-8'))
+
     def test_path(self):
         request = self._create_request()
 
         self.assertEqual('/some/path/', request.path)
+
+    def test_set_path(self):
+        request = self._create_request()
+
+        request.path = '/some/other/path'
+
+        self.assertEqual('/some/other/path', request.path)
 
     def test_request_repr(self):
         request = self._create_request()
@@ -78,22 +110,6 @@ class RequestTest(TestCase):
         request = self._create_request()
 
         self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', str(request))
-
-    def test_to_dict(self):
-        request = self._create_request(body=b'helloworld')
-        request.id = '12345'
-
-        self.assertEqual({
-            'id': '12345',
-            'method': 'GET',
-            'url': 'http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
-            'headers': {
-                'Accept': '*/*',
-                'Host': 'www.example.com',
-                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
-            },
-            'response': None
-        }, request.to_dict())
 
     def _create_request(self, body=None):
         request = Request(
@@ -156,18 +172,6 @@ class ResponseTest(TestCase):
         response = self._create_response()
 
         self.assertEqual('200 OK', str(response))
-
-    def test_to_dict(self):
-        response = self._create_response(body=b'helloworld')
-
-        self.assertEqual({
-            'status_code': 200,
-            'reason': 'OK',
-            'headers': {
-                'Content-Type': 'application/json',
-                'Content-Length': 120
-            },
-        }, response.to_dict())
 
     def _create_response(self, body=None):
         response = Response(

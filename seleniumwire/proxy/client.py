@@ -11,7 +11,10 @@ log = logging.getLogger(__name__)
 
 
 class AdminClient:
-    """Provides an API for sending commands to a remote proxy server."""
+    """Provides an API for sending commands to a remote proxy server.
+
+    DEPRECATED.
+    """
 
     def __init__(self, proxy_mgr_addr=None, proxy_mgr_port=None):
         # The address of the proxy manager if set

@@ -1,370 +1,256 @@
 from unittest import TestCase
 from unittest.mock import Mock, call
 
-from seleniumwire.webdriver.request import (InspectRequestsMixin, LazyRequest, LazyResponse,
-                                            TimeoutException)
+from seleniumwire.webdriver.request import InspectRequestsMixin, TimeoutException
 
 
 class Driver(InspectRequestsMixin):
-    def __init__(self, client):
-        self._client = client
+    def __init__(self, proxy):
+        self.proxy = proxy
 
 
 class InspectRequestsMixinTest(TestCase):
 
     def setUp(self):
-        self.mock_client = Mock()
-        self.driver = Driver(self.mock_client)
+        self.mock_proxy = Mock()
+        self.driver = Driver(self.mock_proxy)
 
     def test_get_requests(self):
-        self.mock_client.get_requests.return_value = [{
-            'id': '12345',
-            'method': 'GET',
-            'url': 'http://www.example.com/some/path',
-            'headers': {
-                'Accept': '*/*',
-                'Host': 'www.example.com'
-            },
-            'response': {
-                'status_code': 200,
-                'reason': 'OK',
-                'headers': {
-                    'Content-Type': 'text/plain',
-                    'Content-Length': '15012'
-                }
-            }
-        }]
+        self.mock_proxy.storage.load_requests.return_value = [Mock()]
 
         requests = self.driver.requests
 
-        self.mock_client.get_requests.assert_called_once_with()
+        self.mock_proxy.storage.load_requests.assert_called_once_with()
         self.assertEqual(1, len(requests))
-        self.assertEqual(requests[0].url, 'http://www.example.com/some/path')
-        self.assertEqual(requests[0].response.headers['Content-Type'], 'text/plain')
 
     def test_set_requests(self):
-        driver = Driver(Mock())
-
         with self.assertRaises(AttributeError):
-            driver.requests = ['some request']
+            self.driver.requests = [Mock()]
 
     def test_delete_requests(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
-        del driver.requests
+        del self.driver.requests
 
-        mock_client.clear_requests.assert_called_once_with()
+        self.mock_proxy.storage.clear_requests.assert_called_once_with()
 
     def test_last_request(self):
-        self.mock_client.get_last_request.return_value = {
-            'method': 'GET',
-            'url': 'http://www.example.com/different/path?foo=bar',
-            'headers': {
-                'Accept': '*/*',
-                'Host': 'www.example.com'
-            },
-            'response': {
-                'status_code': 200,
-                'reason': 'OK',
-                'headers': {
-                    'Content-Type': 'text/plain',
-                    'Content-Length': '98425'
-                }
-            }
-        }
+        self.mock_proxy.storage.load_last_request.return_value = Mock()
 
         last_request = self.driver.last_request
 
-        self.mock_client.get_last_request.assert_called_once_with()
-        self.assertEqual(last_request.url, 'http://www.example.com/different/path?foo=bar')
-        self.assertEqual(last_request.response.headers['Content-Length'], '98425')
+        self.assertIsNotNone(last_request)
+        self.mock_proxy.storage.load_last_request.assert_called_once_with()
 
     def test_last_request_none(self):
-        self.mock_client.get_last_request.return_value = None
+        self.mock_proxy.storage.load_last_request.return_value = None
 
         last_request = self.driver.last_request
 
-        self.mock_client.get_last_request.assert_called_once_with()
         self.assertIsNone(last_request)
+        self.mock_proxy.storage.load_last_request.assert_called_once_with()
 
     def test_wait_for_request(self):
-        mock_client = Mock()
-        mock_client.find.return_value = {
-            'method': 'GET',
-            'url': 'http://www.example.com/some/path?foo=bar',
-            'headers': {
-                'Accept': '*/*',
-                'Host': 'www.example.com'
-            },
-            'response': {
-                'status_code': 200,
-                'reason': 'OK',
-                'headers': {
-                    'Content-Type': 'text/plain',
-                    'Content-Length': '98425'
-                }
-            }
-        }
-        driver = Driver(mock_client)
+        self.mock_proxy.storage.find.return_value = Mock()
 
-        request = driver.wait_for_request('/some/path')
+        request = self.driver.wait_for_request('/some/path')
 
-        mock_client.find.assert_called_once_with('/some/path')
-        self.assertEqual(request.url, 'http://www.example.com/some/path?foo=bar')
+        self.assertIsNotNone(request)
+        self.mock_proxy.storage.find.assert_called_once_with('/some/path')
 
     def test_wait_for_request_timeout(self):
-        mock_client = Mock()
-        mock_client.find.return_value = None
-        driver = Driver(mock_client)
+        self.mock_proxy.storage.find.return_value = None
 
         with self.assertRaises(TimeoutException):
-            driver.wait_for_request('/some/path', timeout=1)
+            self.driver.wait_for_request('/some/path', timeout=1)
 
-        mock_client.find.assert_has_calls([call('/some/path')] * 5)
+        self.mock_proxy.storage.find.assert_has_calls([call('/some/path')] * 5)
 
     def test_set_header_overrides(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
         header_overrides = {
             'User-Agent': 'Test_User_Agent_String',
             'Accept-Encoding': None
         }
 
-        driver.header_overrides = header_overrides
+        self.driver.header_overrides = header_overrides
 
-        mock_client.set_header_overrides.assert_called_once_with(header_overrides)
+        self.assertEqual(header_overrides, self.mock_proxy.modifier.headers)
 
     def test_set_header_overrides_non_str(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
         header_overrides = {
             'MyHeader': 99
         }
 
         with self.assertRaises(AssertionError):
-            driver.header_overrides = header_overrides
+            self.driver.header_overrides = header_overrides
 
     def test_delete_header_overrides(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
+        self.mock_proxy.modifier.headers = {
+            'User-Agent': 'Test_User_Agent_String',
+            'Accept-Encoding': None
+        }
 
-        del driver.header_overrides
+        del self.driver.header_overrides
 
-        mock_client.clear_header_overrides.assert_called_once_with()
+        self.assertFalse(hasattr(self.mock_proxy.modifier, 'headers'))
 
     def test_get_header_overrides(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
+        header_overrides = {
+            'User-Agent': 'Test_User_Agent_String',
+            'Accept-Encoding': None
+        }
+        self.mock_proxy.modifier.headers = header_overrides
 
-        driver.header_overrides
-
-        mock_client.get_header_overrides.assert_called_once_with()
+        self.assertEqual(header_overrides, self.driver.header_overrides)
 
     def test_set_param_overrides(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
         param_overrides = {'foo': 'bar'}
 
-        driver.param_overrides = param_overrides
+        self.driver.param_overrides = param_overrides
 
-        mock_client.set_param_overrides.assert_called_once_with(param_overrides)
+        self.assertEqual(param_overrides, self.mock_proxy.modifier.params)
 
     def test_delete_param_overrides(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
+        self.mock_proxy.modifier.params = {'foo': 'bar'}
 
-        del driver.param_overrides
+        del self.driver.param_overrides
 
-        mock_client.clear_param_overrides.assert_called_once_with()
+        self.assertFalse(hasattr(self.mock_proxy.modifier, 'params'))
 
     def test_get_param_overrides(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
+        param_overrides = {'foo': 'bar'}
 
-        driver.param_overrides
+        self.mock_proxy.modifier.params = param_overrides
 
-        mock_client.get_param_overrides.assert_called_once_with()
+        self.assertEqual(param_overrides, self.driver.param_overrides)
 
     def test_set_querystring_overrides(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
         querystring_overrides = 'foo=bar&hello=world'
 
-        driver.querystring_overrides = querystring_overrides
+        self.driver.querystring_overrides = querystring_overrides
 
-        mock_client.set_querystring_overrides.assert_called_once_with(querystring_overrides)
+        self.assertEqual(querystring_overrides, self.mock_proxy.modifier.querystring)
 
     def test_delete_querystring_overrides(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
+        self.mock_proxy.modifier.querystring = 'foo=bar&hello=world'
 
-        del driver.querystring_overrides
+        del self.driver.querystring_overrides
 
-        mock_client.clear_querystring_overrides.assert_called_once_with()
+        self.assertFalse(hasattr(self.mock_proxy.modifier, 'querystring'))
 
     def test_get_querystring_overrides(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
+        querystring_overrides = 'foo=bar&hello=world'
 
-        driver.querystring_overrides
+        self.mock_proxy.modifier.querystring = querystring_overrides
 
-        mock_client.get_querystring_overrides.assert_called_once_with()
+        self.assertEqual(querystring_overrides, self.driver.querystring_overrides)
 
     def test_set_rewrite_rules(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
         rewrite_rules = [
             ('http://somewhere.com/', 'https://www.somewhere.com'),
             ('http://otherplace.com/', 'http://otherplace.com/api/')
         ]
 
-        driver.rewrite_rules = rewrite_rules
+        self.driver.rewrite_rules = rewrite_rules
 
-        mock_client.set_rewrite_rules.assert_called_once_with(rewrite_rules)
+        self.assertEqual(rewrite_rules, self.mock_proxy.modifier.rewrite_rules)
 
     def test_delete_rewrite_rules(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
+        self.mock_proxy.modifier.rewrite_rules = [
+            ('http://somewhere.com/', 'https://www.somewhere.com'),
+            ('http://otherplace.com/', 'http://otherplace.com/api/')
+        ]
 
-        del driver.rewrite_rules
+        del self.driver.rewrite_rules
 
-        mock_client.clear_rewrite_rules.assert_called_once_with()
+        self.assertFalse(hasattr(self.mock_proxy.modifier, 'rewrite_rules'))
 
     def test_get_rewrite_rules(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
+        rewrite_rules = [
+            ('http://somewhere.com/', 'https://www.somewhere.com'),
+            ('http://otherplace.com/', 'http://otherplace.com/api/')
+        ]
 
-        driver.rewrite_rules
+        self.mock_proxy.modifier.rewrite_rules = rewrite_rules
 
-        mock_client.get_rewrite_rules.assert_called_once_with()
+        self.assertEqual(rewrite_rules, self.driver.rewrite_rules)
 
     def test_set_scopes(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
         scopes = [
             '.*stackoverflow.*',
             '.*github.*'
         ]
 
-        driver.scopes = scopes
+        self.driver.scopes = scopes
 
-        mock_client.set_scopes.assert_called_once_with(scopes)
+        self.assertEqual(scopes, self.mock_proxy.scopes)
 
     def test_delete_scopes(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
+        self.mock_proxy.scopes = [
+            '.*stackoverflow.*',
+            '.*github.*'
+        ]
 
-        del driver.scopes
+        del self.driver.scopes
 
-        mock_client.reset_scopes.assert_called_once_with()
+        self.assertEqual([], self.mock_proxy.scopes)
 
     def test_get_scopes(self):
-        mock_client = Mock()
-        driver = Driver(mock_client)
+        scopes = [
+            '.*stackoverflow.*',
+            '.*github.*'
+        ]
 
-        driver.scopes
+        self.mock_proxy.scopes = scopes
 
-        mock_client.get_scopes.assert_called_once_with()
+        self.assertEqual(scopes, self.driver.scopes)
 
+    def test_set_request_interceptor(self):
+        def interceptor(r):
+            pass
 
-class LazyRequestTest(TestCase):
+        self.driver.request_interceptor = interceptor
 
-    def test_load_request_body(self):
-        mock_client = Mock()
-        mock_client.get_request_body.return_value = b'the body'
+        self.assertEqual(interceptor, self.mock_proxy.request_interceptor)
 
-        request = self._create_request(mock_client)
-        body = request.body
+    def test_delete_request_interceptor(self):
+        def interceptor(r):
+            pass
 
-        self.assertEqual(body, b'the body')
-        mock_client.get_request_body.assert_called_once_with(request.id)
+        self.mock_proxy.request_interceptor = interceptor
 
-    def test_from_dict(self):
-        mock_client = Mock()
-        request = LazyRequest.from_dict({
-            'id': '12345',
-            'method': 'GET',
-            'url': 'http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
-            'headers': {
-                'Accept': '*/*',
-                'Host': 'www.example.com',
-                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
-            },
-            'response': {
-                'status_code': 200,
-                'reason': 'OK',
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Content-Length': 120
-                },
-            }
-        }, mock_client)
+        del self.driver.request_interceptor
 
-        self.assertEqual('12345', request.id)
-        self.assertEqual('GET', request.method)
-        self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', request.url)
-        self.assertEqual({
-                'Accept': '*/*',
-                'Host': 'www.example.com',
-                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
-            }, request.headers)
-        self.assertIsInstance(request.response, LazyResponse)
+        self.assertIsNone(self.mock_proxy.request_interceptor)
 
-    def _create_request(self, client):
-        request = LazyRequest(
-            client,
-            method='GET',
-            url='http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
-            headers={
-                'Accept': '*/*',
-                'Host': 'www.example.com',
-                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
-            }
-        )
+    def test_get_request_interceptor(self):
+        def interceptor(r):
+            pass
 
-        return request
+        self.mock_proxy.request_interceptor = interceptor
 
+        self.assertEqual(interceptor, self.driver.request_interceptor)
 
-class ResponseTest(TestCase):
+    def test_set_response_interceptor(self):
+        def interceptor(res, req):
+            pass
 
-    def test_load_response_body(self):
-        mock_client = Mock()
-        mock_client.get_response_body.return_value = b'the body'
+        self.driver.response_interceptor = interceptor
 
-        response = self._create_response('12345', mock_client)
-        body = response.body
+        self.assertEqual(interceptor, self.mock_proxy.response_interceptor)
 
-        self.assertEqual(body, b'the body')
-        mock_client.get_response_body.assert_called_once_with('12345')
+    def test_delete_response_interceptor(self):
+        def interceptor(res, req):
+            pass
 
-    def test_from_dict(self):
-        mock_client = Mock()
-        response = LazyResponse.from_dict({
-            'status_code': 200,
-            'reason': 'OK',
-            'headers': {
-                'Content-Type': 'application/json',
-                'Content-Length': 120
-            },
-            'body': 'foobar'
-        }, mock_client, '12345')
+        self.mock_proxy.response_interceptor = interceptor
 
-        self.assertEqual(200, response.status_code)
-        self.assertEqual('OK', response.reason)
-        self.assertEqual({
-            'Content-Type': 'application/json',
-            'Content-Length': 120
-        }, response.headers)
+        del self.driver.response_interceptor
 
-    def _create_response(self, request_id, client):
-        response = LazyResponse(
-            request_id,
-            client,
-            status_code=200,
-            reason='OK',
-            headers={
-                'Content-Type': 'application/json',
-                'Content-Length': 120
-            },
-        )
-        return response
+        self.assertIsNone(self.mock_proxy.response_interceptor)
+
+    def test_get_response_interceptor(self):
+        def interceptor(res, req):
+            pass
+
+        self.mock_proxy.response_interceptor = interceptor
+
+        self.assertEqual(interceptor, self.driver.response_interceptor)
