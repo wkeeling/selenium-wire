@@ -134,7 +134,7 @@ class CaptureRequestHandler(CaptureMixin, ProxyRequestHandler):
         response = Response(
             status_code=res.status,
             reason=res.reason,
-            headers=dict(res.headers),
+            headers=res.headers.items(),
             body=res_body
         )
 
@@ -159,43 +159,11 @@ class CaptureRequestHandler(CaptureMixin, ProxyRequestHandler):
         request = Request(
             method=req.command,
             url=req.path,
-            headers=dict(req.headers),
+            headers=req.headers.items(),
             body=req_body
         )
 
         return request
-
-    # @property
-    # def options(self):
-    #     return self.server.options
-    #
-    # @options.setter
-    # def options(self, options):
-    #     self.server.options = options
-    #
-    # @property
-    # def scopes(self):
-    #     return self.server.scopes
-    #
-    # @scopes.setter
-    # def scopes(self, scopes):
-    #     self.server.scopes = scopes
-    #
-    # @property
-    # def modifier(self):
-    #     return self.server.modifier
-    #
-    # @modifier.setter
-    # def modifier(self, modifier):
-    #     self.server.modifier = modifier
-    #
-    # @property
-    # def storage(self):
-    #     return self.server.storage
-    #
-    # @storage.setter
-    # def storage(self, storage):
-    #     self.server.storage = storage
 
     @property
     def certdir(self):

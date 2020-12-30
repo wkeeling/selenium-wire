@@ -1,8 +1,14 @@
 """Houses the classes used to transfer request and response data between components. """
-from typing import Dict, List, Union
+from typing import Dict, List, Sequence, Tuple, Union
+from http.client import HTTPMessage
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
-from .utils import CaseInsensitiveDict
+
+class HTTPHeaders(HTTPMessage):
+    """Used to hold HTTP headers."""
+
+    def __repr__(self):
+        return repr(self.items())
 
 
 class Request:
@@ -11,22 +17,24 @@ class Request:
     def __init__(self, *,
                  method: str,
                  url: str,
-                 headers: Dict[str, str],
+                 headers: Sequence[Tuple[str, str]],
                  body: bytes = b''):
         """Initialise a new Request object.
 
         Args:
             method: The request method - GET, POST etc.
             url: The request URL.
-            headers: The request headers as a dictionary.
+            headers: The request headers as a sequence of 2-element tuples.
             body: The request body as bytes.
         """
         self.id = None  # The id is set for captured requests
         self.method = method
         self.url = url
-        # XXX: this is not fully RFC7230 compliant. Headers with the
-        # same name will be lost when converting to a dictionary.
-        self.headers = CaseInsensitiveDict(headers)
+        self.headers = HTTPHeaders()
+
+        for k, v in headers:
+            self.headers.add_header(k, v)
+
         self.body = body
         self.response = None
 
@@ -120,19 +128,23 @@ class Response:
     def __init__(self, *,
                  status_code: int,
                  reason: str,
-                 headers: Dict[str, str],
+                 headers: Sequence[Tuple[str, str]],
                  body: bytes = b''):
         """Initialise a new Response object.
 
         Args:
             status_code: The status code.
             reason: The reason message (e.g. "OK" or "Not Found").
-            headers: The response headers as a dictionary.
+            headers: The response headers as a sequence of 2-element tuples.
             body: The response body as bytes.
         """
         self.status_code = status_code
         self.reason = reason
-        self.headers = CaseInsensitiveDict(headers)
+        self.headers = HTTPHeaders()
+
+        for k, v in headers:
+            self.headers.add_header(k, v)
+
         self.body = body
 
     @property

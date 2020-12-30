@@ -103,7 +103,7 @@ class RequestTest(TestCase):
         self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', request2.url)
         self.assertEqual({'Accept': '*/*', 'Host': 'www.example.com',
                           'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'},
-                         request2.headers)
+                         dict(request2.headers))
         self.assertEqual(b'', request2.body)
 
     def test_request_str(self):
@@ -115,11 +115,11 @@ class RequestTest(TestCase):
         request = Request(
             method='GET',
             url='http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=',
-            headers={
-                'Accept': '*/*',
-                'Host': 'www.example.com',
-                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
-            },
+            headers=[
+                ('Accept', '*/*'),
+                ('Host', 'www.example.com'),
+                ('User-Agent', 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0')
+            ],
             body=body
         )
 
@@ -164,8 +164,8 @@ class ResponseTest(TestCase):
         self.assertEqual('OK', response2.reason)
         self.assertEqual({
             'Content-Type': 'application/json',
-            'Content-Length': 120
-        }, response2.headers)
+            'Content-Length': '120'
+        }, dict(response2.headers))
         self.assertEqual(b'', response2.body)
 
     def test_response_str(self):
@@ -177,10 +177,10 @@ class ResponseTest(TestCase):
         response = Response(
             status_code=200,
             reason='OK',
-            headers={
-                'Content-Type': 'application/json',
-                'Content-Length': 120
-            },
+            headers=[
+                ('Content-Type', 'application/json'),
+                ('Content-Length', '120'),
+            ],
             body=body
         )
         return response

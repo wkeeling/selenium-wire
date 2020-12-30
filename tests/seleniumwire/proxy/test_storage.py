@@ -66,7 +66,7 @@ class RequestStorageTest(TestCase):
         self.assertEqual({
             'Host': 'www.example.com',
             'Accept': '*/*'
-        }, loaded_request.headers)
+        }, dict(loaded_request.headers))
         self.assertIsNone(loaded_request.response)
 
     def test_save_request_with_body(self):
@@ -100,8 +100,8 @@ class RequestStorageTest(TestCase):
         self.assertEqual('OK', loaded_response.reason)
         self.assertEqual({
             'Content-Type': 'application/json',
-            'Content-Length': 500
-        }, loaded_response.headers)
+            'Content-Length': '500'
+        }, dict(loaded_response.headers))
 
     def test_save_response_with_body(self):
         body = b'some response body'
@@ -233,17 +233,17 @@ class RequestStorageTest(TestCase):
                                       'request-{}'.format(request_id), filename))
 
     def _create_request(self, url='http://www.example.com/test/path/', body=b''):
-        headers = {
-            'Host': 'www.example.com',
-            'Accept': '*/*'
-        }
+        headers = [
+            ('Host', 'www.example.com'),
+            ('Accept', '*/*')
+        ]
         return Request(method='GET', url=url, headers=headers, body=body)
 
     def _create_response(self, body=b''):
-        headers = {
-            'Content-Type': 'application/json',
-            'Content-Length': 500
-        }
+        headers = [
+            ('Content-Type', 'application/json'),
+            ('Content-Length', '500')
+        ]
         return Response(status_code=200, reason='OK', headers=headers, body=body)
 
     def setUp(self):

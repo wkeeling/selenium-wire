@@ -10,6 +10,7 @@ except ImportError as e:
 from mitmproxy import addons
 from mitmproxy.exceptions import Timeout
 from mitmproxy.master import Master
+from mitmproxy.net.http.headers import Headers
 from mitmproxy.options import Options
 from mitmproxy.proxy.config import ProxyConfig
 from mitmproxy.proxy.server import ProxyServer
@@ -52,8 +53,9 @@ class MitmProxyRequestHandler(CaptureMixin):
             self.server.request_interceptor(request)
             flow.request.method = request.method
             flow.request.url = request.url
-            flow.request.headers.clear()
-            flow.request.headers.update(request.headers)
+            flow.request.headers = Headers(
+                [(k.encode('utf-8'), v.encode('utf-8')) for k, v in request.headers.items()]
+            )
             flow.request.raw_content = request.body
 
         self.capture_request(request)
@@ -77,7 +79,7 @@ class MitmProxyRequestHandler(CaptureMixin):
         response = Response(
             status_code=flow.response.status_code,
             reason=flow.response.reason,
-            headers=dict(flow.response.headers),
+            headers=[(k, v) for k, v in flow.response.headers.items()],
             body=flow.response.raw_content
         )
 
@@ -86,8 +88,9 @@ class MitmProxyRequestHandler(CaptureMixin):
             self.server.response_interceptor(response, self._create_request(flow))
             flow.response.status_code = response.status_code
             flow.response.reason = response.reason
-            flow.response.headers.clear()
-            flow.response.headers.update(response.headers)
+            flow.response.headers = Headers(
+                [(k.encode('utf-8'), v.encode('utf-8')) for k, v in response.headers.items()]
+            )
             flow.response.raw_content = response.body
 
         self.capture_response(flow.request.id, flow.request.url, response)
@@ -101,7 +104,7 @@ class MitmProxyRequestHandler(CaptureMixin):
         request = Request(
             method=flow.request.method,
             url=flow.request.url,
-            headers=dict(flow.request.headers),
+            headers=[(k, v) for k, v in flow.request.headers.items()],
             body=flow.request.raw_content
         )
 

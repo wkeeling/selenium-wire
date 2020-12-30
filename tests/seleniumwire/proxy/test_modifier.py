@@ -446,27 +446,6 @@ class RequestModifierTest(TestCase):
         self.assertEqual(b'foo=bazz', mock_request.body)
         self.assertEqual('8', mock_request.headers['Content-Length'])
 
-    def test_override_bodies_with_multiple_url_matching(self):
-        self.modifier.bodies = [
-            (".*prod1.server.com.*", '{"foo":"baz","spam":"ham"}'),
-            (".*prod2.server.com.*", '{"foo":"baz2","spam":"ham2"}')
-        ]
-
-        # Modify a request that matches the first pattern
-        url = 'https://prod1.server.com/some/path/12345?foo=bar&spam=eggs'
-        mock_request = self._create_mock_request(url, method='POST')
-
-        self.modifier.modify_request(mock_request)
-        self.assertEqual(b'{"foo":"baz","spam":"ham"}', mock_request.body)
-
-        # Modify a request that matches the second pattern
-        url = 'https://prod2.server.com/some/path/12345?foo=bar&spam=eggs'
-        mock_request = self._create_mock_request(url, method='POST')
-
-        self.modifier.modify_request(mock_request)
-
-        self.assertEqual(b'{"foo":"baz2","spam":"ham2"}', mock_request.body)
-
     def test_override_bodies_with_url_not_matching(self):
         self.modifier.params = [
             (".*prod.server.com.*", {'foo': 'baz'})
@@ -476,17 +455,6 @@ class RequestModifierTest(TestCase):
         self.modifier.modify_request(mock_request)
 
         self.assertEqual(b'', mock_request.body)
-
-    def test_add_bodies_when_no_body(self):
-        self.modifier.bodies = '{"foo":"bazz"}'
-        mock_request = self._create_mock_request(
-            url='https://prod1.server.com/some/path/12345',
-            method='POST',
-            body=b''
-        )
-        self.modifier.modify_request(mock_request)
-        self.assertEqual(b'{"foo":"bazz"}', mock_request.body)
-        self.assertEqual('14', mock_request.headers['Content-Length'])
 
     def test_filter_out_param_qs(self):
         self.modifier.params = {

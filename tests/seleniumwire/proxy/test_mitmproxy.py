@@ -1,6 +1,8 @@
 from unittest import TestCase
 from unittest.mock import ANY, call, Mock, patch
 
+from mitmproxy.net.http.headers import Headers
+
 from seleniumwire.proxy.mitmproxy import MitmProxy, MitmProxyRequestHandler
 
 
@@ -10,7 +12,7 @@ class MitmProxyRequestHandlerTest(TestCase):
         mock_flow = Mock()
         mock_flow.request.url = 'http://somewhere.com/some/path'
         mock_flow.request.method = 'GET'
-        mock_flow.request.headers = {'Accept-Encoding': 'identity'}
+        mock_flow.request.headers = Headers([(b'Accept-Encoding', b'identity')])
         mock_flow.request.raw_content = b''
 
         self.handler.request(mock_flow)
@@ -21,7 +23,7 @@ class MitmProxyRequestHandlerTest(TestCase):
         mock_flow = Mock()
         mock_flow.request.url = 'http://somewhere.com/some/path'
         mock_flow.request.method = 'GET'
-        mock_flow.request.headers = {'Accept-Encoding': 'identity'}
+        mock_flow.request.headers = Headers([(b'Accept-Encoding', b'identity')])
         mock_flow.request.raw_content = b'foobar'
         captured_request = None
 
@@ -37,7 +39,7 @@ class MitmProxyRequestHandlerTest(TestCase):
         self.assertEqual(1, self.capture_request.call_count)
         self.assertEqual('GET', captured_request.method)
         self.assertEqual('http://somewhere.com/some/path', captured_request.url)
-        self.assertEqual({'Accept-Encoding': 'identity'}, captured_request.headers)
+        self.assertEqual({'Accept-Encoding': 'identity'}, dict(captured_request.headers))
         self.assertEqual(b'foobar', captured_request.body)
         self.assertEqual('12345', captured_request.id)
         self.assertEqual('12345', mock_flow.request.id)
@@ -46,13 +48,13 @@ class MitmProxyRequestHandlerTest(TestCase):
         mock_flow = Mock()
         mock_flow.request.url = 'http://somewhere.com/some/path'
         mock_flow.request.method = 'GET'
-        mock_flow.request.headers = {'Accept-Encoding': 'gzip'}
+        mock_flow.request.headers = Headers([(b'Accept-Encoding', b'gzip')])
         mock_flow.request.raw_content = b''
         self.server.options['disable_encoding'] = True
 
         self.handler.request(mock_flow)
 
-        self.assertEqual({'Accept-Encoding': 'identity'}, mock_flow.request.headers)
+        self.assertEqual({'Accept-Encoding': 'identity'}, dict(mock_flow.request.headers))
 
     def test_response_modifier_called(self):
         mock_flow = Mock()
@@ -60,7 +62,7 @@ class MitmProxyRequestHandlerTest(TestCase):
         mock_flow.request.url = 'http://somewhere.com/some/path'
         mock_flow.response.status_code = 200
         mock_flow.response.reason = 'OK'
-        mock_flow.response.headers = {'Content-Length': 6}
+        mock_flow.response.headers = Headers([(b'Content-Length', b'6')])
         mock_flow.response.raw_content = b'foobar'
 
         self.handler.response(mock_flow)
@@ -73,7 +75,7 @@ class MitmProxyRequestHandlerTest(TestCase):
         mock_flow.request.url = 'http://somewhere.com/some/path'
         mock_flow.response.status_code = 200
         mock_flow.response.reason = 'OK'
-        mock_flow.response.headers = {'Content-Length': 6}
+        mock_flow.response.headers = Headers([(b'Content-Length', b'6')])
         mock_flow.response.raw_content = b'foobar'
         captured_response = None
 
@@ -88,7 +90,7 @@ class MitmProxyRequestHandlerTest(TestCase):
         self.capture_response.assert_called_once_with('12345', 'http://somewhere.com/some/path', ANY)
         self.assertEqual(200, captured_response.status_code)
         self.assertEqual('OK', captured_response.reason)
-        self.assertEqual({'Content-Length': 6}, captured_response.headers)
+        self.assertEqual({'Content-Length': '6'}, dict(captured_response.headers))
         self.assertEqual(b'foobar', captured_response.body)
 
     def test_ignore_response_when_no_request(self):
@@ -125,7 +127,7 @@ class MitmProxyRequestHandlerTest(TestCase):
         mock_flow = Mock()
         mock_flow.request.url = 'http://somewhere.com/some/path'
         mock_flow.request.method = 'GET'
-        mock_flow.request.headers = {'Accept-Encoding': 'identity'}
+        mock_flow.request.headers = Headers([(b'Accept-Encoding', b'identity')])
         mock_flow.request.raw_content = b''
         
         def intercept(req):
@@ -140,18 +142,18 @@ class MitmProxyRequestHandlerTest(TestCase):
 
         self.assertEqual('POST', mock_flow.request.method)
         self.assertEqual('https://www.google.com/foo/bar?x=y', mock_flow.request.url)
-        self.assertEqual({'Accept-Encoding': 'identity', 'a': 'b'}, mock_flow.request.headers)
+        self.assertEqual({'Accept-Encoding': 'identity', 'a': 'b'}, dict(mock_flow.request.headers))
         self.assertEqual(b'foobarbaz', mock_flow.request.raw_content)
 
     def test_response_interceptor_called(self):
         mock_flow = Mock()
         mock_flow.request.id = '12345'
         mock_flow.request.url = 'http://somewhere.com/some/path'
-        mock_flow.request.headers = {}
+        mock_flow.request.headers = Headers()
         mock_flow.request.raw_content = b''
         mock_flow.response.status_code = 200
         mock_flow.response.reason = 'OK'
-        mock_flow.response.headers = {'Content-Length': 6}
+        mock_flow.response.headers = Headers([(b'Content-Length', b'6')])
         mock_flow.response.raw_content = b'foobar'
 
         def intercept(res, req):
@@ -167,7 +169,7 @@ class MitmProxyRequestHandlerTest(TestCase):
 
         self.assertEqual(201, mock_flow.response.status_code)
         self.assertEqual('Created', mock_flow.response.reason)
-        self.assertEqual({'Content-Length': 6, 'a': 'b'}, mock_flow.response.headers)
+        self.assertEqual({'Content-Length': '6', 'a': 'b'}, dict(mock_flow.response.headers))
         self.assertEqual(b'foobarbaz', mock_flow.response.raw_content)
 
     def setUp(self):

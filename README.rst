@@ -300,7 +300,7 @@ Requests have the following attributes.
     A dictionary of request parameters. If a parameter with the same name appears more than once in the request, it's value in the dictionary will be a list.
 
 ``headers``
-    A case-insensitive dictionary of request headers. Asking for ``request.headers['user-agent']`` will return the value of the ``User-Agent`` header.
+    A dictionary-like object of request headers. Headers are case-insensitive and duplicates are permitted. Asking for ``request.headers['user-agent']`` will return the value of the ``User-Agent`` header. If you wish to replace a header, make sure you delete the existing header first with ``del request.headers['header-name']``, otherwise you'll create a duplicate.
 
 ``body``
     The request body as ``bytes``. If the request has no body the value of ``body`` will be empty, i.e. ``b''``.
@@ -320,10 +320,10 @@ The response can be retrieved from a request via the ``response`` attribute. A r
     The reason phrase, e.g. ``OK`` or ``Not Found``.
 
 ``headers``
-     A case-insensitive dictionary of response headers. Asking for ``response.headers['content-length']`` will return the value of the ``Content-Length`` header.
+     A dictionary-like object of response headers. Headers are case-insensitive and duplicates are permitted. Asking for ``response.headers['content-length']`` will return the value of the ``Content-Length`` header. If you wish to replace a header, make sure you delete the existing header first with ``del response.headers['header-name']``, otherwise you'll create a duplicate.
 
 ``body``
-    The response body as ``bytes``. If the response has no body the value of ``body`` will be empty, i.e. ``b''``. If the body was compressed (zipped) by the server it will automatically be uncompressed.
+    The response body as ``bytes``. If the response has no body the value of ``body`` will be empty, i.e. ``b''``.
 
 
 Modifying Requests and Responses

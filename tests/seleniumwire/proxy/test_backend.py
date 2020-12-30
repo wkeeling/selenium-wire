@@ -324,6 +324,7 @@ class BackendIntegrationTest(TestCase):
 
     def test_intercept_request_headers(self):
         def interceptor(request):
+            del request.headers['User-Agent']
             request.headers['User-Agent'] = 'Test_User_Agent_String'
 
         self.backend.request_interceptor = interceptor
@@ -367,6 +368,7 @@ class BackendIntegrationTest(TestCase):
 
     def test_intercept_response_headers(self):
         def interceptor(response, request):
+            del response.headers['Cache-Control']
             response.headers['Cache-Control'] = 'none'
 
         self.backend.response_interceptor = interceptor
