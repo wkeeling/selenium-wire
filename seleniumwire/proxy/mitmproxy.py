@@ -7,7 +7,7 @@ except ImportError as e:
     raise ImportError("To use the mitmproxy backend you must first "
                       "install mitmproxy with 'pip install mitmproxy'.") from e
 
-from mitmproxy import addons
+from mitmproxy import addons, http
 from mitmproxy.exceptions import Timeout
 from mitmproxy.master import Master
 from mitmproxy.net.http.headers import Headers
@@ -20,6 +20,7 @@ from seleniumwire.proxy.modifier import RequestModifier
 from seleniumwire.proxy.request import Request, Response
 from seleniumwire.proxy.storage import RequestStorage
 from seleniumwire.proxy.utils import get_upstream_proxy
+
 
 RETRIES = 3
 PORT_RANGE_START = 9000
@@ -51,11 +52,19 @@ class MitmProxyRequestHandler(CaptureMixin):
         # Call the request interceptor if set
         if self.server.request_interceptor is not None:
             self.server.request_interceptor(request)
+
+            if request.response:
+                # The interceptor has created a response for us to send back immediately
+                flow.response = http.HTTPResponse.make(
+                    status_code=request.response.status_code,
+                    content=request.response.body,
+                    headers=[(k.encode('utf-8'), v.encode('utf-8')) for k, v in request.response.headers.items()]
+                )
+                return
+
             flow.request.method = request.method
             flow.request.url = request.url
-            flow.request.headers = Headers(
-                [(k.encode('utf-8'), v.encode('utf-8')) for k, v in request.headers.items()]
-            )
+            flow.request.headers = self._to_headers_obj(request.headers)
             flow.request.raw_content = request.body
 
         self.capture_request(request)
@@ -85,12 +94,10 @@ class MitmProxyRequestHandler(CaptureMixin):
 
         # Call the response interceptor if set
         if self.server.response_interceptor is not None:
-            self.server.response_interceptor(response, self._create_request(flow))
+            self.server.response_interceptor(self._create_request(flow, response), response)
             flow.response.status_code = response.status_code
             flow.response.reason = response.reason
-            flow.response.headers = Headers(
-                [(k.encode('utf-8'), v.encode('utf-8')) for k, v in response.headers.items()]
-            )
+            flow.response.headers = self._to_headers_obj(response.headers)
             flow.response.raw_content = response.body
 
         self.capture_response(flow.request.id, flow.request.url, response)
@@ -100,15 +107,19 @@ class MitmProxyRequestHandler(CaptureMixin):
         if self.in_scope(self.server.scopes, flow.request.url):
             flow.response.stream = False
 
-    def _create_request(self, flow):
+    def _create_request(self, flow, response=None):
         request = Request(
             method=flow.request.method,
             url=flow.request.url,
             headers=[(k, v) for k, v in flow.request.headers.items()],
             body=flow.request.raw_content
         )
+        request.response = response
 
         return request
+
+    def _to_headers_obj(self, headers):
+        return Headers([(k.encode('utf-8'), v.encode('utf-8')) for k, v in headers.items()])
 
 
 class MitmProxy:

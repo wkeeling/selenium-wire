@@ -1,8 +1,9 @@
-from selenium.webdriver import Chrome as _Chrome, ChromeOptions
+from selenium.webdriver import Chrome as _Chrome
+from selenium.webdriver import ChromeOptions
 from selenium.webdriver import Edge as _Edge
 from selenium.webdriver import Firefox as _Firefox
-from selenium.webdriver import Safari as _Safari
 from selenium.webdriver import Remote as _Remote
+from selenium.webdriver import Safari as _Safari
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from ..proxy import backend
@@ -38,7 +39,7 @@ class Firefox(InspectRequestsMixin, _Firefox):
                 'proxyType': 'manual',
                 'httpProxy': '{}:{}'.format(addr, port),
                 'sslProxy': '{}:{}'.format(addr, port),
-                'noProxy': [],
+                'noProxy': ['tracking-protection.cdn.mozilla.net'],
             }
             capabilities['acceptInsecureCerts'] = True
 
@@ -204,4 +205,3 @@ class Remote(InspectRequestsMixin, _Remote):
     def quit(self):
         self.proxy.shutdown()
         super().quit()
-

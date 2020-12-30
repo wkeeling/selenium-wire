@@ -1,3 +1,4 @@
+import inspect
 import time
 from typing import List, Union
 
@@ -289,6 +290,8 @@ class InspectRequestsMixin:
 
     @response_interceptor.setter
     def response_interceptor(self, interceptor: callable):
+        if len(inspect.signature(interceptor).parameters) != 2:
+            raise RuntimeError('A response interceptor takes two parameters: the request and response')
         self.proxy.response_interceptor = interceptor
 
     @response_interceptor.deleter

@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import ANY, call, Mock, patch
+from unittest.mock import ANY, Mock, call, patch
 
 from mitmproxy.net.http.headers import Headers
 
@@ -145,6 +145,28 @@ class MitmProxyRequestHandlerTest(TestCase):
         self.assertEqual({'Accept-Encoding': 'identity', 'a': 'b'}, dict(mock_flow.request.headers))
         self.assertEqual(b'foobarbaz', mock_flow.request.raw_content)
 
+    def test_request_interceptor_creates_response(self):
+        mock_flow = Mock()
+        mock_flow.request.url = 'http://somewhere.com/some/path'
+        mock_flow.request.method = 'GET'
+        mock_flow.request.headers = Headers([(b'Accept-Encoding', b'identity')])
+        mock_flow.request.raw_content = b''
+
+        def intercept(req):
+            req.create_response(
+                status_code=200,
+                headers={'a': 'b'},
+                body=b'foobarbaz'
+            )
+
+        self.server.request_interceptor = intercept
+
+        self.handler.request(mock_flow)
+
+        self.assertEqual(200, mock_flow.response.status_code)
+        self.assertEqual({'a': 'b', 'content-length': '9'}, dict(mock_flow.response.headers))
+        self.assertEqual(b'foobarbaz', mock_flow.response.content)
+
     def test_response_interceptor_called(self):
         mock_flow = Mock()
         mock_flow.request.id = '12345'
@@ -156,7 +178,7 @@ class MitmProxyRequestHandlerTest(TestCase):
         mock_flow.response.headers = Headers([(b'Content-Length', b'6')])
         mock_flow.response.raw_content = b'foobar'
 
-        def intercept(res, req):
+        def intercept(req, res):
             if req.url == 'http://somewhere.com/some/path':
                 res.status_code = 201
                 res.reason = 'Created'
@@ -360,4 +382,3 @@ class MitmProxyTest(TestCase):
         patcher = patch('seleniumwire.proxy.mitmproxy.asyncio')
         self.mock_asyncio = patcher.start()
         self.addCleanup(patcher.stop)
-

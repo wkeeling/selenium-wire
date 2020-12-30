@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import ANY, Mock
 
 from seleniumwire.proxy.handler import CaptureRequestHandler
 
@@ -34,15 +34,8 @@ class CaptureRequestHandlerTest(TestCase):
         self.assertEqual(1, len(saved))
         self.assertEqual('https://www.google.com/foo/bar?x=y', saved[0].url)
 
-    def test_ignores_options(self):
-        self.handler.command = 'OPTIONS'
-
-        self.handler.handle_request(self.handler, self.body)
-
-        self.assertFalse(self.mock_storage.save_request.called)
-
-    def test_ignores_get(self):
-        self.handler.server.options = {'ignore_http_methods': ['OPTIONS', 'GET']}
+    def test_ignore_get_method(self):
+        self.handler.server.options = {'ignore_http_methods': ['GET']}
 
         self.handler.handle_request(self.handler, self.body)
 
@@ -118,10 +111,27 @@ class CaptureRequestHandlerTest(TestCase):
         self.assertEqual(b'foobarbaz', body)
         self.assertEqual({'a': 'b'}, dict(self.handler.headers))
 
+    def test_request_interceptor_creates_response(self):
+        def intercept(req):
+            req.create_response(
+                status_code=200,
+                headers={'a': 'b'},
+                body=b'foobarbaz'
+            )
+
+        self.handler.server.request_interceptor = intercept
+
+        body = self.handler.handle_request(self.handler, self.body)
+
+        self.assertIs(False, body)
+        self.handler.commit_response.assert_called_once_with(
+            200, 'OK', ANY, b'foobarbaz'
+        )
+
     def test_response_interceptor_called(self):
         response, res_body = Mock(status=200, reason='OK', headers={}), b'the body'
 
-        def intercept(res, req):
+        def intercept(req, res):
             if req.url == 'https://www.google.com/foo/bar?x=y':
                 res.status_code = 201
                 res.reason = 'Created'
@@ -153,4 +163,5 @@ class CaptureRequestHandlerTest(TestCase):
         self.handler.path = 'https://www.google.com/foo/bar?x=y'
         self.handler.command = 'GET'
         self.handler.status = None
+        self.handler.commit_response = Mock()
         self.body = None

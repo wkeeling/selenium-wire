@@ -1,6 +1,7 @@
 """Houses the classes used to transfer request and response data between components. """
-from typing import Dict, List, Sequence, Tuple, Union
+from http import HTTPStatus
 from http.client import HTTPMessage
+from typing import Dict, Iterable, List, Tuple, Union
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 
@@ -17,14 +18,14 @@ class Request:
     def __init__(self, *,
                  method: str,
                  url: str,
-                 headers: Sequence[Tuple[str, str]],
+                 headers: Iterable[Tuple[str, str]],
                  body: bytes = b''):
         """Initialise a new Request object.
 
         Args:
             method: The request method - GET, POST etc.
             url: The request URL.
-            headers: The request headers as a sequence of 2-element tuples.
+            headers: The request headers as an iterable of 2-element tuples.
             body: The request body as bytes.
         """
         self.id = None  # The id is set for captured requests
@@ -114,6 +115,32 @@ class Request:
         parts[2] = p
         self.url = urlunsplit(parts)
 
+    def create_response(self,
+                        status_code: int,
+                        headers: Union[Dict[str, str], Iterable[Tuple[str, str]]] = None,
+                        body: bytes = b''):
+        """Create a response object and attach it to this request."""
+        try:
+            reason = {v: v.phrase for v in HTTPStatus.__members__.values()}[status_code]
+        except KeyError:
+            raise ValueError('Unknown status code: {}'.format(status_code))
+
+        if isinstance(headers, dict):
+            headers = headers.items()
+
+        self.response = Response(
+            status_code=status_code,
+            reason=reason,
+            headers=headers or (),
+            body=body
+        )
+
+    def abort(self, error_code: int):
+        """Convenience method for signalling that this request is to be terminated
+        with a specific error code.
+        """
+        self.create_response(status_code=error_code)
+
     def __repr__(self):
         return 'Request(method={method!r}, url={url!r}, headers={headers!r}, body={_body!r})' \
             .format_map(vars(self))
@@ -128,14 +155,14 @@ class Response:
     def __init__(self, *,
                  status_code: int,
                  reason: str,
-                 headers: Sequence[Tuple[str, str]],
+                 headers: Iterable[Tuple[str, str]],
                  body: bytes = b''):
         """Initialise a new Response object.
 
         Args:
             status_code: The status code.
             reason: The reason message (e.g. "OK" or "Not Found").
-            headers: The response headers as a sequence of 2-element tuples.
+            headers: The response headers as an iterable of 2-element tuples.
             body: The response body as bytes.
         """
         self.status_code = status_code

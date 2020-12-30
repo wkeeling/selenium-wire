@@ -1,24 +1,22 @@
 import argparse
-from argparse import RawDescriptionHelpFormatter
 import logging
 import signal
+from argparse import RawDescriptionHelpFormatter
 
-from seleniumwire.proxy import client, utils
+from seleniumwire.proxy import backend, utils
 
 logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 
 
 def standalone_proxy(port=0):
-    c = client.AdminClient()
-
-    # Configure shutdown handlers
-    signal.signal(signal.SIGTERM, lambda *_: c.destroy_proxy())
-    signal.signal(signal.SIGINT, lambda *_: c.destroy_proxy())
-
-    c.create_proxy(port=int(port), options={
+    b = backend.create(port=int(port), options={
         'standalone': True,
         'verify_ssl': False,
     })
+
+    # Configure shutdown handlers
+    signal.signal(signal.SIGTERM, lambda *_: b.shutdown())
+    signal.signal(signal.SIGINT, lambda *_: b.shutdown())
 
 
 if __name__ == '__main__':

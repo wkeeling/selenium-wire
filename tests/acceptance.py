@@ -8,6 +8,22 @@ logging.basicConfig(level=logging.DEBUG)
 
 class BrowserIntegrationTest(TestCase):
 
+    def test_simple_example(self):
+        # Create a new instance of the Firefox driver
+        driver = webdriver.Firefox()
+
+        # Go to the Google home page
+        driver.get('https://www.google.com')
+
+        # Access requests via the `requests` attribute
+        for request in driver.requests:
+            if request.response:
+                print(
+                    request.url,
+                    request.response.status_code,
+                    request.response.headers['Content-Type']
+                )
+
     def test_firefox_can_access_requests(self):
         url = 'https://www.python.org/'
         driver = webdriver.Firefox()
@@ -201,4 +217,3 @@ class BrowserIntegrationTest(TestCase):
         driver.get('https://www.python.org/')
 
         driver.quit()
-

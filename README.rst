@@ -3,8 +3,6 @@ Selenium Wire
 
 Selenium Wire extends Selenium's Python bindings to give your tests access to the underlying requests made by the browser. It is a lightweight library designed for ease of use with minimal external dependencies.
 
-With Selenium Wire, you author your tests in just the same way as you do with Selenium, but you get an additional user-friendly API for accessing things such as the request/response headers, status code and body content.
-
 .. image:: https://travis-ci.org/wkeeling/selenium-wire.svg?branch=master
         :target: https://travis-ci.org/wkeeling/selenium-wire
 
@@ -59,45 +57,45 @@ Features
 
 * Pure Python, user-friendly API
 * HTTP and HTTPS requests captured
-* Access headers, parameters, body
-* Modify headers, parameters
-* Rewrite URLs
+* Intercept requests and responses
+* Modify requests on the fly
 * Proxy server support
-
 
 Compatibilty
 ~~~~~~~~~~~~
 
 * Python 3.6+
 * Selenium 3.4.0+
-* Firefox, Chrome, Safari and Edge are supported
+* Firefox, Chrome and Remote Webdriver supported
 
 Table of Contents
 ~~~~~~~~~~~~~~~~~
 
 - `Installation`_
 
-  * `OpenSSL`_
   * `Browser Setup`_
 
-- `Usage`_
+- `Creating the Webdriver`_
 
-  * `Creating the Webdriver`_
-  * `Accessing Requests`_
-  * `Waiting for a Request`_
-  * `Clearing Requests`_
-  * `Scoping Request Capture`_
+- `Accessing Requests`_
 
-- `Request Attributes`_
+- `Limiting Request Capture`_
 
-- `Response Attributes`_
+- `Request Objects`_
 
-- `Modifying Requests and Responses`_
+- `Response Objects`_
 
-  * `Modifying Headers`_
-  * `Modifying Parameters`_
-  * `Modifying the Query String`_
-  * `Rewriting URLs`_
+- `Intercepting Requests and Responses`_
+
+  * `Example: Add a request header`_
+  * `Example: Replace an existing request header`_
+  * `Example: Add a response header`_
+  * `Example: Add a request parameter`_
+  * `Example: Update JSON in a POST request body`_
+  * `Example: Block a request`_
+  * `Example: Rewrite a URL`_
+  * `Example: Mock a response`_
+  * `Unset an interceptor`_
 
 - `Proxies`_
 
@@ -125,30 +123,16 @@ Install using pip:
 Browser Setup
 -------------
 
-**Firefox and Chrome**
-
 No specific configuration should be necessary - everything should just work.
 
-You will however need to ensure that you have downloaded the `Gecko driver`_ and `Chrome driver`_ for Firefox and Chrome to be remotely controlled - the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on your PATH.
-
-.. _`Gecko driver`: https://github.com/mozilla/geckodriver/
+You will however need to ensure that you have downloaded the `Chrome driver`_ and `Gecko driver`_ for Chrome and Firefox to be remotely controlled - the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on your PATH.
 
 .. _`Chrome driver`: https://sites.google.com/a/chromium.org/chromedriver/
 
-**Safari**
+.. _`Gecko driver`: https://github.com/mozilla/geckodriver/
 
-There are a few `manual steps`_ that have to be carried out before you can use Safari with Selenium Wire.
-
-.. _`manual steps`: ./safari_setup.rst
-
-**Edge**
-
-Like Safari, Microsoft Edge requires some `manual configuration`_ before it can be used with Selenium Wire.
-
-.. _`manual configuration`: ./edge_setup.rst
-
-Usage
-~~~~~
+Creating the Webdriver
+~~~~~~~~~~~~~~~~~~~~~~
 
 Ensure that you import ``webdriver`` from the ``seleniumwire`` package:
 
@@ -163,99 +147,57 @@ Ensure that you import ``webdriver`` from the ``seleniumwire`` package:
     # Sub-packages of webdriver must still be imported from `selenium` itself
     from selenium.webdriver.support.ui import WebDriverWait
 
-Creating the Webdriver
-----------------------
+**Chrome and Firefox**
 
-For Firefox and Chrome, you don't need to do anything special. Just instantiate the webdriver as you would normally, passing in Selenium specific options if you have any. Selenium Wire also has it's `own options`_ that can be passed in the ``seleniumwire_options`` attribute.
+For Chrome and Firefox, you don't need to do anything special. Just instantiate the webdriver as you would normally with ``webdriver.Chrome()`` or ``webdriver.Firefox()``, passing in any Selenium specific options. Selenium Wire also has it's `own options`_ that can be passed in the ``seleniumwire_options`` attribute.
 
 .. _`own options`: #all-options
 
-**Firefox**
+**Remote**
+
+Selenium Wire has limited support for using the remote webdriver client. When you create an instance of the remote webdriver, you need to specify the hostname or IP address of the machine (or container) running Selenium Wire. This allows the remote instance to communicate back to Selenium Wire with its requests and responses.
 
 .. code:: python
 
-    driver = webdriver.Firefox()
-
-**Chrome**
-
-.. code:: python
-
-    driver = webdriver.Chrome()
-
-**Safari**
-
-For Safari, you need to tell Selenium Wire the port number you selected when you configured the browser in `Browser Setup`_.
-For example, if you chose port 12345, then you would pass it in the ``seleniumwire_options`` like this:
-
-.. code:: python
-
-    driver = webdriver.Safari(seleniumwire_options={'port': 12345})
-
-**Edge**
-
-For Edge, you need to tell Selenium Wire the port number you selected when you configured the browser in `Browser Setup`_.
-For example, if you chose port 12345, then you would pass it in the ``seleniumwire_options`` like this:
-
-.. code:: python
-
-    driver = webdriver.Edge(seleniumwire_options={'port': 12345})
+    options = {
+        'addr': 'hostname_or_ip'  # Address of the machine running Selenium Wire
+    }
+    driver = webdriver.Remote(
+        command_executor='http://www.example.com',
+        seleniumwire_options=options
+    )
 
 Accessing Requests
-------------------
+~~~~~~~~~~~~~~~~~~
 
-Selenium Wire captures all HTTP/HTTPS traffic made by the browser during a test.
+Selenium Wire captures all HTTP/HTTPS traffic made by the browser.
 
-**driver.requests**
+``driver.requests``
+    The list of captured requests in chronological order.
 
-You can retrieve all requests with the ``driver.requests`` attribute. The requests are just a list and can be iterated (like in the opening example) and indexed:
+``driver.last_request``
+    Convenience attribute for retrieving the most recently captured request. This is also more efficient than using ``driver.requests[-1]``.
 
-.. code:: python
+``driver.wait_for_request(path, timeout=10)``
+    This method will wait for a previous request with a specific URL to complete before continuing. The ``path`` attribute can be a regex that will be matched within the request URL. Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action. Also note that since ``path`` can be a regex, you must escape special characters such as question marks with a slash. A ``TimeoutException`` is raised if no match is found within the timeout period.
 
-    first_request = driver.requests[0]
+    For example, to wait for an AJAX request to return after a button is clicked:
 
-**driver.last_request**
+    .. code:: python
 
-The list of requests held by ``driver.requests`` is in chronological order. If you want to access the most recent request, use the dedicated ``driver.last_request`` attribute:
+        # Click a button that triggers a background request to https://server/api/products/12345/
+        button_element.click()
 
-.. code:: python
+        # Wait for the request/response to complete
+        request = driver.wait_for_request('/api/products/12345/$')
 
-    last_request = driver.last_request
+``driver.request_interceptor``
+    Used to set a request interceptor. See `Intercepting Requests and Responses`_.
 
-This is more efficient than using ``driver.requests[-1]``.
+``driver.response_interceptor``
+    Used to set a response interceptor. See `Intercepting Requests and Responses`_.
 
-Waiting for a Request
----------------------
-
-When you ask for captured requests using ``driver.requests`` or ``driver.last_request`` you have to be sure that the requests you're interested in have actually been captured. If you ask too soon, then you may find that a request is not yet present, or is present but has no associated response.
-
-**driver.wait_for_request(path)**
-
-This method will wait for a previous request with a specific URL to complete before allowing the test to continue. The ``path`` attribute can be a regex that will be searched within the request URL.
-
-For example, to wait for an AJAX request to return after a button is clicked:
-
-.. code:: python
-
-    # Click a button that triggers a background request to https://server/api/products/12345/
-    button_element.click()
-
-    # Wait for the request/response to complete
-    request = driver.wait_for_request('/api/products/12345/$')
-
-* Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action.
-* Note that because the ``path`` can be a regex, you must escape special characters such as question marks with a slash.
-
-The ``wait_for_request()`` method will return the first *fully completed* request it finds that matches the supplied path. Fully completed meaning that the response must have returned. The method will wait up to 10 seconds by default but you can vary that with the ``timeout`` argument:
-
-.. code:: python
-
-    # Wait up to 30 seconds for a request/response
-    request = driver.wait_for_request('/api/products/12345/$', timeout=30)
-
-If a fully completed request is not seen within the timeout period a ``TimeoutException`` is raised.
-
-Clearing Requests
------------------
+**Clearing Requests**
 
 To clear previously captured requests, use ``del``:
 
@@ -263,26 +205,75 @@ To clear previously captured requests, use ``del``:
 
     del driver.requests
 
-Scoping Request Capture
------------------------
+Limiting Request Capture
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-By default, Selenium Wire will capture all requests the browser makes during a test. You may want to restrict this to particular URLs - e.g. for performance reasons.
+By default, Selenium Wire will capture all requests the browser makes, but there are a number of ways you can limit request capture. You may want to do this for performance reasons.
 
-To restrict request capture use the ``scopes`` attribute. This accepts a list of regular expressions that will match URLs to be captured.
+``driver.scopes``
+    This accepts a list of regular expressions that will match URLs to be captured. It should be set on the driver before making any requests.
 
-.. code:: python
+    .. code:: python
 
-    driver.scopes = [
-        '.*stackoverflow.*',
-        '.*github.*'
-    ]
+        driver.scopes = [
+            '.*stackoverflow.*',
+            '.*github.*'
+        ]
 
-    # Only request URLs containing "stackoverflow" or "github" will now be captured...
+        driver.get(...)  # Start making requests
 
-Request Attributes
-~~~~~~~~~~~~~~~~~~
+        # Only request URLs containing "stackoverflow" or "github" will now be captured
 
-Requests have the following attributes.
+    Note that even if a request is out of scope and not captured, it will still travel through Selenium Wire.
+
+``seleniumwire_options.ignore_http_methods``
+    Use this option to prevent capturing certain HTTP methods. For example, to ignore OPTIONS requests:
+
+    .. code:: python
+
+        options = {
+            'ignore_http_methods': ['OPTIONS']
+        }
+        driver = webdriver.Firefox(seleniumwire_options=options)
+
+    Note that even if a request is ignored and not captured, it will still travel through Selenium Wire.
+
+``seleniumwire_options.exclude_hosts``
+    Use this option to bypass Selenium Wire entirely. Any requests made to addresses listed here will go direct from the browser to the server without involving Selenium Wire. Note that if you've configured an upstream proxy then these requests will also bypass that proxy.
+
+    .. code:: python
+
+        options = {
+            'exclude_hosts': ['address1', 'address2']  # Bypass Selenium Wire for address1 and address2
+        }
+        driver = webdriver.Firefox(seleniumwire_options=options)
+
+``request.abort()``
+    You can abort a request early by using ``request.abort()`` from within a `request interceptor`_. This will send an immediate response back to the client without the request travelling any further. Aborted requests are not captured.
+
+    .. code:: python
+
+        from http import HTTPStatus
+
+        def interceptor(request):
+            # Block PNG images, CSS and Javascript resources
+            if request.path.endswith(('.png', '.css', '.js')):
+                request.abort(HTTPStatus.FORBIDDEN)
+
+        driver.request_interceptor = request_interceptor
+
+        driver.get(...)  # Start making requests
+
+.. _`request interceptor`: #intercepting-requests-and-responses
+
+If you find you're not getting the performance you want after limiting request capture, you might try switching to the `mitmproxy backend`_.
+
+.. _`mitmproxy backend`: #backends
+
+Request Objects
+~~~~~~~~~~~~~~~
+
+Request objects have the following attributes.
 
 ``method``
     The HTTP method type, e.g. ``GET`` or ``POST``.
@@ -308,10 +299,18 @@ Requests have the following attributes.
 ``response``
    The response associated with the request. This will be ``None`` if the request has no response.
 
-Response Attributes
-~~~~~~~~~~~~~~~~~~~
+Request objects have the following methods.
 
-The response can be retrieved from a request via the ``response`` attribute. A response may be ``None`` if it was never captured, which may happen if you asked for it before it returned or if the server timed out etc. A response has the following attributes.
+``abort(error_code)``
+    Trigger immediate termination of the request with the supplied error code. For use within request interceptors. See `Example: Block a request`_.
+
+``create_response(status_code, reason, headers, body)``
+    Create a response and return it without sending any data to the remote server. For use within request interceptors. See `Example: Mock a response`_.
+
+Response Objects
+~~~~~~~~~~~~~~~~
+
+Response objects have the following attributes.
 
 ``status_code``
     The status code of the response, e.g. ``200`` or ``404``.
@@ -326,187 +325,181 @@ The response can be retrieved from a request via the ``response`` attribute. A r
     The response body as ``bytes``. If the response has no body the value of ``body`` will be empty, i.e. ``b''``.
 
 
-Modifying Requests and Responses
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Intercepting Requests and Responses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Selenium Wire allows you to modify requests and responses. Requests are modified *after* the browser sends them and responses are modified *before* the browser receives them.
+Selenium Wire allows you to modify requests and responses on the fly using interceptors. An interceptor is a function that gets invoked with the requests and responses as they pass through Selenium Wire. Within an interceptor you can modify the request and response as you see fit.
 
-Modifying Headers
------------------
+You set your interceptor functions using the ``driver.request_interceptor`` and ``driver.response_interceptor`` attributes before you start using the driver.
 
-The ``driver.header_overrides`` attribute is used for modifying headers.
-
-To add one or more new headers to a request, create a dictionary containing those headers and set it as the value of ``header_overrides``.
+To set a request interceptor:
 
 .. code:: python
 
-    driver.header_overrides = {
-        'New-Header1': 'Some Value',
-        'New-Header2': 'Some Value'
-    }
+    def request_interceptor(request):
+        # Code that modifies the request
+        ...
 
-    # All subsequent requests will now contain New-Header1 and New-Header2
+    driver.request_interceptor = request_interceptor
 
-If a header already exists in a request it will be overwritten by the one in the dictionary. Header names are case-insensitive.
+    driver.get(...)  # Start making requests
 
-For response headers, just prefix the header name with ``response:``
-
-.. code:: python
-
-    driver.header_overrides = {
-        'New-Header1': 'Some Value',
-        'response:New-Header2': 'Some Value'
-    }
-
-    # All subsequent requests will now contain New-Header1
-    # All responses will contain New-Header2
-
-To remove one or more headers from a request or response, set the value of those headers to ``None``.
+To set a response interceptor:
 
 .. code:: python
 
-    driver.header_overrides = {
-        'Existing-Header1': None,
-        'response:Existing-Header2': None
-    }
+    def response_interceptor(request, response):  # Takes two args
+        # Code that modifies the response
+        ...
 
-    # All subsequent requests will *not* contain Existing-Header1
-    # All responses will *not* contain Existing-Header2
+    driver.response_interceptor = response_interceptor
 
-Header overrides can also be applied on a per-URL basis using a regex to match the appropriate request URL:
+Note that the response interceptor takes two arguments, the originating request and the response.
 
-.. code:: python
 
-    driver.header_overrides = [
-        ('.*prod1.server.com.*', {'User-Agent': 'Test_User_Agent_String',
-                                  'response:New-Header': 'HeaderValue'}),
-        ('.*prod2.server.com.*', {'User-Agent': 'Test_User_Agent_String2',
-                                  'response:New-Header': 'HeaderValue2'})
-    ]
-
-    # Only requests/responses to prod1.server.com or prod2.server.com will have their headers modified
-
-To clear the header overrides that you have set, use ``del``:
+Example: Add a request header
+-----------------------------
 
 .. code:: python
 
-    del driver.header_overrides
+    def interceptor(request):
+        request.headers['New-Header'] = 'Some Value'
 
-Modifying Parameters
+    driver.request_interceptor = request_interceptor
+
+    # All requests will now contain New-Header
+
+Example: Replace an existing request header
+-------------------------------------------
+
+Duplicate header names are permitted in an HTTP request, so before setting the replacement header you must first delete the existing header using ``del`` like in the following example, otherwise two headers with the same name will exist (``request.headers`` is a special dictionary-like object that allows duplicates).
+
+.. code:: python
+
+    def interceptor(request):
+        del request.headers['Referer']  # Remember to delete the header first
+        request.headers['Referer'] = 'some_referer'  # Spoof the referer
+
+    driver.request_interceptor = request_interceptor
+
+    # All requests will now use 'some_referer' for the referer
+
+Example: Add a response header
+------------------------------
+
+.. code:: python
+
+    def interceptor(request, response):  # A response interceptor takes two args
+        if request.url == 'https://server.com/some/path':
+            response.headers['New-Header'] = 'Some Value'
+
+    driver.response_interceptor = response_interceptor
+
+    # Responses from https://server.com/some/path will now contain New-Header
+
+Example: Add a request parameter
+--------------------------------
+
+Request parameters work differently to headers in that they are calculated when they are set on the request. That means that you first have to read them, then update them, and then write them back - like in the following example. Parameters are held in a regular dictionary, so parameters with the same name will be overwritten.
+
+.. code:: python
+
+    def interceptor(request):
+        params = request.params
+        params['foo'] = 'bar'
+        request.params = params
+
+    driver.request_interceptor = request_interceptor
+
+    # foo=bar will be added to all requests
+
+Example: Update JSON in a POST request body
+-----------------------------------------------
+
+.. code:: python
+
+    import json
+
+    def interceptor(request):
+        if request.method == 'POST' and request.headers['Content-Type'] = 'application/json':
+            # The body is in bytes so convert to a string
+            body = request.body.decode('utf-8')
+            # Load the JSON
+            data = json.loads(body)
+            # Add a new property
+            data['foo'] = 'bar'
+            # Set the JSON back on the request
+            request.body = json.dumps(data).encode('utf-8')
+            # Update the content length
+            del request.headers['Content-Length']
+            request.headers['Content-Length'] = str(len(request.body))
+
+    driver.request_interceptor = request_interceptor
+
+Example: Block a request
+------------------------
+
+You can use ``request.abort()`` to block a request and send an error code back to the client.
+
+.. code:: python
+
+    from http import HTTPStatus
+
+    def interceptor(request):
+        # Block PNG images, CSS and Javascript resources
+        if request.path.endswith(('.png', '.css', '.js')):
+            request.abort(HTTPStatus.FORBIDDEN)
+
+    driver.request_interceptor = request_interceptor
+
+    # Requests for PNG images, CSS and Javascript will result in a 403 Forbidden
+
+Example: Rewrite a URL
+----------------------
+
+.. code:: python
+
+    def interceptor(request):
+        if request.url == 'https://prod1.server.com
+        params = request.params
+        params['foo'] = 'bar'
+        request.params = params
+
+    driver.request_interceptor = request_interceptor
+
+    # foo=bar will be added to all requests
+
+Example: Mock a response
+------------------------
+
+You can use ``request.create_response()`` to send a custom reply back to the client. No data will be sent to the remote server.
+
+.. code:: python
+
+    def interceptor(request):
+        if request.url == 'https://server.com/some/path':
+            request.create_response(
+                status_code=200,
+                reason='OK',  # Optional, will be determined from the status code
+                headers={'Content-Type': 'text/html'},  # Optional headers dictionary
+                body='<html>Hello World!</html>'  # Optional body
+            )
+
+    driver.request_interceptor = request_interceptor
+
+    # Requests to https://server.com/some/path will have their responses mocked
+
+*Have any other examples you think could be useful? Please submit a PR :)*
+
+Unset an interceptor
 --------------------
 
-The ``driver.param_overrides`` attribute is used for modifying request parameters. Parameters are modified *after* the browser sends them.
-
-For GET requests the query string is modified. For POST requests that have a content type of ``application/x-www-form-urlencoded`` the body of the request is modified.
-
-To add one or more new parameters to a request, create a dictionary containing those parameters and set it as the value of ``param_overrides``.
+To unset an interceptor, use ``del``:
 
 .. code:: python
 
-    driver.param_overrides = {
-        'new_param1': 'val1',
-        'new_param2': 'val2'
-    }
-
-    # All subsequent requests will now contain new_param1 and new_param2
-
-If a parameter already exists in a request it will be overwritten by the one in the dictionary.
-
-To remove one or more parameters from a request, set the value of those parameters to ``None``.
-
-.. code:: python
-
-    driver.param_overrides = {
-        'existing_param1': None,
-        'existing_param2': None
-    }
-
-    # All subsequent requests will *not* contain existing_param1 or existing_param2
-
-Perhaps more usefully, parameter overrides can be applied on a per-URL basis using a regex to match the appropriate request URL:
-
-.. code:: python
-
-    driver.param_overrides = [
-        ('https://server/some/path.*', {'new_param1': 'val1',
-                                        'new_param2': 'val2'}),
-        ('https://server/some/other/path.*', {'new_param3': 'val3'})
-    ]
-
-    # Only requests starting https://server/some/path and https://server/some/other/path
-    # will have their parameters modified
-
-To clear the parameter overrides that you have set, use ``del``:
-
-.. code:: python
-
-    del driver.param_overrides
-
-Modifying the Query String
----------------------------
-
-The ``driver.querystring_overrides`` attribute is used for modifying the whole request query string. The query string is modified *after* the browser sends the request.
-
-Specifying a query string override will replace any existing query string in the request, or will add it to the request if it doesn't already exist.
-
-.. code:: python
-
-    driver.querystring_overrides = 'foo=bar&spam=eggs'
-
-    # All subsequent requests will now have the query string foo=bar&spam=eggs
-    # e.g. http://server/some/path?foo=bar&spam=eggs
-
-To remove a query string from a request, set the value to empty string.
-
-.. code:: python
-
-    driver.querystring_overrides = ''
-
-    # All subsequent requests will *not* contain a query string
-
-Perhaps more usefully, query string overrides can be applied on a per-URL basis using a regex to match the appropriate request URL:
-
-.. code:: python
-
-    driver.querystring_overrides = [
-        ('https://server/some/path.*', 'foo=bar&spam=eggs'),
-        ('https://server/some/other/path.*', 'a=b&c=d&x=z')
-    ]
-
-    # Only requests starting https://server/some/path and https://server/some/other/path
-    # will have their query strings modified
-
-To clear the query string overrides that you have set, use ``del``:
-
-.. code:: python
-
-    del driver.querystring_overrides
-
-Rewriting URLs
---------------
-
-The ``driver.rewrite_rules`` attribute is used for rewriting request URLs. URLs are rewritten *after* the browser sends the request.
-
-Each rewrite rule should be specified as a 2-tuple or list, the first element containing the URL pattern to match and the second element the replacement. One or more rewrite rules can be supplied.
-
-.. code:: python
-
-    driver.rewrite_rules = [
-        (r'(https?://)prod1.server.com(.*)', r'\1prod2.server.com\2'),
-    ]
-
-    # All subsequent requests that match http://prod1.server.com... or https://prod1.server.com...
-    # will be rewritten to http://prod2.server.com... or https://prod2.server.com...
-
-The match and replacement syntax is just Python's regex syntax. See `re.sub`_ for more information.
-
-.. _`re.sub`: https://docs.python.org/3/library/re.html#re.sub
-
-To clear the rewrite rules that you have set, use ``del``:
-
-.. code:: python
-
-    del driver.rewrite_rules
+    del driver.request_interceptor
+    del driver.response_interceptor
 
 Proxies
 ~~~~~~~
@@ -651,6 +644,16 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
+``exclude_hosts``
+    A list of addresses for which Selenium Wire should be bypassed entirely. Note that if you have configured an upstream proxy then requests to excluded hosts will also bypass that proxy.
+
+    .. code:: python
+
+        options = {
+            'exclude_hosts': ['address1', 'address2']  # Bypass Selenium Wire for address1 and address2
+        }
+        driver = webdriver.Firefox(seleniumwire_options=options)
+
 ``connection_keep_alive``
     Whether connections should be reused across requests. The default is ``False``.
     *Applies to the default backend only.*
@@ -677,6 +680,8 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
 ``custom_response_handler``
     This function that should be passed in custom response handlers should maintain a signature that it compatible with ``CaptureRequestHandler.handle_response``, as all arguments passed to that function will in turn be passed to your function. In order to modify the response data, you will need to return it from your function (the response data for the request is given in the ``res_body`` argument).
     *Applies to the default backend only.*
+
+    *DEPRECATED. Use webdriver.response_interceptor instead.*
 
 .. code:: python
 
@@ -707,12 +712,12 @@ The code above will print something like this to the console (loading a page wil
     driver = webdriver.Firefox(seleniumwire_options=options)
 
 ``ignore_http_methods``
-    A list of HTTP methods (specified as uppercase strings) that should be ignored by Selenium Wire and not captured. The default is ``['OPTIONS']`` which ignores all OPTIONS requests. To capture all request methods, set ``ignore_http_methods`` to an empty list:
+    A list of HTTP methods (specified as uppercase strings) that should be ignored by Selenium Wire and not captured. The default is ``[]`` which means all HTTP methods are captured.
 
 .. code:: python
 
     options = {
-        'ignore_http_methods': []  # Capture all requests, including OPTIONS requests
+        'ignore_http_methods': ['OPTIONS']  # Don't capture OPTIONS requests
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
@@ -781,12 +786,6 @@ The code above will print something like this to the console (loading a page wil
         'verify_ssl': True  # Verify SSL certificates but beware of errors with self-signed certificates
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
-
-Limitations
-~~~~~~~~~~~
-
-* Selenium Wire will currently work with tests that run on the same machine as the browser. A distributed setup using Selenium Grid is not yet supported.
-* Sites that use NTLM authentication (Windows authentication) cannot currently be tested with Selenium Wire. NTLM authentication is not supported.
 
 License
 ~~~~~~~

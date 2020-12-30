@@ -66,7 +66,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         req_body_modified = self.handle_request(req, req_body)
         if req_body_modified is False:
-            self.send_error(403)
+            # Response already committed
             return
         elif req_body_modified is not None:
             req_body = req_body_modified
@@ -80,9 +80,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             req.headers['Host'] = netloc
         setattr(req, 'headers', self._filter_headers(req.headers))
 
-        origin = (scheme, netloc)
         try:
-            conn = self._create_connection(origin)
+            conn = self._create_connection((scheme, netloc))
             conn.request(self.command, path, req_body, dict(req.headers))
             res = conn.getresponse()
 
@@ -110,22 +109,13 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         setattr(res, 'headers', self._filter_headers(res.headers))
 
-        self.send_response(res.status, res.reason)
-
-        for header, val in res.headers.items():
-            self.send_header(header, val)
-        self.end_headers()
-
-        if res_body:
-            self.wfile.write(res_body)
-
-        self.wfile.flush()
-
-        if self.websocket:
-            self._handle_websocket(conn.sock)
-            self.close_connection = True
-        elif not self._keepalive():
-            self.close_connection = True
+        self.commit_response(
+            res.status,
+            res.reason,
+            res.headers,
+            res_body,
+            conn
+        )
 
     def _create_connection(self, origin):
         scheme, netloc = origin
@@ -251,6 +241,10 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
     def handle_request(self, req, req_body):
         """Hook method that subclasses should override to process a request.
 
+        If the request body has been modified, it should be returned from the method.
+        Returning False will indicate that the response has been committed and no
+        further processing will take place.
+
         Args:
             req: A ProxyRequestHandler instance.
             req_body: The request body as bytes.
@@ -260,6 +254,8 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
     def handle_response(self, req, req_body, res, res_body):
         """Hook method that subclasses should override to process a response.
 
+        If the response body has been modified, it should be returned from the method.
+
         Args:
             req: The original request - a ProxyRequestHandler instance.
             req_body: The request body as bytes.
@@ -268,6 +264,24 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             res_body: The response body as bytes.
         """
         pass
+
+    def commit_response(self, status, reason, headers, body, conn=None):
+        self.send_response(status, reason)
+
+        for header, val in headers.items():
+            self.send_header(header, val)
+        self.end_headers()
+
+        if body:
+            self.wfile.write(body)
+
+        self.wfile.flush()
+
+        if self.websocket and conn is not None:
+            self._handle_websocket(conn.sock)
+            self.close_connection = True
+        elif not self._keepalive():
+            self.close_connection = True
 
 
 class ProxyAwareHTTPConnection(HTTPConnection):

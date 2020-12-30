@@ -3,8 +3,8 @@ import os
 import ssl
 import urllib.error
 import urllib.request
-from urllib.parse import parse_qs, urlsplit
 from unittest import TestCase
+from urllib.parse import parse_qs, urlsplit
 
 from seleniumwire.proxy import backend
 
@@ -367,7 +367,7 @@ class BackendIntegrationTest(TestCase):
         self.assertEqual({'foo': 'baz', 'spam': 'eggs', 'a': 'b'}, json.loads(last_request.body.decode('utf-8')))
 
     def test_intercept_response_headers(self):
-        def interceptor(response, request):
+        def interceptor(request, response):
             del response.headers['Cache-Control']
             response.headers['Cache-Control'] = 'none'
 
@@ -380,7 +380,7 @@ class BackendIntegrationTest(TestCase):
         self.assertEqual('none', last_request.response.headers['Cache-Control'])
 
     def test_intercept_response_body(self):
-        def interceptor(response, request):
+        def interceptor(request, response):
             response.body = b'helloworld'
 
         self.backend.response_interceptor = interceptor

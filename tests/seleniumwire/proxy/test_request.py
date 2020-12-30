@@ -94,6 +94,32 @@ class RequestTest(TestCase):
 
         self.assertEqual('/some/other/path', request.path)
 
+    def test_create_response(self):
+        request = self._create_request()
+
+        request.create_response(
+            200, {'header-name': 'header-val'}, b'test body'
+        )
+
+        self.assertEqual(200, request.response.status_code)
+        self.assertEqual({'header-name': 'header-val'}, dict(request.response.headers))
+        self.assertEqual(b'test body', request.response.body)
+
+    def test_create_response_invalid_status(self):
+        request = self._create_request()
+
+        with self.assertRaises(ValueError):
+            request.create_response(900)
+
+    def test_create_abort(self):
+        request = self._create_request()
+
+        request.abort(403)
+
+        self.assertEqual(403, request.response.status_code)
+        self.assertEqual({}, dict(request.response.headers))
+        self.assertEqual(b'', request.response.body)
+
     def test_request_repr(self):
         request = self._create_request()
 

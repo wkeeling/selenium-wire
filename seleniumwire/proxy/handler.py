@@ -25,7 +25,7 @@ class CaptureMixin:
         Returns: The captured request id.
         """
         ignore_method = request.method in self.server.options.get(
-            'ignore_http_methods', ['OPTIONS'])
+            'ignore_http_methods', [])
         not_in_scope = not self.in_scope(self.server.scopes, request.url)
         if ignore_method or not_in_scope:
             log.debug('Not capturing %s request: %s', request.method, request.url)
@@ -95,6 +95,18 @@ class CaptureRequestHandler(CaptureMixin, ProxyRequestHandler):
         # Call the request interceptor if set
         if self.server.request_interceptor is not None:
             self.server.request_interceptor(request)
+
+            if request.response:
+                # The interceptor has created a response for us to send back immediately
+                self.commit_response(
+                    request.response.status_code,
+                    request.response.reason,
+                    request.response.headers,
+                    request.response.body
+                )
+                return False  # Signals that we've committed the response ourselves
+
+            # Transfer any modifications to the original request
             req.command = request.method
             req.path = request.url
             req.headers = HTTPMessage()
@@ -140,7 +152,8 @@ class CaptureRequestHandler(CaptureMixin, ProxyRequestHandler):
 
         # Call the response interceptor if set
         if self.server.response_interceptor is not None:
-            self.server.response_interceptor(response, self._create_request(req, req_body))
+            self.server.response_interceptor(self._create_request(req, req_body, response), response)
+            # Transfer any modifications to the original response
             res.status = response.status_code
             res.reason = response.reason
             res.headers = HTTPMessage()
@@ -155,13 +168,14 @@ class CaptureRequestHandler(CaptureMixin, ProxyRequestHandler):
 
         return res_body
 
-    def _create_request(self, req, req_body):
+    def _create_request(self, req, req_body, response=None):
         request = Request(
             method=req.command,
             url=req.path,
             headers=req.headers.items(),
             body=req_body
         )
+        request.response = response
 
         return request
 

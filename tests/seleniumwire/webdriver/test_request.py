@@ -230,15 +230,22 @@ class InspectRequestsMixinTest(TestCase):
         self.assertEqual(interceptor, self.driver.request_interceptor)
 
     def test_set_response_interceptor(self):
-        def interceptor(res, req):
+        def interceptor(req, res):
             pass
 
         self.driver.response_interceptor = interceptor
 
         self.assertEqual(interceptor, self.mock_proxy.response_interceptor)
 
+    def test_set_response_interceptor_invalid_signature(self):
+        def interceptor(res):
+            pass
+
+        with self.assertRaises(RuntimeError):
+            self.driver.response_interceptor = interceptor
+
     def test_delete_response_interceptor(self):
-        def interceptor(res, req):
+        def interceptor(req, res):
             pass
 
         self.mock_proxy.response_interceptor = interceptor
@@ -248,7 +255,7 @@ class InspectRequestsMixinTest(TestCase):
         self.assertIsNone(self.mock_proxy.response_interceptor)
 
     def test_get_response_interceptor(self):
-        def interceptor(res, req):
+        def interceptor(req, res):
             pass
 
         self.mock_proxy.response_interceptor = interceptor
