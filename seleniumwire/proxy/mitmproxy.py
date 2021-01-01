@@ -162,9 +162,10 @@ class MitmProxy:
             upstream_cert=DEFAULT_UPSTREAM_CERT,
             stream_websockets=DEFAULT_STREAM_WEBSOCKETS,
             **self._get_upstream_proxy_args(),
-            # Options that are prefixed mitm_ are passed through to mitmproxy
-            **{k[5:]: v for k, v in options.items() if k.startswith('mitm_')}
         )
+
+        # Options that are prefixed mitm_ are passed through to mitmproxy
+        mitmproxy_opts.update(**{k[5:]: v for k, v in options.items() if k.startswith('mitm_')})
 
         self._event_loop = asyncio.get_event_loop()
 
