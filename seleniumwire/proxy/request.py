@@ -119,7 +119,7 @@ class Request:
 
     def create_response(self,
                         status_code: int,
-                        headers: Union[Dict[str, str], Iterable[Tuple[str, str]]] = None,
+                        headers: Union[Dict[str, str], Iterable[Tuple[str, str]]] = (),
                         body: bytes = b''):
         """Create a response object and attach it to this request."""
         try:
@@ -133,11 +133,11 @@ class Request:
         self.response = Response(
             status_code=status_code,
             reason=reason,
-            headers=headers or (),
+            headers=headers,
             body=body
         )
 
-    def abort(self, error_code: int):
+    def abort(self, error_code: int = HTTPStatus.FORBIDDEN):
         """Convenience method for signalling that this request is to be terminated
         with a specific error code.
         """

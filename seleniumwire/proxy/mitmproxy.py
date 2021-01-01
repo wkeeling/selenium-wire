@@ -44,6 +44,7 @@ class MitmProxyRequestHandler(CaptureMixin):
 
     def request(self, flow):
         # Make any modifications to the original request
+        # DEPRECATED. This will be replaced by request_interceptor
         self.server.modifier.modify_request(flow.request, bodyattr='raw_content')
 
         # Convert to one of our requests for handling
@@ -56,7 +57,7 @@ class MitmProxyRequestHandler(CaptureMixin):
             if request.response:
                 # The interceptor has created a response for us to send back immediately
                 flow.response = http.HTTPResponse.make(
-                    status_code=request.response.status_code,
+                    status_code=int(request.response.status_code),
                     content=request.response.body,
                     headers=[(k.encode('utf-8'), v.encode('utf-8')) for k, v in request.response.headers.items()]
                 )
@@ -77,6 +78,7 @@ class MitmProxyRequestHandler(CaptureMixin):
 
     def response(self, flow):
         # Make any modifications to the response
+        # DEPRECATED. This will be replaced by response_interceptor
         self.server.modifier.modify_response(flow.response, flow.request)
 
         if not hasattr(flow.request, 'id'):

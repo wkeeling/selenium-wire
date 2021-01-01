@@ -1,7 +1,7 @@
 Selenium Wire
 =============
 
-Selenium Wire extends Selenium's Python bindings to give your tests access to the underlying requests made by the browser. It is a lightweight library designed for ease of use with minimal external dependencies.
+Selenium Wire extends Selenium's Python bindings to give you access to the underlying requests made by the browser. It is a lightweight library designed for ease of use with minimal external dependencies.
 
 .. image:: https://travis-ci.org/wkeeling/selenium-wire.svg?branch=master
         :target: https://travis-ci.org/wkeeling/selenium-wire
@@ -79,8 +79,6 @@ Table of Contents
 
 - `Accessing Requests`_
 
-- `Limiting Request Capture`_
-
 - `Request Objects`_
 
 - `Response Objects`_
@@ -93,9 +91,10 @@ Table of Contents
   * `Example: Add a request parameter`_
   * `Example: Update JSON in a POST request body`_
   * `Example: Block a request`_
-  * `Example: Rewrite a URL`_
   * `Example: Mock a response`_
   * `Unset an interceptor`_
+
+- `Limiting Request Capture`_
 
 - `Proxies`_
 
@@ -106,8 +105,6 @@ Table of Contents
 - `Certificates`_
 
 - `All Options`_
-
-- `Limitations`_
 
 - `License`_
 
@@ -176,7 +173,7 @@ Selenium Wire captures all HTTP/HTTPS traffic made by the browser.
     The list of captured requests in chronological order.
 
 ``driver.last_request``
-    Convenience attribute for retrieving the most recently captured request. This is also more efficient than using ``driver.requests[-1]``.
+    Convenience attribute for retrieving the most recently captured request. This is more efficient than using ``driver.requests[-1]``.
 
 ``driver.wait_for_request(path, timeout=10)``
     This method will wait for a previous request with a specific URL to complete before continuing. The ``path`` attribute can be a regex that will be matched within the request URL. Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action. Also note that since ``path`` can be a regex, you must escape special characters such as question marks with a slash. A ``TimeoutException`` is raised if no match is found within the timeout period.
@@ -204,71 +201,6 @@ To clear previously captured requests, use ``del``:
 .. code:: python
 
     del driver.requests
-
-Limiting Request Capture
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-By default, Selenium Wire will capture all requests the browser makes, but there are a number of ways you can limit request capture. You may want to do this for performance reasons.
-
-``driver.scopes``
-    This accepts a list of regular expressions that will match URLs to be captured. It should be set on the driver before making any requests.
-
-    .. code:: python
-
-        driver.scopes = [
-            '.*stackoverflow.*',
-            '.*github.*'
-        ]
-
-        driver.get(...)  # Start making requests
-
-        # Only request URLs containing "stackoverflow" or "github" will now be captured
-
-    Note that even if a request is out of scope and not captured, it will still travel through Selenium Wire.
-
-``seleniumwire_options.ignore_http_methods``
-    Use this option to prevent capturing certain HTTP methods. For example, to ignore OPTIONS requests:
-
-    .. code:: python
-
-        options = {
-            'ignore_http_methods': ['OPTIONS']
-        }
-        driver = webdriver.Firefox(seleniumwire_options=options)
-
-    Note that even if a request is ignored and not captured, it will still travel through Selenium Wire.
-
-``seleniumwire_options.exclude_hosts``
-    Use this option to bypass Selenium Wire entirely. Any requests made to addresses listed here will go direct from the browser to the server without involving Selenium Wire. Note that if you've configured an upstream proxy then these requests will also bypass that proxy.
-
-    .. code:: python
-
-        options = {
-            'exclude_hosts': ['address1', 'address2']  # Bypass Selenium Wire for address1 and address2
-        }
-        driver = webdriver.Firefox(seleniumwire_options=options)
-
-``request.abort()``
-    You can abort a request early by using ``request.abort()`` from within a `request interceptor`_. This will send an immediate response back to the client without the request travelling any further. Aborted requests are not captured.
-
-    .. code:: python
-
-        from http import HTTPStatus
-
-        def interceptor(request):
-            # Block PNG images, CSS and Javascript resources
-            if request.path.endswith(('.png', '.css', '.js')):
-                request.abort(HTTPStatus.FORBIDDEN)
-
-        driver.request_interceptor = request_interceptor
-
-        driver.get(...)  # Start making requests
-
-.. _`request interceptor`: #intercepting-requests-and-responses
-
-If you find you're not getting the performance you want after limiting request capture, you might try switching to the `mitmproxy backend`_.
-
-.. _`mitmproxy backend`: #backends
 
 Request Objects
 ~~~~~~~~~~~~~~~
@@ -301,10 +233,10 @@ Request objects have the following attributes.
 
 Request objects have the following methods.
 
-``abort(error_code)``
+``abort(error_code=403)``
     Trigger immediate termination of the request with the supplied error code. For use within request interceptors. See `Example: Block a request`_.
 
-``create_response(status_code, reason, headers, body)``
+``create_response(status_code, headers=(), body=b'')``
     Create a response and return it without sending any data to the remote server. For use within request interceptors. See `Example: Mock a response`_.
 
 Response Objects
@@ -365,7 +297,7 @@ Example: Add a request header
     def interceptor(request):
         request.headers['New-Header'] = 'Some Value'
 
-    driver.request_interceptor = request_interceptor
+    driver.request_interceptor = interceptor
 
     # All requests will now contain New-Header
 
@@ -380,7 +312,7 @@ Duplicate header names are permitted in an HTTP request, so before setting the r
         del request.headers['Referer']  # Remember to delete the header first
         request.headers['Referer'] = 'some_referer'  # Spoof the referer
 
-    driver.request_interceptor = request_interceptor
+    driver.request_interceptor = interceptor
 
     # All requests will now use 'some_referer' for the referer
 
@@ -393,7 +325,7 @@ Example: Add a response header
         if request.url == 'https://server.com/some/path':
             response.headers['New-Header'] = 'Some Value'
 
-    driver.response_interceptor = response_interceptor
+    driver.response_interceptor = interceptor
 
     # Responses from https://server.com/some/path will now contain New-Header
 
@@ -409,7 +341,7 @@ Request parameters work differently to headers in that they are calculated when 
         params['foo'] = 'bar'
         request.params = params
 
-    driver.request_interceptor = request_interceptor
+    driver.request_interceptor = interceptor
 
     # foo=bar will be added to all requests
 
@@ -421,7 +353,7 @@ Example: Update JSON in a POST request body
     import json
 
     def interceptor(request):
-        if request.method == 'POST' and request.headers['Content-Type'] = 'application/json':
+        if request.method == 'POST' and request.headers['Content-Type'] == 'application/json':
             # The body is in bytes so convert to a string
             body = request.body.decode('utf-8')
             # Load the JSON
@@ -434,40 +366,23 @@ Example: Update JSON in a POST request body
             del request.headers['Content-Length']
             request.headers['Content-Length'] = str(len(request.body))
 
-    driver.request_interceptor = request_interceptor
+    driver.request_interceptor = interceptor
 
 Example: Block a request
 ------------------------
 
-You can use ``request.abort()`` to block a request and send an error code back to the client.
-
-.. code:: python
-
-    from http import HTTPStatus
-
-    def interceptor(request):
-        # Block PNG images, CSS and Javascript resources
-        if request.path.endswith(('.png', '.css', '.js')):
-            request.abort(HTTPStatus.FORBIDDEN)
-
-    driver.request_interceptor = request_interceptor
-
-    # Requests for PNG images, CSS and Javascript will result in a 403 Forbidden
-
-Example: Rewrite a URL
-----------------------
+You can use ``request.abort()`` to block a request and send an immediate response back to the client. An optional error code can be supplied. The default is 403 (forbidden).
 
 .. code:: python
 
     def interceptor(request):
-        if request.url == 'https://prod1.server.com
-        params = request.params
-        params['foo'] = 'bar'
-        request.params = params
+        # Block PNG, JPEG and GIF images
+        if request.path.endswith(('.png', '.jpg', '.gif')):
+            request.abort()
 
-    driver.request_interceptor = request_interceptor
+    driver.request_interceptor = interceptor
 
-    # foo=bar will be added to all requests
+    # Requests for PNG, JPEG and GIF images will result in a 403 Forbidden
 
 Example: Mock a response
 ------------------------
@@ -480,16 +395,15 @@ You can use ``request.create_response()`` to send a custom reply back to the cli
         if request.url == 'https://server.com/some/path':
             request.create_response(
                 status_code=200,
-                reason='OK',  # Optional, will be determined from the status code
                 headers={'Content-Type': 'text/html'},  # Optional headers dictionary
                 body='<html>Hello World!</html>'  # Optional body
             )
 
-    driver.request_interceptor = request_interceptor
+    driver.request_interceptor = interceptor
 
     # Requests to https://server.com/some/path will have their responses mocked
 
-*Have any other examples you think could be useful? Please submit a PR :)*
+*Have any other examples you think could be useful? Feel free to submit a PR :)*
 
 Unset an interceptor
 --------------------
@@ -501,10 +415,73 @@ To unset an interceptor, use ``del``:
     del driver.request_interceptor
     del driver.response_interceptor
 
+Limiting Request Capture
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Selenium Wire works by redirecting browser traffic through an internal proxy server it spins up in the background. As requests flow through the proxy they are intercepted and captured. Capturing requests can slow things down a little, but there are a few things you can do to restrict what gets captured.
+
+``driver.scopes``
+    This accepts a list of regular expressions that will match URLs to be captured. It should be set on the driver before making any requests.
+
+    .. code:: python
+
+        driver.scopes = [
+            '.*stackoverflow.*',
+            '.*github.*'
+        ]
+
+        driver.get(...)  # Start making requests
+
+        # Only request URLs containing "stackoverflow" or "github" will now be captured
+
+    Note that even if a request is out of scope and not captured, it will still travel through Selenium Wire.
+
+``seleniumwire_options.ignore_http_methods``
+    Use this option to prevent capturing certain HTTP methods. For example, to ignore OPTIONS requests:
+
+    .. code:: python
+
+        options = {
+            'ignore_http_methods': ['OPTIONS']
+        }
+        driver = webdriver.Firefox(seleniumwire_options=options)
+
+    Note that even if a request is ignored and not captured, it will still travel through Selenium Wire.
+
+``seleniumwire_options.exclude_hosts``
+    Use this option to bypass Selenium Wire entirely. Any requests made to addresses listed here will go direct from the browser to the server without involving Selenium Wire. Note that if you've configured an upstream proxy then these requests will also bypass that proxy.
+
+    .. code:: python
+
+        options = {
+            'exclude_hosts': ['host1.com', 'host2.com']  # Bypass Selenium Wire for these hosts
+        }
+        driver = webdriver.Firefox(seleniumwire_options=options)
+
+``request.abort()``
+    You can abort a request early by using ``request.abort()`` from within a `request interceptor`_. This will send an immediate response back to the client without the request travelling any further. Aborted requests are not captured.
+
+    .. code:: python
+
+        def interceptor(request):
+            # Block PNG, JPEG and GIF images
+            if request.path.endswith(('.png', '.jpg', '.gif')):
+                request.abort()
+
+        driver.request_interceptor = interceptor
+
+        driver.get(...)  # Start making requests
+
+.. _`request interceptor`: #intercepting-requests-and-responses
+
+If you find you're still not getting the performance you want after limiting request capture, you might try switching to the `mitmproxy backend`_.
+
+.. _`mitmproxy backend`: #backends
+
 Proxies
 ~~~~~~~
 
-If the site you are testing sits behind a proxy server you can tell Selenium Wire about that proxy server in the options you pass to the webdriver instance. The configuration takes the following format:
+If the site you are accessing sits behind a proxy server you can tell Selenium Wire about that proxy server in the options you pass to the webdriver instance. The configuration takes the following format:
 
 .. code:: python
 
@@ -634,6 +611,18 @@ All Options
 
 A summary of all options that can be passed to Selenium Wire via the ``seleniumwire_options`` webdriver attribute.
 
+``addr``
+    The IP address or hostname of the machine running Selenium Wire. This defaults to 127.0.0.1. You may want to change this to the public IP of the machine (or container) if you're using the `remote webdriver`_.
+
+.. code:: python
+
+    options = {
+        'addr': '192.168.0.10'  # Use the public IP of the machine
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
+
+.. _`remote webdriver`: #creating-the-webdriver
+
 ``backend``
     The backend component that Selenium Wire will use to capture requests. The currently supported values are ``default`` (same as not specifying) or ``mitmproxy``.
 
@@ -647,12 +636,12 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
 ``exclude_hosts``
     A list of addresses for which Selenium Wire should be bypassed entirely. Note that if you have configured an upstream proxy then requests to excluded hosts will also bypass that proxy.
 
-    .. code:: python
+.. code:: python
 
-        options = {
-            'exclude_hosts': ['address1', 'address2']  # Bypass Selenium Wire for address1 and address2
-        }
-        driver = webdriver.Firefox(seleniumwire_options=options)
+    options = {
+        'exclude_hosts': ['host1.com', 'host2.com']  # Bypass Selenium Wire for host1.com and host2.com
+    }
+    driver = webdriver.Firefox(seleniumwire_options=options)
 
 ``connection_keep_alive``
     Whether connections should be reused across requests. The default is ``False``.

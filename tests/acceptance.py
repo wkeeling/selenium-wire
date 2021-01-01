@@ -117,7 +117,7 @@ class BrowserIntegrationTest(TestCase):
         url = 'https://www.guardian.co.uk'
         driver = webdriver.Firefox()
 
-        def intercept(res, req):
+        def intercept(req, res):
             res.headers['X-Foo'] = 'bar'
 
         driver.response_interceptor = intercept

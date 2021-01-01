@@ -245,13 +245,37 @@ class MitmProxyTest(TestCase):
             'mitm_test': 'foobar'
         })
 
-        self.mock_options.return_value.update.assert_called_once_with(
-            confdir='~/.mitmproxy',
-            ssl_insecure=True,
-            upstream_cert=False,
-            stream_websockets=True,
-            test='foobar'
-        )
+        self.mock_options.return_value.update.has_calls([
+            call(
+                confdir='~/.mitmproxy',
+                ssl_insecure=True,
+                upstream_cert=False,
+                stream_websockets=True,
+            ),
+            call(
+                test='foobar'
+            )
+        ])
+
+    def test_update_mitmproxy_options_with_override(self):
+        MitmProxy('somehost', 12345, {
+            'request_storage_base_dir': '/some/dir',
+            'mitm_test': 'foobar',
+            'mitm_confdir': '/tmp/.mitmproxy'
+        })
+
+        self.mock_options.return_value.update.has_calls([
+            call(
+                confdir='~/.mitmproxy',
+                ssl_insecure=True,
+                upstream_cert=False,
+                stream_websockets=True,
+            ),
+            call(
+                test='foobar',
+                confdir='/tmp/.mitmproxy'
+            )
+        ])
 
     def test_upstream_proxy(self):
         MitmProxy('somehost', 12345, {
@@ -263,13 +287,16 @@ class MitmProxyTest(TestCase):
             }
         })
 
-        self.mock_options.return_value.update.assert_called_once_with(
-            confdir='~/.mitmproxy',
-            ssl_insecure=True,
-            upstream_cert=False,
-            stream_websockets=True,
-            mode='upstream:https://proxyserver:8080'
-        )
+        self.mock_options.return_value.update.has_calls([
+            call(
+                confdir='~/.mitmproxy',
+                ssl_insecure=True,
+                upstream_cert=False,
+                stream_websockets=True,
+                mode='upstream:https://proxyserver:8080'
+            ),
+            call()
+        ])
 
     def test_upstream_proxy_single(self):
         MitmProxy('somehost', 12345, {
@@ -279,13 +306,16 @@ class MitmProxyTest(TestCase):
             }
         })
 
-        self.mock_options.return_value.update.assert_called_once_with(
-            confdir='~/.mitmproxy',
-            ssl_insecure=True,
-            upstream_cert=False,
-            stream_websockets=True,
-            mode='upstream:http://proxyserver:8080'
-        )
+        self.mock_options.return_value.update.has_calls([
+            call(
+                confdir='~/.mitmproxy',
+                ssl_insecure=True,
+                upstream_cert=False,
+                stream_websockets=True,
+                mode='upstream:http://proxyserver:8080'
+            ),
+            call()
+        ])
 
     def test_upstream_proxy_auth(self):
         MitmProxy('somehost', 12345, {
@@ -295,14 +325,17 @@ class MitmProxyTest(TestCase):
             }
         })
 
-        self.mock_options.return_value.update.assert_called_once_with(
-            confdir='~/.mitmproxy',
-            ssl_insecure=True,
-            upstream_cert=False,
-            stream_websockets=True,
-            mode='upstream:https://proxyserver:8080',
-            upstream_auth='user:pass'
-        )
+        self.mock_options.return_value.update.has_calls([
+            call(
+                confdir='~/.mitmproxy',
+                ssl_insecure=True,
+                upstream_cert=False,
+                stream_websockets=True,
+                mode='upstream:https://proxyserver:8080',
+                upstream_auth='user:pass'
+            ),
+            call()
+        ])
 
     def test_upstream_proxy_different(self):
         with self.assertRaises(ValueError):

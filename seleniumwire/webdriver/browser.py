@@ -39,7 +39,7 @@ class Firefox(InspectRequestsMixin, _Firefox):
                 'proxyType': 'manual',
                 'httpProxy': '{}:{}'.format(addr, port),
                 'sslProxy': '{}:{}'.format(addr, port),
-                'noProxy': ['tracking-protection.cdn.mozilla.net'],
+                'noProxy': seleniumwire_options.pop('exclude_hosts', []),
             }
             capabilities['acceptInsecureCerts'] = True
 
@@ -81,7 +81,7 @@ class Chrome(InspectRequestsMixin, _Chrome):
                 'proxyType': 'manual',
                 'httpProxy': '{}:{}'.format(addr, port),
                 'sslProxy': '{}:{}'.format(addr, port),
-                'noProxy': ''
+                'noProxy': ','.join(seleniumwire_options.pop('exclude_hosts', []))
             }
             capabilities['acceptInsecureCerts'] = True
 
@@ -194,7 +194,7 @@ class Remote(InspectRequestsMixin, _Remote):
                 "proxyType": "manual",
                 "httpProxy": "{}:{}".format(addr, port),
                 "sslProxy": "{}:{}".format(addr, port),
-                "noProxy": [],
+                "noProxy": seleniumwire_options.pop('exclude_hosts', []),
             }
             capabilities["acceptInsecureCerts"] = True
 
