@@ -1,4 +1,5 @@
 """Houses the classes used to transfer request and response data between components. """
+from datetime import datetime
 from http import HTTPStatus
 from http.client import HTTPMessage
 from typing import Dict, Iterable, List, Tuple, Union
@@ -38,6 +39,7 @@ class Request:
 
         self.body = body
         self.response = None
+        self.date = datetime.now()
 
     @property
     def body(self) -> bytes:
@@ -173,6 +175,7 @@ class Response:
             self.headers.add_header(k, v)
 
         self.body = body
+        self.date = datetime.now()
 
     @property
     def body(self) -> bytes:

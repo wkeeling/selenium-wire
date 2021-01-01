@@ -45,6 +45,7 @@ class CaptureMixin:
             response: The response to capture.
         """
         log.info('Capturing response: %s %s %s', url, response.status_code, response.reason)
+
         self.server.storage.save_response(request_id, response)
 
     def in_scope(self, scopes, url):

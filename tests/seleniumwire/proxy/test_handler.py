@@ -33,6 +33,7 @@ class CaptureRequestHandlerTest(TestCase):
 
         self.assertEqual(1, len(saved))
         self.assertEqual('https://www.google.com/foo/bar?x=y', saved[0].url)
+        self.assertIsNotNone(saved[0].date)
 
     def test_ignore_get_method(self):
         self.handler.server.options = {'ignore_http_methods': ['GET']}
@@ -85,6 +86,7 @@ class CaptureRequestHandlerTest(TestCase):
         self.assertEqual('12345', request_id)
         self.assertEqual(200, response.status_code)
         self.assertEqual('OK', response.reason)
+        self.assertIsNotNone(response.date)
 
     def test_ignores_response(self):
         res, res_body = Mock(), Mock()
