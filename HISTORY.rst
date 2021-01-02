@@ -1,6 +1,19 @@
 History
 ~~~~~~~
 
+3.0.0 (2021-01-02)
+------------------
+
+* Inroduce request and response interceptors.
+* Run mitmproxy backend in a thread rather than subprocess.
+* Drop internal HTTP admin API.
+* Drop support for Python 3.4 and 3.5.
+* Add support for remote webdriver client.
+* Add support for duplicate request and response headers.
+* Fixed issue where Proxy-Connection header was being propagated.
+* Fixed issue where desired capabilities could not be reused outside of Selenium Wire due to addition of proxy config.
+* Deprecation of header_overrides, param_overrides, querystring_overrides, rewrite_urls, custom_response_handler
+
 2.1.2 (2020-11-14)
 ------------------
 
