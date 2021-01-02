@@ -1,5 +1,6 @@
 """This module manages the integraton with mitmproxy."""
 import asyncio
+import logging
 
 try:
     import mitmproxy
@@ -20,6 +21,8 @@ from seleniumwire.proxy.modifier import RequestModifier
 from seleniumwire.proxy.request import Request, Response
 from seleniumwire.proxy.storage import RequestStorage
 from seleniumwire.proxy.utils import get_upstream_proxy
+
+logger = logging.getLogger(__name__)
 
 
 RETRIES = 3
@@ -155,6 +158,7 @@ class MitmProxy:
         self._master = Master(mitmproxy_opts)
         self._master.server = ProxyServer(ProxyConfig(mitmproxy_opts))
         self._master.addons.add(*addons.default_addons())
+        self._master.addons.add(SendToLogger())
         self._master.addons.add(MitmProxyRequestHandler(self))
 
         # Update the options now all addons have been added
@@ -222,3 +226,10 @@ class MitmProxy:
                 args['upstream_auth'] = '{}:{}'.format(username, password)
 
         return args
+
+
+class SendToLogger:
+
+    def log(self, entry):
+        """Send a mitmproxy log message through our own logger."""
+        getattr(logger, entry.level, logger.info)(entry.msg)
