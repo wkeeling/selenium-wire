@@ -234,6 +234,7 @@ class MitmProxyTest(TestCase):
         self.mock_proxy_server.assert_called_once_with(self.mock_proxy_config.return_value)
         self.mock_master.return_value.addons.add.assert_has_calls([
             call(),
+            call(self.mock_logger.return_value),
             call(self.mock_handler.return_value)
         ])
         self.mock_addons.default_addons.assert_called_once_with()
@@ -402,6 +403,10 @@ class MitmProxyTest(TestCase):
 
         patcher = patch('seleniumwire.proxy.mitmproxy.ProxyServer')
         self.mock_proxy_server = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = patch('seleniumwire.proxy.mitmproxy.SendToLogger')
+        self.mock_logger = patcher.start()
         self.addCleanup(patcher.stop)
 
         patcher = patch('seleniumwire.proxy.mitmproxy.addons')
