@@ -100,6 +100,7 @@ class BrowserIntegrationTest(TestCase):
         driver = webdriver.Firefox()
 
         def intercept(req):
+            del req.headers['User-Agent']
             req.headers['User-Agent'] = user_agent
             req.params = {**req.params, 'foo': 'bar'}
 
