@@ -591,7 +591,7 @@ You can pass `mitmproxy specific options`_ to the mitmproxy backend by prefixing
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
-Mitmproxy includes options that can help with performance such as ``stream_large_bodies``. Setting this to a low value (e.g. '1k') has been shown to improve performance, in conjunction with the use of ``driver.scopes``.
+Mitmproxy includes options that can help with performance such as ``mitm_stream_large_bodies``. Setting this to a low value (e.g. '1k') has been shown to improve performance, in conjunction with the use of ``driver.scopes``.
 
 *Note that the mitmproxy backend won't work with upstream SOCKS proxies.*
 
