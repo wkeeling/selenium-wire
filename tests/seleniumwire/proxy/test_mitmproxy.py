@@ -349,6 +349,7 @@ class MitmProxyTest(TestCase):
             })
 
     def test_get_event_loop(self):
+        self.mock_asyncio.get_event_loop.return_value.is_closed.return_value = False
         proxy = MitmProxy('somehost', 12345, {
             'request_storage_base_dir': '/some/dir',
         })
@@ -356,7 +357,19 @@ class MitmProxyTest(TestCase):
         self.assertEqual(self.mock_asyncio.get_event_loop.return_value, proxy._event_loop)
         self.mock_asyncio.get_event_loop.assert_called_once_with()
 
+    def test_new_event_loop(self):
+        self.mock_asyncio.get_event_loop.return_value.is_closed.return_value = True
+        proxy = MitmProxy('somehost', 12345, {
+            'request_storage_base_dir': '/some/dir',
+        })
+
+        self.assertEqual(self.mock_asyncio.new_event_loop.return_value, proxy._event_loop)
+        self.mock_asyncio.get_event_loop.assert_called_once_with()
+        self.mock_asyncio.new_event_loop.assert_called_once_with()
+        self.mock_asyncio.set_event_loop.assert_called_once_with(proxy._event_loop)
+
     def test_serve_forever(self):
+        self.mock_asyncio.get_event_loop.return_value.is_closed.return_value = False
         proxy = MitmProxy('somehost', 12345, {
             'request_storage_base_dir': '/some/dir',
         })
