@@ -24,11 +24,6 @@ from seleniumwire.proxy.utils import get_upstream_proxy
 
 logger = logging.getLogger(__name__)
 
-
-RETRIES = 3
-PORT_RANGE_START = 9000
-PORT_RANGE_END = 9999
-
 DEFAULT_CONFDIR = '~/.mitmproxy'
 DEFAULT_UPSTREAM_CERT = False
 DEFAULT_STREAM_WEBSOCKETS = True
