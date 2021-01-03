@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+3.0.1 (2021-01-03)
+------------------
+
+* Create a new event loop if current event loop is closed.
+
 3.0.0 (2021-01-02)
 ------------------
 
