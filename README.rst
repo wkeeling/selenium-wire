@@ -459,7 +459,7 @@ Selenium Wire works by redirecting browser traffic through an internal proxy ser
         driver = webdriver.Firefox(seleniumwire_options=options)
 
 ``request.abort()``
-    You can abort a request early by using ``request.abort()`` from within a `request interceptor`_. This will send an immediate response back to the client without the request travelling any further. You can use this mechanism to block certain types of requests (e.g. images) to improve page load performance. Aborted requests are not captured. 
+    You can abort a request early by using ``request.abort()`` from within a `request interceptor`_. This will send an immediate response back to the client without the request travelling any further. You can use this mechanism to block certain types of requests (e.g. images) to improve page load performance. Aborted requests are not captured.
 
     .. code:: python
 
@@ -590,6 +590,8 @@ You can pass `mitmproxy specific options`_ to the mitmproxy backend by prefixing
         'mitm_confdir': '/tmp/.mitmproxy'  # Switch the location to /tmp
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
+
+Mitmproxy includes options that can help with performance such as ``stream_large_bodies``. Setting this to a low value (e.g. '1k') has been shown to improve performance, in conjunction with the use of ``driver.scopes``.
 
 *Note that the mitmproxy backend won't work with upstream SOCKS proxies.*
 
