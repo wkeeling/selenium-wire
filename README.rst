@@ -120,9 +120,7 @@ Install using pip:
 Browser Setup
 -------------
 
-No specific configuration should be necessary - everything should just work.
-
-You will however need to ensure that you have downloaded the `Chrome driver`_ and `Gecko driver`_ for Chrome and Firefox to be remotely controlled - the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on your PATH.
+No specific configuration should be necessary except to ensure that you have downloaded the `Chrome driver`_ and `Gecko driver`_ for Chrome and Firefox to be remotely controlled - the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on your PATH.
 
 .. _`Chrome driver`: https://sites.google.com/a/chromium.org/chromedriver/
 
@@ -262,32 +260,7 @@ Intercepting Requests and Responses
 
 Selenium Wire allows you to modify requests and responses on the fly using interceptors. An interceptor is a function that gets invoked with the requests and responses as they pass through Selenium Wire. Within an interceptor you can modify the request and response as you see fit.
 
-You set your interceptor functions using the ``driver.request_interceptor`` and ``driver.response_interceptor`` attributes before you start using the driver.
-
-To set a request interceptor:
-
-.. code:: python
-
-    def request_interceptor(request):
-        # Code that modifies the request
-        ...
-
-    driver.request_interceptor = request_interceptor
-
-    driver.get(...)  # Start making requests
-
-To set a response interceptor:
-
-.. code:: python
-
-    def response_interceptor(request, response):  # Takes two args
-        # Code that modifies the response
-        ...
-
-    driver.response_interceptor = response_interceptor
-
-Note that the response interceptor takes two arguments, the originating request and the response.
-
+You set your interceptor functions using the ``driver.request_interceptor`` and ``driver.response_interceptor`` attributes before you start using the driver. A request interceptor should accept a single argument for the request. A response interceptor should accept two arguments, one for the originating request and one for the response.
 
 Example: Add a request header
 -----------------------------
