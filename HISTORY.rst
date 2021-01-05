@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+3.0.2 (2021-01-05)
+------------------
+
+* Fix issue where remote web driver client was being imported from incorrect package.
+
 3.0.1 (2021-01-03)
 ------------------
 
