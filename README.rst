@@ -75,6 +75,8 @@ Table of Contents
 
   * `Browser Setup`_
 
+  * `OpenSSL`_
+
 - `Creating the Webdriver`_
 
 - `Accessing Requests`_
@@ -125,6 +127,34 @@ No specific configuration should be necessary except to ensure that you have dow
 .. _`Chrome driver`: https://sites.google.com/a/chromium.org/chromedriver/
 
 .. _`Gecko driver`: https://github.com/mozilla/geckodriver/
+
+OpenSSL
+-------
+
+Selenium Wire requires OpenSSL for decrypting HTTPS requests. This is often already installed, but you can install it with:
+
+**Linux**
+
+.. code:: bash
+
+    # For apt based Linux systems
+    sudo apt install openssl
+
+    # For RPM based Linux systems
+    sudo yum install openssl
+
+    # For Linux alpine
+    sudo apk add openssl
+
+**MacOS**
+
+.. code:: bash
+
+    brew install openssl
+
+**Windows**
+
+No installation is required - OpenSSL for Windows is bundled with Selenium Wire.
 
 Creating the Webdriver
 ~~~~~~~~~~~~~~~~~~~~~~
