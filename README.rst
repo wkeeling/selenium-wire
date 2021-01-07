@@ -195,7 +195,7 @@ Selenium Wire has limited support for using the remote webdriver client. When yo
 Accessing Requests
 ~~~~~~~~~~~~~~~~~~
 
-Selenium Wire captures all [1]_ HTTP/HTTPS traffic made by the browser.
+Selenium Wire captures all :superscript:`1` HTTP/HTTPS traffic made by the browser.
 
 ``driver.requests``
     The list of captured requests in chronological order.
@@ -230,7 +230,7 @@ To clear previously captured requests, use ``del``:
 
     del driver.requests
 
-.. [1] Selenium Wire ignores OPTIONS requests by default, as these are typically uninteresting and just add overhead. If you want to capture OPTIONS requests, you need to set the ``ignore_http_methods`` `option`_ to [].
+1. Selenium Wire ignores OPTIONS requests by default, as these are typically uninteresting and just add overhead. If you want to capture OPTIONS requests, you need to set the ``ignore_http_methods`` `option`_ to ``[]``.
 
 .. _`option`: #all-options
 
