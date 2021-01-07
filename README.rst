@@ -195,7 +195,7 @@ Selenium Wire has limited support for using the remote webdriver client. When yo
 Accessing Requests
 ~~~~~~~~~~~~~~~~~~
 
-Selenium Wire captures all HTTP/HTTPS traffic made by the browser.
+Selenium Wire captures all [1]_ HTTP/HTTPS traffic made by the browser.
 
 ``driver.requests``
     The list of captured requests in chronological order.
@@ -229,6 +229,10 @@ To clear previously captured requests, use ``del``:
 .. code:: python
 
     del driver.requests
+
+.. [1] Selenium Wire ignores OPTIONS requests by default, as these are typically uninteresting and just add overhead. If you want to capture OPTIONS requests, you need to set the ``ignore_http_methods`` `option`_ to [].
+
+.. _`option`: #all-options
 
 Request Objects
 ~~~~~~~~~~~~~~~
@@ -706,12 +710,12 @@ The code above will print something like this to the console (loading a page wil
     driver = webdriver.Firefox(seleniumwire_options=options)
 
 ``ignore_http_methods``
-    A list of HTTP methods (specified as uppercase strings) that should be ignored by Selenium Wire and not captured. The default is ``[]`` which means all HTTP methods are captured.
+    A list of HTTP methods (specified as uppercase strings) that should be ignored by Selenium Wire and not captured. The default is ``['OPTIONS']`` which ignores all OPTIONS requests. To capture all request methods, set ``ignore_http_methods`` to an empty list:
 
 .. code:: python
 
     options = {
-        'ignore_http_methods': ['OPTIONS']  # Don't capture OPTIONS requests
+        'ignore_http_methods': []  # Capture all requests, including OPTIONS requests
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 

@@ -25,7 +25,7 @@ class CaptureMixin:
         Returns: The captured request id.
         """
         ignore_method = request.method in self.server.options.get(
-            'ignore_http_methods', [])
+            'ignore_http_methods', ['OPTIONS'])
         not_in_scope = not self.in_scope(self.server.scopes, request.url)
         if ignore_method or not_in_scope:
             log.debug('Not capturing %s request: %s', request.method, request.url)

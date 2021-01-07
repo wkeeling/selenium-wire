@@ -1,6 +1,12 @@
 History
 ~~~~~~~
 
+3.0.4 (2021-01-07)
+------------------
+
+* Revert change to capture OPTIONS requests by default.
+
+
 3.0.3 (2021-01-07)
 ------------------
 
