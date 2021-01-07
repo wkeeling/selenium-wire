@@ -444,12 +444,12 @@ Selenium Wire works by redirecting browser traffic through an internal proxy ser
     Note that even if a request is out of scope and not captured, it will still travel through Selenium Wire.
 
 ``seleniumwire_options.ignore_http_methods``
-    Use this option to prevent capturing certain HTTP methods. For example, to ignore OPTIONS requests:
+    Use this option to prevent capturing certain HTTP methods. By default, OPTIONS requests are ignored, but you might want to expand the list with other request methods.
 
     .. code:: python
 
         options = {
-            'ignore_http_methods': ['OPTIONS']
+            'ignore_http_methods': ['HEAD', 'OPTIONS']  # Ignore all HEAD and OPTIONS requests
         }
         driver = webdriver.Firefox(seleniumwire_options=options)
 
