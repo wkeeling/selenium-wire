@@ -66,7 +66,7 @@ Compatibilty
 
 * Python 3.6+
 * Selenium 3.4.0+
-* Firefox, Chrome and Remote Webdriver supported
+* Chrome, Firefox and Remote Webdriver supported
 
 Table of Contents
 ~~~~~~~~~~~~~~~~~

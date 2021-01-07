@@ -1,3 +1,4 @@
+import gzip
 import logging
 import os
 import pickle
@@ -5,7 +6,9 @@ import re
 import shutil
 import threading
 import uuid
+import zlib
 from datetime import datetime, timedelta
+from io import BytesIO
 
 log = logging.getLogger(__name__)
 
@@ -134,11 +137,31 @@ class RequestStorage:
             try:
                 with open(os.path.join(request_dir, 'response'), 'rb') as res:
                     response = pickle.load(res)
+                    response.body = self._decode(response.body, response.headers.get('Content-Encoding', 'identity'))
                     request.response = response
             except (FileNotFoundError, EOFError):
                 pass
 
         return request
+
+    def _decode(self, data, encoding):
+        if encoding != 'identity':
+            try:
+                if encoding in ('gzip', 'x-gzip'):
+                    io = BytesIO(data)
+                    with gzip.GzipFile(fileobj=io) as f:
+                        data = f.read()
+                elif encoding == 'deflate':
+                    try:
+                        data = zlib.decompress(data)
+                    except zlib.error:
+                        data = zlib.decompress(data, -zlib.MAX_WBITS)
+                else:
+                    log.debug("Unknown Content-Encoding: %s", encoding)
+            except (OSError, EOFError, zlib.error) as e:
+                # Log a message and return the data untouched
+                log.debug('Unable to decode body: %s', str(e))
+        return data
 
     def load_last_request(self):
         """Loads the last saved request.

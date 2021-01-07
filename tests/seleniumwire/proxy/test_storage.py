@@ -1,9 +1,11 @@
 import glob
+import gzip
 import os
 import pickle
 import shutil
 from datetime import datetime, timedelta
 from fnmatch import fnmatch
+from io import BytesIO
 from unittest import TestCase
 
 from seleniumwire.proxy.request import Request, Response
@@ -157,6 +159,35 @@ class RequestStorageTest(TestCase):
         requests = storage.load_requests()
 
         self.assertIsNotNone(requests[0].response)
+
+    def test_load_response_encoded_body(self):
+        body = b'test response body'
+        io = BytesIO()
+        with gzip.GzipFile(fileobj=io, mode='wb') as f:
+            f.write(body)
+        request = self._create_request()
+        storage = RequestStorage(base_dir=self.base_dir)
+        storage.save_request(request)
+        response = self._create_response(body=io.getvalue())
+        response.headers['Content-Encoding'] = 'gzip'
+        storage.save_response(request.id, response)
+
+        response_body = storage.load_requests()[0].response.body
+
+        self.assertEqual(body, response_body)
+
+    def test_load_response_encoded_body_error(self):
+        body = b'test response body'
+        request = self._create_request()
+        storage = RequestStorage(base_dir=self.base_dir)
+        storage.save_request(request)
+        response = self._create_response(body=body)
+        response.headers['Content-Encoding'] = 'gzip'
+        storage.save_response(request.id, response)
+
+        response_body = storage.load_requests()[0].response.body
+
+        self.assertEqual(body, response_body)
 
     def test_load_last_request(self):
         request_1 = self._create_request()

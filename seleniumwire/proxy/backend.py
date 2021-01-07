@@ -59,6 +59,6 @@ def create(addr='127.0.0.1', port=0, options=None):
     t.daemon = not options.get('standalone')
     t.start()
 
-    log.info('Created proxy listening on {}:{}'.format(*proxy.address()))
+    log.info('Created proxy listening on %s:%s', *proxy.address())
 
     return proxy
