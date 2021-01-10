@@ -195,7 +195,7 @@ Selenium Wire has limited support for using the remote webdriver client. When yo
 Accessing Requests
 ~~~~~~~~~~~~~~~~~~
 
-Selenium Wire captures all :superscript:`1` HTTP/HTTPS traffic made by the browser.
+Selenium Wire captures all HTTP/HTTPS traffic made by the browser :superscript:`1`.
 
 ``driver.requests``
     The list of captured requests in chronological order.
@@ -204,7 +204,7 @@ Selenium Wire captures all :superscript:`1` HTTP/HTTPS traffic made by the brows
     Convenience attribute for retrieving the most recently captured request. This is more efficient than using ``driver.requests[-1]``.
 
 ``driver.wait_for_request(path, timeout=10)``
-    This method will wait for a previous request with a specific URL to complete before continuing. The ``path`` attribute can be a regex that will be matched within the request URL. Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action. Also note that since ``path`` can be a regex, you must escape special characters such as question marks with a slash. A ``TimeoutException`` is raised if no match is found within the timeout period.
+    This method will wait for a previous request with a specific URL to complete before continuing. The ``path`` attribute can be a regex that will be matched within the request URL. Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action - and it will return the first request it finds. Also note that since ``path`` can be a regex, you must escape special characters such as question marks with a slash. A ``TimeoutException`` is raised if no match is found within the timeout period.
 
     For example, to wait for an AJAX request to return after a button is clicked:
 
