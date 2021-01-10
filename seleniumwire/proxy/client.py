@@ -4,7 +4,7 @@ import logging
 import threading
 from urllib.parse import quote_plus
 
-from .handler import ADMIN_PATH, CaptureRequestHandler, create_custom_capture_request_handler
+from .handler import CaptureRequestHandler, create_custom_capture_request_handler
 from .server import ProxyHTTPServer
 
 log = logging.getLogger(__name__)
@@ -253,7 +253,7 @@ class AdminClient:
         return self._make_request('GET', '/scopes')
 
     def _make_request(self, command, path, data=None):
-        url = '{}{}'.format(ADMIN_PATH, path)
+        url = '{}{}'.format('http://seleniumwire', path)
         conn = http.client.HTTPConnection(self._proxy_addr, self._proxy_port)
 
         args = {}
