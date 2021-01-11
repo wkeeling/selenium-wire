@@ -1,8 +1,8 @@
 import logging
 import threading
 
-from .handler import CaptureRequestHandler, create_custom_capture_request_handler
-from .server import ProxyHTTPServer
+from .proxy2.handler import CaptureRequestHandler, create_custom_capture_request_handler
+from .proxy2.server import ProxyHTTPServer
 
 log = logging.getLogger(__name__)
 

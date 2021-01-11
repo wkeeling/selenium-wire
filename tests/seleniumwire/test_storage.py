@@ -8,8 +8,8 @@ from fnmatch import fnmatch
 from io import BytesIO
 from unittest import TestCase
 
-from seleniumwire.proxy.request import Request, Response
-from seleniumwire.proxy.storage import RequestStorage
+from seleniumwire.request import Request, Response
+from seleniumwire.storage import RequestStorage
 
 
 class RequestStorageTest(TestCase):

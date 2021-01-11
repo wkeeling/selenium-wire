@@ -7,7 +7,7 @@ from socketserver import ThreadingMixIn
 
 from . import utils
 from .modifier import RequestModifier
-from .storage import RequestStorage
+from ..storage import RequestStorage
 
 
 class BoundedThreadingMixin(ThreadingMixIn):

@@ -6,8 +6,8 @@ from selenium.webdriver import Remote as _Remote
 from selenium.webdriver import Safari as _Safari
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
-from ..proxy import backend
-from .request import InspectRequestsMixin
+from . import backend
+from .inspect import InspectRequestsMixin
 
 
 class Firefox(InspectRequestsMixin, _Firefox):

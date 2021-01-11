@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import ANY, Mock
 
-from seleniumwire.proxy.handler import CaptureRequestHandler
+from seleniumwire.proxy2.handler import CaptureRequestHandler
 
 
 class CaptureRequestHandlerTest(TestCase):

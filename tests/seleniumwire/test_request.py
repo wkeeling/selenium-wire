@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from seleniumwire.proxy.request import Request, Response
+from seleniumwire.request import Request, Response
 
 
 class RequestTest(TestCase):

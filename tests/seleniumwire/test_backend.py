@@ -6,7 +6,7 @@ import urllib.request
 from unittest import TestCase
 from urllib.parse import parse_qs, urlsplit
 
-from seleniumwire.proxy import backend
+from seleniumwire import backend
 
 
 class BackendIntegrationTest(TestCase):

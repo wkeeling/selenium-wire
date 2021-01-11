@@ -4,7 +4,7 @@ from typing import List, Union
 
 from selenium.common.exceptions import TimeoutException
 
-from ..proxy.request import Request
+from .request import Request
 
 
 class InspectRequestsMixin:

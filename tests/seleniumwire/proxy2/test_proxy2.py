@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 from urllib.request import _parse_proxy
 
 from seleniumwire.proxy import socks
-from seleniumwire.proxy.proxy2 import ProxyAwareHTTPConnection, ProxyAwareHTTPSConnection, _create_auth_header
+from seleniumwire.proxy2.proxy2 import ProxyAwareHTTPConnection, ProxyAwareHTTPSConnection, _create_auth_header
 
 
 class ProxyAwareHTTPConnectionTest(TestCase):

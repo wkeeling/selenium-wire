@@ -3,7 +3,7 @@ from unittest.mock import ANY, Mock, call, patch
 
 from mitmproxy.net.http.headers import Headers
 
-from seleniumwire.proxy.mitmproxy import MitmProxy, MitmProxyRequestHandler
+from seleniumwire.proxy2.mitmproxy import MitmProxy, MitmProxyRequestHandler
 
 
 class MitmProxyRequestHandlerTest(TestCase):

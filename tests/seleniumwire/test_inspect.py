@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import Mock, call
 
-from seleniumwire.webdriver.request import InspectRequestsMixin, TimeoutException
+from seleniumwire.inspect import InspectRequestsMixin, TimeoutException
 
 
 class Driver(InspectRequestsMixin):

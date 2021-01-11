@@ -16,11 +16,11 @@ from mitmproxy.options import Options
 from mitmproxy.proxy.config import ProxyConfig
 from mitmproxy.proxy.server import ProxyServer
 
-from seleniumwire.proxy.handler import CaptureMixin
-from seleniumwire.proxy.modifier import RequestModifier
-from seleniumwire.proxy.request import Request, Response
-from seleniumwire.proxy.storage import RequestStorage
-from seleniumwire.proxy.utils import get_upstream_proxy
+from .handler import CaptureMixin
+from .modifier import RequestModifier
+from ..request import Request, Response
+from ..storage import RequestStorage
+from .utils import get_upstream_proxy
 
 logger = logging.getLogger(__name__)
 

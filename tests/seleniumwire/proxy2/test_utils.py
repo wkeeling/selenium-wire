@@ -2,7 +2,7 @@ import contextlib
 import os
 from unittest import TestCase
 
-from seleniumwire.proxy.utils import get_upstream_proxy
+from seleniumwire.proxy2.utils import get_upstream_proxy
 
 
 class GetUpstreamProxyTest(TestCase):
