@@ -5,9 +5,9 @@ import threading
 from http.server import HTTPServer
 from socketserver import ThreadingMixIn
 
+from ..storage import RequestStorage
 from . import utils
 from .modifier import RequestModifier
-from ..storage import RequestStorage
 
 
 class BoundedThreadingMixin(ThreadingMixIn):

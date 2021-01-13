@@ -3,8 +3,8 @@ import re
 import socket
 from http.client import HTTPMessage
 
-from .proxy2 import ProxyRequestHandler
 from ..request import Request, Response
+from .proxy2 import ProxyRequestHandler
 from .utils import is_list_alike
 
 log = logging.getLogger(__name__)

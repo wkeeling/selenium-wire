@@ -16,11 +16,11 @@ from mitmproxy.options import Options
 from mitmproxy.proxy.config import ProxyConfig
 from mitmproxy.proxy.server import ProxyServer
 
-from .handler import CaptureMixin
-from .modifier import RequestModifier
-from ..request import Request, Response
-from ..storage import RequestStorage
-from .utils import get_upstream_proxy
+from seleniumwire.modifier import RequestModifier
+from seleniumwire.request import Request, Response
+from seleniumwire.storage import RequestStorage
+from seleniumwire.utils import get_upstream_proxy
+
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +29,11 @@ DEFAULT_UPSTREAM_CERT = False
 DEFAULT_STREAM_WEBSOCKETS = True
 
 
-class MitmProxyRequestHandler(CaptureMixin):
-    """Mitmproxy add-on which provides request modification and capture."""
+class MitmProxyRequestHandler:
+    """Mitmproxy add-on which provides request modification and capture.
+
+    DEPRECATED.
+    """
 
     def __init__(self, server):
         self.server = server

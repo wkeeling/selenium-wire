@@ -1,8 +1,7 @@
 import logging
 import threading
 
-from .proxy2.handler import CaptureRequestHandler, create_custom_capture_request_handler
-from .proxy2.server import ProxyHTTPServer
+from seleniumwire.server import MitmProxy
 
 log = logging.getLogger(__name__)
 
@@ -33,16 +32,7 @@ def create(addr='127.0.0.1', port=0, options=None):
 
     if backend == DEFAULT_BACKEND:
         # Use the default backend
-        # Note that the use of custom_response_handler is deprecated.
-        custom_response_handler = options.pop('custom_response_handler', None)
-        if custom_response_handler is not None:
-            capture_request_handler = create_custom_capture_request_handler(custom_response_handler)
-        else:
-            capture_request_handler = CaptureRequestHandler
-            # Set the timeout here before the handler starts executing
-            capture_request_handler.timeout = options.get('connection_timeout', 5)
-
-        proxy = ProxyHTTPServer(addr, port, capture_request_handler, options=options)
+        proxy = MitmProxy(addr, port, options)
     elif backend == 'mitmproxy':
         # Use mitmproxy if installed
         from . import mitmproxy

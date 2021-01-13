@@ -1,0 +1,132 @@
+import logging
+import re
+
+from seleniumwire.proxy.http import HTTPResponse
+from seleniumwire.proxy.net.http.headers import Headers
+from seleniumwire.request import Request, Response
+from seleniumwire.utils import is_list_alike
+
+log = logging.getLogger(__name__)
+
+
+class MitmProxyRequestHandler:
+    """Mitmproxy add-on which provides request modification and capture."""
+
+    def __init__(self, proxy):
+        self.proxy = proxy
+
+    def requestheaders(self, flow):
+        # Requests that are being captured are not streamed.
+        if self.in_scope(flow.request):
+            flow.request.stream = False
+
+    def request(self, flow):
+        # Make any modifications to the original request
+        # DEPRECATED. This will be replaced by request_interceptor
+        self.proxy.modifier.modify_request(flow.request, bodyattr='raw_content')
+
+        # Convert to one of our requests for handling
+        request = self._create_request(flow)
+
+        # Call the request interceptor if set
+        if self.proxy.request_interceptor is not None:
+            self.proxy.request_interceptor(request)
+
+            if request.response:
+                # The interceptor has created a response for us to send back immediately
+                flow.response = HTTPResponse.make(
+                    status_code=int(request.response.status_code),
+                    content=request.response.body,
+                    headers=[(k.encode('utf-8'), v.encode('utf-8')) for k, v in request.response.headers.items()]
+                )
+                return
+
+            flow.request.method = request.method
+            flow.request.url = request.url
+            flow.request.headers = self._to_headers_obj(request.headers)
+            flow.request.raw_content = request.body
+
+        self.capture_request(request)
+        if request.id is not None:  # Will not be None when captured
+            flow.request.id = request.id
+
+        # Could possibly use mitmproxy's 'anticomp' option instead of this
+        if self.proxy.options.get('disable_encoding') is True:
+            flow.request.headers['Accept-Encoding'] = 'identity'
+
+    def capture_request(self, request):
+        if not self.in_scope(request):
+            log.debug('Not capturing %s request: %s', request.method, request.url)
+            return
+
+        log.info('Capturing request: %s', request.url)
+
+        # Save the request to our storage
+        self.proxy.storage.save_request(request)
+
+    def in_scope(self, request):
+        if request.method in self.proxy.options.get('ignore_http_methods', ['OPTIONS']):
+            return False
+
+        scopes = self.proxy.scopes
+
+        if not scopes:
+            return True
+        elif not is_list_alike(scopes):
+            scopes = [scopes]
+
+        for scope in scopes:
+            match = re.search(scope, request.url)
+            if match:
+                return True
+
+        return False
+
+    def responseheaders(self, flow):
+        # Responses that are being captured are not streamed.
+        if self.in_scope(flow.request):
+            flow.response.stream = False
+
+    def response(self, flow):
+        # Make any modifications to the response
+        # DEPRECATED. This will be replaced by response_interceptor
+        self.proxy.modifier.modify_response(flow.response, flow.request)
+
+        if not hasattr(flow.request, 'id'):
+            # Request was not stored
+            return
+
+        # Convert the mitmproxy specific response to one of our responses
+        # for handling.
+        response = Response(
+            status_code=flow.response.status_code,
+            reason=flow.response.reason,
+            headers=[(k, v) for k, v in flow.response.headers.items()],
+            body=flow.response.raw_content
+        )
+
+        # Call the response interceptor if set
+        if self.proxy.response_interceptor is not None:
+            self.proxy.response_interceptor(self._create_request(flow, response), response)
+            flow.response.status_code = response.status_code
+            flow.response.reason = response.reason
+            flow.response.headers = self._to_headers_obj(response.headers)
+            flow.response.raw_content = response.body
+
+        log.info('Capturing response: %s %s %s', flow.request.url, response.status_code, response.reason)
+
+        self.proxy.storage.save_response(flow.request.id, response)
+
+    def _create_request(self, flow, response=None):
+        request = Request(
+            method=flow.request.method,
+            url=flow.request.url,
+            headers=[(k, v) for k, v in flow.request.headers.items()],
+            body=flow.request.raw_content
+        )
+        request.response = response
+
+        return request
+
+    def _to_headers_obj(self, headers):
+        return Headers([(k.encode('utf-8'), v.encode('utf-8')) for k, v in headers.items()])

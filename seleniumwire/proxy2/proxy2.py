@@ -16,8 +16,8 @@ import urllib.parse
 from http.client import HTTPConnection, HTTPSConnection
 from http.server import BaseHTTPRequestHandler
 
-from . import cert
 from ..proxy import socks
+from . import cert
 
 
 class ProxyRequestHandler(BaseHTTPRequestHandler):
