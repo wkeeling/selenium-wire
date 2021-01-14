@@ -281,7 +281,7 @@ class MitmProxyTest(TestCase):
     def test_upstream_proxy(self):
         MitmProxy('somehost', 12345, {
             'request_storage_base_dir': '/some/dir',
-            'proxy': {
+            'mitmproxy': {
                 'http': 'http://proxyserver:8080',
                 # We pick https when both are specified and the same
                 'https': 'https://proxyserver:8080'
@@ -302,7 +302,7 @@ class MitmProxyTest(TestCase):
     def test_upstream_proxy_single(self):
         MitmProxy('somehost', 12345, {
             'request_storage_base_dir': '/some/dir',
-            'proxy': {
+            'mitmproxy': {
                 'http': 'http://proxyserver:8080',
             }
         })
@@ -321,7 +321,7 @@ class MitmProxyTest(TestCase):
     def test_upstream_proxy_auth(self):
         MitmProxy('somehost', 12345, {
             'request_storage_base_dir': '/some/dir',
-            'proxy': {
+            'mitmproxy': {
                 'https': 'https://user:pass@proxyserver:8080',
             }
         })
@@ -342,7 +342,7 @@ class MitmProxyTest(TestCase):
         with self.assertRaises(ValueError):
             MitmProxy('somehost', 12345, {
                 'request_storage_base_dir': '/some/dir',
-                'proxy': {
+                'mitmproxy': {
                     'http': 'http://proxyserver1:8080',
                     'https': 'https://proxyserver2:8080'
                 }
@@ -398,38 +398,38 @@ class MitmProxyTest(TestCase):
         self.mock_storage.return_value.cleanup.assert_called_once_with()
 
     def setUp(self):
-        patcher = patch('seleniumwire.proxy.mitmproxy.RequestStorage')
+        patcher = patch('seleniumwire.mitmproxy.mitmproxy.RequestStorage')
         self.mock_storage = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = patch('seleniumwire.proxy.mitmproxy.Options')
+        patcher = patch('seleniumwire.mitmproxy.mitmproxy.Options')
         self.mock_options = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = patch('seleniumwire.proxy.mitmproxy.Master')
+        patcher = patch('seleniumwire.mitmproxy.mitmproxy.Master')
         self.mock_master = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = patch('seleniumwire.proxy.mitmproxy.ProxyConfig')
+        patcher = patch('seleniumwire.mitmproxy.mitmproxy.ProxyConfig')
         self.mock_proxy_config = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = patch('seleniumwire.proxy.mitmproxy.ProxyServer')
+        patcher = patch('seleniumwire.mitmproxy.mitmproxy.ProxyServer')
         self.mock_proxy_server = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = patch('seleniumwire.proxy.mitmproxy.SendToLogger')
+        patcher = patch('seleniumwire.mitmproxy.mitmproxy.SendToLogger')
         self.mock_logger = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = patch('seleniumwire.proxy.mitmproxy.addons')
+        patcher = patch('seleniumwire.mitmproxy.mitmproxy.addons')
         self.mock_addons = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = patch('seleniumwire.proxy.mitmproxy.MitmProxyRequestHandler')
+        patcher = patch('seleniumwire.mitmproxy.mitmproxy.MitmProxyRequestHandler')
         self.mock_handler = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = patch('seleniumwire.proxy.mitmproxy.asyncio')
+        patcher = patch('seleniumwire.mitmproxy.mitmproxy.asyncio')
         self.mock_asyncio = patcher.start()
         self.addCleanup(patcher.stop)

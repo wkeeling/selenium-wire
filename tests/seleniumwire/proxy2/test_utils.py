@@ -9,7 +9,7 @@ class GetUpstreamProxyTest(TestCase):
 
     def test_get_config(self):
         options = {
-            'proxy': {
+            'mitmproxy': {
                 'http': 'http://username1:password1@server1:8888',
                 'https': 'https://username2:password2@server2:8888',
                 'no_proxy': 'localhost'
@@ -55,7 +55,7 @@ class GetUpstreamProxyTest(TestCase):
 
     def test_merge(self):
         options = {
-            'proxy': {
+            'mitmproxy': {
                 'https': 'https://username3:password3@server3:8888',
                 'no_proxy': 'localhost'
             }

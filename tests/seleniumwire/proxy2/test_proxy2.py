@@ -4,7 +4,7 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 from urllib.request import _parse_proxy
 
-from seleniumwire.proxy import socks
+from seleniumwire.thirdparty.mitmproxy import socks
 from seleniumwire.proxy2.proxy2 import ProxyAwareHTTPConnection, ProxyAwareHTTPSConnection, _create_auth_header
 
 
@@ -37,7 +37,7 @@ class ProxyAwareHTTPConnectionTest(TestCase):
         self.assertFalse(conn.use_proxy)
         self.assertEqual(conn.host, 'example.com')
 
-    @patch('seleniumwire.proxy.proxy2.HTTPConnection.request')
+    @patch('seleniumwire.mitmproxy.proxy2.HTTPConnection.request')
     def test_request_uses_absolute_url(self, mock_request):
         conn = ProxyAwareHTTPConnection(self.config, 'example.com')
         conn._create_connection = Mock()
@@ -48,7 +48,7 @@ class ProxyAwareHTTPConnectionTest(TestCase):
             headers={'Proxy-Authorization': 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='}
         )
 
-    @patch('seleniumwire.proxy.proxy2.HTTPConnection.request')
+    @patch('seleniumwire.mitmproxy.proxy2.HTTPConnection.request')
     def test_request_uses_original_url_when_not_proxied(self, mock_request):
         self.config = {}
         conn = ProxyAwareHTTPConnection(self.config, 'example.com')
@@ -59,7 +59,7 @@ class ProxyAwareHTTPConnectionTest(TestCase):
             'GET', '/foobar', None, headers={}
         )
 
-    @patch('seleniumwire.proxy.proxy2.socks')
+    @patch('seleniumwire.mitmproxy.proxy2.socks')
     def test_connect_does_not_use_socks_proxy(self, mock_socks):
         conn = ProxyAwareHTTPConnection(self.config, 'example.com')
         conn._create_connection = Mock()
@@ -67,7 +67,7 @@ class ProxyAwareHTTPConnectionTest(TestCase):
 
         assert mock_socks._create_connection.call_count == 0
 
-    @patch('seleniumwire.proxy.proxy2.socks')
+    @patch('seleniumwire.mitmproxy.proxy2.socks')
     def test_connect_uses_socks5_proxy(self, mock_socks):
         conf = namedtuple('ProxyConf', 'scheme username password hostport')
         self.config = {
@@ -92,7 +92,7 @@ class ProxyAwareHTTPConnectionTest(TestCase):
             ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
         )
 
-    @patch('seleniumwire.proxy.proxy2.socks')
+    @patch('seleniumwire.mitmproxy.proxy2.socks')
     def test_connect_uses_remote_dns(self, mock_socks):
         conf = namedtuple('ProxyConf', 'scheme username password hostport')
         self.config = {
@@ -117,7 +117,7 @@ class ProxyAwareHTTPConnectionTest(TestCase):
             ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
         )
 
-    @patch('seleniumwire.proxy.proxy2.socks')
+    @patch('seleniumwire.mitmproxy.proxy2.socks')
     def test_connect_uses_socks4_proxy(self, mock_socks):
         conf = namedtuple('ProxyConf', 'scheme username password hostport')
         self.config = {
@@ -142,7 +142,7 @@ class ProxyAwareHTTPConnectionTest(TestCase):
             ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
         )
 
-    @patch('seleniumwire.proxy.proxy2.socks')
+    @patch('seleniumwire.mitmproxy.proxy2.socks')
     def test_raises_exception_when_invalid_socks_scheme(self, mock_socks):
         conf = namedtuple('ProxyConf', 'scheme username password hostport')
         self.config = {
@@ -171,7 +171,7 @@ class ProxyAwareHTTPSConnectionTest(TestCase):
         self.assertTrue(conn.use_proxy)
         self.assertEqual(conn.host, 'host')
 
-    @patch('seleniumwire.proxy.proxy2.HTTPSConnection.set_tunnel')
+    @patch('seleniumwire.mitmproxy.proxy2.HTTPSConnection.set_tunnel')
     def test_set_tunnel_is_called(self, mock_set_tunnel):
         ProxyAwareHTTPSConnection(self.config, 'example.com')
 
@@ -193,14 +193,14 @@ class ProxyAwareHTTPSConnectionTest(TestCase):
         self.assertFalse(conn.use_proxy)
         self.assertEqual(conn.host, 'example.com')
 
-    @patch('seleniumwire.proxy.proxy2.HTTPSConnection.set_tunnel')
+    @patch('seleniumwire.mitmproxy.proxy2.HTTPSConnection.set_tunnel')
     def test_set_tunnel_is_not_called(self, mock_set_tunnel):
         self.config = {}
         ProxyAwareHTTPSConnection(self.config, 'example.com')
 
         self.assertEqual(mock_set_tunnel.call_count, 0)
 
-    @patch('seleniumwire.proxy.proxy2.HTTPSConnection.set_tunnel')
+    @patch('seleniumwire.mitmproxy.proxy2.HTTPSConnection.set_tunnel')
     def test_set_tunnel_is_not_called_when_socks(self, mock_set_tunnel):
         conf = namedtuple('ProxyConf', 'scheme username password hostport')
         self.config = {
@@ -210,9 +210,9 @@ class ProxyAwareHTTPSConnectionTest(TestCase):
 
         self.assertEqual(mock_set_tunnel.call_count, 0)
 
-    @patch('seleniumwire.proxy.proxy2.socks')
-    @patch('seleniumwire.proxy.proxy2.HTTPSConnection.connect')
-    @patch('seleniumwire.proxy.proxy2.HTTPSConnection.set_tunnel')
+    @patch('seleniumwire.mitmproxy.proxy2.socks')
+    @patch('seleniumwire.mitmproxy.proxy2.HTTPSConnection.connect')
+    @patch('seleniumwire.mitmproxy.proxy2.HTTPSConnection.set_tunnel')
     def test_connect_does_not_use_socks_proxy(self, mock_set_tunnel, mock_connect, mock_socks):
         conn = ProxyAwareHTTPSConnection(self.config, 'example.com')
         conn.connect()
@@ -220,7 +220,7 @@ class ProxyAwareHTTPSConnectionTest(TestCase):
         assert mock_socks._create_connection.call_count == 0
         mock_connect.assert_called_once_with()
 
-    @patch('seleniumwire.proxy.proxy2.socks')
+    @patch('seleniumwire.mitmproxy.proxy2.socks')
     def test_connect_uses_socks5_proxy(self, mock_socks):
         conf = namedtuple('ProxyConf', 'scheme username password hostport')
         self.config = {
@@ -245,7 +245,7 @@ class ProxyAwareHTTPSConnectionTest(TestCase):
             ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
         )
 
-    @patch('seleniumwire.proxy.proxy2.socks')
+    @patch('seleniumwire.mitmproxy.proxy2.socks')
     def test_connect_uses_remote_dns(self, mock_socks):
         conf = namedtuple('ProxyConf', 'scheme username password hostport')
         self.config = {
@@ -270,7 +270,7 @@ class ProxyAwareHTTPSConnectionTest(TestCase):
             ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
         )
 
-    @patch('seleniumwire.proxy.proxy2.socks')
+    @patch('seleniumwire.mitmproxy.proxy2.socks')
     def test_connect_uses_socks4_proxy(self, mock_socks):
         conf = namedtuple('ProxyConf', 'scheme username password hostport')
         self.config = {
@@ -295,7 +295,7 @@ class ProxyAwareHTTPSConnectionTest(TestCase):
             ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
         )
 
-    @patch('seleniumwire.proxy.proxy2.socks')
+    @patch('seleniumwire.mitmproxy.proxy2.socks')
     def test_raises_exception_when_invalid_socks_scheme(self, mock_socks):
         conf = namedtuple('ProxyConf', 'scheme username password hostport')
         self.config = {

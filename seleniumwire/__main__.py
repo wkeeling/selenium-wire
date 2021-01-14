@@ -3,7 +3,7 @@ import logging
 import signal
 from argparse import RawDescriptionHelpFormatter
 
-from seleniumwire.proxy import backend, utils
+from seleniumwire.thirdparty.mitmproxy import backend, utils
 
 logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 

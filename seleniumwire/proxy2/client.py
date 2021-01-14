@@ -11,37 +11,37 @@ log = logging.getLogger(__name__)
 
 
 class AdminClient:
-    """Provides an API for sending commands to a remote proxy server.
+    """Provides an API for sending commands to a remote mitmproxy server.
 
     DEPRECATED.
     """
 
     def __init__(self, proxy_mgr_addr=None, proxy_mgr_port=None):
-        # The address of the proxy manager if set
+        # The address of the mitmproxy manager if set
         self._proxy_mgr_addr = proxy_mgr_addr
         self._proxy_mgr_port = proxy_mgr_port
 
-        # Reference to a created proxy instance and its address/port
+        # Reference to a created mitmproxy instance and its address/port
         self._proxy = None
         self._proxy_addr = None
         self._proxy_port = None
         self._capture_request_handler = None
 
     def create_proxy(self, addr='127.0.0.1', port=0, options=None):
-        """Creates a new proxy server and returns the address and port number that the
+        """Creates a new mitmproxy server and returns the address and port number that the
         server was started on.
 
         Args:
-            addr: The address the proxy server will listen on. Default 127.0.0.1.
-            port: The port the proxy server will listen on. Default 0 - which means
+            addr: The address the mitmproxy server will listen on. Default 127.0.0.1.
+            port: The port the mitmproxy server will listen on. Default 0 - which means
                 use the first available port.
-            options: Additional options to configure the proxy.
+            options: Additional options to configure the mitmproxy.
 
         Returns:
-            A tuple of the address and port number of the created proxy server.
+            A tuple of the address and port number of the created mitmproxy server.
         """
         if self._proxy_mgr_addr is not None and self._proxy_mgr_port is not None:
-            # TODO: ask the proxy manager to create a proxy and return that
+            # TODO: ask the mitmproxy manager to create a mitmproxy and return that
             pass
 
         if options is None:
@@ -84,11 +84,11 @@ class AdminClient:
 
         self.initialise_proxy(options)
 
-        log.info('Created proxy listening on {}:{}'.format(self._proxy_addr, self._proxy_port))
+        log.info('Created mitmproxy listening on {}:{}'.format(self._proxy_addr, self._proxy_port))
         return self._proxy_addr, self._proxy_port
 
     def initialise_proxy(self, options):
-        """Initialise the proxy with any options.
+        """Initialise the mitmproxy with any options.
 
         Args:
             options: The selenium wire options.
@@ -96,13 +96,13 @@ class AdminClient:
         self._make_request('POST', '/initialise', data=options)
 
     def destroy_proxy(self):
-        """Stops the proxy server and performs any clean up actions."""
-        log.info('Destroying proxy')
-        # If proxy manager set, we would ask it to do this
+        """Stops the mitmproxy server and performs any clean up actions."""
+        log.info('Destroying mitmproxy')
+        # If mitmproxy manager set, we would ask it to do this
         self._proxy.shutdown()
 
     def get_requests(self):
-        """Returns the requests currently captured by the proxy server.
+        """Returns the requests currently captured by the mitmproxy server.
 
         The data is returned as a list of dictionaries in the format:
 
@@ -133,7 +133,7 @@ class AdminClient:
         return self._make_request('GET', '/requests')
 
     def get_last_request(self):
-        """Returns the last request captured by the proxy server.
+        """Returns the last request captured by the mitmproxy server.
 
         This is more efficient than running get_requests()[-1]
 
@@ -144,7 +144,7 @@ class AdminClient:
         return self._make_request('GET', '/last_request')
 
     def clear_requests(self):
-        """Clears any previously captured requests from the proxy server."""
+        """Clears any previously captured requests from the mitmproxy server."""
         self._make_request('DELETE', '/requests')
 
     def find(self, path):
@@ -245,7 +245,7 @@ class AdminClient:
         self._make_request('POST', '/scopes', data=scopes)
 
     def reset_scopes(self):
-        """Reset scopes to let proxy capture all requests."""
+        """Reset scopes to let mitmproxy capture all requests."""
         self._make_request('DELETE', '/scopes')
 
     def get_scopes(self):
@@ -277,7 +277,7 @@ class AdminClient:
         except ProxyException:
             raise
         except Exception as e:
-            raise ProxyException('Unable to retrieve data from proxy: {}'.format(e))
+            raise ProxyException('Unable to retrieve data from mitmproxy: {}'.format(e))
         finally:
             try:
                 conn.close()
@@ -287,4 +287,4 @@ class AdminClient:
 
 
 class ProxyException(Exception):
-    """Raised when there is a problem communicating with the proxy server."""
+    """Raised when there is a problem communicating with the mitmproxy server."""

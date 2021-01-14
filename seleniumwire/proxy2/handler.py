@@ -62,7 +62,7 @@ class CaptureMixin:
 
 class CaptureRequestHandler(CaptureMixin, ProxyRequestHandler):
     """Specialisation of ProxyRequestHandler that captures requests and responses
-    that pass through the proxy server.
+    that pass through the mitmproxy server.
     """
     def __init__(self, *args, **kwargs):
         try:

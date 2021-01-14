@@ -1,0 +1,9 @@
+Selenium Wire relies on the following third party libraries:
+
+mitmproxy
+    - https://github.com/mitmproxy/
+    - Used for request/response interception, capture and modification
+
+pysocks
+    - https://github.com/Anorov/PySocks
+    - Used for connecting to upstream socks proxies

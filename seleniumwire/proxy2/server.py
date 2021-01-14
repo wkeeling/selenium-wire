@@ -38,7 +38,7 @@ class ProxyHTTPServer(BoundedThreadingMixin, HTTPServer):
     daemon_threads = True
 
     def __init__(self, host, port, *args, options=None, **kwargs):
-        # The server's upstream proxy configuration (if any)
+        # The server's upstream mitmproxy configuration (if any)
         self.proxy_config = utils.get_upstream_proxy(options)
 
         # Additional configuration

@@ -178,7 +178,7 @@ class BrowserIntegrationTest(TestCase):
         options = {
             'backend': 'mitmproxy',
             'disable_encoding': True,
-            'proxy': {
+            'mitmproxy': {
                 'https': 'https://localhost:8080'
             }
         }

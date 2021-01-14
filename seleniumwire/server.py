@@ -2,10 +2,11 @@ import asyncio
 import logging
 
 from seleniumwire.handler import MitmProxyRequestHandler
-from seleniumwire.proxy.exceptions import Timeout
-from seleniumwire.proxy.master import Master
-from seleniumwire.proxy.options import Options
-from seleniumwire.proxy.server import ProxyConfig, ProxyServer
+from seleniumwire.thirdparty.mitmproxy import addons
+from seleniumwire.thirdparty.mitmproxy.exceptions import Timeout
+from seleniumwire.thirdparty.mitmproxy.master import Master
+from seleniumwire.thirdparty.mitmproxy.options import Options
+from seleniumwire.thirdparty.mitmproxy.server import ProxyConfig, ProxyServer
 from seleniumwire.storage import RequestStorage
 from seleniumwire.utils import get_upstream_proxy
 
@@ -50,7 +51,7 @@ class MitmProxy:
         # Create an instance of the mitmproxy server
         self._master = Master(mitmproxy_opts)
         self._master.server = ProxyServer(ProxyConfig(mitmproxy_opts))
-        # self._master.addons.add(*addons.default_addons())
+        self._master.addons.add(*addons.default_addons())
         self._master.addons.add(SendToLogger())
         self._master.addons.add(MitmProxyRequestHandler(self))
 
@@ -96,9 +97,9 @@ class MitmProxy:
 
         if http_proxy and https_proxy:
             if http_proxy.hostport != https_proxy.hostport:
-                # We only support a single upstream proxy server
+                # We only support a single upstream mitmproxy server
                 raise ValueError('Cannot specify both http AND https '
-                                 'proxy settings with mitmproxy backend')
+                                 'mitmproxy settings with mitmproxy backend')
 
             conf = https_proxy
         elif http_proxy:

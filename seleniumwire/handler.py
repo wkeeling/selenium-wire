@@ -1,8 +1,8 @@
 import logging
 import re
 
-from seleniumwire.proxy.http import HTTPResponse
-from seleniumwire.proxy.net.http.headers import Headers
+from seleniumwire.thirdparty.mitmproxy.http import HTTPResponse
+from seleniumwire.thirdparty.mitmproxy.net.http.headers import Headers
 from seleniumwire.request import Request, Response
 from seleniumwire.utils import is_list_alike
 

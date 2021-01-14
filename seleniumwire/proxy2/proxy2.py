@@ -16,7 +16,7 @@ import urllib.parse
 from http.client import HTTPConnection, HTTPSConnection
 from http.server import BaseHTTPRequestHandler
 
-from ..proxy import socks
+from seleniumwire.thirdparty.mitmproxy import socks
 from . import cert
 
 
@@ -151,9 +151,9 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         # http://tools.ietf.org/html/rfc2616#section-13.5.1
         hop_by_hop = (
             'keep-alive',
-            'proxy-authenticate',
-            'proxy-authorization',
-            'proxy-connection',
+            'mitmproxy-authenticate',
+            'mitmproxy-authorization',
+            'mitmproxy-connection',
             'te',
             'trailers',
             'transfer-encoding',
@@ -287,7 +287,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
 class ProxyAwareHTTPConnection(HTTPConnection):
     """A specialised HTTPConnection that will transparently connect to a
-    HTTP or SOCKS proxy server based on supplied proxy configuration.
+    HTTP or SOCKS mitmproxy server based on supplied mitmproxy configuration.
     """
 
     def __init__(self, proxy_config, netloc, *args, **kwargs):
@@ -331,7 +331,7 @@ class ProxyAwareHTTPConnection(HTTPConnection):
 
 class ProxyAwareHTTPSConnection(HTTPSConnection):
     """A specialised HTTPSConnection that will transparently connect to a
-    HTTP or SOCKS proxy server based on supplied proxy configuration.
+    HTTP or SOCKS mitmproxy server based on supplied mitmproxy configuration.
     """
 
     def __init__(self, proxy_config, netloc, *args, **kwargs):
@@ -370,9 +370,9 @@ def _create_auth_header(proxy_username, proxy_password, custom_proxy_authorizati
     and password or custom Proxy-Authorization header value.
 
     Args:
-        proxy_username: The proxy username.
-        proxy_password: The proxy password.
-        custom_proxy_authorization: The custom proxy authorization.
+        proxy_username: The mitmproxy username.
+        proxy_password: The mitmproxy password.
+        custom_proxy_authorization: The custom mitmproxy authorization.
     Returns:
         A dictionary containing the Proxy-Authorization header or an empty
         dictionary if the username or password were not set.

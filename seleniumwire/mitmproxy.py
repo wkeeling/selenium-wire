@@ -209,9 +209,9 @@ class MitmProxy:
 
         if http_proxy and https_proxy:
             if http_proxy.hostport != https_proxy.hostport:
-                # We only support a single upstream proxy server
+                # We only support a single upstream mitmproxy server
                 raise ValueError('Cannot specify both http AND https '
-                                 'proxy settings with mitmproxy backend')
+                                 'mitmproxy settings with mitmproxy backend')
 
             conf = https_proxy
         elif http_proxy:

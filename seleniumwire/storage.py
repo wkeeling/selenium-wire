@@ -17,7 +17,7 @@ REMOVE_DATA_OLDER_THAN_DAYS = 1
 
 
 class RequestStorage:
-    """Responsible for saving request and response data that passes through the proxy server,
+    """Responsible for saving request and response data that passes through the mitmproxy server,
     and provding an API to retrieve that data.
 
     Requests and responses are saved separately. However, when a request is loaded, the
