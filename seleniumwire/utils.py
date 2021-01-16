@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 
 def get_upstream_proxy(options):
-    """Get the upstream mitmproxy configuration from the options dictionary.
+    """Get the upstream proxy configuration from the options dictionary.
     This will be overridden with any configuration found in the environment
     variables HTTP_PROXY, HTTPS_PROXY, NO_PROXY
 
@@ -18,13 +18,13 @@ def get_upstream_proxy(options):
     be a named tuple with the attributes:
         scheme, username, password, hostport
     Note that the keys will only be present in the dictionary when relevant
-    mitmproxy configuration exists.
+    proxy configuration exists.
 
     Args:
         options: The selenium wire options.
     Returns: A dictionary.
     """
-    proxy_options = (options or {}).pop('mitmproxy', {})
+    proxy_options = (options or {}).pop('proxy', {})
 
     http_proxy = os.environ.get('HTTP_PROXY')
     https_proxy = os.environ.get('HTTPS_PROXY')
@@ -44,7 +44,7 @@ def get_upstream_proxy(options):
     conf = namedtuple('ProxyConf', 'scheme username password hostport')
 
     for proxy_type in ('http', 'https'):
-        # Parse the upstream mitmproxy URL into (scheme, username, password, hostport)
+        # Parse the upstream proxy URL into (scheme, username, password, hostport)
         # for ease of access.
         if merged.get(proxy_type) is not None:
             merged[proxy_type] = conf(*_parse_proxy(merged[proxy_type]))

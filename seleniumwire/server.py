@@ -7,6 +7,7 @@ from seleniumwire.thirdparty.mitmproxy.exceptions import Timeout
 from seleniumwire.thirdparty.mitmproxy.master import Master
 from seleniumwire.thirdparty.mitmproxy.options import Options
 from seleniumwire.thirdparty.mitmproxy.server import ProxyConfig, ProxyServer
+from seleniumwire.modifier import RequestModifier
 from seleniumwire.storage import RequestStorage
 from seleniumwire.utils import get_upstream_proxy
 
@@ -27,6 +28,10 @@ class MitmProxy:
         self.storage = RequestStorage(
             base_dir=options.pop('request_storage_base_dir', None)
         )
+
+        # Used to modify requests/responses passing through the server
+        # DEPRECATED. Will be superceded by request/response interceptors.
+        self.modifier = RequestModifier()
 
         # The scope of requests we're interested in capturing.
         self.scopes = []
@@ -73,7 +78,7 @@ class MitmProxy:
         self._master.run_loop(self._event_loop.run_forever)
 
     def address(self):
-        """Get a tuple of the address and port the mitmproxy server
+        """Get a tuple of the address and port the proxy server
         is listening on.
         """
         return self._master.server.address
@@ -97,9 +102,8 @@ class MitmProxy:
 
         if http_proxy and https_proxy:
             if http_proxy.hostport != https_proxy.hostport:
-                # We only support a single upstream mitmproxy server
-                raise ValueError('Cannot specify both http AND https '
-                                 'mitmproxy settings with mitmproxy backend')
+                # We only support a single upstream proxy server
+                raise ValueError('Cannot specify both http AND https proxy settings')
 
             conf = https_proxy
         elif http_proxy:

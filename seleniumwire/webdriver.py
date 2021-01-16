@@ -35,7 +35,7 @@ class Firefox(InspectRequestsMixin, _Firefox):
 
             addr, port = self.proxy.address()
 
-            capabilities['mitmproxy'] = {
+            capabilities['proxy'] = {
                 'proxyType': 'manual',
                 'httpProxy': '{}:{}'.format(addr, port),
                 'sslProxy': '{}:{}'.format(addr, port),
@@ -77,7 +77,7 @@ class Chrome(InspectRequestsMixin, _Chrome):
 
             addr, port = self.proxy.address()
 
-            capabilities['mitmproxy'] = {
+            capabilities['proxy'] = {
                 'proxyType': 'manual',
                 'httpProxy': '{}:{}'.format(addr, port),
                 'sslProxy': '{}:{}'.format(addr, port),
@@ -92,9 +92,9 @@ class Chrome(InspectRequestsMixin, _Chrome):
         except KeyError:
             chrome_options = ChromeOptions()
 
-        # Prevent Chrome from bypassing the Selenium Wire mitmproxy
+        # Prevent Chrome from bypassing the Selenium Wire proxy
         # for localhost addresses.
-        chrome_options.add_argument('mitmproxy-bypass-list=<-loopback>')
+        chrome_options.add_argument('proxy-bypass-list=<-loopback>')
         kwargs['options'] = chrome_options
 
         super().__init__(*args, **kwargs)
@@ -116,7 +116,7 @@ class Safari(InspectRequestsMixin, _Safari):
         if seleniumwire_options is None:
             seleniumwire_options = {}
 
-        # Safari does not support automatic mitmproxy configuration through the
+        # Safari does not support automatic proxy configuration through the
         # DesiredCapabilities API, and thus has to be configured manually.
         # Whatever port number is chosen for that manual configuration has to
         # be passed in the options.
@@ -146,7 +146,7 @@ class Edge(InspectRequestsMixin, _Edge):
         if seleniumwire_options is None:
             seleniumwire_options = {}
 
-        # Edge does not support automatic mitmproxy configuration through the
+        # Edge does not support automatic proxy configuration through the
         # DesiredCapabilities API, and thus has to be configured manually.
         # Whatever port number is chosen for that manual configuration has to
         # be passed in the options.
@@ -190,7 +190,7 @@ class Remote(InspectRequestsMixin, _Remote):
 
             addr, port = self.proxy.address()
 
-            capabilities["mitmproxy"] = {
+            capabilities["proxy"] = {
                 "proxyType": "manual",
                 "httpProxy": "{}:{}".format(addr, port),
                 "sslProxy": "{}:{}".format(addr, port),

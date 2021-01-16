@@ -9,7 +9,7 @@ DEFAULT_BACKEND = 'default'
 
 
 def create(addr='127.0.0.1', port=0, options=None):
-    """Create a new mitmproxy backend.
+    """Create a new proxy backend.
 
     The type of backend created depends on the 'backend' option. Supported types
     are 'default' and 'mitmproxy'. When not specified, the default backend will
@@ -17,13 +17,13 @@ def create(addr='127.0.0.1', port=0, options=None):
     installed.
 
     Args:
-        addr: The address the mitmproxy server will listen on. Default 127.0.0.1.
-        port: The port the mitmproxy server will listen on. Default 0 - which means
+        addr: The address the proxy server will listen on. Default 127.0.0.1.
+        port: The port the proxy server will listen on. Default 0 - which means
             use the first available port.
-        options: Additional options to configure the mitmproxy.
+        options: Additional options to configure the proxy.
 
     Returns:
-        An instance of the mitmproxy backend.
+        An instance of the proxy backend.
     """
     if options is None:
         options = {}
@@ -49,6 +49,6 @@ def create(addr='127.0.0.1', port=0, options=None):
     t.daemon = not options.get('standalone')
     t.start()
 
-    log.info('Created mitmproxy listening on %s:%s', *proxy.address())
+    log.info('Created proxy listening on %s:%s', *proxy.address())
 
     return proxy

@@ -6,6 +6,7 @@ from seleniumwire.thirdparty.mitmproxy import flow
 from seleniumwire.thirdparty.mitmproxy.net import server_spec
 from seleniumwire.thirdparty.mitmproxy.net.http import status_codes
 from seleniumwire.thirdparty.mitmproxy.utils import human
+import seleniumwire.thirdparty.mitmproxy.types
 
 CONF_DIR = "~/.mitmproxy"
 LISTEN_PORT = 8080
@@ -161,7 +162,7 @@ class Core:
         ]
 
     @command.command("flow.set")
-    @command.argument("attr", type=mitmproxy.types.Choice("flow.set.options"))
+    @command.argument("attr", type=seleniumwire.thirdparty.mitmproxy.types.Choice("flow.set.options"))
     def flow_set(
         self,
         flows: typing.Sequence[flow.Flow],
@@ -254,7 +255,7 @@ class Core:
         ctx.log.alert("Toggled encoding on %s flows." % len(updated))
 
     @command.command("flow.encode")
-    @command.argument("encoding", type=mitmproxy.types.Choice("flow.encode.options"))
+    @command.argument("encoding", type=seleniumwire.thirdparty.mitmproxy.types.Choice("flow.encode.options"))
     def encode(
         self,
         flows: typing.Sequence[flow.Flow],
@@ -284,7 +285,7 @@ class Core:
         return ["gzip", "deflate", "br", "zstd"]
 
     @command.command("options.load")
-    def options_load(self, path: mitmproxy.types.Path) -> None:
+    def options_load(self, path: seleniumwire.thirdparty.mitmproxy.types.Path) -> None:
         """
             Load options from a file.
         """
@@ -296,7 +297,7 @@ class Core:
             ) from e
 
     @command.command("options.save")
-    def options_save(self, path: mitmproxy.types.Path) -> None:
+    def options_save(self, path: seleniumwire.thirdparty.mitmproxy.types.Path) -> None:
         """
             Save options to a file.
         """

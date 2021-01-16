@@ -137,7 +137,7 @@ class MitmProxy:
         )
 
         # Used to modify requests/responses passing through the server
-        # Deprecated. Will be superceded by request/response interceptors.
+        # DEPRECATED. Will be superceded by request/response interceptors.
         self.modifier = RequestModifier()
 
         # The scope of requests we're interested in capturing.

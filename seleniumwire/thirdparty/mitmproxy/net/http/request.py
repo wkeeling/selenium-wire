@@ -6,8 +6,8 @@ from typing import Dict, Iterable, Optional, Tuple, Union
 import seleniumwire.thirdparty.mitmproxy.net.http.url
 from seleniumwire.thirdparty.mitmproxy.coretypes import multidict
 from seleniumwire.thirdparty.mitmproxy.net.http import cookies, message, multipart
-from seleniumwire.thirdparty.mitmproxy import Headers
-from seleniumwire.thirdparty.mitmproxy import always_bytes, always_str
+from seleniumwire.thirdparty.mitmproxy.net.http.headers import Headers
+from seleniumwire.thirdparty.mitmproxy.utils.strutils import always_bytes, always_str
 
 
 @dataclass
