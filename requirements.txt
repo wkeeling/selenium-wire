@@ -1,12 +1,1 @@
-blinker
-brotli
-certifi
-h2
-hyperframe
-kaitaistruct
-pyasn1
-pydivert
-pyparsing
-selenium
-wsproto
-zstandard
+-e .[dev]
