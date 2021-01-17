@@ -28,6 +28,10 @@ class MitmProxyRequestHandler:
         # Convert to one of our requests for handling
         request = self._create_request(flow)
 
+        if not self.in_scope(request):
+            log.debug('Not capturing %s request: %s', request.method, request.url)
+            return
+
         # Call the request interceptor if set
         if self.proxy.request_interceptor is not None:
             self.proxy.request_interceptor(request)
@@ -46,23 +50,16 @@ class MitmProxyRequestHandler:
             flow.request.headers = self._to_headers_obj(request.headers)
             flow.request.raw_content = request.body
 
-        self.capture_request(request)
+        log.info('Capturing request: %s', request.url)
+
+        self.proxy.storage.save_request(request)
+
         if request.id is not None:  # Will not be None when captured
             flow.request.id = request.id
 
         # Could possibly use mitmproxy's 'anticomp' option instead of this
         if self.proxy.options.get('disable_encoding') is True:
             flow.request.headers['Accept-Encoding'] = 'identity'
-
-    def capture_request(self, request):
-        if not self.in_scope(request):
-            log.debug('Not capturing %s request: %s', request.method, request.url)
-            return
-
-        log.info('Capturing request: %s', request.url)
-
-        # Save the request to our storage
-        self.proxy.storage.save_request(request)
 
     def in_scope(self, request):
         if request.method in self.proxy.options.get('ignore_http_methods', ['OPTIONS']):
