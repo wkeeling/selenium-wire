@@ -5,9 +5,9 @@ from typing import Iterable, Mapping, Optional, Tuple, Union
 
 from seleniumwire.thirdparty.mitmproxy.coretypes import multidict
 from seleniumwire.thirdparty.mitmproxy.net.http import cookies, status_codes, message
-from seleniumwire.thirdparty.mitmproxy import Headers
+from seleniumwire.thirdparty.mitmproxy.net.http.headers import Headers
 from seleniumwire.thirdparty.mitmproxy.utils import human, strutils
-from seleniumwire.thirdparty.mitmproxy import always_bytes
+from seleniumwire.thirdparty.mitmproxy.utils.strutils import always_bytes
 
 
 @dataclass

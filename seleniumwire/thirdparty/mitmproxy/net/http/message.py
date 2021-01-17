@@ -4,7 +4,7 @@ from typing import Callable, Optional, Union, cast
 
 from seleniumwire.thirdparty.mitmproxy.coretypes import serializable
 from seleniumwire.thirdparty.mitmproxy.net.http import encoding
-from seleniumwire.thirdparty.mitmproxy import Headers, assemble_content_type, parse_content_type
+from seleniumwire.thirdparty.mitmproxy.net.http.headers import Headers, assemble_content_type, parse_content_type
 from seleniumwire.thirdparty.mitmproxy.utils import typecheck, strutils
 
 
