@@ -9,8 +9,10 @@ import zlib
 from io import BytesIO
 from typing import AnyStr, Optional, Union, overload  # noqa
 
-import brotli
-import zstandard as zstd
+# Selenium Wire: disabling these imports since encoding/decoding
+# not currently supported. No need to bring in external dependencies.
+# import brotli
+# import zstandard as zstd
 
 # We have a shared single-element cache for encoding and decoding.
 # This is quite useful in practice, e.g.
@@ -159,31 +161,31 @@ def encode_gzip(content: bytes) -> bytes:
     return s.getvalue()
 
 
-def decode_brotli(content: bytes) -> bytes:
-    if not content:
-        return b""
-    return brotli.decompress(content)
-
-
-def encode_brotli(content: bytes) -> bytes:
-    return brotli.compress(content)
-
-
-def decode_zstd(content: bytes) -> bytes:
-    if not content:
-        return b""
-    zstd_ctx = zstd.ZstdDecompressor()
-    try:
-        return zstd_ctx.decompress(content)
-    except zstd.ZstdError:
-        # If the zstd stream is streamed without a size header,
-        # try decoding with a 10MiB output buffer
-        return zstd_ctx.decompress(content, max_output_size=10 * 2 ** 20)
-
-
-def encode_zstd(content: bytes) -> bytes:
-    zstd_ctx = zstd.ZstdCompressor()
-    return zstd_ctx.compress(content)
+# def decode_brotli(content: bytes) -> bytes:
+#     if not content:
+#         return b""
+#     return brotli.decompress(content)
+#
+#
+# def encode_brotli(content: bytes) -> bytes:
+#     return brotli.compress(content)
+#
+#
+# def decode_zstd(content: bytes) -> bytes:
+#     if not content:
+#         return b""
+#     zstd_ctx = zstd.ZstdDecompressor()
+#     try:
+#         return zstd_ctx.decompress(content)
+#     except zstd.ZstdError:
+#         # If the zstd stream is streamed without a size header,
+#         # try decoding with a 10MiB output buffer
+#         return zstd_ctx.decompress(content, max_output_size=10 * 2 ** 20)
+#
+#
+# def encode_zstd(content: bytes) -> bytes:
+#     zstd_ctx = zstd.ZstdCompressor()
+#     return zstd_ctx.compress(content)
 
 
 def decode_deflate(content: bytes) -> bytes:
@@ -216,8 +218,8 @@ custom_decode = {
     "gzip": decode_gzip,
     "deflate": decode_deflate,
     "deflateRaw": decode_deflate,
-    "br": decode_brotli,
-    "zstd": decode_zstd,
+    # "br": decode_brotli,
+    # "zstd": decode_zstd,
 }
 custom_encode = {
     "none": identity,
@@ -225,8 +227,8 @@ custom_encode = {
     "gzip": encode_gzip,
     "deflate": encode_deflate,
     "deflateRaw": encode_deflate,
-    "br": encode_brotli,
-    "zstd": encode_zstd,
+    # "br": encode_brotli,
+    # "zstd": encode_zstd,
 }
 
 __all__ = ["encode", "decode"]

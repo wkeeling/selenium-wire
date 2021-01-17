@@ -30,8 +30,7 @@ setup(
     long_description=readme + '\n\n' + history,
     include_package_data=True,
     install_requires=[
-        'blinker>=1.4, <1.5',
-        'Brotli>=1.0,<1.1',
+        'blinker>=1.4',
         'certifi>=2019.9.11',
         "h2>=4.0,<5; python_version>='3.6.0'",
         "hyperframe>=6.0,<7; python_version>='3.6.0'",
@@ -40,7 +39,6 @@ setup(
         'pyparsing>=2.4.2,<2.5',
         'selenium>=3.4.0',
         'wsproto>=0.14,<0.16',
-        'zstandard>=0.11,<0.15',
     ],
     extras_require={
         ':sys_platform == "win32"': [
