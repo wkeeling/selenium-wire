@@ -37,8 +37,8 @@ class RequestStorage:
         if base_dir is None:
             base_dir = os.path.expanduser('~')
 
-        self._storage_dir = os.path.join(base_dir, '.seleniumwire', 'storage-{}'.format(str(uuid.uuid4())))
-        os.makedirs(self._storage_dir)
+        self.storage_dir = os.path.join(base_dir, '.seleniumwire', 'storage-{}'.format(str(uuid.uuid4())))
+        os.makedirs(self.storage_dir)
         self._cleanup_old_dirs()
 
         # Index of requests received.
@@ -70,7 +70,7 @@ class RequestStorage:
         return request_id
 
     def _save(self, obj, dirname, filename):
-        request_dir = os.path.join(self._storage_dir, dirname)
+        request_dir = os.path.join(self.storage_dir, dirname)
 
         with open(os.path.join(request_dir, filename), 'wb') as out:
             pickle.dump(obj, out)
@@ -216,27 +216,25 @@ class RequestStorage:
     def get_cert_dir(self):
         """Returns a storage-specific path to a directory where the SSL certificates are stored.
 
-        The directory does not have to exist.
-
         Returns:
             The path to the certificates directory in this storage.
         """
-        return os.path.join(self._storage_dir, 'certs')
+        return os.path.join(self.storage_dir, 'certs')
 
     def _get_request_dir(self, request_id):
-        return os.path.join(self._storage_dir, 'request-{}'.format(request_id))
+        return os.path.join(self.storage_dir, 'request-{}'.format(request_id))
 
     def cleanup(self):
         """Removes all stored requests, the storage directory containing those
         requests, and if that is the only storage directory, also removes the
         top level parent directory.
         """
-        log.debug('Cleaning up %s', self._storage_dir)
+        log.debug('Cleaning up %s', self.storage_dir)
         self.clear_requests()
-        shutil.rmtree(self._storage_dir, ignore_errors=True)
+        shutil.rmtree(self.storage_dir, ignore_errors=True)
         try:
             # Attempt to remove the parent folder if it is empty
-            os.rmdir(os.path.dirname(self._storage_dir))
+            os.rmdir(os.path.dirname(self.storage_dir))
         except OSError:
             # Parent folder not empty
             pass
@@ -245,7 +243,7 @@ class RequestStorage:
         """Cleans up and removes any old storage directories that were not previously
         cleaned up properly by _cleanup().
         """
-        parent_dir = os.path.dirname(self._storage_dir)
+        parent_dir = os.path.dirname(self.storage_dir)
         for storage_dir in os.listdir(parent_dir):
             storage_dir = os.path.join(parent_dir, storage_dir)
             try:
