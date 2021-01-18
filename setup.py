@@ -29,20 +29,21 @@ setup(
     license="MIT",
     long_description=readme + '\n\n' + history,
     include_package_data=True,
+    python_requires='>=3.6',
     install_requires=[
         'blinker>=1.4',
         'certifi>=2019.9.11',
-        "h2>=4.0,<5; python_version>='3.6.0'",
-        "hyperframe>=6.0,<7; python_version>='3.6.0'",
-        'kaitaistruct>=0.7,<0.10',
-        'pyasn1>=0.3.1,<0.5',
-        'pyparsing>=2.4.2,<2.5',
+        "h2>=4.0; python_version>='3.6.0'",
+        "hyperframe>=6.0; python_version>='3.6.0'",
+        'kaitaistruct>=0.7',
+        'pyasn1>=0.3.1',
+        'pyparsing>=2.4.2',
         'selenium>=3.4.0',
-        'wsproto>=0.14,<0.16',
+        'wsproto>=0.14',
     ],
     extras_require={
         ':sys_platform == "win32"': [
-            'pydivert>=2.0.3,<2.2',
+            'pydivert>=2.0.3',
         ],
         ':python_version == "3.6"': [
             "dataclasses>=0.7",
