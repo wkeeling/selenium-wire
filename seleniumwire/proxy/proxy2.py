@@ -94,7 +94,11 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
             res_body = res.read()
         except Exception:
-            self.log_error('Error making request')
+            msg = 'Error making request to: %s'
+            if self.server.options.get('suppress_connection_errors', True):
+                self.log_message(msg, req.path)
+            else:
+                self.log_error(msg, req.path)
             self.close_connection = True
             return
 
