@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+3.0.5 (2021-01-18)
+------------------
+
+* Suppress upstream connection errors based on configuration.
+
 3.0.4 (2021-01-07)
 ------------------
 
@@ -10,7 +15,7 @@ History
 3.0.3 (2021-01-07)
 ------------------
 
-* Decode response body on load
+* Decode response body on load.
 
 3.0.2 (2021-01-05)
 ------------------
