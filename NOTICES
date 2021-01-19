@@ -30,11 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --
 
-This library contains code from the requests library: https://github.com/requests/requests.
-The requests library is licensed under the Apache License 2.0: http://www.apache.org/licenses/LICENSE-2.0
-
---
-
 This library contains code from PySocks: https://github.com/Anorov/PySocks
 
 Copyright 2006 Dan-Haim. All rights reserved.
