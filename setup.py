@@ -38,6 +38,7 @@ setup(
         'kaitaistruct>=0.7',
         'pyasn1>=0.3.1',
         'pyparsing>=2.4.2',
+        'pysocks>=1.7.1',
         'selenium>=3.4.0',
         'wsproto>=0.14',
     ],

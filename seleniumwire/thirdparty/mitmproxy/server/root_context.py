@@ -60,16 +60,6 @@ class RootContext:
             if is_filtered:
                 return protocol.RawTCPLayer(top_layer, ignore=True)
 
-        # 2. Always insert a TLS layer, even if there's neither client nor server tls.
-        # An inline script may upgrade from http to https,
-        # in which case we need some form of TLS layer.
-        if isinstance(top_layer, modes.ReverseProxy):
-            return protocol.TlsLayer(
-                top_layer,
-                client_tls,
-                top_layer.server_tls,
-                top_layer.server_conn.address[0]
-            )
         if isinstance(top_layer, protocol.ServerConnectionMixin):
             return protocol.TlsLayer(top_layer, client_tls, client_tls)
         if isinstance(top_layer, protocol.UpstreamConnectLayer):
@@ -87,6 +77,8 @@ class RootContext:
                 return protocol.Http1Layer(top_layer, http.HTTPMode.regular)
             if isinstance(top_layer.ctx, modes.HttpUpstreamProxy):
                 return protocol.Http1Layer(top_layer, http.HTTPMode.upstream)
+            if isinstance(top_layer.ctx, modes.SocksUpstreamProxy):
+                return protocol.Http1Layer(top_layer, http.HTTPMode.regular)
 
         # 4. Check for other TLS cases (e.g. after CONNECT).
         if client_tls:

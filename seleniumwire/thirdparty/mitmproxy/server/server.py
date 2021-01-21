@@ -84,21 +84,17 @@ class ConnectionHandler:
 
         mode = self.config.options.mode
         if mode.startswith("upstream:"):
-            return modes.HttpUpstreamProxy(
-                root_ctx,
-                self.config.upstream_server.address
-            )
-        elif mode == "transparent":
-            return modes.TransparentProxy(root_ctx)
-        elif mode.startswith("reverse:"):
-            server_tls = self.config.upstream_server.scheme == "https"
-            return modes.ReverseProxy(
-                root_ctx,
-                self.config.upstream_server.address,
-                server_tls
-            )
-        elif mode == "socks5":
-            return modes.Socks5Proxy(root_ctx)
+            if "socks" in mode:
+                return modes.SocksUpstreamProxy(
+                    root_ctx,
+                    self.config.upstream_server,
+                    self.config.options.upstream_auth
+                )
+            else:
+                return modes.HttpUpstreamProxy(
+                    root_ctx,
+                    self.config.upstream_server.address
+                )
         elif mode == "regular":
             return modes.HttpProxy(root_ctx)
         elif callable(mode):  # pragma: no cover

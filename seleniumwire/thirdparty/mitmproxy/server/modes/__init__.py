@@ -1,7 +1,7 @@
 from .http_proxy import HttpProxy, HttpUpstreamProxy
-from .reverse_proxy import ReverseProxy
+from .socks_proxy import SocksUpstreamProxy
 
 __all__ = [
     "HttpProxy", "HttpUpstreamProxy",
-    "ReverseProxy",
+    "SocksUpstreamProxy",
 ]

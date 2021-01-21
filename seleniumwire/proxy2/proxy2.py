@@ -16,7 +16,7 @@ import urllib.parse
 from http.client import HTTPConnection, HTTPSConnection
 from http.server import BaseHTTPRequestHandler
 
-from seleniumwire.thirdparty.mitmproxy import socks
+import socks
 from . import cert
 
 
@@ -275,7 +275,6 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
 
         if body:
             self.wfile.write(body)
-
         self.wfile.flush()
 
         if self.websocket and conn is not None:

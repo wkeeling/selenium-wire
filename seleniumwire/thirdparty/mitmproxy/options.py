@@ -94,6 +94,8 @@ class Options(optmanager.OptManager):
             Mode can be "regular", "transparent", "socks5", "reverse:SPEC",
             or "upstream:SPEC". For reverse and upstream mitmproxy modes, SPEC
             is host specification in the form of "http[s]://host[:port]".
+            Upstream mitmproxy mode also supports a socks SPEC in the form of
+            "socks5[h]://host[:port]".
             """
         )
         self.add_option(

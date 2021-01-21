@@ -3,6 +3,8 @@ import time
 import typing
 import uuid
 
+import socks
+
 from seleniumwire.thirdparty.mitmproxy import certs, exceptions, stateobject
 from seleniumwire.thirdparty.mitmproxy.net import tls, tcp
 from seleniumwire.thirdparty.mitmproxy.utils import human, strutils
@@ -297,3 +299,31 @@ class ServerConnection(tcp.TCPClient, stateobject.StateObject):
 
 
 ServerConnection._stateobject_attributes["via"] = ServerConnection
+
+
+class SocksServerConnection(ServerConnection):
+
+    def __init__(self, socks_config, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.socks_config = socks_config
+
+    def makesocket(self, family, type, proto):
+        try:
+            socks_type = dict(
+                socks4=socks.PROXY_TYPE_SOCKS4,
+                socks5=socks.PROXY_TYPE_SOCKS5,
+                socks5h=socks.PROXY_TYPE_SOCKS5
+            )[self.socks_config.scheme]
+        except KeyError:
+            raise TypeError('Invalid SOCKS scheme: {}'.format(self.socks_config.scheme))
+
+        s = socks.socksocket(family, type, proto)
+        s.set_proxy(
+            socks_type,
+            self.socks_config.address,
+            self.socks_config.port,
+            self.socks_config.scheme == 'socks5h',
+            self.socks_config.username,
+            self.socks_config.password
+        )
+        return s
