@@ -3,9 +3,14 @@ import logging
 import os
 import pkgutil
 from collections import namedtuple
+from pathlib import Path
 from urllib.request import _parse_proxy
 
 log = logging.getLogger(__name__)
+
+ROOT_CERT = 'ca.crt'
+ROOT_KEY = 'ca.key'
+COMBINED_CERT = 'seleniumwire-ca.pem'
 
 
 def get_upstream_proxy(options):
@@ -60,10 +65,32 @@ def extract_cert(cert_name='ca.crt'):
     except FileNotFoundError:
         log.error("Invalid certificate '{}'".format(cert_name))
     else:
-        with open(os.path.join(os.getcwd(), cert_name), 'wb') as out:
+        with open(Path(os.getcwd(), cert_name), 'wb') as out:
             out.write(cert)
         log.info('{} extracted. You can now import this into a browser.'.format(
             cert_name))
+
+
+def extract_cert_and_key(dest_folder, check_exists=True):
+    """Extracts the root certificate and key and combines them into a
+    single file called seleniumwire-ca.pem in the specified destination
+    folder.
+
+    Args:
+        dest_folder: The destination folder that the combined certificate
+            and key will be written to.
+        check_exists: If True the destination file will not be overwritten
+            if it already exists.
+    """
+    combined_path = Path(dest_folder, COMBINED_CERT)
+    if check_exists and combined_path.exists():
+        return
+
+    root_cert = pkgutil.get_data(__package__, ROOT_CERT)
+    root_key = pkgutil.get_data(__package__, ROOT_KEY)
+
+    with open(combined_path, 'wb') as f_out:
+        f_out.write(root_cert + root_key)
 
 
 def is_list_alike(container):

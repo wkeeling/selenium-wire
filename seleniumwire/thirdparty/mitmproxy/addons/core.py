@@ -8,7 +8,7 @@ from seleniumwire.thirdparty.mitmproxy.net.http import status_codes
 from seleniumwire.thirdparty.mitmproxy.utils import human
 import seleniumwire.thirdparty.mitmproxy.types
 
-CONF_DIR = "~/.mitmproxy"
+CONF_DIR = "~/.seleniumwire"
 LISTEN_PORT = 8080
 
 

@@ -9,11 +9,10 @@ from seleniumwire.thirdparty.mitmproxy.options import Options
 from seleniumwire.thirdparty.mitmproxy.server import ProxyConfig, ProxyServer
 from seleniumwire.modifier import RequestModifier
 from seleniumwire.storage import RequestStorage
-from seleniumwire.utils import get_upstream_proxy
+from seleniumwire.utils import extract_cert_and_key, get_upstream_proxy
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_CONFDIR = '~/.mitmproxy'
 DEFAULT_UPSTREAM_CERT = False
 DEFAULT_STREAM_WEBSOCKETS = True
 
@@ -28,6 +27,7 @@ class MitmProxy:
         self.storage = RequestStorage(
             base_dir=options.pop('request_storage_base_dir', None)
         )
+        extract_cert_and_key(self.storage.storage_home)
 
         # Used to modify requests/responses passing through the server
         # DEPRECATED. Will be superceded by request/response interceptors.
@@ -49,6 +49,7 @@ class MitmProxy:
 
         # mitmproxy specific options
         mitmproxy_opts = Options(
+            confdir=self.storage.storage_home,
             listen_host=host,
             listen_port=port,
         )
@@ -62,7 +63,6 @@ class MitmProxy:
 
         # Update the options now all addons have been added
         mitmproxy_opts.update(
-            confdir=DEFAULT_CONFDIR,
             ssl_insecure=options.get('verify_ssl', True),
             upstream_cert=DEFAULT_UPSTREAM_CERT,
             stream_websockets=DEFAULT_STREAM_WEBSOCKETS,

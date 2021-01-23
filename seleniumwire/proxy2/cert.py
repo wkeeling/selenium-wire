@@ -12,10 +12,10 @@ def _currentdir(path):
 CAKEY = _currentdir('ca.key')
 
 # Path to the certificate authority cert.
-CACERT = _currentdir('ca.crt')
+CACERT = _currentdir('seleniumwire-ca.crt')
 
 # Path to the server certificate key.
-CERTKEY = _currentdir('cert.key')
+CERTKEY = _currentdir('seleniumwire-cert.key')
 
 # Path to the directory used to store the generated certificates.
 CERTDIR = _currentdir('certs/')

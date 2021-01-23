@@ -52,7 +52,7 @@ def get_upstream_proxy(options):
     return merged
 
 
-def extract_cert(cert_name='ca.crt'):
+def extract_cert(cert_name='seleniumwire-ca.crt'):
     """Extracts the root certificate to the current working directory."""
 
     try:

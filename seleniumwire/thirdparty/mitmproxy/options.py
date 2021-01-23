@@ -3,8 +3,8 @@ from typing import Optional, Sequence
 from seleniumwire.thirdparty.mitmproxy import optmanager
 from seleniumwire.thirdparty.mitmproxy.net import tls
 
-CONF_DIR = "~/.mitmproxy"
-CONF_BASENAME = "mitmproxy"
+CONF_DIR = "~/.seleniumwire"
+CONF_BASENAME = "seleniumwire"
 LISTEN_PORT = 8080
 CONTENT_VIEW_LINES_CUTOFF = 512
 KEY_SIZE = 2048
