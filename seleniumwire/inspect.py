@@ -1,6 +1,6 @@
 import inspect
 import time
-from typing import List, Union
+from typing import List, Optional
 
 from selenium.common.exceptions import TimeoutException
 
@@ -29,7 +29,7 @@ class InspectRequestsMixin:
         self.proxy.storage.clear_requests()
 
     @property
-    def last_request(self) -> Union[Request, None]:
+    def last_request(self) -> Optional[Request]:
         """Retrieve the last request made between the browser and server.
 
         Note that this is more efficient than running requests[-1]
