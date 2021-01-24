@@ -19,12 +19,13 @@ def parse_upstream_auth(auth):
 class UpstreamAuth:
     """
         This addon handles authentication to systems upstream from us for the
-        upstream proxy and reverse proxy mode. There are 3 cases:
+        upstream proxy and reverse proxy mode. There are 4 cases:
 
         - Upstream proxy CONNECT requests should have authentication added, and
           subsequent already connected requests should not.
         - Upstream proxy regular requests
         - Reverse proxy regular requests (CONNECT is invalid in this mode)
+        - Upstream SOCKS proxy requests (CONNECT is invalid in this mode)
     """
     def __init__(self):
         self.auth = None
@@ -38,12 +39,26 @@ class UpstreamAuth:
             """
         )
 
+        loader.add_option(
+            "upstream_custom_auth", typing.Optional[str], None,
+            """
+            Add custom authentication to upstream proxy requests by supplying
+            the full value of the Proxy-Authorization header. 
+            Format: <type> <credentials> - e.g. "Bearer mytoken123"
+            """
+        )
+
     def configure(self, updated):
         # FIXME: We're doing this because our proxy core is terminally confused
         # at the moment. Ideally, we should be able to check if we're in
         # reverse proxy mode at the HTTP layer, so that scripts can put the
         # proxy in reverse proxy mode for specific requests.
-        if "upstream_auth" in updated:
+        if "upstream_custom_auth" in updated:
+            if ctx.options.upstream_custom_auth is None:
+                self.auth = None
+            elif "socks" not in ctx.options.mode:
+                self.auth = ctx.options.upstream_custom_auth
+        elif "upstream_auth" in updated:
             if ctx.options.upstream_auth is None:
                 self.auth = None
             elif "socks" not in ctx.options.mode:

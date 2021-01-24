@@ -121,6 +121,11 @@ class MitmProxy:
             if username and password:
                 args['upstream_auth'] = '{}:{}'.format(username, password)
 
+            custom_auth = proxy_config.get('custom_authorization')
+
+            if custom_auth:
+                args['upstream_custom_auth'] = custom_auth
+
         return args
 
 
