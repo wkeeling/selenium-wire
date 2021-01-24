@@ -109,7 +109,8 @@ class ConnectionHandler:
         try:
             root_layer = self._create_root_layer()
             root_layer = self.channel.ask("clientconnect", root_layer)
-            root_layer()
+            if root_layer:
+                root_layer()
         except exceptions.Kill:
             self.log(flow.Error.KILLED_MESSAGE, "info")
         except exceptions.ProtocolException as e:
@@ -137,9 +138,6 @@ class ConnectionHandler:
                 pass
         except Exception:
             self.log(traceback.format_exc(), "error")
-            print(traceback.format_exc(), file=sys.stderr)
-            print("mitmproxy has crashed!", file=sys.stderr)
-            print("Please lodge a bug report at: https://github.com/mitmproxy/mitmproxy", file=sys.stderr)
 
         self.log("clientdisconnect", "info")
         if root_layer is not None:
