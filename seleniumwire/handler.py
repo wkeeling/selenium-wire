@@ -121,6 +121,13 @@ class MitmProxyRequestHandler:
             headers=[(k, v) for k, v in flow.request.headers.items()],
             body=flow.request.raw_content
         )
+
+        # For websocket requests, the scheme is overwritten with https
+        # in the initial CONNECT request so this hack explicitly sets the
+        # scheme back to wss.
+        if request.headers['upgrade'] == 'websocket':
+            request.url = request.url.replace('https', 'wss', 1)
+
         request.response = response
 
         return request
