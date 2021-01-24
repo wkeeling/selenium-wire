@@ -85,12 +85,6 @@ class MitmProxy:
 
     def shutdown(self):
         """Shutdown the server and perform any cleanup."""
-        try:
-            # Wait for any active requests to finish. This reduces the
-            # probability of seeing shutdown errors in the console.
-            self._master.server.wait_for_silence()
-        except Timeout:
-            pass
         self._master.shutdown()
         self.storage.cleanup()
 

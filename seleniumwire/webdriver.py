@@ -10,7 +10,16 @@ from . import backend
 from .inspect import InspectRequestsMixin
 
 
-class Firefox(InspectRequestsMixin, _Firefox):
+class DriverCommonMixin:
+    """Operations common to all webdriver types."""
+
+    def quit(self):
+        """Shutdown Selenium Wire and then quit the webdriver."""
+        self.proxy.shutdown()
+        super().quit()
+
+
+class Firefox(InspectRequestsMixin, DriverCommonMixin, _Firefox):
     """Extends the Firefox webdriver to provide additional methods for inspecting requests."""
 
     def __init__(self, *args, seleniumwire_options=None, **kwargs):
@@ -47,12 +56,8 @@ class Firefox(InspectRequestsMixin, _Firefox):
 
         super().__init__(*args, **kwargs)
 
-    def quit(self):
-        self.proxy.shutdown()
-        super().quit()
 
-
-class Chrome(InspectRequestsMixin, _Chrome):
+class Chrome(InspectRequestsMixin, DriverCommonMixin, _Chrome):
     """Extends the Chrome webdriver to provide additional methods for inspecting requests."""
 
     def __init__(self, *args, seleniumwire_options=None, **kwargs):
@@ -99,12 +104,8 @@ class Chrome(InspectRequestsMixin, _Chrome):
 
         super().__init__(*args, **kwargs)
 
-    def quit(self):
-        self.proxy.shutdown()
-        super().quit()
 
-
-class Safari(InspectRequestsMixin, _Safari):
+class Safari(InspectRequestsMixin, DriverCommonMixin, _Safari):
     """Extends the Safari webdriver to provide additional methods for inspecting requests."""
 
     def __init__(self, seleniumwire_options=None, *args, **kwargs):
@@ -129,12 +130,8 @@ class Safari(InspectRequestsMixin, _Safari):
 
         super().__init__(*args, **kwargs)
 
-    def quit(self):
-        self.proxy.shutdown()
-        super().quit()
 
-
-class Edge(InspectRequestsMixin, _Edge):
+class Edge(InspectRequestsMixin, DriverCommonMixin, _Edge):
     """Extends the Edge webdriver to provide additional methods for inspecting requests."""
 
     def __init__(self, seleniumwire_options=None, *args, **kwargs):
@@ -159,12 +156,8 @@ class Edge(InspectRequestsMixin, _Edge):
 
         super().__init__(*args, **kwargs)
 
-    def quit(self):
-        self.proxy.shutdown()
-        super().quit()
 
-
-class Remote(InspectRequestsMixin, _Remote):
+class Remote(InspectRequestsMixin, DriverCommonMixin, _Remote):
     """Extends the Remote webdriver to provide additional methods for inspecting requests."""
 
     def __init__(self, *args, seleniumwire_options=None, **kwargs):
@@ -201,7 +194,3 @@ class Remote(InspectRequestsMixin, _Remote):
             kwargs["desired_capabilities"] = capabilities
 
         super().__init__(*args, **kwargs)
-
-    def quit(self):
-        self.proxy.shutdown()
-        super().quit()
