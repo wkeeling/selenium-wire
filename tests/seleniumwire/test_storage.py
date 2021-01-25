@@ -220,11 +220,15 @@ class RequestStorageTest(TestCase):
         self.assertFalse(requests)
         self.assertFalse(glob.glob(os.path.join(self.base_dir, '.seleniumwire', 'storage-*', '*')))
 
-    def test_get_cert_dir(self):
+    def test_get_home_dir(self):
         storage = RequestStorage(base_dir=self.base_dir)
 
-        self.assertTrue(fnmatch(storage.get_cert_dir(),
-                                os.path.join(self.base_dir, '.seleniumwire', 'storage-*', 'certs')))
+        self.assertEqual(os.path.join(self.base_dir, '.seleniumwire'), storage.home_dir)
+
+    def test_get_session_dir(self):
+        storage = RequestStorage(base_dir=self.base_dir)
+
+        self.assertTrue(fnmatch(storage.session_dir, os.path.join(self.base_dir, '.seleniumwire', 'storage-*')))
 
     def test_find(self):
         request_1 = self._create_request('http://www.example.com/test/path/?foo=bar')

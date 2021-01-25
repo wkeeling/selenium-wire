@@ -37,9 +37,10 @@ class RequestStorage:
         if base_dir is None:
             base_dir = os.path.expanduser('~')
 
-        self.storage_home = os.path.join(base_dir, '.seleniumwire')
-        self.storage_session = os.path.join(self.storage_home, 'storage-{}'.format(str(uuid.uuid4())))
-        os.makedirs(self.storage_session, exist_ok=True)
+        """"""
+        self.home_dir = os.path.join(base_dir, '.seleniumwire')
+        self.session_dir = os.path.join(self.home_dir, 'storage-{}'.format(str(uuid.uuid4())))
+        os.makedirs(self.session_dir, exist_ok=True)
         self._cleanup_old_dirs()
 
         # Index of requests received.
@@ -73,7 +74,7 @@ class RequestStorage:
         return request_id
 
     def _save(self, obj, dirname, filename):
-        request_dir = os.path.join(self.storage_session, dirname)
+        request_dir = os.path.join(self.session_dir, dirname)
 
         with open(os.path.join(request_dir, filename), 'wb') as out:
             pickle.dump(obj, out)
@@ -217,19 +218,19 @@ class RequestStorage:
         return None
 
     def _get_request_dir(self, request_id):
-        return os.path.join(self.storage_session, 'request-{}'.format(request_id))
+        return os.path.join(self.session_dir, 'request-{}'.format(request_id))
 
     def cleanup(self):
         """Removes all stored requests, the storage directory containing those
         requests, and if that is the only storage directory, also removes the
         top level parent directory.
         """
-        log.debug('Cleaning up %s', self.storage_session)
+        log.debug('Cleaning up %s', self.session_dir)
         self.clear_requests()
-        shutil.rmtree(self.storage_session, ignore_errors=True)
+        shutil.rmtree(self.session_dir, ignore_errors=True)
         try:
             # Attempt to remove the parent folder if it is empty
-            os.rmdir(os.path.dirname(self.storage_session))
+            os.rmdir(os.path.dirname(self.session_dir))
         except OSError:
             # Parent folder not empty
             pass
@@ -238,7 +239,7 @@ class RequestStorage:
         """Cleans up and removes any old storage directories that were not previously
         cleaned up properly by _cleanup().
         """
-        parent_dir = os.path.dirname(self.storage_session)
+        parent_dir = os.path.dirname(self.session_dir)
         for storage_dir in os.listdir(parent_dir):
             storage_dir = os.path.join(parent_dir, storage_dir)
             try:

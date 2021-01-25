@@ -2,13 +2,12 @@ import asyncio
 import logging
 
 from seleniumwire.handler import MitmProxyRequestHandler
+from seleniumwire.modifier import RequestModifier
+from seleniumwire.storage import RequestStorage
 from seleniumwire.thirdparty.mitmproxy import addons
-from seleniumwire.thirdparty.mitmproxy.exceptions import Timeout
 from seleniumwire.thirdparty.mitmproxy.master import Master
 from seleniumwire.thirdparty.mitmproxy.options import Options
 from seleniumwire.thirdparty.mitmproxy.server import ProxyConfig, ProxyServer
-from seleniumwire.modifier import RequestModifier
-from seleniumwire.storage import RequestStorage
 from seleniumwire.utils import extract_cert_and_key, get_upstream_proxy
 
 logger = logging.getLogger(__name__)
@@ -27,7 +26,7 @@ class MitmProxy:
         self.storage = RequestStorage(
             base_dir=options.pop('request_storage_base_dir', None)
         )
-        extract_cert_and_key(self.storage.storage_home)
+        extract_cert_and_key(self.storage.home_dir)
 
         # Used to modify requests/responses passing through the server
         # DEPRECATED. Will be superceded by request/response interceptors.
@@ -49,7 +48,7 @@ class MitmProxy:
 
         # mitmproxy specific options
         mitmproxy_opts = Options(
-            confdir=self.storage.storage_home,
+            confdir=self.storage.home_dir,
             listen_host=host,
             listen_port=port,
         )

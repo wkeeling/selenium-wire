@@ -4,7 +4,8 @@ import time
 import typing
 
 from seleniumwire.thirdparty.mitmproxy import exceptions
-from seleniumwire.thirdparty.mitmproxy.net.http import headers, request, response, url
+from seleniumwire.thirdparty.mitmproxy.net.http import (headers, request,
+                                                        response, url)
 
 
 def get_header_tokens(headers, key):
@@ -255,6 +256,12 @@ def _read_request_line(rfile):
                 raise ValueError
         else:
             scheme, rest = target.split(b"://", maxsplit=1)
+            # There seems to be a bug here for http URLs that
+            # have no path and don't end with a slash - e.g.
+            # http://python.org
+            # Add a slash in this case.
+            if not rest.endswith(b"/"):
+                rest = rest + b"/"
             authority, path_ = rest.split(b"/", maxsplit=1)
             path = b"/" + path_
             host, port = url.parse_authority(authority, check=True)

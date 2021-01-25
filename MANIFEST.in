@@ -8,7 +8,6 @@ include README.rst
 recursive-include tests *
 recursive-include seleniumwire *.crt
 recursive-include seleniumwire *.key
-recursive-include seleniumwire *.exe
 recursive-include seleniumwire *.cnf
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]

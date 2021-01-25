@@ -4,14 +4,15 @@ from pathlib import Path
 from unittest import TestCase
 from unittest.mock import call, mock_open, patch
 
-from seleniumwire.utils import get_upstream_proxy, extract_cert, extract_cert_and_key
+from seleniumwire.utils import (extract_cert, extract_cert_and_key,
+                                get_upstream_proxy)
 
 
 class GetUpstreamProxyTest(TestCase):
 
     def test_get_config(self):
         options = {
-            'mitmproxy': {
+            'proxy': {
                 'http': 'http://username1:password1@server1:8888',
                 'https': 'https://username2:password2@server2:8888',
                 'no_proxy': 'localhost'
@@ -57,7 +58,7 @@ class GetUpstreamProxyTest(TestCase):
 
     def test_merge(self):
         options = {
-            'mitmproxy': {
+            'proxy': {
                 'https': 'https://username3:password3@server3:8888',
                 'no_proxy': 'localhost'
             }

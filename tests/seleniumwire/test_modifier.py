@@ -2,7 +2,7 @@ from unittest import TestCase
 from unittest.mock import Mock
 from urllib.parse import parse_qs, urlsplit
 
-from seleniumwire.proxy2.modifier import RequestModifier
+from seleniumwire.modifier import RequestModifier
 
 
 class RequestModifierTest(TestCase):
