@@ -1,6 +1,11 @@
-"""This module manages the integraton with mitmproxy."""
+"""This module manages the integraton with mitmproxy.
+
+DEPRECATED. The default backend now uses mitmproxy so this separate
+add-on will be removed in a future release.
+"""
 import asyncio
 import logging
+import re
 
 try:
     import mitmproxy
@@ -19,7 +24,7 @@ from mitmproxy.proxy.server import ProxyServer
 from seleniumwire.modifier import RequestModifier
 from seleniumwire.request import Request, Response
 from seleniumwire.storage import RequestStorage
-from seleniumwire.utils import get_upstream_proxy
+from seleniumwire.utils import get_upstream_proxy, is_list_alike
 
 
 logger = logging.getLogger(__name__)
@@ -29,7 +34,60 @@ DEFAULT_UPSTREAM_CERT = False
 DEFAULT_STREAM_WEBSOCKETS = True
 
 
-class MitmProxyRequestHandler:
+class CaptureMixin:
+    """Mixin that handles the capturing of requests and responses.
+
+    DEPRECATED.
+    """
+
+    def capture_request(self, request):
+        """Capture a request and save the unique id associated with the
+        captured request in the id field.
+
+        If any modification rules are set, the request will be modified
+        before capture.
+
+        Args:
+            request: The request to capture.
+        Returns: The captured request id.
+        """
+        ignore_method = request.method in self.server.options.get(
+            'ignore_http_methods', ['OPTIONS'])
+        not_in_scope = not self.in_scope(self.server.scopes, request.url)
+        if ignore_method or not_in_scope:
+            logger.debug('Not capturing %s request: %s', request.method, request.url)
+            return
+
+        logger.info('Capturing request: %s', request.url)
+
+        # Save the request to our storage
+        self.server.storage.save_request(request)
+
+    def capture_response(self, request_id, url, response):
+        """Capture a response and its body that relate to a previous request.
+
+        Args:
+            request_id: The id of the original request.
+            url: The request url.
+            response: The response to capture.
+        """
+        logger.info('Capturing response: %s %s %s', url, response.status_code, response.reason)
+
+        self.server.storage.save_response(request_id, response)
+
+    def in_scope(self, scopes, url):
+        if not scopes:
+            return True
+        elif not is_list_alike(scopes):
+            scopes = [scopes]
+        for scope in scopes:
+            match = re.search(scope, url)
+            if match:
+                return True
+        return False
+
+
+class MitmProxyRequestHandler(CaptureMixin):
     """Mitmproxy add-on which provides request modification and capture.
 
     DEPRECATED.
@@ -126,7 +184,10 @@ class MitmProxyRequestHandler:
 
 
 class MitmProxy:
-    """Run and manage a mitmproxy server instance."""
+    """Run and manage a mitmproxy server instance.
+
+    DEPRECATED.
+    """
 
     def __init__(self, host, port, options):
         self.options = options
