@@ -38,13 +38,7 @@ class MitmProxy:
         self.request_interceptor = None
         self.response_interceptor = None
 
-        self._event_loop = asyncio.get_event_loop()
-
-        if self._event_loop.is_closed():
-            # The event loop may be closed if the server had previously
-            # been shutdown and then spun up again
-            self._event_loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self._event_loop)
+        self._event_loop = self._get_event_loop()
 
         # mitmproxy specific options
         mitmproxy_opts = Options(
@@ -70,6 +64,20 @@ class MitmProxy:
 
         # Options that are prefixed mitm_ are passed through to mitmproxy
         mitmproxy_opts.update(**{k[5:]: v for k, v in options.items() if k.startswith('mitm_')})
+
+    def _get_event_loop(self):
+        try:
+            event_loop = asyncio.get_event_loop()
+            if event_loop.is_closed():
+                # The event loop may be closed if the server had previously
+                # been shutdown and then spun up again
+                event_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(event_loop)
+        except Exception:
+            event_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(event_loop)
+
+        return event_loop
 
     def serve_forever(self):
         """Run the server."""

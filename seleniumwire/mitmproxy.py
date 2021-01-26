@@ -7,24 +7,24 @@ import asyncio
 import logging
 import re
 
-try:
-    import mitmproxy
-except ImportError as e:
-    raise ImportError("To use the mitmproxy backend you must first "
-                      "install mitmproxy with 'pip install mitmproxy'.") from e
-
-from mitmproxy import addons, http
-from mitmproxy.exceptions import Timeout
-from mitmproxy.master import Master
-from mitmproxy.net.http.headers import Headers
-from mitmproxy.options import Options
-from mitmproxy.proxy.config import ProxyConfig
-from mitmproxy.proxy.server import ProxyServer
-
 from seleniumwire.modifier import RequestModifier
 from seleniumwire.request import Request, Response
 from seleniumwire.storage import RequestStorage
 from seleniumwire.utils import get_upstream_proxy, is_list_alike
+
+try:
+    import mitmproxy  # noqa:F401  # isort:skip
+except ImportError as e:
+    raise ImportError("To use the mitmproxy backend you must first "
+                      "install mitmproxy with 'pip install mitmproxy'.") from e
+
+from mitmproxy import addons, http  # isort:skip
+from mitmproxy.exceptions import Timeout  # isort:skip
+from mitmproxy.master import Master  # isort:skip
+from mitmproxy.net.http.headers import Headers  # isort:skip
+from mitmproxy.options import Options  # isort:skip
+from mitmproxy.proxy.config import ProxyConfig  # isort:skip
+from mitmproxy.proxy.server import ProxyServer  # isort:skip
 
 
 logger = logging.getLogger(__name__)
@@ -207,7 +207,7 @@ class MitmProxy:
         self.request_interceptor = None
         self.response_interceptor = None
 
-        self._event_loop = asyncio.get_event_loop()
+        self._event_loop = self._get_event_loop()
 
         if self._event_loop.is_closed():
             # The event loop may be closed if the server had previously
@@ -239,6 +239,20 @@ class MitmProxy:
 
         # Options that are prefixed mitm_ are passed through to mitmproxy
         mitmproxy_opts.update(**{k[5:]: v for k, v in options.items() if k.startswith('mitm_')})
+
+    def _get_event_loop(self):
+        try:
+            event_loop = asyncio.get_event_loop()
+            if event_loop.is_closed():
+                # The event loop may be closed if the server had previously
+                # been shutdown and then spun up again
+                event_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(event_loop)
+        except Exception:
+            event_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(event_loop)
+
+        return event_loop
 
     def serve_forever(self):
         """Run the server."""
