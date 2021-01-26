@@ -257,10 +257,10 @@ def _read_request_line(rfile):
         else:
             scheme, rest = target.split(b"://", maxsplit=1)
             # There seems to be a bug here for http URLs that
-            # have no path and don't end with a slash - e.g.
+            # have no path and so don't end with a slash - e.g.
             # http://python.org
-            # Add a slash in this case.
-            if not rest.endswith(b"/"):
+            # Add a trailing slash in this case.
+            if b"/" not in rest:
                 rest = rest + b"/"
             authority, path_ = rest.split(b"/", maxsplit=1)
             path = b"/" + path_

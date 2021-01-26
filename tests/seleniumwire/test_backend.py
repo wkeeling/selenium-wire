@@ -14,7 +14,7 @@ class BackendIntegrationTest(TestCase):
     backend = None
 
     def test_create_proxy(self):
-        html = self._make_request('http://python.org/')
+        html = self._make_request('http://python.org')
 
         self.assertIn(b'Welcome to Python.org', html)
 
