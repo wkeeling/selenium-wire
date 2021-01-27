@@ -1,12 +1,12 @@
-import sys
 import traceback
 
 from seleniumwire.thirdparty.mitmproxy import controller  # noqa
-from seleniumwire.thirdparty.mitmproxy import connections, exceptions, http, log, platform
-from seleniumwire.thirdparty.mitmproxy import flow
+from seleniumwire.thirdparty.mitmproxy import (connections, exceptions, flow,
+                                               http, log, platform)
 from seleniumwire.thirdparty.mitmproxy.net import tcp
 from seleniumwire.thirdparty.mitmproxy.net.http import http1
-from seleniumwire.thirdparty.mitmproxy.server import config, modes, root_context
+from seleniumwire.thirdparty.mitmproxy.server import (config, modes,
+                                                      root_context)
 from seleniumwire.thirdparty.mitmproxy.utils import human
 
 
