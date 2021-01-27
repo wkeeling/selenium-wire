@@ -429,7 +429,7 @@ class BackendIntegrationTest(TestCase):
         request = urllib.request.Request(url, method=method, data=data)
         request.add_header('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 '
                                          '(KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36')
-        with urllib.request.urlopen(request, timeout=5000) as response:
+        with urllib.request.urlopen(request, timeout=5) as response:
             html = response.read()
 
         return html
