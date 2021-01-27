@@ -1,14 +1,12 @@
 import contextlib
 import copy
 import functools
-import os
 import pprint
 import textwrap
 import typing
 
 import blinker
 import blinker._saferef
-import ruamel.yaml
 
 from seleniumwire.thirdparty.mitmproxy import exceptions
 from seleniumwire.thirdparty.mitmproxy.utils import typecheck
@@ -434,28 +432,6 @@ class OptManager:
             raise ValueError("Unsupported option type: %s", o.typespec)
 
 
-def dump_defaults(opts):
-    """
-        Dumps an annotated file with all options.
-    """
-    # Sort data
-    s = ruamel.yaml.comments.CommentedMap()
-    for k in sorted(opts.keys()):
-        o = opts._options[k]
-        s[k] = o.default
-        txt = o.help.strip()
-
-        if o.choices:
-            txt += " Valid values are %s." % ", ".join(repr(c) for c in o.choices)
-        else:
-            t = typecheck.typespec_to_str(o.typespec)
-            txt += " Type %s." % t
-
-        txt = "\n".join(textwrap.wrap(txt))
-        s.yaml_set_comment_before_after_key(k, before="\n" + txt)
-    return ruamel.yaml.round_trip_dump(s)
-
-
 def dump_dicts(opts, keys: typing.List[str]=None):
     """
         Dumps the options into a list of dict object.
@@ -476,102 +452,3 @@ def dump_dicts(opts, keys: typing.List[str]=None):
         }
         options_dict[k] = option
     return options_dict
-
-
-def parse(text):
-    if not text:
-        return {}
-    try:
-        data = ruamel.yaml.load(text, ruamel.yaml.RoundTripLoader)
-    except ruamel.yaml.error.YAMLError as v:
-        if hasattr(v, "problem_mark"):
-            snip = v.problem_mark.get_snippet()
-            raise exceptions.OptionsError(
-                "Config error at line %s:\n%s\n%s" %
-                (v.problem_mark.line + 1, snip, v.problem)
-            )
-        else:
-            raise exceptions.OptionsError("Could not parse options.")
-    if isinstance(data, str):
-        raise exceptions.OptionsError("Config error - no keys found.")
-    elif data is None:
-        return {}
-    return data
-
-
-def load(opts: OptManager, text: str) -> None:
-    """
-        Load configuration from text, over-writing options already set in
-        this object. May raise OptionsError if the config file is invalid.
-    """
-    data = parse(text)
-    opts.update_defer(**data)
-
-
-def load_paths(opts: OptManager, *paths: str) -> None:
-    """
-        Load paths in order. Each path takes precedence over the previous
-        path. Paths that don't exist are ignored, errors raise an
-        OptionsError.
-    """
-    for p in paths:
-        p = os.path.expanduser(p)
-        if os.path.exists(p) and os.path.isfile(p):
-            with open(p, "rt", encoding="utf8") as f:
-                try:
-                    txt = f.read()
-                except UnicodeDecodeError as e:
-                    raise exceptions.OptionsError(
-                        "Error reading %s: %s" % (p, e)
-                    )
-            try:
-                load(opts, txt)
-            except exceptions.OptionsError as e:
-                raise exceptions.OptionsError(
-                    "Error reading %s: %s" % (p, e)
-                )
-
-
-def serialize(opts: OptManager, text: str, defaults: bool = False) -> str:
-    """
-        Performs a round-trip serialization. If text is not None, it is
-        treated as a previous serialization that should be modified
-        in-place.
-
-        - If "defaults" is False, only options with non-default values are
-            serialized. Default values in text are preserved.
-        - Unknown options in text are removed.
-        - Raises OptionsError if text is invalid.
-    """
-    data = parse(text)
-    for k in opts.keys():
-        if defaults or opts.has_changed(k):
-            data[k] = getattr(opts, k)
-    for k in list(data.keys()):
-        if k not in opts._options:
-            del data[k]
-    ret = ruamel.yaml.round_trip_dump(data)
-    assert ret
-    return ret
-
-
-def save(opts: OptManager, path: str, defaults: bool =False) -> None:
-    """
-        Save to path. If the destination file exists, modify it in-place.
-
-        Raises OptionsError if the existing data is corrupt.
-    """
-    path = os.path.expanduser(path)
-    if os.path.exists(path) and os.path.isfile(path):
-        with open(path, "rt", encoding="utf8") as f:
-            try:
-                data = f.read()
-            except UnicodeDecodeError as e:
-                raise exceptions.OptionsError(
-                    "Error trying to modify %s: %s" % (path, e)
-                )
-    else:
-        data = ""
-    data = serialize(opts, data, defaults)
-    with open(path, "wt", encoding="utf8") as f:
-        f.write(data)
