@@ -45,7 +45,7 @@ def safecall():
         etype, value, tb = sys.exc_info()
         tb = cut_traceback(tb, "invoke_addon")
         ctx.log.error(
-            "Addon error: %s" % "".join(
+            "Error handling request\n%s" % "".join(
                 traceback.format_exception(etype, value, tb)
             )
         )

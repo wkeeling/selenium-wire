@@ -103,7 +103,7 @@ class ConnectionHandler:
             raise ValueError("Unknown mitmproxy mode: %s" % mode)
 
     def handle(self):
-        self.log("clientconnect", "info")
+        self.log("clientconnect", "debug")
 
         root_layer = None
         try:
@@ -139,7 +139,7 @@ class ConnectionHandler:
         except Exception:
             self.log(traceback.format_exc(), "error")
 
-        self.log("clientdisconnect", "info")
+        self.log("clientdisconnect", "debug")
         if root_layer is not None:
             self.channel.tell("clientdisconnect", root_layer)
         self.client_conn.finish()
