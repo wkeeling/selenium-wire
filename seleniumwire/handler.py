@@ -1,9 +1,10 @@
 import logging
 import re
 
-from seleniumwire.thirdparty.mitmproxy.http import HTTPResponse
-from seleniumwire.thirdparty.mitmproxy.net.http.headers import Headers
 from seleniumwire.request import Request, Response
+from seleniumwire.thirdparty.mitmproxy.http import HTTPResponse
+from seleniumwire.thirdparty.mitmproxy.net import websockets
+from seleniumwire.thirdparty.mitmproxy.net.http.headers import Headers
 from seleniumwire.utils import is_list_alike
 
 log = logging.getLogger(__name__)
@@ -122,10 +123,9 @@ class MitmProxyRequestHandler:
             body=flow.request.raw_content
         )
 
-        # For websocket requests, the scheme is overwritten with https
-        # in the initial CONNECT request so this hack explicitly sets the
-        # scheme back to wss.
-        if request.headers['upgrade'] == 'websocket':
+        # For websocket requests, the scheme of the request is overwritten with https
+        # in the initial CONNECT request so this hack explicitly sets the scheme back to wss.
+        if websockets.check_handshake(request.headers) and websockets.check_client_version(request.headers):
             request.url = request.url.replace('https', 'wss', 1)
 
         request.response = response
