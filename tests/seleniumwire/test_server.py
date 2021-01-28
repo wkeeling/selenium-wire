@@ -56,6 +56,7 @@ class MitmProxyTest(TestCase):
                 ssl_insecure=True,
                 upstream_cert=False,
                 stream_websockets=True,
+                suppress_connection_errors=True,
             ),
             call(
                 test='foobar'
@@ -74,6 +75,7 @@ class MitmProxyTest(TestCase):
                 ssl_insecure=True,
                 upstream_cert=False,
                 stream_websockets=True,
+                suppress_connection_errors=True,
             ),
             call(
                 test='foobar',
@@ -96,6 +98,7 @@ class MitmProxyTest(TestCase):
                 ssl_insecure=True,
                 upstream_cert=False,
                 stream_websockets=True,
+                suppress_connection_errors=True,
                 mode='upstream:https://proxyserver:8080'
             ),
             call()
@@ -114,6 +117,7 @@ class MitmProxyTest(TestCase):
                 ssl_insecure=True,
                 upstream_cert=False,
                 stream_websockets=True,
+                suppress_connection_errors=True,
                 mode='upstream:http://proxyserver:8080'
             ),
             call()
@@ -132,6 +136,7 @@ class MitmProxyTest(TestCase):
                 ssl_insecure=True,
                 upstream_cert=False,
                 stream_websockets=True,
+                suppress_connection_errors=True,
                 mode='upstream:https://proxyserver:8080',
                 upstream_auth='user:pass'
             ),
@@ -152,6 +157,7 @@ class MitmProxyTest(TestCase):
                 ssl_insecure=True,
                 upstream_cert=False,
                 stream_websockets=True,
+                suppress_connection_errors=True,
                 mode='upstream:https://proxyserver:8080',
                 upstream_custom_auth='Bearer 12345'
             ),

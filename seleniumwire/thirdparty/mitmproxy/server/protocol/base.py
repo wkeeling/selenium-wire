@@ -1,3 +1,5 @@
+import traceback
+
 from seleniumwire.thirdparty.mitmproxy import controller  # noqa
 from seleniumwire.thirdparty.mitmproxy import connections, exceptions
 from seleniumwire.thirdparty.mitmproxy.server import config  # noqa
@@ -173,6 +175,11 @@ class ServerConnectionMixin:
             self.log("serverconnect", "debug", [repr(self.server_conn.address)])
             self.channel.ask("serverconnect", self.server_conn)
         except exceptions.TcpException as e:
+            if self.config.options.suppress_connection_errors:
+                self.log(repr(e), "debug")
+            else:
+                self.log(repr(e), "error")
+                self.log(traceback.format_exc(), "error")
             raise exceptions.ProtocolException(
                 "Server connection to {} failed: {}".format(
                     repr(self.server_conn.address), str(e)

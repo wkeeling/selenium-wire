@@ -192,5 +192,12 @@ class Options(optmanager.OptManager):
             Disable HTTP form validation.
             """
         )
+        self.add_option(
+            "suppress_connection_errors", bool, True,
+            """
+            When True log connection errors at debug level. Set to
+            False to log at error level with full tracebacks.
+            """
+        )
 
         self.update(**kwargs)

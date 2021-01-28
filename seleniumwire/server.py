@@ -59,6 +59,7 @@ class MitmProxy:
             ssl_insecure=options.get('verify_ssl', True),
             upstream_cert=DEFAULT_UPSTREAM_CERT,
             stream_websockets=DEFAULT_STREAM_WEBSOCKETS,
+            suppress_connection_errors=options.get('suppress_connection_errors', True),
             **self._get_upstream_proxy_args(),
         )
 
