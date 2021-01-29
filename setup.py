@@ -53,8 +53,10 @@ setup(
         'dev': [
             'coverage',
             'flake8',
-            'nose',
+            'mitmproxy',  # This should be removed once the mitmproxy backend goes
             'pre-commit',
+            'pytest',
+            'pytest-cov',
             'tox',
             'twine',
             'wheel',
