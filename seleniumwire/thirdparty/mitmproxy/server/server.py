@@ -117,7 +117,7 @@ class ConnectionHandler:
             if isinstance(e, exceptions.ClientHandshakeException):
                 self.log(
                     "Client Handshake failed. "
-                    "The client may not trust the mitmproxy's certificate for {}.".format(e.server),
+                    "The client may not trust Selenium Wire's certificate for {}.".format(e.server),
                     "warn"
                 )
                 self.log(repr(e), "debug")
