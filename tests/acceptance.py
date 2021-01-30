@@ -53,7 +53,7 @@ class BrowserIntegrationTest(TestCase):
 
         driver.quit()
 
-    def test_referer(self):
+    def test_chrome_remote_debugger(self):
         import subprocess
         import time
 
@@ -64,9 +64,14 @@ class BrowserIntegrationTest(TestCase):
         options = webdriver.ChromeOptions()
         options.add_experimental_option("debuggerAddress", "127.0.0.1:12264")
         chromeadres = '/usr/bin/google-chrome-stable'
-        subprocess.Popen([chromeadres, "--remote-debugging-port=12264"])
+        subprocess.Popen([
+            chromeadres,
+            "--remote-debugging-port=12264",
+            "--ignore-certificate-errors",
+            "--proxy-server=http://localhost:12345"
+        ])
         time.sleep(0.3)
-        driver = webdriver.Chrome(chrome_options=options)
+        driver = webdriver.Chrome(chrome_options=options, seleniumwire_options={'port': 12345})
         driver.request_interceptor = interceptor
         driver.get('https://www.whatismyreferer.com')
 
