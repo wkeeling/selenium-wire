@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+3.0.6 (2021-01-30)
+------------------
+
+* Fix bug preventing mitmproxy backend from using custom confdir.
+
 3.0.5 (2021-01-18)
 ------------------
 
