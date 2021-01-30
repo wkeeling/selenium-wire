@@ -614,7 +614,7 @@ Selenium Wire uses it's own CA certificate to decrypt HTTPS traffic. It is not n
 
 For the default backend, you can download the CA certificate `here`_. Once downloaded, navigate to "Certificates" in your browser settings and import the certificate in the "Authorities" section.
 
-.. _`here`: https://github.com/wkeeling/selenium-wire/raw/master/seleniumwire/proxy/ca.crt
+.. _`here`: https://github.com/wkeeling/selenium-wire/raw/master/seleniumwire/ca.crt
 
 If you are using the mitmproxy backend, you can follow `these instructions`_ to install the CA certificate.
 
