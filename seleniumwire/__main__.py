@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 
 
 def standalone_proxy(port=0, addr='127.0.0.1'):
-    b = backend.create(addr=addr, port=int(port), options={
+    b = backend.create(port=int(port), addr=addr, options={
         'standalone': True,
         'verify_ssl': False,
     })
