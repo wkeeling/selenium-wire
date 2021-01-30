@@ -8,8 +8,8 @@ from seleniumwire.proxy import backend, utils
 logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 
 
-def standalone_proxy(port=0):
-    b = backend.create(port=int(port), options={
+def standalone_proxy(port=0, addr='127.0.0.1'):
+    b = backend.create(addr=addr, port=int(port), options={
         'standalone': True,
         'verify_ssl': False,
     })
