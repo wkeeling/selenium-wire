@@ -449,8 +449,8 @@ class TlsLayer(base.Layer):
             )
             tls_cert_err = self.server_conn.ssl_verification_error
             if tls_cert_err is not None:
-                self.log(str(tls_cert_err), "warn")
-                self.log("Ignoring server verification error, continuing with connection", "warn")
+                self.log(str(tls_cert_err), "debug")
+                self.log("Ignoring server verification error, continuing with connection", "debug")
         except exceptions.InvalidCertificateException as e:
             raise exceptions.InvalidServerCertificate(str(e))
         except exceptions.TlsException as e:
