@@ -153,6 +153,7 @@ class MitmProxy:
 
         # mitmproxy specific options
         mitmproxy_opts = Options(
+            confdir=options.pop('mitm_confdir', DEFAULT_CONFDIR),
             listen_host=host,
             listen_port=port,
         )
@@ -166,7 +167,6 @@ class MitmProxy:
 
         # Update the options now all addons have been added
         mitmproxy_opts.update(
-            confdir=DEFAULT_CONFDIR,
             ssl_insecure=options.get('verify_ssl', True),
             upstream_cert=DEFAULT_UPSTREAM_CERT,
             stream_websockets=DEFAULT_STREAM_WEBSOCKETS,

@@ -225,6 +225,7 @@ class MitmProxyTest(TestCase):
         })
         self.assertEqual(self.mock_master.return_value, proxy._master)
         self.mock_options.assert_called_once_with(
+            confdir='~/.mitmproxy',
             listen_host='somehost',
             listen_port=12345
         )
@@ -240,15 +241,26 @@ class MitmProxyTest(TestCase):
         self.mock_addons.default_addons.assert_called_once_with()
         self.mock_handler.assert_called_once_with(proxy)
 
+    def test_override_confdir(self):
+        proxy = MitmProxy('somehost', 12345, {
+            'request_storage_base_dir': '/some/dir',
+            'mitm_confdir': '/tmp/.mitmproxy'
+        })
+        self.assertEqual(self.mock_master.return_value, proxy._master)
+        self.mock_options.assert_called_once_with(
+            confdir='/tmp/.mitmproxy',
+            listen_host='somehost',
+            listen_port=12345
+        )
+
     def test_update_mitmproxy_options(self):
         MitmProxy('somehost', 12345, {
             'request_storage_base_dir': '/some/dir',
             'mitm_test': 'foobar'
         })
 
-        self.mock_options.return_value.update.has_calls([
+        self.mock_options.return_value.update.assert_has_calls([
             call(
-                confdir='~/.mitmproxy',
                 ssl_insecure=True,
                 upstream_cert=False,
                 stream_websockets=True,
@@ -265,16 +277,14 @@ class MitmProxyTest(TestCase):
             'mitm_confdir': '/tmp/.mitmproxy'
         })
 
-        self.mock_options.return_value.update.has_calls([
+        self.mock_options.return_value.update.assert_has_calls([
             call(
-                confdir='~/.mitmproxy',
                 ssl_insecure=True,
                 upstream_cert=False,
                 stream_websockets=True,
             ),
             call(
                 test='foobar',
-                confdir='/tmp/.mitmproxy'
             )
         ])
 
@@ -288,9 +298,8 @@ class MitmProxyTest(TestCase):
             }
         })
 
-        self.mock_options.return_value.update.has_calls([
+        self.mock_options.return_value.update.assert_has_calls([
             call(
-                confdir='~/.mitmproxy',
                 ssl_insecure=True,
                 upstream_cert=False,
                 stream_websockets=True,
@@ -307,9 +316,8 @@ class MitmProxyTest(TestCase):
             }
         })
 
-        self.mock_options.return_value.update.has_calls([
+        self.mock_options.return_value.update.assert_has_calls([
             call(
-                confdir='~/.mitmproxy',
                 ssl_insecure=True,
                 upstream_cert=False,
                 stream_websockets=True,
@@ -326,9 +334,8 @@ class MitmProxyTest(TestCase):
             }
         })
 
-        self.mock_options.return_value.update.has_calls([
+        self.mock_options.return_value.update.assert_has_calls([
             call(
-                confdir='~/.mitmproxy',
                 ssl_insecure=True,
                 upstream_cert=False,
                 stream_websockets=True,
