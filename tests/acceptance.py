@@ -219,18 +219,3 @@ class BrowserIntegrationTest(TestCase):
         driver.wait_for_request('https://www.wikipedia.org/')  # Should find www.wikipedia.org
 
         driver.quit()
-
-    def test_custom_response_handler(self):
-        """NOTE: this is being deprecated. Use driver.response_interceptor."""
-        def custom(req, req_body, res, res_body):
-            print(f'res_body length: {len(res_body)}')
-
-        options = {
-            'custom_response_handler': custom
-        }
-
-        driver = webdriver.Firefox(seleniumwire_options=options)
-
-        driver.get('https://www.python.org/')
-
-        driver.quit()
