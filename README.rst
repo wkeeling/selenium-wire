@@ -1,7 +1,7 @@
 Selenium Wire
 =============
 
-Selenium Wire extends Selenium's Python bindings to give you access to the underlying requests made by the browser. It is a lightweight library designed for ease of use with minimal external dependencies.
+Selenium Wire extends Selenium's Python bindings to give you access to the underlying requests made by the browser. It allows you to capture requests and responses, as well as make changes to them on the fly.
 
 .. image:: https://travis-ci.org/wkeeling/selenium-wire.svg?branch=master
         :target: https://travis-ci.org/wkeeling/selenium-wire
@@ -131,7 +131,7 @@ No specific configuration should be necessary except to ensure that you have dow
 OpenSSL
 -------
 
-Selenium Wire requires OpenSSL for decrypting HTTPS requests. This is often already installed, but you can install it with:
+Selenium Wire requires OpenSSL for decrypting HTTPS requests. This is normally already installed on most systems, but you can install it with:
 
 **Linux**
 
@@ -154,7 +154,7 @@ Selenium Wire requires OpenSSL for decrypting HTTPS requests. This is often alre
 
 **Windows**
 
-No installation is required - OpenSSL for Windows is bundled with Selenium Wire.
+No installation is required.
 
 Creating the Webdriver
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -239,11 +239,20 @@ Request Objects
 
 Request objects have the following attributes.
 
+``body``
+    The request body as ``bytes``. If the request has no body the value of ``body`` will be empty, i.e. ``b''``.
+
+``date``
+    The date/time the request was made.
+
+``headers``
+    A dictionary-like object of request headers. Headers are case-insensitive and duplicates are permitted. Asking for ``request.headers['user-agent']`` will return the value of the ``User-Agent`` header. If you wish to replace a header, make sure you delete the existing header first with ``del request.headers['header-name']``, otherwise you'll create a duplicate.
+
 ``method``
     The HTTP method type, e.g. ``GET`` or ``POST``.
 
-``url``
-    The request URL, e.g. ``https://server/some/path/index.html?foo=bar&spam=eggs``
+``params``
+    A dictionary of request parameters. If a parameter with the same name appears more than once in the request, it's value in the dictionary will be a list.
 
 ``path``
     The request path, e.g. ``/some/path/index.html``
@@ -251,17 +260,11 @@ Request objects have the following attributes.
 ``querystring``
     The query string, e.g. ``foo=bar&spam=eggs``
 
-``params``
-    A dictionary of request parameters. If a parameter with the same name appears more than once in the request, it's value in the dictionary will be a list.
-
-``headers``
-    A dictionary-like object of request headers. Headers are case-insensitive and duplicates are permitted. Asking for ``request.headers['user-agent']`` will return the value of the ``User-Agent`` header. If you wish to replace a header, make sure you delete the existing header first with ``del request.headers['header-name']``, otherwise you'll create a duplicate.
-
-``body``
-    The request body as ``bytes``. If the request has no body the value of ``body`` will be empty, i.e. ``b''``.
-
 ``response``
    The response associated with the request. This will be ``None`` if the request has no response.
+
+``url``
+    The request URL, e.g. ``https://server/some/path/index.html?foo=bar&spam=eggs``
 
 Request objects have the following methods.
 
@@ -276,18 +279,20 @@ Response Objects
 
 Response objects have the following attributes.
 
-``status_code``
-    The status code of the response, e.g. ``200`` or ``404``.
+``body``
+    The response body as ``bytes``. If the response has no body the value of ``body`` will be empty, i.e. ``b''``.
 
-``reason``
-    The reason phrase, e.g. ``OK`` or ``Not Found``.
+``date``
+    The date/time the response was received.
 
 ``headers``
      A dictionary-like object of response headers. Headers are case-insensitive and duplicates are permitted. Asking for ``response.headers['content-length']`` will return the value of the ``Content-Length`` header. If you wish to replace a header, make sure you delete the existing header first with ``del response.headers['header-name']``, otherwise you'll create a duplicate.
 
-``body``
-    The response body as ``bytes``. If the response has no body the value of ``body`` will be empty, i.e. ``b''``.
+``reason``
+    The reason phrase, e.g. ``OK`` or ``Not Found``.
 
+``status_code``
+    The status code of the response, e.g. ``200`` or ``404``.
 
 Intercepting Requests and Responses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -428,7 +433,7 @@ Limiting Request Capture
 Selenium Wire works by redirecting browser traffic through an internal proxy server it spins up in the background. As requests flow through the proxy they are intercepted and captured. Capturing requests can slow things down a little, but there are a few things you can do to restrict what gets captured.
 
 ``driver.scopes``
-    This accepts a list of regular expressions that will match URLs to be captured. It should be set on the driver before making any requests.
+    This accepts a list of regular expressions that will match the hostnames of URLs to be captured. It should be set on the driver before making any requests. When empty (the default) all hosts are captured.
 
     .. code:: python
 
@@ -647,42 +652,6 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
 
 .. code:: python
 
-    options = {
-        'exclude_hosts': ['host1.com', 'host2.com']  # Bypass Selenium Wire for host1.com and host2.com
-    }
-    driver = webdriver.Firefox(seleniumwire_options=options)
-
-``connection_keep_alive``
-    Whether connections should be reused across requests. The default is ``False``.
-    *Applies to the default backend only.*
-
-.. code:: python
-
-    options = {
-        'connection_keep_alive': True  # Allow persistent connections
-    }
-    driver = webdriver.Firefox(seleniumwire_options=options)
-
-``connection_timeout``
-    The number of seconds Selenium Wire should wait before timing out requests. The default is 5 seconds. Increase this value if you're working with a slow server that needs more time to respond. Set to ``None`` for no timeout.
-    *Applies to the default backend only.*
-
-.. code:: python
-
-    options = {
-        'connection_timeout': None  # Never timeout
-    }
-    driver = webdriver.Firefox(seleniumwire_options=options)
-
-
-``custom_response_handler``
-    This function that should be passed in custom response handlers should maintain a signature that it compatible with ``CaptureRequestHandler.handle_response``, as all arguments passed to that function will in turn be passed to your function. In order to modify the response data, you will need to return it from your function (the response data for the request is given in the ``res_body`` argument).
-    *Applies to the default backend only.*
-
-    *DEPRECATED. Use webdriver.response_interceptor instead.*
-
-.. code:: python
-
     def custom(req, req_body, res, res_body):
         print(f'res_body length: {len(res_body)}')
 
@@ -716,17 +685,6 @@ The code above will print something like this to the console (loading a page wil
 
     options = {
         'ignore_http_methods': []  # Capture all requests, including OPTIONS requests
-    }
-    driver = webdriver.Firefox(seleniumwire_options=options)
-
-``max_threads``
-    The maximum allowed number threads that will be used to handle requests. The default is 9999.
-    *Applies to the default backend only.*
-
-.. code:: python
-
-    options = {
-        'max_threads': 3  # Allow a maximum of 3 threads to handle requests.
     }
     driver = webdriver.Firefox(seleniumwire_options=options)
 
