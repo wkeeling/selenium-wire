@@ -1,6 +1,17 @@
 History
 ~~~~~~~
 
+4.0.0 (2021-01-31)
+------------------
+
+* Rework the default backend to:
+    * improve performance when connecting to upstream proxies
+    * remove the need for starting an openssl subprocess for certificate generation
+    * fix issue where duplicate headers could not be proxied to the upstream server
+    * fix issue where the response status code was being overridden by the CONNECT status
+    * lay the groundwork for supporting websocket message capture
+    * lay the groundwork for supporting SSL pass-through
+
 3.0.6 (2021-01-30)
 ------------------
 
