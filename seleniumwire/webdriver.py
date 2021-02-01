@@ -42,7 +42,7 @@ class Firefox(InspectRequestsMixin, DriverCommonMixin, _Firefox):
             except KeyError:
                 capabilities = DesiredCapabilities.FIREFOX.copy()
 
-            addr, port = self.proxy.address()
+            addr, port, *_ = self.proxy.address()
 
             capabilities['proxy'] = {
                 'proxyType': 'manual',
@@ -80,7 +80,7 @@ class Chrome(InspectRequestsMixin, DriverCommonMixin, _Chrome):
             except KeyError:
                 capabilities = DesiredCapabilities.CHROME.copy()
 
-            addr, port = self.proxy.address()
+            addr, port, *_ = self.proxy.address()
 
             capabilities['proxy'] = {
                 'proxyType': 'manual',
@@ -181,7 +181,7 @@ class Remote(InspectRequestsMixin, DriverCommonMixin, _Remote):
             except KeyError:
                 capabilities = DesiredCapabilities.FIREFOX.copy()
 
-            addr, port = self.proxy.address()
+            addr, port, *_ = self.proxy.address()
 
             capabilities["proxy"] = {
                 "proxyType": "manual",
