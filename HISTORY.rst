@@ -1,6 +1,12 @@
 History
 ~~~~~~~
 
+4.0.1 (2021-02-01)
+------------------
+
+* Fix bug where binding to IPv6 socket would prevent Selenium Wire from starting.
+
+
 4.0.0 (2021-01-31)
 ------------------
 
