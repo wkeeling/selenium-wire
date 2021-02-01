@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+4.0.2 (2021-02-01)
+------------------
+
+* Fix additional problems caused by IPv6 socket binding.
+
 4.0.1 (2021-02-01)
 ------------------
 
