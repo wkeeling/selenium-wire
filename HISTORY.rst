@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+4.0.3 (2021-02-04)
+------------------
+
+* Fix bug where IPv6 addresses were not being enclosed in square brackets, breaking the local proxy URL.
+
 4.0.2 (2021-02-01)
 ------------------
 
