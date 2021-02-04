@@ -135,4 +135,4 @@ class SendToLogger:
 
     def log(self, entry):
         """Send a mitmproxy log message through our own logger."""
-        getattr(logger, entry.level, logger.info)(entry.msg)
+        getattr(logger, entry.level.replace('warn', 'warning'), logger.info)(entry.msg)

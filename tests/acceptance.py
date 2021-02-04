@@ -53,6 +53,18 @@ class BrowserIntegrationTest(TestCase):
 
         driver.quit()
 
+    def test_chrome_can_access_requests(self):
+        url = 'https://www.wikipedia.org/'
+        driver = webdriver.Chrome()
+        driver.get(url)
+
+        request = driver.wait_for_request(url)
+
+        self.assertEqual(request.response.status_code, 200)
+        self.assertIn('text/html', request.response.headers['Content-Type'])
+
+        driver.quit()
+
     def test_chrome_remote_debugger(self):
         import subprocess
         import time
@@ -76,18 +88,6 @@ class BrowserIntegrationTest(TestCase):
         driver.get('https://www.whatismyreferer.com')
 
         time.sleep(3)
-
-    def test_chrome_can_access_requests(self):
-        url = 'https://www.wikipedia.org/'
-        driver = webdriver.Chrome()
-        driver.get(url)
-
-        request = driver.wait_for_request(url)
-
-        self.assertEqual(request.response.status_code, 200)
-        self.assertIn('text/html', request.response.headers['Content-Type'])
-
-        driver.quit()
 
     def test_safari_can_access_requests(self):
         url = 'https://github.com/'

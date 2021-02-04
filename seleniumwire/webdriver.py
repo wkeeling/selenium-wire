@@ -42,7 +42,7 @@ class Firefox(InspectRequestsMixin, DriverCommonMixin, _Firefox):
             except KeyError:
                 capabilities = DesiredCapabilities.FIREFOX.copy()
 
-            addr, port, *_ = self.proxy.address()
+            addr, port = urlsafe_address(self.proxy.address())
 
             capabilities['proxy'] = {
                 'proxyType': 'manual',
@@ -80,7 +80,7 @@ class Chrome(InspectRequestsMixin, DriverCommonMixin, _Chrome):
             except KeyError:
                 capabilities = DesiredCapabilities.CHROME.copy()
 
-            addr, port, *_ = self.proxy.address()
+            addr, port = urlsafe_address(self.proxy.address())
 
             capabilities['proxy'] = {
                 'proxyType': 'manual',
@@ -181,7 +181,7 @@ class Remote(InspectRequestsMixin, DriverCommonMixin, _Remote):
             except KeyError:
                 capabilities = DesiredCapabilities.FIREFOX.copy()
 
-            addr, port, *_ = self.proxy.address()
+            addr, port = urlsafe_address(self.proxy.address())
 
             capabilities["proxy"] = {
                 "proxyType": "manual",
@@ -194,3 +194,20 @@ class Remote(InspectRequestsMixin, DriverCommonMixin, _Remote):
             kwargs["desired_capabilities"] = capabilities
 
         super().__init__(*args, **kwargs)
+
+
+def urlsafe_address(address):
+    """Make an address safe to use in a URL.
+
+    Args:
+        address: A tuple of address information.
+    Returns:
+        A 2-tuple of url-safe (address, port)
+    """
+    addr, port, *rest = address
+
+    if rest:
+        # An IPv6 address needs to be surrounded by square brackets
+        addr = f'[{addr}]'
+
+    return addr, port
