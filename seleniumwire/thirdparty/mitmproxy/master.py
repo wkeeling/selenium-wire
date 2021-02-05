@@ -4,7 +4,9 @@ import sys
 import threading
 import traceback
 
-from seleniumwire.thirdparty.mitmproxy import addonmanager, command, controller, eventsequence, http, log, options, websocket
+from seleniumwire.thirdparty.mitmproxy import (addonmanager, command,
+                                               controller, eventsequence, http,
+                                               log, options, websocket)
 from seleniumwire.thirdparty.mitmproxy.coretypes import basethread
 from seleniumwire.thirdparty.mitmproxy.net import server_spec
 
@@ -89,9 +91,6 @@ class Master:
 
         if exc:  # pragma: no cover
             print(exc, file=sys.stderr)
-            print("mitmproxy has crashed!", file=sys.stderr)
-            print("Please lodge a bug report at:", file=sys.stderr)
-            print("\thttps://github.com/mitmproxy/mitmproxy", file=sys.stderr)
 
         self.addons.trigger("done")
 
