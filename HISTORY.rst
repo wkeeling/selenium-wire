@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+4.0.4 (2021-02-05)
+------------------
+
+* Fix bug where Selenium Wire would attempt to close running event loop.
+
 4.0.3 (2021-02-04)
 ------------------
 
