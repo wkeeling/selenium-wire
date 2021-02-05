@@ -39,7 +39,6 @@ class MitmProxy:
         self.response_interceptor = None
 
         self._event_loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self._event_loop)
 
         # mitmproxy specific options
         mitmproxy_opts = Options(
@@ -49,7 +48,7 @@ class MitmProxy:
         )
 
         # Create an instance of the mitmproxy server
-        self._master = Master(mitmproxy_opts)
+        self._master = Master(self._event_loop, mitmproxy_opts)
         self._master.server = ProxyServer(ProxyConfig(mitmproxy_opts))
         self._master.addons.add(*addons.default_addons())
         self._master.addons.add(SendToLogger())

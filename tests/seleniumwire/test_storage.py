@@ -240,15 +240,15 @@ class RequestStorageTest(TestCase):
         storage.save_request(request_2)
 
         self.assertEqual(request_1.id, storage.find('/test/path/').id)
-        self.assertEqual(request_1.id, storage.find('/test/path/\?foo=bar').id)
-        self.assertEqual(request_1.id, storage.find('http://www.example.com/test/path/\?foo=bar').id)
-        self.assertEqual(request_1.id, storage.find('http://www.example.com/test/path/').id)
+        self.assertEqual(request_1.id, storage.find(r'/test/path/\?foo=bar').id)
+        self.assertEqual(request_1.id, storage.find(r'http://www.example.com/test/path/\?foo=bar').id)
+        self.assertEqual(request_1.id, storage.find(r'http://www.example.com/test/path/').id)
 
         self.assertIsNone(storage.find('/different/path'))
         self.assertIsNone(storage.find('/test/path/?x=y'))
-        self.assertIsNone(storage.find('http://www.example.com/different/path/\?foo=bar'))
-        self.assertIsNone(storage.find('http://www.different.com/test/path/\?foo=bar'))
-        self.assertIsNone(storage.find('http://www.example.com/test/path/\?x=y'))
+        self.assertIsNone(storage.find(r'http://www.example.com/different/path/\?foo=bar'))
+        self.assertIsNone(storage.find(r'http://www.different.com/test/path/\?foo=bar'))
+        self.assertIsNone(storage.find(r'http://www.example.com/test/path/\?x=y'))
 
     def test_find_similar_urls(self):
         request_1 = self._create_request('https://192.168.1.1/redfish/v1')

@@ -35,11 +35,11 @@ class Master:
     """
         The master handles mitmproxy's main event loop.
     """
-    def __init__(self, opts):
+    def __init__(self, event_loop, opts):
         self.should_exit = threading.Event()
         self.channel = controller.Channel(
             self,
-            asyncio.get_event_loop(),
+            event_loop,
             self.should_exit,
         )
 
