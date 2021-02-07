@@ -131,7 +131,7 @@ No specific configuration should be necessary except to ensure that you have dow
 OpenSSL
 -------
 
-Selenium Wire requires OpenSSL for decrypting HTTPS requests. This is normally already installed on most systems, but you can install it with:
+Selenium Wire requires OpenSSL for decrypting HTTPS requests. This is normally already installed on most systems, but if not you can install it with:
 
 **Linux**
 
@@ -637,6 +637,9 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
 
 .. _`remote webdriver`: #creating-the-webdriver
 
+``auto_config``
+    Whether Selenium Wire should auto-configure the browser for request capture. ``True`` by default.
+
 ``backend``
     The backend component that Selenium Wire will use to capture requests. The currently supported values are ``default`` (same as not specifying) or ``mitmproxy``.
 
@@ -652,21 +655,10 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
 
 .. code:: python
 
-    def custom(req, req_body, res, res_body):
-        print(f'res_body length: {len(res_body)}')
-
     options = {
-        'custom_response_handler': custom
+        'exclude_hosts': ['google-analytics.com']  # Bypass these hosts
     }
-    drv = webdriver.Firefox(seleniumwire_options=options)
-    drv.get('https://example.com')
-
-The code above will print something like this to the console (loading a page will almost always initiate more than one request):
-
-.. code:: python
-
-    res_body length: 471
-    res_body length: 606
+    driver = webdriver.Firefox(seleniumwire_options=options)
 
 ``disable_encoding``
     Whether to disable content encoding. When set to ``True``, the ``Accept-Encoding`` header will be set to ``identity`` for all requests. This tells the server to not compress/modify the response. The default is ``False``.
