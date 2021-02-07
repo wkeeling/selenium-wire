@@ -14,8 +14,12 @@ class DriverCommonMixin:
     """Operations common to all webdriver types."""
 
     def _configure(self, capabilities, options):
+        """Configure the desired capabilities for request
+        capture. Modifications are made in a copy of
+        the original dictionary and the copy returned.
+        """
         # Make a copy to avoid side effects between webdriver
-        # instances sharing the same capabilities.
+        # instances sharing the same capabilities dict.
         capabilities = dict(capabilities)
 
         addr, port = urlsafe_address(self.proxy.address())
