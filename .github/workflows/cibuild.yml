@@ -41,4 +41,4 @@ jobs:
         with:
           python-version: ${{ matrix.py }}
       - run: pip install tox
-      - run: tox -e tests
+      - run: tox
