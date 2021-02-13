@@ -395,7 +395,7 @@ class BackendIntegrationTest(TestCase):
     def setUpClass(cls):
         options = {'backend': os.environ.get('SW_TEST_BACKEND', 'default')}
         cls.backend = backend.create(options=options)
-        cls._configure_proxy(*cls.backend.address())
+        cls._configure_proxy(*cls.backend.address()[:2])
 
     @classmethod
     def tearDownClass(cls):
