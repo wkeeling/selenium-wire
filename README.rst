@@ -313,7 +313,7 @@ Example: Add a request header
 
     # All requests will now contain New-Header
 
-How can I check that the header has been set? You can print the headers from captured requests using ``driver.requests`` after the page has loaded, or alternatively point the webdriver at https://httpbin.org/headers which will echo the request headers back to the browser so you can view them.
+How can I check that a header has been set correctly? You can print the headers from captured requests using ``driver.requests`` after the page has loaded, or alternatively point the webdriver at https://httpbin.org/headers which will echo the request headers back to the browser so you can view them.
 
 Example: Replace an existing request header
 -------------------------------------------
