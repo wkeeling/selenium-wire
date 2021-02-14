@@ -68,7 +68,7 @@ class InspectRequestsMixin:
             request = self.proxy.storage.find(path)
 
             if request is None:
-                time.sleep(0.2)
+                time.sleep(1 / 5)
             else:
                 return request
 
