@@ -53,6 +53,8 @@ setup(
         'dev': [
             'coverage',
             'flake8',
+            'gunicorn',
+            'httpbin',
             'mitmproxy',  # This should be removed once the mitmproxy backend goes
             'pre-commit',
             'pytest',

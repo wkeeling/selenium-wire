@@ -7,32 +7,35 @@ from unittest import TestCase
 from urllib.parse import parse_qs, urlsplit
 
 from seleniumwire import backend
+from tests import utils as testutils
 
 
 class BackendIntegrationTest(TestCase):
 
     backend = None
+    httpbin = None
+    base_url = 'https://localhost:8085'
 
     def test_create_proxy(self):
-        html = self.make_request('http://python.org')
+        html = self.make_request(f'{self.base_url}/html')
 
-        self.assertIn(b'Welcome to Python.org', html)
+        self.assertIn(b'Herman Melville', html)
 
     def test_shutdown(self):
         self.backend.shutdown()
 
         with self.assertRaises(OSError):
-            self.make_request('http://github.com')
+            self.make_request(f'{self.base_url}/html')
 
     def test_get_requests_single(self):
-        self.make_request('https://www.python.org/')
+        self.make_request(f'{self.base_url}/html')
 
         requests = self.backend.storage.load_requests()
 
         self.assertEqual(len(requests), 1)
         request = requests[0]
         self.assertEqual('GET', request.method)
-        self.assertEqual('https://www.python.org/', request.url)
+        self.assertEqual(f'{self.base_url}/html', request.url)
         self.assertEqual('identity', request.headers['Accept-Encoding'])
         self.assertEqual(200, request.response.status_code)
         self.assertEqual('text/html; charset=utf-8', request.response.headers['Content-Type'])
@@ -40,20 +43,20 @@ class BackendIntegrationTest(TestCase):
         self.assertIn(b'html', request.response.body)
 
     def test_get_requests_multiple(self):
-        self.make_request('https://github.com/')
-        self.make_request('https://www.wikipedia.org/')
+        self.make_request(f'{self.base_url}/html')
+        self.make_request(f'{self.base_url}/anything')
 
         requests = self.backend.storage.load_requests()
 
         self.assertEqual(2, len(requests))
 
     def test_get_last_request(self):
-        self.make_request('https://python.org')
-        self.make_request('https://www.bbc.co.uk/')
+        self.make_request(f'{self.base_url}/html')
+        self.make_request(f'{self.base_url}/anything')
 
         last_request = self.backend.storage.load_last_request()
 
-        self.assertEqual('https://www.bbc.co.uk/', last_request.url)
+        self.assertEqual(f'{self.base_url}/anything', last_request.url)
 
     def test_get_last_request_none(self):
         last_request = self.backend.storage.load_last_request()
@@ -61,8 +64,8 @@ class BackendIntegrationTest(TestCase):
         self.assertIsNone(last_request)
 
     def test_clear_requests(self):
-        self.make_request('https://python.org')
-        self.make_request('https://www.wikipedia.org')
+        self.make_request(f'{self.base_url}/html')
+        self.make_request(f'{self.base_url}/anything')
 
         self.backend.storage.clear_requests()
 
@@ -70,98 +73,103 @@ class BackendIntegrationTest(TestCase):
 
     def test_find(self):
         self.make_request(
-            'https://stackoverflow.com/questions/tagged/django?page=2&sort=newest&pagesize=15')
+            f'{self.base_url}/anything/questions/tagged/django?page=2&sort=newest&pagesize=15')
         self.make_request(
-            'https://docs.python.org/3.4/library/http.client.html')
-        self.make_request('https://www.google.com')
+            f'{self.base_url}/anything/3.4/library/http.client.html')
 
         self.assertEqual(
-            'https://stackoverflow.com/questions/tagged/django?page=2&sort=newest&pagesize=15',
+            f'{self.base_url}/anything/questions/tagged/django?page=2&sort=newest&pagesize=15',
             self.backend.storage.find('/questions/tagged/django').url
         )
         self.assertEqual(
-            'https://docs.python.org/3.4/library/http.client.html',
-            self.backend.storage.find('/3.4/library/http.client.html').url
-        )
-        self.assertEqual(
-            'https://www.google.com/',
-            self.backend.storage.find('https://www.google.com').url
+            f'{self.base_url}/anything/3.4/library/http.client.html',
+            self.backend.storage.find('.*library.*').url
         )
 
     def test_get_request_body_empty(self):
-        self.make_request('https://www.amazon.com')
+        self.make_request(f'{self.base_url}/get')
         last_request = self.backend.storage.load_last_request()
 
         self.assertEqual(b'', last_request.body)
 
     def test_get_response_body_json(self):
-        self.make_request('https://radiopaedia.org/api/v1/countries/current')  # Returns JSON
+        self.make_request(f'{self.base_url}/get')  # httpbin endpoints return JSON
         last_request = self.backend.storage.load_last_request()
 
         self.assertIsInstance(last_request.response.body, bytes)
+        data = json.loads(last_request.response.body.decode('utf-8'))
+        self.assertEqual(f'{self.base_url}/get', data['url'])
 
     def test_get_response_body_image(self):
-        self.make_request(
-            'https://www.python.org/static/img/python-logo@2x.png')
+        self.make_request(f'{self.base_url}/image/png')
         last_request = self.backend.storage.load_last_request()
 
         self.assertIsInstance(last_request.response.body, bytes)
 
     def test_get_response_body_empty(self):
-        # Redirects to https with empty body
-        self.make_request('http://www.python.org')
+        self.make_request(f'{self.base_url}/bytes/0')
         redirect_request = self.backend.storage.load_requests()[0]
 
-        self.assertEqual(301, redirect_request.response.status_code)
         self.assertEqual(b'', redirect_request.response.body)
 
     def test_set_header_overrides(self):
+        user_agent = 'Test_User_Agent_String'
         self.backend.modifier.headers = {
-            'User-Agent': 'Test_User_Agent_String'
+            'User-Agent': user_agent
         }
-        self.make_request('https://www.github.com')
+        self.make_request(f'{self.base_url}/headers')
 
         last_request = self.backend.storage.load_last_request()
 
-        self.assertEqual('Test_User_Agent_String', last_request.headers['User-Agent'])
+        self.assertEqual(user_agent, last_request.headers['User-Agent'])
+        data = json.loads(last_request.response.body.decode('utf-8'))
+        self.assertEqual(user_agent, data['headers']['User-Agent'])
 
     def test_set_header_overrides_case_insensitive(self):
+        user_agent = 'Test_User_Agent_String'
         self.backend.modifier.headers = {
-            'user-agent': 'Test_User_Agent_String'  # Lowercase header name
+            'user-agent': user_agent  # Lowercase header name
         }
-        self.make_request('https://www.bbc.co.uk')
+        self.make_request(f'{self.base_url}/headers')
 
         last_request = self.backend.storage.load_last_request()
 
-        self.assertEqual('Test_User_Agent_String', last_request.headers['User-Agent'])
+        self.assertEqual(user_agent, last_request.headers['User-Agent'])
+        data = json.loads(last_request.response.body.decode('utf-8'))
+        self.assertEqual(user_agent, data['headers']['User-Agent'])
 
     def test_set_header_overrides_filters_out_header(self):
         self.backend.modifier.headers = {
             'User-Agent': None
         }
-        self.make_request('https://www.wikipedia.org')
+        self.make_request(f'{self.base_url}/headers')
 
         last_request = self.backend.storage.load_last_request()
 
         self.assertNotIn('User-Agent', last_request.headers)
+        data = json.loads(last_request.response.body.decode('utf-8'))
+        self.assertNotIn('User-Agent', data['headers'])
 
     def test_clear_header_overrides(self):
+        user_agent = 'Test_User_Agent_String'
         self.backend.modifier.headers = {
-            'User-Agent': 'Test_User_Agent_String'
+            'User-Agent': user_agent
         }
         del self.backend.modifier.headers
-        self.make_request('https://www.stackoverflow.com')
+        self.make_request(f'{self.base_url}/headers')
 
         last_request = self.backend.storage.load_last_request()
 
         self.assertNotEqual(
-            'Test_User_Agent_String', last_request.headers['User-Agent']
+            user_agent, last_request.headers['User-Agent']
         )
+        data = json.loads(last_request.response.body.decode('utf-8'))
+        self.assertNotEqual(user_agent, data['headers']['User-Agent'])
 
     def test_set_param_overrides(self):
         self.backend.modifier.params = {'foo': 'baz'}
 
-        self.make_request('https://httpbin.org/?foo=bar&spam=eggs')
+        self.make_request(f'{self.base_url}/get?foo=bar&spam=eggs')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -175,7 +183,7 @@ class BackendIntegrationTest(TestCase):
         self.backend.modifier.params = {'foo': 'baz'}
 
         self.make_request(
-            'https://httpbin.org/post',
+            f'{self.base_url}/post',
             method='POST',
             data=b'foo=bazzz&spam=eggs'
         )
@@ -190,7 +198,7 @@ class BackendIntegrationTest(TestCase):
     def test_set_param_overrides_filters_out_param(self):
         self.backend.modifier.params = {'foo': None}
 
-        self.make_request('https://httpbin.org/?foo=bar&spam=eggs')
+        self.make_request(f'{self.base_url}/get?foo=bar&spam=eggs')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -200,7 +208,7 @@ class BackendIntegrationTest(TestCase):
     def test_clear_param_overrides(self):
         self.backend.modifier.params = {'foo': 'baz'}
         del self.backend.modifier.params
-        self.make_request('https://www.stackoverflow.com')
+        self.make_request(f'{self.base_url}/get')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -210,7 +218,7 @@ class BackendIntegrationTest(TestCase):
     def test_set_querystring_overrides(self):
         self.backend.modifier.querystring = 'foo=baz'
 
-        self.make_request('https://httpbin.org/?foo=bar&spam=eggs')
+        self.make_request(f'{self.base_url}/get?foo=bar&spam=eggs')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -220,7 +228,7 @@ class BackendIntegrationTest(TestCase):
     def test_set_querystring_overrides_filters(self):
         self.backend.modifier.querystring = ''  # Empty string to filter a querystring (not None)
 
-        self.make_request('https://httpbin.org/?foo=bar&spam=eggs')
+        self.make_request(f'{self.base_url}/get?foo=bar&spam=eggs')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -230,7 +238,7 @@ class BackendIntegrationTest(TestCase):
     def test_clear_querystring_overrides(self):
         self.backend.modifier.querystring = 'foo=baz'
         del self.backend.modifier.querystring
-        self.make_request('https://httpbin.org/get?foo=bar')
+        self.make_request(f'{self.base_url}/get?foo=bar')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -239,70 +247,67 @@ class BackendIntegrationTest(TestCase):
 
     def test_set_rewrite_rules(self):
         self.backend.modifier.rewrite_rules = [
-            (r'https://stackoverflow.com(.*)', r'https://github.com\1'),
+            (f'{self.base_url}/anything/foo/(.*)', rf'{self.base_url}/anything/bar/\1'),
         ]
-        self.make_request('https://stackoverflow.com')
+        self.make_request(f'{self.base_url}/anything/foo/x/y')
 
         last_request = self.backend.storage.load_last_request()
 
-        self.assertEqual('https://github.com/', last_request.url)
-        self.assertEqual('github.com', last_request.headers['Host'])
+        self.assertEqual(f'{self.base_url}/anything/bar/x/y', last_request.url)
 
     def test_clear_rewrite_rules(self):
         self.backend.modifier.rewrite_rules = [
-            (r'https://stackoverflow.com(.*)', r'https://www.github.com\1'),
+            (f'{self.base_url}/anything/foo/(.*)', rf'{self.base_url}/anything/bar/\1'),
         ]
         del self.backend.modifier.rewrite_rules
 
-        self.make_request('https://www.stackoverflow.com/')
+        self.make_request(f'{self.base_url}/anything/foo/x/y')
 
         last_request = self.backend.storage.load_last_request()
 
-        self.assertEqual('https://stackoverflow.com/', last_request.url)
-        self.assertEqual('stackoverflow.com', last_request.headers['Host'])
+        self.assertEqual(f'{self.base_url}/anything/foo/x/y', last_request.url)
 
     def test_set_single_scopes(self):
-        self.backend.scopes = ['.*stackoverflow.*']
+        self.backend.scopes = [f'{self.base_url}/anything/foo/.*']
 
-        self.make_request('https://stackoverflow.com')
-
-        last_request = self.backend.storage.load_last_request()
-
-        self.assertEqual('https://stackoverflow.com/', last_request.url)
-        self.assertEqual('stackoverflow.com', last_request.headers['Host'])
-
-        self.make_request('https://github.com')
+        self.make_request(f'{self.base_url}/anything/foo/bar')
 
         last_request = self.backend.storage.load_last_request()
 
-        self.assertEqual('https://stackoverflow.com/', last_request.url)
-        self.assertEqual('stackoverflow.com', last_request.headers['Host'])
-        self.assertNotEqual('https://github.com/', last_request.url)
-        self.assertNotEqual('github.com', last_request.headers['Host'])
+        self.assertEqual(f'{self.base_url}/anything/foo/bar', last_request.url)
+
+        self.make_request(f'{self.base_url}/anything/spam/bar')
+
+        last_request = self.backend.storage.load_last_request()
+
+        self.assertNotEqual(f'{self.base_url}/anything/spam/bar', last_request.url)
 
     def test_set_multiples_scopes(self):
-        self.backend.scopes = ('.*stackoverflow.*', '.*github.*')
+        self.backend.scopes = (
+            f'{self.base_url}/anything/foo/.*',
+            f'{self.base_url}/anything/spam/.*'
+        )
 
-        self.make_request('https://stackoverflow.com')
+        self.make_request(f'{self.base_url}/anything/foo/bar')
         last_request = self.backend.storage.load_last_request()
-        self.assertEqual('https://stackoverflow.com/', last_request.url)
-        self.assertEqual('stackoverflow.com', last_request.headers['Host'])
+        self.assertEqual(f'{self.base_url}/anything/foo/bar', last_request.url)
 
-        self.make_request('https://github.com')
+        self.make_request(f'{self.base_url}/anything/spam/bar')
         last_request = self.backend.storage.load_last_request()
-        self.assertEqual('https://github.com/', last_request.url)
-        self.assertEqual('github.com', last_request.headers['Host'])
+        self.assertEqual(f'{self.base_url}/anything/spam/bar', last_request.url)
 
-        self.make_request('https://google.com')
+        self.make_request(f'{self.base_url}/anything/hello/bar')
         last_request = self.backend.storage.load_last_request()
-        self.assertNotEqual('https://google.com/', last_request.url)
-        self.assertNotEqual('google.com', last_request.headers['Host'])
+        self.assertNotEqual(f'{self.base_url}/anything/hello/bar', last_request.url)
 
     def test_reset_scopes(self):
-        self.backend.scopes = ('.*stackoverflow.*', '.*github.*')
-        self.backend.scopes = []
+        self.backend.scopes = (
+            f'{self.base_url}/anything/foo/.*',
+            f'{self.base_url}/anything/spam/.*'
+        )
+        self.backend.scopes = ()
 
-        self.make_request('https://www.stackoverflow.com')
+        self.make_request(f'{self.base_url}/anything/hello/bar')
         self.assertTrue(self.backend.storage.load_last_request())
 
     def test_disable_encoding(self):
@@ -312,28 +317,29 @@ class BackendIntegrationTest(TestCase):
             'Accept-Encoding': 'gzip'
         }
 
-        self.make_request('https://www.google.com/')
+        self.make_request(f'{self.base_url}/anything')
 
-        requests = self.backend.storage.load_requests()
+        last_request = self.backend.storage.load_last_request()
+        data = json.loads(last_request.response.body.decode('utf-8'))
 
-        # No Content-Encoding header implies 'identity'
-        self.assertEqual(
-            'identity',
-            requests[0].response.headers.get('Content-Encoding', 'identity')
-        )
+        self.assertEqual('identity', data['headers']['Accept-Encoding'])
 
     def test_intercept_request_headers(self):
+        user_agent = 'Test_User_Agent_String'
+
         def interceptor(request):
             del request.headers['User-Agent']
-            request.headers['User-Agent'] = 'Test_User_Agent_String'
+            request.headers['User-Agent'] = user_agent
 
         self.backend.request_interceptor = interceptor
 
-        self.make_request('https://www.github.com')
+        self.make_request(f'{self.base_url}/headers')
 
         last_request = self.backend.storage.load_last_request()
+        data = json.loads(last_request.response.body.decode('utf-8'))
 
-        self.assertEqual('Test_User_Agent_String', last_request.headers['User-Agent'])
+        self.assertEqual(user_agent, last_request.headers['User-Agent'])
+        self.assertEqual(user_agent, data['headers']['User-Agent'])
 
     def test_intercept_request_params(self):
         def interceptor(request):
@@ -342,11 +348,13 @@ class BackendIntegrationTest(TestCase):
 
         self.backend.request_interceptor = interceptor
 
-        self.make_request('https://httpbin.org/?foo=bar&spam=eggs')
+        self.make_request(f'{self.base_url}/get?foo=bar&spam=eggs')
 
         last_request = self.backend.storage.load_last_request()
 
         self.assertEqual({'foo': 'baz', 'spam': 'eggs', 'a': 'b'}, last_request.params)
+        data = json.loads(last_request.response.body.decode('utf-8'))
+        self.assertEqual({'foo': 'baz', 'spam': 'eggs', 'a': 'b'}, data['args'])
 
     def test_intercept_request_body(self):
         def interceptor(request):
@@ -357,7 +365,7 @@ class BackendIntegrationTest(TestCase):
         self.backend.request_interceptor = interceptor
 
         self.make_request(
-            'https://httpbin.org/post',
+            f'{self.base_url}/post',
             method='POST',
             data=b'{"foo": "bar", "spam": "eggs"}'
         )
@@ -373,7 +381,7 @@ class BackendIntegrationTest(TestCase):
 
         self.backend.response_interceptor = interceptor
 
-        self.make_request('https://www.github.com')
+        self.make_request(f'{self.base_url}/anything')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -382,10 +390,12 @@ class BackendIntegrationTest(TestCase):
     def test_intercept_response_body(self):
         def interceptor(request, response):
             response.body = b'helloworld'
+            del response.headers['Content-Length']
+            response.headers['Content-Length'] = '10'
 
         self.backend.response_interceptor = interceptor
 
-        self.make_request('https://www.github.com')
+        self.make_request(f'{self.base_url}/anything')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -396,10 +406,12 @@ class BackendIntegrationTest(TestCase):
         options = {'backend': os.environ.get('SW_TEST_BACKEND', 'default')}
         cls.backend = backend.create(options=options)
         cls.configure_proxy(*cls.backend.address()[:2])
+        cls.httpbin = testutils.start_httpbin()
 
     @classmethod
     def tearDownClass(cls):
         cls.backend.shutdown()
+        cls.httpbin.terminate()
 
     def tearDown(self):
         del self.backend.modifier.headers
