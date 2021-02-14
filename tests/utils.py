@@ -37,7 +37,7 @@ def get_httpbin(port=8085):
             print(f'Using existing httpbin server at {url}')
             return Httpbin(url)
 
-    if os.name != 'nt':
+    if os.name != 'nt':  # Gunicorn doesn't work on Windows
         cert = Path(__file__).parent / 'server.crt'
         key = Path(__file__).parent / 'server.key'
         proc = subprocess.Popen([
