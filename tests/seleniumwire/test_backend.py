@@ -14,10 +14,9 @@ class BackendIntegrationTest(TestCase):
 
     backend = None
     httpbin = None
-    base_url = 'https://localhost:8085'
 
     def test_create_proxy(self):
-        html = self.make_request(f'{self.base_url}/html')
+        html = self.make_request(f'{self.httpbin}/html')
 
         self.assertIn(b'Herman Melville', html)
 
@@ -25,17 +24,17 @@ class BackendIntegrationTest(TestCase):
         self.backend.shutdown()
 
         with self.assertRaises(OSError):
-            self.make_request(f'{self.base_url}/html')
+            self.make_request(f'{self.httpbin}/html')
 
     def test_get_requests_single(self):
-        self.make_request(f'{self.base_url}/html')
+        self.make_request(f'{self.httpbin}/html')
 
         requests = self.backend.storage.load_requests()
 
         self.assertEqual(len(requests), 1)
         request = requests[0]
         self.assertEqual('GET', request.method)
-        self.assertEqual(f'{self.base_url}/html', request.url)
+        self.assertEqual(f'{self.httpbin}/html', request.url)
         self.assertEqual('identity', request.headers['Accept-Encoding'])
         self.assertEqual(200, request.response.status_code)
         self.assertEqual('text/html; charset=utf-8', request.response.headers['Content-Type'])
@@ -43,20 +42,20 @@ class BackendIntegrationTest(TestCase):
         self.assertIn(b'html', request.response.body)
 
     def test_get_requests_multiple(self):
-        self.make_request(f'{self.base_url}/html')
-        self.make_request(f'{self.base_url}/anything')
+        self.make_request(f'{self.httpbin}/html')
+        self.make_request(f'{self.httpbin}/anything')
 
         requests = self.backend.storage.load_requests()
 
         self.assertEqual(2, len(requests))
 
     def test_get_last_request(self):
-        self.make_request(f'{self.base_url}/html')
-        self.make_request(f'{self.base_url}/anything')
+        self.make_request(f'{self.httpbin}/html')
+        self.make_request(f'{self.httpbin}/anything')
 
         last_request = self.backend.storage.load_last_request()
 
-        self.assertEqual(f'{self.base_url}/anything', last_request.url)
+        self.assertEqual(f'{self.httpbin}/anything', last_request.url)
 
     def test_get_last_request_none(self):
         last_request = self.backend.storage.load_last_request()
@@ -64,8 +63,8 @@ class BackendIntegrationTest(TestCase):
         self.assertIsNone(last_request)
 
     def test_clear_requests(self):
-        self.make_request(f'{self.base_url}/html')
-        self.make_request(f'{self.base_url}/anything')
+        self.make_request(f'{self.httpbin}/html')
+        self.make_request(f'{self.httpbin}/anything')
 
         self.backend.storage.clear_requests()
 
@@ -73,41 +72,41 @@ class BackendIntegrationTest(TestCase):
 
     def test_find(self):
         self.make_request(
-            f'{self.base_url}/anything/questions/tagged/django?page=2&sort=newest&pagesize=15')
+            f'{self.httpbin}/anything/questions/tagged/django?page=2&sort=newest&pagesize=15')
         self.make_request(
-            f'{self.base_url}/anything/3.4/library/http.client.html')
+            f'{self.httpbin}/anything/3.4/library/http.client.html')
 
         self.assertEqual(
-            f'{self.base_url}/anything/questions/tagged/django?page=2&sort=newest&pagesize=15',
+            f'{self.httpbin}/anything/questions/tagged/django?page=2&sort=newest&pagesize=15',
             self.backend.storage.find('/questions/tagged/django').url
         )
         self.assertEqual(
-            f'{self.base_url}/anything/3.4/library/http.client.html',
+            f'{self.httpbin}/anything/3.4/library/http.client.html',
             self.backend.storage.find('.*library.*').url
         )
 
     def test_get_request_body_empty(self):
-        self.make_request(f'{self.base_url}/get')
+        self.make_request(f'{self.httpbin}/get')
         last_request = self.backend.storage.load_last_request()
 
         self.assertEqual(b'', last_request.body)
 
     def test_get_response_body_json(self):
-        self.make_request(f'{self.base_url}/get')  # httpbin endpoints return JSON
+        self.make_request(f'{self.httpbin}/get')  # httpbin endpoints return JSON
         last_request = self.backend.storage.load_last_request()
 
         self.assertIsInstance(last_request.response.body, bytes)
         data = json.loads(last_request.response.body.decode('utf-8'))
-        self.assertEqual(f'{self.base_url}/get', data['url'])
+        self.assertEqual(f'{self.httpbin}/get', data['url'])
 
     def test_get_response_body_image(self):
-        self.make_request(f'{self.base_url}/image/png')
+        self.make_request(f'{self.httpbin}/image/png')
         last_request = self.backend.storage.load_last_request()
 
         self.assertIsInstance(last_request.response.body, bytes)
 
     def test_get_response_body_empty(self):
-        self.make_request(f'{self.base_url}/bytes/0')
+        self.make_request(f'{self.httpbin}/bytes/0')
         redirect_request = self.backend.storage.load_requests()[0]
 
         self.assertEqual(b'', redirect_request.response.body)
@@ -117,7 +116,7 @@ class BackendIntegrationTest(TestCase):
         self.backend.modifier.headers = {
             'User-Agent': user_agent
         }
-        self.make_request(f'{self.base_url}/headers')
+        self.make_request(f'{self.httpbin}/headers')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -130,7 +129,7 @@ class BackendIntegrationTest(TestCase):
         self.backend.modifier.headers = {
             'user-agent': user_agent  # Lowercase header name
         }
-        self.make_request(f'{self.base_url}/headers')
+        self.make_request(f'{self.httpbin}/headers')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -142,7 +141,7 @@ class BackendIntegrationTest(TestCase):
         self.backend.modifier.headers = {
             'User-Agent': None
         }
-        self.make_request(f'{self.base_url}/headers')
+        self.make_request(f'{self.httpbin}/headers')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -156,7 +155,7 @@ class BackendIntegrationTest(TestCase):
             'User-Agent': user_agent
         }
         del self.backend.modifier.headers
-        self.make_request(f'{self.base_url}/headers')
+        self.make_request(f'{self.httpbin}/headers')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -169,7 +168,7 @@ class BackendIntegrationTest(TestCase):
     def test_set_param_overrides(self):
         self.backend.modifier.params = {'foo': 'baz'}
 
-        self.make_request(f'{self.base_url}/get?foo=bar&spam=eggs')
+        self.make_request(f'{self.httpbin}/get?foo=bar&spam=eggs')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -183,7 +182,7 @@ class BackendIntegrationTest(TestCase):
         self.backend.modifier.params = {'foo': 'baz'}
 
         self.make_request(
-            f'{self.base_url}/post',
+            f'{self.httpbin}/post',
             method='POST',
             data=b'foo=bazzz&spam=eggs'
         )
@@ -198,7 +197,7 @@ class BackendIntegrationTest(TestCase):
     def test_set_param_overrides_filters_out_param(self):
         self.backend.modifier.params = {'foo': None}
 
-        self.make_request(f'{self.base_url}/get?foo=bar&spam=eggs')
+        self.make_request(f'{self.httpbin}/get?foo=bar&spam=eggs')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -208,7 +207,7 @@ class BackendIntegrationTest(TestCase):
     def test_clear_param_overrides(self):
         self.backend.modifier.params = {'foo': 'baz'}
         del self.backend.modifier.params
-        self.make_request(f'{self.base_url}/get')
+        self.make_request(f'{self.httpbin}/get')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -218,7 +217,7 @@ class BackendIntegrationTest(TestCase):
     def test_set_querystring_overrides(self):
         self.backend.modifier.querystring = 'foo=baz'
 
-        self.make_request(f'{self.base_url}/get?foo=bar&spam=eggs')
+        self.make_request(f'{self.httpbin}/get?foo=bar&spam=eggs')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -228,7 +227,7 @@ class BackendIntegrationTest(TestCase):
     def test_set_querystring_overrides_filters(self):
         self.backend.modifier.querystring = ''  # Empty string to filter a querystring (not None)
 
-        self.make_request(f'{self.base_url}/get?foo=bar&spam=eggs')
+        self.make_request(f'{self.httpbin}/get?foo=bar&spam=eggs')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -238,7 +237,7 @@ class BackendIntegrationTest(TestCase):
     def test_clear_querystring_overrides(self):
         self.backend.modifier.querystring = 'foo=baz'
         del self.backend.modifier.querystring
-        self.make_request(f'{self.base_url}/get?foo=bar')
+        self.make_request(f'{self.httpbin}/get?foo=bar')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -247,67 +246,67 @@ class BackendIntegrationTest(TestCase):
 
     def test_set_rewrite_rules(self):
         self.backend.modifier.rewrite_rules = [
-            (f'{self.base_url}/anything/foo/(.*)', rf'{self.base_url}/anything/bar/\1'),
+            (f'{self.httpbin}/anything/foo/(.*)', rf'{self.httpbin}/anything/bar/\1'),
         ]
-        self.make_request(f'{self.base_url}/anything/foo/x/y')
+        self.make_request(f'{self.httpbin}/anything/foo/x/y')
 
         last_request = self.backend.storage.load_last_request()
 
-        self.assertEqual(f'{self.base_url}/anything/bar/x/y', last_request.url)
+        self.assertEqual(f'{self.httpbin}/anything/bar/x/y', last_request.url)
 
     def test_clear_rewrite_rules(self):
         self.backend.modifier.rewrite_rules = [
-            (f'{self.base_url}/anything/foo/(.*)', rf'{self.base_url}/anything/bar/\1'),
+            (f'{self.httpbin}/anything/foo/(.*)', rf'{self.httpbin}/anything/bar/\1'),
         ]
         del self.backend.modifier.rewrite_rules
 
-        self.make_request(f'{self.base_url}/anything/foo/x/y')
+        self.make_request(f'{self.httpbin}/anything/foo/x/y')
 
         last_request = self.backend.storage.load_last_request()
 
-        self.assertEqual(f'{self.base_url}/anything/foo/x/y', last_request.url)
+        self.assertEqual(f'{self.httpbin}/anything/foo/x/y', last_request.url)
 
     def test_set_single_scopes(self):
-        self.backend.scopes = [f'{self.base_url}/anything/foo/.*']
+        self.backend.scopes = [f'{self.httpbin}/anything/foo/.*']
 
-        self.make_request(f'{self.base_url}/anything/foo/bar')
-
-        last_request = self.backend.storage.load_last_request()
-
-        self.assertEqual(f'{self.base_url}/anything/foo/bar', last_request.url)
-
-        self.make_request(f'{self.base_url}/anything/spam/bar')
+        self.make_request(f'{self.httpbin}/anything/foo/bar')
 
         last_request = self.backend.storage.load_last_request()
 
-        self.assertNotEqual(f'{self.base_url}/anything/spam/bar', last_request.url)
+        self.assertEqual(f'{self.httpbin}/anything/foo/bar', last_request.url)
+
+        self.make_request(f'{self.httpbin}/anything/spam/bar')
+
+        last_request = self.backend.storage.load_last_request()
+
+        self.assertNotEqual(f'{self.httpbin}/anything/spam/bar', last_request.url)
 
     def test_set_multiples_scopes(self):
         self.backend.scopes = (
-            f'{self.base_url}/anything/foo/.*',
-            f'{self.base_url}/anything/spam/.*'
+            f'{self.httpbin}/anything/foo/.*',
+            f'{self.httpbin}/anything/spam/.*'
         )
 
-        self.make_request(f'{self.base_url}/anything/foo/bar')
+        self.make_request(f'{self.httpbin}/anything/foo/bar')
         last_request = self.backend.storage.load_last_request()
-        self.assertEqual(f'{self.base_url}/anything/foo/bar', last_request.url)
+        self.assertEqual(f'{self.httpbin}/anything/foo/bar', last_request.url)
 
-        self.make_request(f'{self.base_url}/anything/spam/bar')
+        self.make_request(f'{self.httpbin}/anything/spam/bar')
         last_request = self.backend.storage.load_last_request()
-        self.assertEqual(f'{self.base_url}/anything/spam/bar', last_request.url)
+        self.assertEqual(f'{self.httpbin}/anything/spam/bar', last_request.url)
 
-        self.make_request(f'{self.base_url}/anything/hello/bar')
+        self.make_request(f'{self.httpbin}/anything/hello/bar')
         last_request = self.backend.storage.load_last_request()
-        self.assertNotEqual(f'{self.base_url}/anything/hello/bar', last_request.url)
+        self.assertNotEqual(f'{self.httpbin}/anything/hello/bar', last_request.url)
 
     def test_reset_scopes(self):
         self.backend.scopes = (
-            f'{self.base_url}/anything/foo/.*',
-            f'{self.base_url}/anything/spam/.*'
+            f'{self.httpbin}/anything/foo/.*',
+            f'{self.httpbin}/anything/spam/.*'
         )
         self.backend.scopes = ()
 
-        self.make_request(f'{self.base_url}/anything/hello/bar')
+        self.make_request(f'{self.httpbin}/anything/hello/bar')
         self.assertTrue(self.backend.storage.load_last_request())
 
     def test_disable_encoding(self):
@@ -317,7 +316,7 @@ class BackendIntegrationTest(TestCase):
             'Accept-Encoding': 'gzip'
         }
 
-        self.make_request(f'{self.base_url}/anything')
+        self.make_request(f'{self.httpbin}/anything')
 
         last_request = self.backend.storage.load_last_request()
         data = json.loads(last_request.response.body.decode('utf-8'))
@@ -333,7 +332,7 @@ class BackendIntegrationTest(TestCase):
 
         self.backend.request_interceptor = interceptor
 
-        self.make_request(f'{self.base_url}/headers')
+        self.make_request(f'{self.httpbin}/headers')
 
         last_request = self.backend.storage.load_last_request()
         data = json.loads(last_request.response.body.decode('utf-8'))
@@ -348,7 +347,7 @@ class BackendIntegrationTest(TestCase):
 
         self.backend.request_interceptor = interceptor
 
-        self.make_request(f'{self.base_url}/get?foo=bar&spam=eggs')
+        self.make_request(f'{self.httpbin}/get?foo=bar&spam=eggs')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -365,7 +364,7 @@ class BackendIntegrationTest(TestCase):
         self.backend.request_interceptor = interceptor
 
         self.make_request(
-            f'{self.base_url}/post',
+            f'{self.httpbin}/post',
             method='POST',
             data=b'{"foo": "bar", "spam": "eggs"}'
         )
@@ -381,7 +380,7 @@ class BackendIntegrationTest(TestCase):
 
         self.backend.response_interceptor = interceptor
 
-        self.make_request(f'{self.base_url}/anything')
+        self.make_request(f'{self.httpbin}/anything')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -395,7 +394,7 @@ class BackendIntegrationTest(TestCase):
 
         self.backend.response_interceptor = interceptor
 
-        self.make_request(f'{self.base_url}/anything')
+        self.make_request(f'{self.httpbin}/anything')
 
         last_request = self.backend.storage.load_last_request()
 
@@ -406,12 +405,12 @@ class BackendIntegrationTest(TestCase):
         options = {'backend': os.environ.get('SW_TEST_BACKEND', 'default')}
         cls.backend = backend.create(options=options)
         cls.configure_proxy(*cls.backend.address()[:2])
-        cls.httpbin = testutils.start_httpbin()
+        cls.httpbin = testutils.get_httpbin()
 
     @classmethod
     def tearDownClass(cls):
         cls.backend.shutdown()
-        cls.httpbin.terminate()
+        cls.httpbin.close()
 
     def tearDown(self):
         del self.backend.modifier.headers
