@@ -507,7 +507,7 @@ The configuration takes the following format:
     options = {
         'proxy': {
             'http': 'http://192.168.10.100:8888',
-            'https': 'https://192.168.10.100:8889',
+            'https': 'https://192.168.10.100:8888',
             'no_proxy': 'localhost,127.0.0.1'
         }
     }
@@ -519,17 +519,17 @@ To use HTTP Basic Auth with your proxy, specify the username and password in the
 
     options = {
         'proxy': {
-            'https': 'https://user:pass@192.168.10.100:8889',
+            'https': 'https://user:pass@192.168.10.100:8888',
         }
     }
 
-For proxy authentication different to Basic, you can supply the full value for the ``Proxy-Authorization`` header using the ``custom_authorization`` option. For example, if your proxy used the Bearer scheme:
+For authentication other than Basic, you can supply the full value for the ``Proxy-Authorization`` header using the ``custom_authorization`` option. For example, if your proxy used the Bearer scheme:
 
 .. code:: python
 
     options = {
         'proxy': {
-            'https': 'https://192.168.10.100:8889',  # No username or password used
+            'https': 'https://192.168.10.100:8888',  # No username or password used
             'custom_authorization': 'Bearer mytoken123'  # Custom Proxy-Authorization header value
         }
     }
@@ -543,7 +543,7 @@ The proxy configuration can also be loaded through environment variables called 
 .. code:: bash
 
     $ export HTTP_PROXY="http://192.168.10.100:8888"
-    $ export HTTPS_PROXY="https://192.168.10.100:8889"
+    $ export HTTPS_PROXY="https://192.168.10.100:8888"
     $ export NO_PROXY="localhost,127.0.0.1"
 
 SOCKS
@@ -556,7 +556,7 @@ Using a SOCKS proxy is the same as using an HTTP based one:
     options = {
         'proxy': {
             'http': 'socks5://user:pass@192.168.10.100:8888',
-            'https': 'socks5://user:pass@192.168.10.100:8889',
+            'https': 'socks5://user:pass@192.168.10.100:8888',
             'no_proxy': 'localhost,127.0.0.1'
         }
     }
