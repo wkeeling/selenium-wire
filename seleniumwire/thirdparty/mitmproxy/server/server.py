@@ -118,7 +118,7 @@ class ConnectionHandler:
                 self.log(
                     "Client Handshake failed. "
                     "The client may not trust Selenium Wire's certificate for {}.".format(e.server),
-                    "warn"
+                    "debug"
                 )
                 self.log(repr(e), "debug")
             elif isinstance(e, exceptions.InvalidServerCertificate):
