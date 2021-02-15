@@ -1,6 +1,12 @@
 History
 ~~~~~~~
 
+4.0.5 (2021-02-15)
+------------------
+
+* Downgrade "The client may not trust Selenium Wire's certificate" to debug.
+* Introduce auto_config option.
+
 4.0.4 (2021-02-05)
 ------------------
 
