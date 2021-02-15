@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 def get_httpbin(port=8085):
-    """Get a Httpbin object containing the URL of a running httpbin server.
+    """Get a running httpbin server instance.
 
     This function will attempt to discover a httpbin server by trying each
     of the following steps in turn:
@@ -20,10 +20,10 @@ def get_httpbin(port=8085):
     hosts.
 
     - Return a Httpbin object containing the URL of the public httpbin website,
-    i.e. https://httpbin.org
+    https://httpbin.org
 
-    Clients should call the close() method on the returned Httpbin object when they
-    are finished with it.
+    Clients should call close() on the returned Httpbin object when they are
+    finished with it.
 
     Args:
         port: Optional port number that the httpbin instance is/should listen on.
