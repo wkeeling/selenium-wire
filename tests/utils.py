@@ -1,4 +1,5 @@
 import os
+import shutil
 import socket
 import subprocess
 from contextlib import closing
@@ -70,6 +71,12 @@ class Httpbin:
     """Represents a running httpbin server."""
 
     def __init__(self, url, proc=None):
+        """Initialise a new Httpbin with a URL and optional Popen object.
+
+        Args:
+            url: The URL of the httpbin server.
+            proc: The Popen object if a httpbin server was created.
+        """
         self.url = url
         self.proc = proc
 
@@ -80,6 +87,23 @@ class Httpbin:
 
     def __str__(self):
         return self.url
+
+
+def get_headless_chromium():
+    """Get the path to a headless chromium executable uncompressing the
+    executable if required.
+
+    Returns: The path.
+    """
+    bin_path = Path(__file__).parent / Path('end2end', 'linux', 'headless-chromium')
+
+    if not bin_path.exists():
+        zip_path = bin_path.with_suffix('.zip')
+        print(f'Unzipping {zip_path}')
+        shutil.unpack_archive(str(zip_path), bin_path.parent)
+        os.chmod(bin_path, 0o755)
+
+    return str(bin_path)
 
 
 if __name__ == '__main__':

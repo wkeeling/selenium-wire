@@ -7,6 +7,7 @@ unit test where it makes sense.
 """
 
 import json
+import shutil
 from pathlib import Path
 
 import pytest
@@ -26,7 +27,7 @@ def httpbin():
 @pytest.fixture
 def chrome_options():
     options = webdriver.ChromeOptions()
-    options.binary_location = str(Path(__file__).parent / Path('linux', 'headless-chromium'))
+    options.binary_location = testutils.get_headless_chromium()
     return options
 
 
@@ -42,7 +43,16 @@ def driver(chrome_options, driver_path):
         options=chrome_options,
     )
 
-    return driver
+    yield driver
+
+    try:
+        (Path(__file__).parent / Path('linux', 'chrome_debug.log')).unlink()
+    except FileNotFoundError:
+        pass
+    shutil.rmtree(
+        Path(__file__).parent / Path('linux', 'locales'),
+        ignore_errors=True
+    )
 
 
 def test_capture_requests(driver, httpbin):
