@@ -45,6 +45,7 @@ def driver(chrome_options, driver_path):
 
     yield driver
 
+    driver.quit()
     cleanup()
 
 
@@ -55,6 +56,10 @@ def cleanup():
         pass
     shutil.rmtree(
         Path(__file__).parent / Path('linux', 'locales'),
+        ignore_errors=True
+    )
+    shutil.rmtree(
+        Path(__file__).parent / 'chrome_tmp',
         ignore_errors=True
     )
 
