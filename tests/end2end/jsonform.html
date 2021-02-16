@@ -1,0 +1,19 @@
+<html>
+    <head>
+        <title>Post JSON to End2End Test</title>
+    </head>
+    <body>
+        <button id="submit" onclick="sendJson()">Submit</button>
+    </body>
+    <script>
+        function sendJson() {
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST", "https://localhost:8085/post", true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            let data = JSON.stringify(
+                { "hello": "world", "spam": "eggs" }
+            );
+            xhr.send(data);
+        }
+    </script>
+</html>

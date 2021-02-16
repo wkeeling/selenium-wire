@@ -480,7 +480,7 @@ Selenium Wire works by redirecting browser traffic through an internal proxy ser
         driver = webdriver.Firefox(seleniumwire_options=options)
 
 ``request.abort()``
-    You can abort a request early by using ``request.abort()`` from within a `request interceptor`_. This will send an immediate response back to the client without the request travelling any further. You can use this mechanism to block certain types of requests (e.g. images) to improve page load performance. Aborted requests are not captured.
+    You can abort a request early by using ``request.abort()`` from within a `request interceptor`_. This will send an immediate response back to the client without the request travelling any further. You can use this mechanism to block certain types of requests (e.g. images) to improve page load performance.
 
     .. code:: python
 

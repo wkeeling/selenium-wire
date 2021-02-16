@@ -7,7 +7,7 @@ on:
       - end2end_tests
 
 jobs:
-  lint:
+  flake8:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -16,7 +16,7 @@ jobs:
     - run: pip install tox
     - run: tox -e flake8
 
-  test:
+  unit_tests:
     strategy:
       fail-fast: false
       matrix:
@@ -43,7 +43,7 @@ jobs:
       - run: pip install tox
       - run: tox -e py
 
-  end2end:
+  end2end_tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
