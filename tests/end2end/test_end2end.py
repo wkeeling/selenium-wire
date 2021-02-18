@@ -24,6 +24,20 @@ def httpbin():
     httpbin.close()
 
 
+@pytest.fixture(scope='module')
+def httpproxy():
+    httpproxy = testutils.get_proxy()
+    yield httpproxy
+    httpproxy.close()
+
+
+@pytest.fixture(scope='module')
+def socksproxy():
+    httpproxy = testutils.get_proxy(port=8087, mode='socks')
+    yield httpproxy
+    httpproxy.close()
+
+
 @pytest.fixture
 def chrome_options():
     options = webdriver.ChromeOptions()
@@ -46,21 +60,20 @@ def driver(chrome_options, driver_path):
     yield driver
 
     driver.quit()
-    cleanup()
 
 
-def cleanup():
+def teardown_function():
     try:
         (Path(__file__).parent / Path('linux', 'chrome_debug.log')).unlink()
     except FileNotFoundError:
         pass
+
     shutil.rmtree(
-        Path(__file__).parent / Path('linux', 'locales'),
-        ignore_errors=True
+        Path(__file__).parent / Path('linux', 'locales'), ignore_errors=True
     )
+
     shutil.rmtree(
-        Path(__file__).parent / 'chrome_tmp',
-        ignore_errors=True
+        Path(__file__).parent / 'chrome_tmp', ignore_errors=True
     )
 
 
@@ -174,7 +187,6 @@ def test_update_json_post_request(chrome_options, driver_path, httpbin):
     chrome_options.add_argument('--disable-web-security')
     chrome_data_dir = Path(__file__).parent / 'chrome_tmp'
     chrome_options.add_argument(f'--user-data-dir={str(chrome_data_dir)}')
-    chrome_options.add_argument('--ignore-certificate-errors')
 
     driver = webdriver.Chrome(
         executable_path=driver_path,
@@ -204,6 +216,8 @@ def test_update_json_post_request(chrome_options, driver_path, httpbin):
 
     assert resp_body['json'] == {'hello': 'world', 'spam': 'eggs', 'foo': 'bar'}
 
+    driver.quit()
+
 
 def test_block_a_request(driver, httpbin):
     def interceptor(req):
@@ -230,3 +244,83 @@ def test_mock_a_response(driver, httpbin):
     driver.wait_for_request('/html')
 
     assert 'Hello World!' in driver.page_source
+
+
+def test_mitmproxy_backend(chrome_options, driver_path, httpbin):
+    sw_options = {
+        'backend': 'mitmproxy'
+    }
+
+    driver = webdriver.Chrome(
+        executable_path=driver_path,
+        options=chrome_options,
+        seleniumwire_options=sw_options,
+    )
+
+    driver.get(f'{httpbin}/html')
+
+    assert f'{httpbin}/html' in [r.url for r in driver.requests]
+
+    driver.quit()
+
+
+def test_upstream_http_proxy(chrome_options, driver_path, httpbin, httpproxy):
+    sw_options = {
+        'proxy': {
+            'https': f'{httpproxy}'
+        }
+    }
+
+    driver = webdriver.Chrome(
+        executable_path=driver_path,
+        options=chrome_options,
+        seleniumwire_options=sw_options,
+    )
+
+    driver.get(f'{httpbin}/html')
+
+    assert 'This passed through a http proxy' in driver.page_source
+
+    driver.quit()
+
+
+def test_upstream_socks_proxy(chrome_options, driver_path, httpbin, socksproxy):
+    sw_options = {
+        'proxy': {
+            'https': f'{socksproxy}'
+        }
+    }
+
+    driver = webdriver.Chrome(
+        executable_path=driver_path,
+        options=chrome_options,
+        seleniumwire_options=sw_options,
+    )
+
+    driver.get(f'{httpbin}/html')
+
+    assert 'This passed through a socks proxy' in driver.page_source
+
+    driver.quit()
+
+
+@pytest.mark.skip('Skipping until no_proxy option has been fixed')
+def test_bypass_upstream_http_proxy(chrome_options, driver_path, httpbin, httpproxy):
+    sw_options = {
+        'proxy': {
+            'https': f'{httpproxy}',
+            'no_proxy': 'localhost'
+        }
+    }
+
+    driver = webdriver.Chrome(
+        executable_path=driver_path,
+        options=chrome_options,
+        seleniumwire_options=sw_options,
+    )
+
+    driver.get(f'{httpbin}/html')
+
+    assert 'This passed through a http proxy' not in driver.page_source
+
+    driver.quit()
