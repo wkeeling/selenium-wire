@@ -4,26 +4,23 @@
 
 from mitmproxy import ctx, http
 
-COMMENT = 'This passed through a {} proxy'  # mode subsituted via injectmode option
 
-
-class AddMessage:
+class InjectMessage:
 
     def load(self, loader):
         loader.add_option(
-            name='injectmode',
+            name='message',
             typespec=str,
             default='http',
-            help="Specify the mode of operation - either 'http' or 'socks'.",
+            help="Specify the message to inject.",
         )
 
     def response(self, flow: http.HTTPFlow) -> None:
-        comment = COMMENT.format(ctx.options.injectmode)
         flow.response.content = flow.response.content.replace(
-            b'</body>', b'<!-- %s --></body>' % comment.encode('utf-8')
+            b'</body>', b'<!-- %s --></body>' % ctx.options.message.encode('utf-8')
         )
 
 
 addons = [
-    AddMessage()
+    InjectMessage()
 ]

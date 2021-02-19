@@ -11,6 +11,12 @@ from tests import utils as testutils
 
 
 class BackendIntegrationTest(TestCase):
+    """This integration test uses a single instance of the backend proxy
+    server for the whole test suite. This makes it quicker, since the server
+    isn't restarted between tests, but it also means that the proxy configuration
+    can't be modified once the server has been started. Consider an end2end
+    test if specific proxy configuration is needed.
+    """
 
     backend = None
     httpbin = None

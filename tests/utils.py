@@ -106,12 +106,23 @@ def get_headless_chromium():
     return str(bin_path)
 
 
-def get_proxy(port=8086, mode='http'):
+def get_proxy(port=8086, mode='http', auth=''):
     """Get a running proxy server instance.
 
     This function will return a Proxy object containing the URL of a running
     proxy server. The URL scheme is based on the supplied mode: 'http'
     (the default) and 'socks' are supported.
+
+    The proxy will modify HTML responses by adding a comment just before the
+    closing </body> tag. The text of the comment will depend on what mode the
+    proxy is running in and whether authentication has been specified, but will
+    be one of:
+
+        This passed through a http proxy
+        This passed through a authenticated http proxy
+        This passed through a socks proxy
+
+    Note: authenticated socks proxy not currently supported by mitmdump.
 
     Clients should call .close() on the returned Proxy object when they are
     finished with it.
@@ -119,7 +130,9 @@ def get_proxy(port=8086, mode='http'):
     Args:
         port: Optional port number the proxy server should listen on.
         mode: Optional mode the proxy server will be started in.
-        Either 'http' (the default) or 'socks'.
+            Either 'http' (the default) or 'socks'.
+        auth: When supplied, proxy authentication will be enabled.
+            The value should be a string in the format: 'username:password'
     Returns: A Proxy object containing the URL of the proxy server.
     """
     assert mode in ('http', 'socks'), "mode must be one of 'http' or 'socks'"
@@ -128,6 +141,13 @@ def get_proxy(port=8086, mode='http'):
         'http': 'regular',
         'socks': 'socks5',
     }
+
+    auth_args = [
+        '--set',
+        f'proxyauth={auth}'
+    ] if auth else []
+
+    message = f"This passed through a {'authenticated ' if auth else ''}{mode} proxy"
 
     proc = subprocess.Popen([
         'mitmdump',
@@ -139,10 +159,11 @@ def get_proxy(port=8086, mode='http'):
         'flow_detail=0',
         '--set',
         'ssl_insecure',
+        *auth_args,
         '-s',
         Path(__file__).parent / f'inject_message.py',
         '--set',
-        f'injectmode={mode}',
+        f'message={message}',
     ],
         bufsize=0,
         stdout=subprocess.PIPE,
@@ -154,11 +175,13 @@ def get_proxy(port=8086, mode='http'):
         # If we're here, wait() has returned meaning no process
         raise RuntimeError(f'Proxy server failed to start: {proc.stderr.read().decode()}')
     except subprocess.TimeoutExpired:
+        if auth:
+            auth = f'{auth}@'
         # Server running
         if mode == 'http':
-            url = f'https://localhost:{port}'
+            url = f'https://{auth}localhost:{port}'
         else:
-            url = f'socks5://localhost:{port}'
+            url = f'socks5://{auth}localhost:{port}'
         print(f'Created new proxy server at {url}')
         return Proxy(url, proc)
 
