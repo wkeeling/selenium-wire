@@ -249,7 +249,7 @@ Request objects have the following attributes.
     A dictionary-like object of request headers. Headers are case-insensitive and duplicates are permitted. Asking for ``request.headers['user-agent']`` will return the value of the ``User-Agent`` header. If you wish to replace a header, make sure you delete the existing header first with ``del request.headers['header-name']``, otherwise you'll create a duplicate.
 
 ``method``
-    The HTTP method type, e.g. ``GET`` or ``POST``.
+    The HTTP method type, e.g. ``GET`` or ``POST`` etc.
 
 ``params``
     A dictionary of request parameters. If a parameter with the same name appears more than once in the request, it's value in the dictionary will be a list.
@@ -289,15 +289,15 @@ Response objects have the following attributes.
      A dictionary-like object of response headers. Headers are case-insensitive and duplicates are permitted. Asking for ``response.headers['content-length']`` will return the value of the ``Content-Length`` header. If you wish to replace a header, make sure you delete the existing header first with ``del response.headers['header-name']``, otherwise you'll create a duplicate.
 
 ``reason``
-    The reason phrase, e.g. ``OK`` or ``Not Found``.
+    The reason phrase, e.g. ``OK`` or ``Not Found`` etc.
 
 ``status_code``
-    The status code of the response, e.g. ``200`` or ``404``.
+    The status code of the response, e.g. ``200`` or ``404`` etc.
 
 Intercepting Requests and Responses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Selenium Wire allows you to modify requests and responses on the fly using interceptors. An interceptor is a function that gets invoked with the requests and responses as they pass through Selenium Wire. Within an interceptor you can modify the request and response as you see fit.
+Selenium Wire allows you to modify requests and responses on the fly using interceptors. An interceptor is a function that gets invoked with requests and responses as they pass through Selenium Wire. Within an interceptor you can modify the request and response as you see fit.
 
 You set your interceptor functions using the ``driver.request_interceptor`` and ``driver.response_interceptor`` attributes before you start using the driver. A request interceptor should accept a single argument for the request. A response interceptor should accept two arguments, one for the originating request and one for the response.
 
@@ -310,6 +310,7 @@ Example: Add a request header
         request.headers['New-Header'] = 'Some Value'
 
     driver.request_interceptor = interceptor
+    driver.get(...)
 
     # All requests will now contain New-Header
 
@@ -327,6 +328,7 @@ Duplicate header names are permitted in an HTTP request, so before setting the r
         request.headers['Referer'] = 'some_referer'  # Spoof the referer
 
     driver.request_interceptor = interceptor
+    driver.get(...)
 
     # All requests will now use 'some_referer' for the referer
 
@@ -340,6 +342,7 @@ Example: Add a response header
             response.headers['New-Header'] = 'Some Value'
 
     driver.response_interceptor = interceptor
+    driver.get(...)
 
     # Responses from https://server.com/some/path will now contain New-Header
 
@@ -356,6 +359,7 @@ Request parameters work differently to headers in that they are calculated when 
         request.params = params
 
     driver.request_interceptor = interceptor
+    driver.get(...)
 
     # foo=bar will be added to all requests
 
@@ -381,6 +385,7 @@ Example: Update JSON in a POST request body
             request.headers['Content-Length'] = str(len(request.body))
 
     driver.request_interceptor = interceptor
+    driver.get(...)
 
 Example: Block a request
 ------------------------
@@ -395,6 +400,7 @@ You can use ``request.abort()`` to block a request and send an immediate respons
             request.abort()
 
     driver.request_interceptor = interceptor
+    driver.get(...)
 
     # Requests for PNG, JPEG and GIF images will result in a 403 Forbidden
 
@@ -414,6 +420,7 @@ You can use ``request.create_response()`` to send a custom reply back to the cli
             )
 
     driver.request_interceptor = interceptor
+    driver.get(...)
 
     # Requests to https://server.com/some/path will have their responses mocked
 
@@ -488,14 +495,12 @@ Selenium Wire works by redirecting browser traffic through an internal proxy ser
 
 .. _`request interceptor`: #intercepting-requests-and-responses
 
-If you find you're still not getting the performance you want after limiting request capture, you might try switching to the `mitmproxy backend`_.
-
-.. _`mitmproxy backend`: #backends
-
 Proxies
 ~~~~~~~
 
-If the site you are accessing sits behind a proxy server you can tell Selenium Wire about that proxy server in the options you pass to the webdriver instance. The configuration takes the following format:
+If the site you are accessing sits behind a proxy server you can tell Selenium Wire about that proxy server in the options you pass to the webdriver.
+
+The configuration takes the following format:
 
 .. code:: python
 
