@@ -11,6 +11,7 @@ import pytest
 from selenium.common.exceptions import TimeoutException
 
 from seleniumwire import webdriver
+from seleniumwire.thirdparty.mitmproxy.exceptions import ServerException
 from tests import utils as testutils
 
 
@@ -483,8 +484,7 @@ def test_address_in_use(driver_path, chrome_options, httpbin):
 
     driver = create_driver(driver_path, chrome_options, sw_options)
 
-    with pytest.raises(OSError) as e:
+    with pytest.raises(ServerException, match='Address already in use'):
         create_driver(driver_path, chrome_options, sw_options)
-        assert e.errno == 98  # Address already in use
 
     driver.quit()
