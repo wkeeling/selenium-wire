@@ -75,6 +75,11 @@ def teardown_function():
     except FileNotFoundError:
         pass
 
+    try:
+        (Path(__file__).parent / Path('html.html')).unlink()
+    except FileNotFoundError:
+        pass
+
     shutil.rmtree(
         Path(__file__).parent / Path('linux', 'locales'), ignore_errors=True
     )
