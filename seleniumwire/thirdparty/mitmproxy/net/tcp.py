@@ -565,10 +565,12 @@ class TCPServer:
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
             self.socket.setsockopt(IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
             self.socket.bind(self.address)
-        except socket.error:
+        except socket.error as e:
             if self.socket:
                 self.socket.close()
             self.socket = None
+            if e.errno == 98:  # Address already in use
+                raise e
 
         if not self.socket:
             try:
@@ -577,10 +579,12 @@ class TCPServer:
                 self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
                 self.socket.bind(self.address)
-            except socket.error:
+            except socket.error as e:
                 if self.socket:
                     self.socket.close()
                 self.socket = None
+                if e.errno == 98:  # Address already in use
+                    raise e
 
         if not self.socket:
             # Binding to an IPv4 only socket failed, lets fall back to IPv6 only.
