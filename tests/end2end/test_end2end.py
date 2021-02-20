@@ -489,7 +489,7 @@ def test_address_in_use(driver_path, chrome_options, httpbin):
 
     driver = create_driver(driver_path, chrome_options, sw_options)
 
-    with pytest.raises(ServerException, match='Address already in use'):
+    with pytest.raises(ServerException, match='.*Address already in use.*'):
         create_driver(driver_path, chrome_options, sw_options)
 
     driver.quit()
