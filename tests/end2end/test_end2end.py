@@ -1,9 +1,11 @@
 """End to end tests for Selenium Wire."""
 
 import json
+import os
 import shutil
 import threading
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from selenium.common.exceptions import TimeoutException
@@ -165,6 +167,20 @@ def test_add_duplicate_request_header(driver, httpbin):
     data = json.loads(driver.last_request.response.body.decode('utf-8'))
 
     assert data['headers']['Referer'] == 'some_referer,another_referer'
+
+
+def test_add_response_header(driver, httpbin):
+    def interceptor(req, res):
+        # Causes the browser to trigger a download rather
+        # than render the page.
+        res.headers['Content-Disposition'] = 'attachment'
+
+    driver.response_interceptor = interceptor
+    driver.get(f'{httpbin}/html')
+
+    # We don't expect to find this text in the page because
+    # the HTML wasn't rendered.
+    assert 'Herman Melville' not in driver.page_source
 
 
 def test_add_request_parameter(driver, httpbin):
@@ -350,6 +366,16 @@ def test_bypass_upstream_http_proxy(driver_path, chrome_options, httpbin, httppr
     driver.quit()
 
 
+def test_upstream_http_proxy_env_var(driver_path, chrome_options, httpbin, httpproxy):
+    with patch.dict(os.environ, {'HTTPS_PROXY': f'{httpproxy}'}):
+        driver = create_driver(driver_path, chrome_options)
+        driver.get(f'{httpbin}/html')
+
+        assert 'This passed through a http proxy' in driver.page_source
+
+        driver.quit()
+
+
 def test_no_auto_config(driver_path, chrome_options, httpbin):
     sw_options = {
         'auto_config': False
@@ -410,7 +436,7 @@ def test_exclude_hosts(driver_path, chrome_options, httpbin):
     driver.quit()
 
 
-@pytest.mark.skip("Fails on GitHub Actions - chromedriver instances timeout")
+@pytest.mark.skip("Fails on GitHub Actions - chromedriver threads timeout")
 def test_multiple_threads(driver_path, chrome_options, httpbin):
     num_threads = 5
     threads, results = [], []
@@ -434,3 +460,31 @@ def test_multiple_threads(driver_path, chrome_options, httpbin):
         t.join(timeout=10)
 
     assert len(results) == num_threads
+
+
+def test_ignore_http_methods(driver_path, chrome_options, httpbin):
+    sw_options = {
+        'ignore_http_methods': ['GET']
+    }
+
+    driver = create_driver(driver_path, chrome_options, sw_options)
+    driver.get(f'{httpbin}/html')
+
+    assert not driver.requests
+
+    driver.quit()
+
+
+def test_address_in_use(driver_path, chrome_options, httpbin):
+    sw_options = {
+        'addr': '127.0.0.1',
+        'port': 8089,
+    }
+
+    driver = create_driver(driver_path, chrome_options, sw_options)
+
+    with pytest.raises(OSError) as e:
+        create_driver(driver_path, chrome_options, sw_options)
+        assert e.errno == 98  # Address already in use
+
+    driver.quit()
