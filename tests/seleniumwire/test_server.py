@@ -1,3 +1,4 @@
+import functools
 from unittest import TestCase
 from unittest.mock import call, patch
 
@@ -5,6 +6,14 @@ from seleniumwire.server import MitmProxy
 
 
 class MitmProxyTest(TestCase):
+
+    base_options_update = functools.partial(
+        call,
+        ssl_insecure=True,
+        upstream_cert=False,
+        stream_websockets=True,
+        suppress_connection_errors=True,
+    )
 
     def test_creates_storage(self):
         proxy = MitmProxy('somehost', 12345, {
@@ -55,12 +64,7 @@ class MitmProxyTest(TestCase):
         })
 
         self.mock_options.return_value.update.assert_has_calls([
-            call(
-                ssl_insecure=True,
-                upstream_cert=False,
-                stream_websockets=True,
-                suppress_connection_errors=True,
-            ),
+            self.base_options_update(),
             call(
                 test='foobar'
             )
@@ -74,12 +78,7 @@ class MitmProxyTest(TestCase):
         })
 
         self.mock_options.return_value.update.assert_has_calls([
-            call(
-                ssl_insecure=True,
-                upstream_cert=False,
-                stream_websockets=True,
-                suppress_connection_errors=True,
-            ),
+            self.base_options_update(),
             call(
                 test='foobar',
                 confdir='/tmp/dir'
@@ -97,11 +96,7 @@ class MitmProxyTest(TestCase):
         })
 
         self.mock_options.return_value.update.assert_has_calls([
-            call(
-                ssl_insecure=True,
-                upstream_cert=False,
-                stream_websockets=True,
-                suppress_connection_errors=True,
+            self.base_options_update(
                 mode='upstream:https://proxyserver:8080'
             ),
             call()
@@ -116,11 +111,7 @@ class MitmProxyTest(TestCase):
         })
 
         self.mock_options.return_value.update.assert_has_calls([
-            call(
-                ssl_insecure=True,
-                upstream_cert=False,
-                stream_websockets=True,
-                suppress_connection_errors=True,
+            self.base_options_update(
                 mode='upstream:http://proxyserver:8080'
             ),
             call()
@@ -135,11 +126,7 @@ class MitmProxyTest(TestCase):
         })
 
         self.mock_options.return_value.update.assert_has_calls([
-            call(
-                ssl_insecure=True,
-                upstream_cert=False,
-                stream_websockets=True,
-                suppress_connection_errors=True,
+            self.base_options_update(
                 mode='upstream:https://proxyserver:8080',
                 upstream_auth='user:pass'
             ),
@@ -155,11 +142,7 @@ class MitmProxyTest(TestCase):
         })
 
         self.mock_options.return_value.update.assert_has_calls([
-            call(
-                ssl_insecure=True,
-                upstream_cert=False,
-                stream_websockets=True,
-                suppress_connection_errors=True,
+            self.base_options_update(
                 mode='upstream:https://proxyserver:8080',
                 upstream_auth='user:'
             ),
@@ -176,11 +159,7 @@ class MitmProxyTest(TestCase):
         })
 
         self.mock_options.return_value.update.assert_has_calls([
-            call(
-                ssl_insecure=True,
-                upstream_cert=False,
-                stream_websockets=True,
-                suppress_connection_errors=True,
+            self.base_options_update(
                 mode='upstream:https://proxyserver:8080',
                 upstream_custom_auth='Bearer 12345'
             ),
