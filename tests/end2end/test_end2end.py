@@ -314,6 +314,28 @@ def test_upstream_http_proxy_basic_auth(driver_path, chrome_options, httpbin):
             httpproxy.close()
 
 
+def test_upstream_http_proxy_basic_auth_empty_pass(driver_path, chrome_options, httpbin):
+    httpproxy = None
+
+    try:
+        httpproxy = testutils.get_proxy(mode='http', port=8088, auth='test:')
+        sw_options = {
+            'proxy': {
+                'https': f'{httpproxy}'
+            }
+        }
+
+        driver = create_driver(driver_path, chrome_options, sw_options)
+        driver.get(f'{httpbin}/html')
+
+        assert 'This passed through a authenticated http proxy' in driver.page_source
+
+        driver.quit()
+    finally:
+        if httpproxy:
+            httpproxy.close()
+
+
 def test_upstream_http_proxy_custom_auth(driver_path, chrome_options, httpbin):
     httpproxy = None
 

@@ -146,6 +146,26 @@ class MitmProxyTest(TestCase):
             call()
         ])
 
+    def test_upstream_proxy_auth_empty_pass(self):
+        MitmProxy('somehost', 12345, {
+            'request_storage_base_dir': '/some/dir',
+            'proxy': {
+                'https': 'https://user:@proxyserver:8080',
+            }
+        })
+
+        self.mock_options.return_value.update.assert_has_calls([
+            call(
+                ssl_insecure=True,
+                upstream_cert=False,
+                stream_websockets=True,
+                suppress_connection_errors=True,
+                mode='upstream:https://proxyserver:8080',
+                upstream_auth='user:'
+            ),
+            call()
+        ])
+
     def test_upstream_proxy_custom_auth(self):
         MitmProxy('somehost', 12345, {
             'request_storage_base_dir': '/some/dir',
