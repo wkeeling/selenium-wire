@@ -9,7 +9,7 @@ Selenium Wire extends Selenium's Python bindings to give you access to the under
 .. image:: https://codecov.io/gh/wkeeling/selenium-wire/branch/master/graph/badge.svg
         :target: https://codecov.io/gh/wkeeling/selenium-wire
 
-.. image:: https://img.shields.io/badge/python-3.6%2C%203.7%2C%203.8-blue.svg
+.. image:: https://img.shields.io/badge/python-3.6%2C%203.7%2C%203.8%2C%203.9-blue.svg
         :target: https://pypi.python.org/pypi/selenium-wire
 
 .. image:: https://img.shields.io/pypi/v/selenium-wire.svg
@@ -480,7 +480,7 @@ Selenium Wire works by redirecting browser traffic through an internal proxy ser
         driver = webdriver.Firefox(seleniumwire_options=options)
 
 ``request.abort()``
-    You can abort a request early by using ``request.abort()`` from within a `request interceptor`_. This will send an immediate response back to the client without the request travelling any further. You can use this mechanism to block certain types of requests (e.g. images) to improve page load performance. Aborted requests are not captured.
+    You can abort a request early by using ``request.abort()`` from within a `request interceptor`_. This will send an immediate response back to the client without the request travelling any further. You can use this mechanism to block certain types of requests (e.g. images) to improve page load performance.
 
     .. code:: python
 
@@ -507,7 +507,7 @@ The configuration takes the following format:
     options = {
         'proxy': {
             'http': 'http://192.168.10.100:8888',
-            'https': 'https://192.168.10.100:8889',
+            'https': 'https://192.168.10.100:8888',
             'no_proxy': 'localhost,127.0.0.1'
         }
     }
@@ -519,17 +519,17 @@ To use HTTP Basic Auth with your proxy, specify the username and password in the
 
     options = {
         'proxy': {
-            'https': 'https://user:pass@192.168.10.100:8889',
+            'https': 'https://user:pass@192.168.10.100:8888',
         }
     }
 
-For proxy authentication different to Basic, you can supply the full value for the ``Proxy-Authorization`` header using the ``custom_authorization`` option. For example, if your proxy used the Bearer scheme:
+For authentication other than Basic, you can supply the full value for the ``Proxy-Authorization`` header using the ``custom_authorization`` option. For example, if your proxy used the Bearer scheme:
 
 .. code:: python
 
     options = {
         'proxy': {
-            'https': 'https://192.168.10.100:8889',  # No username or password used
+            'https': 'https://192.168.10.100:8888',  # No username or password used
             'custom_authorization': 'Bearer mytoken123'  # Custom Proxy-Authorization header value
         }
     }
@@ -543,7 +543,7 @@ The proxy configuration can also be loaded through environment variables called 
 .. code:: bash
 
     $ export HTTP_PROXY="http://192.168.10.100:8888"
-    $ export HTTPS_PROXY="https://192.168.10.100:8889"
+    $ export HTTPS_PROXY="https://192.168.10.100:8888"
     $ export NO_PROXY="localhost,127.0.0.1"
 
 SOCKS
@@ -556,7 +556,7 @@ Using a SOCKS proxy is the same as using an HTTP based one:
     options = {
         'proxy': {
             'http': 'socks5://user:pass@192.168.10.100:8888',
-            'https': 'socks5://user:pass@192.168.10.100:8889',
+            'https': 'socks5://user:pass@192.168.10.100:8888',
             'no_proxy': 'localhost,127.0.0.1'
         }
     }

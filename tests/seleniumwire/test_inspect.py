@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import Mock, call
+from unittest.mock import Mock
 
 from seleniumwire.inspect import InspectRequestsMixin, TimeoutException
 
@@ -62,7 +62,8 @@ class InspectRequestsMixinTest(TestCase):
         with self.assertRaises(TimeoutException):
             self.driver.wait_for_request('/some/path', timeout=1)
 
-        self.mock_proxy.storage.find.assert_has_calls([call('/some/path')] * 5)
+        self.assertTrue(self.mock_proxy.storage.find.call_count > 0)
+        self.assertTrue(self.mock_proxy.storage.find.call_count <= 5)
 
     def test_set_header_overrides(self):
         header_overrides = {

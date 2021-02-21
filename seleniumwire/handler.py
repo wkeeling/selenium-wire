@@ -44,12 +44,11 @@ class MitmProxyRequestHandler:
                     content=request.response.body,
                     headers=[(k.encode('utf-8'), v.encode('utf-8')) for k, v in request.response.headers.items()]
                 )
-                return
-
-            flow.request.method = request.method
-            flow.request.url = request.url
-            flow.request.headers = self._to_headers_obj(request.headers)
-            flow.request.raw_content = request.body
+            else:
+                flow.request.method = request.method
+                flow.request.url = request.url
+                flow.request.headers = self._to_headers_obj(request.headers)
+                flow.request.raw_content = request.body
 
         log.info('Capturing request: %s', request.url)
 
@@ -57,6 +56,10 @@ class MitmProxyRequestHandler:
 
         if request.id is not None:  # Will not be None when captured
             flow.request.id = request.id
+
+        if request.response:
+            # This response will be a mocked response. Capture it for completeness.
+            self.proxy.storage.save_response(request.id, request.response)
 
         # Could possibly use mitmproxy's 'anticomp' option instead of this
         if self.proxy.options.get('disable_encoding') is True:

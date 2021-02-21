@@ -4,26 +4,51 @@ on:
   push:
     branches:
       - master
-      - gh_actions
+      - end2end_tests
 
 jobs:
-  tox:
+  flake8:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.6, 3.7, 3.8]
     steps:
     - uses: actions/checkout@v1
+    - uses: actions/setup-python@v2
+    - run: python -m pip install --upgrade pip
+    - run: pip install tox
+    - run: tox -e flake8
 
-    - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
+  unit_tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            py: 3.9
+          - os: macos-latest
+            py: 3.9
+          - os: ubuntu-latest
+            py: 3.9
+          - os: ubuntu-latest
+            py: 3.8
+          - os: ubuntu-latest
+            py: 3.7
+          - os: ubuntu-latest
+            py: 3.6
+    runs-on: ${{ matrix.os }}
+    steps:
+      - run: printenv
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.py }}
+      - run: pip install tox
+      - run: tox -e py
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install tox tox-gh-actions
-
-    - name: Run tox
-      run: tox
+  end2end_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - run: pip install tox
+      - run: tox -e e2e

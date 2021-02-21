@@ -1,6 +1,6 @@
 import inspect
 import time
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from selenium.common.exceptions import TimeoutException
 
@@ -40,7 +40,7 @@ class InspectRequestsMixin:
         """
         return self.proxy.storage.load_last_request()
 
-    def wait_for_request(self, path: str, timeout: int = 10) -> Request:
+    def wait_for_request(self, path: str, timeout: Union[int, float] = 10) -> Request:
         """Wait up to the timeout period for a request with the specified
         path to be seen.
 
@@ -68,7 +68,7 @@ class InspectRequestsMixin:
             request = self.proxy.storage.find(path)
 
             if request is None:
-                time.sleep(0.2)
+                time.sleep(1 / 5)
             else:
                 return request
 
