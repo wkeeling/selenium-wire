@@ -452,14 +452,17 @@ def test_no_auto_config_manual_proxy(driver_path, chrome_options, httpbin):
 
 
 def test_exclude_hosts(driver_path, chrome_options, httpbin):
+    httpbin2 = testutils.get_httpbin(port=8090)
     sw_options = {
-        'exclude_hosts': ['localhost']
+        'exclude_hosts': ['<-loopback>', 'localhost:8085']
     }
 
     driver = create_driver(driver_path, chrome_options, sw_options)
     driver.get(f'{httpbin}/html')
+    driver.get(f'{httpbin2}/html')
 
-    assert not driver.requests
+    assert len(driver.requests) == 1
+    assert driver.requests[0].url == f'{httpbin2}/html'
 
     driver.quit()
 

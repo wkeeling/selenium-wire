@@ -282,7 +282,7 @@ class MitmProxy:
 
             args['mode'] = 'upstream:{}://{}'.format(scheme, hostport)
 
-            if username and password:
+            if username:
                 args['upstream_auth'] = '{}:{}'.format(username, password)
 
         return args
