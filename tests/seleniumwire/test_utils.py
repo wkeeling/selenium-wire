@@ -85,6 +85,21 @@ class GetUpstreamProxyTest(TestCase):
 
             self.assertEqual('localhost', proxy['no_proxy'])
 
+    def test_empty_password(self):
+        options = {
+            'proxy': {
+                'https': 'https://username:@server:8888',
+            }
+        }
+
+        proxy = get_upstream_proxy(options)
+
+        https = proxy['https']
+        self.assertEqual('https', https.scheme)
+        self.assertEqual('username', https.username)
+        self.assertEqual('', https.password)
+        self.assertEqual('server:8888', https.hostport)
+
     def test_none(self):
         options = None
 
