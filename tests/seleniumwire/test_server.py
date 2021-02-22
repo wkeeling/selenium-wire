@@ -241,7 +241,7 @@ class MitmProxyTest(TestCase):
         self.mock_addons = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = patch('seleniumwire.server.MitmProxyRequestHandler')
+        patcher = patch('seleniumwire.server.InterceptRequestHandler')
         self.mock_handler = patcher.start()
         self.addCleanup(patcher.stop)
 

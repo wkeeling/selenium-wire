@@ -1,7 +1,8 @@
 import logging
 import re
+from datetime import datetime
 
-from seleniumwire.request import Request, Response
+from seleniumwire.request import Request, Response, WebSocketMessage
 from seleniumwire.thirdparty.mitmproxy.http import HTTPResponse
 from seleniumwire.thirdparty.mitmproxy.net import websockets
 from seleniumwire.thirdparty.mitmproxy.net.http.headers import Headers
@@ -10,8 +11,10 @@ from seleniumwire.utils import is_list_alike
 log = logging.getLogger(__name__)
 
 
-class MitmProxyRequestHandler:
-    """Mitmproxy add-on which provides request modification and capture."""
+class InterceptRequestHandler:
+    """Mitmproxy add-on which is responsible for request modification
+    and capture.
+    """
 
     def __init__(self, proxy):
         self.proxy = proxy
@@ -137,3 +140,21 @@ class MitmProxyRequestHandler:
 
     def _to_headers_obj(self, headers):
         return Headers([(k.encode('utf-8'), v.encode('utf-8')) for k, v in headers.items()])
+
+    def websocket_message(self, flow):
+        if hasattr(flow.handshake_flow.request, 'id'):
+            message = flow.messages[-1]
+            ws_message = WebSocketMessage(
+                from_client=message.from_client,
+                content=message.content,
+                date=datetime.fromtimestamp(message.timestamp),
+            )
+
+            self.proxy.storage.save_ws_message(flow.handshake_flow.request.id, ws_message)
+
+            if message.from_client:
+                direction = '(client -> server)'
+            else:
+                direction = '(server -> client)'
+
+            log.debug('Capturing websocket message %s: %s', direction, ws_message)

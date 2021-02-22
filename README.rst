@@ -25,8 +25,8 @@ Simple Example
 
     from seleniumwire import webdriver  # Import from seleniumwire
 
-    # Create a new instance of the Firefox driver
-    driver = webdriver.Firefox()
+    # Create a new instance of the Chrome driver
+    driver = webdriver.Chrome()
 
     # Go to the Google home page
     driver.get('https://www.google.com')
@@ -58,7 +58,8 @@ Features
 * Pure Python, user-friendly API
 * HTTP and HTTPS requests captured
 * Intercept requests and responses
-* Modify requests on the fly
+* Modify headers, parameters, body content on the fly
+* Capture websocket messages
 * Proxy server support
 
 Compatibilty
@@ -203,8 +204,8 @@ Selenium Wire captures all HTTP/HTTPS traffic made by the browser :superscript:`
 ``driver.last_request``
     Convenience attribute for retrieving the most recently captured request. This is more efficient than using ``driver.requests[-1]``.
 
-``driver.wait_for_request(path, timeout=10)``
-    This method will wait for a previous request with a specific URL to complete before continuing. The ``path`` attribute can be a regex that will be matched within the request URL. Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action - and it will return the first request it finds. Also note that since ``path`` can be a regex, you must escape special characters such as question marks with a slash. A ``TimeoutException`` is raised if no match is found within the timeout period.
+``driver.wait_for_request(pat, timeout=10)``
+    This method will wait until it sees a request matching a pattern. The ``pat`` attribute will be matched within the request URL and the value of ``pat`` can be a regex. Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action - and it will return the first request it finds. Also note that since ``pat`` can be a regex, you must escape special characters such as question marks with a slash. A ``TimeoutException`` is raised if no match is found within the timeout period.
 
     For example, to wait for an AJAX request to return after a button is clicked:
 
@@ -217,7 +218,7 @@ Selenium Wire captures all HTTP/HTTPS traffic made by the browser :superscript:`
         request = driver.wait_for_request('/api/products/12345/$')
 
 ``driver.request_interceptor``
-    Used to set a request interceptor. See `Intercepting Requests and Responses`_.
+    Used to set a request interceptor.
 
 ``driver.response_interceptor``
     Used to set a response interceptor. See `Intercepting Requests and Responses`_.
@@ -243,7 +244,7 @@ Request objects have the following attributes.
     The request body as ``bytes``. If the request has no body the value of ``body`` will be empty, i.e. ``b''``.
 
 ``date``
-    The date/time the request was made.
+    The datetime the request was made.
 
 ``headers``
     A dictionary-like object of request headers. Headers are case-insensitive and duplicates are permitted. Asking for ``request.headers['user-agent']`` will return the value of the ``User-Agent`` header. If you wish to replace a header, make sure you delete the existing header first with ``del request.headers['header-name']``, otherwise you'll create a duplicate.
@@ -266,6 +267,9 @@ Request objects have the following attributes.
 ``url``
     The request URL, e.g. ``https://server/some/path/index.html?foo=bar&spam=eggs``
 
+``ws_messages``
+    Where the request is a websocket handshake request (normally with a URL starting ``wss://``), then this attribute will contain a list of any websocket messages sent and received. See `WebSocketMessage Objects`_.
+
 Request objects have the following methods.
 
 ``abort(error_code=403)``
@@ -273,6 +277,20 @@ Request objects have the following methods.
 
 ``create_response(status_code, headers=(), body=b'')``
     Create a response and return it without sending any data to the remote server. For use within request interceptors. See `Example: Mock a response`_.
+
+WebSocketMessage Objects
+------------------------
+
+Represent websocket messages sent between the browser and server and vice versa. They are held in a list by ``request.ws_messages`` on websocket handshake requests. They have the following attributes.
+
+``content``
+    The message content which may be either ``str`` or ``bytes``.
+
+``date``
+    The datetime of the message.
+
+``from_client``
+    ``True`` when the message was sent by the client and ``False`` when sent by the server.
 
 Response Objects
 ~~~~~~~~~~~~~~~~
@@ -283,7 +301,7 @@ Response objects have the following attributes.
     The response body as ``bytes``. If the response has no body the value of ``body`` will be empty, i.e. ``b''``.
 
 ``date``
-    The date/time the response was received.
+    The datetime the response was received.
 
 ``headers``
      A dictionary-like object of response headers. Headers are case-insensitive and duplicates are permitted. Asking for ``response.headers['content-length']`` will return the value of the ``Content-Length`` header. If you wish to replace a header, make sure you delete the existing header first with ``del response.headers['header-name']``, otherwise you'll create a duplicate.
@@ -293,6 +311,7 @@ Response objects have the following attributes.
 
 ``status_code``
     The status code of the response, e.g. ``200`` or ``404`` etc.
+
 
 Intercepting Requests and Responses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -465,7 +484,7 @@ Selenium Wire works by redirecting browser traffic through an internal proxy ser
         options = {
             'ignore_http_methods': ['HEAD', 'OPTIONS']  # Ignore all HEAD and OPTIONS requests
         }
-        driver = webdriver.Firefox(seleniumwire_options=options)
+        driver = webdriver.Chrome(seleniumwire_options=options)
 
     Note that even if a request is ignored and not captured, it will still travel through Selenium Wire.
 
@@ -477,7 +496,7 @@ Selenium Wire works by redirecting browser traffic through an internal proxy ser
         options = {
             'exclude_hosts': ['host1.com', 'host2.com']  # Bypass Selenium Wire for these hosts
         }
-        driver = webdriver.Firefox(seleniumwire_options=options)
+        driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``request.abort()``
     You can abort a request early by using ``request.abort()`` from within a `request interceptor`_. This will send an immediate response back to the client without the request travelling any further. You can use this mechanism to block certain types of requests (e.g. images) to improve page load performance.
@@ -511,7 +530,7 @@ The configuration takes the following format:
             'no_proxy': 'localhost,127.0.0.1'
         }
     }
-    driver = webdriver.Firefox(seleniumwire_options=options)
+    driver = webdriver.Chrome(seleniumwire_options=options)
 
 To use HTTP Basic Auth with your proxy, specify the username and password in the URL:
 
@@ -560,7 +579,7 @@ Using a SOCKS proxy is the same as using an HTTP based one:
             'no_proxy': 'localhost,127.0.0.1'
         }
     }
-    driver = webdriver.Firefox(seleniumwire_options=options)
+    driver = webdriver.Chrome(seleniumwire_options=options)
 
 You can leave out the ``user`` and ``pass`` if your proxy doesn't require authentication.
 
@@ -596,7 +615,7 @@ Once installed, set the ``backend`` option in Selenium Wire's options to ``mitmp
     options = {
         'backend': 'mitmproxy'
     }
-    driver = webdriver.Firefox(seleniumwire_options=options)
+    driver = webdriver.Chrome(seleniumwire_options=options)
 
 You can pass `mitmproxy specific options`_ to the mitmproxy backend by prefixing them with **mitm_**. For example, to change the location of the mitmproxy configuration directory which lives in your home folder by default:
 
@@ -608,7 +627,7 @@ You can pass `mitmproxy specific options`_ to the mitmproxy backend by prefixing
         'backend': 'mitmproxy',
         'mitm_confdir': '/tmp/.mitmproxy'  # Switch the location to /tmp
     }
-    driver = webdriver.Firefox(seleniumwire_options=options)
+    driver = webdriver.Chrome(seleniumwire_options=options)
 
 Mitmproxy includes options that can help with performance such as ``mitm_stream_large_bodies``. Setting this to a low value (e.g. '1k') has been shown to improve performance, in conjunction with the use of ``driver.scopes``.
 
@@ -640,7 +659,7 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     options = {
         'addr': '192.168.0.10'  # Use the public IP of the machine
     }
-    driver = webdriver.Firefox(seleniumwire_options=options)
+    driver = webdriver.Chrome(seleniumwire_options=options)
 
 .. _`remote webdriver`: #creating-the-webdriver
 
@@ -655,7 +674,7 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     options = {
         'backend': 'mitmproxy'  # Use the mitmproxy backend (see limitations above)
     }
-    driver = webdriver.Firefox(seleniumwire_options=options)
+    driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``exclude_hosts``
     A list of addresses for which Selenium Wire should be bypassed entirely. Note that if you have configured an upstream proxy then requests to excluded hosts will also bypass that proxy.
@@ -665,7 +684,7 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     options = {
         'exclude_hosts': ['google-analytics.com']  # Bypass these hosts
     }
-    driver = webdriver.Firefox(seleniumwire_options=options)
+    driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``disable_encoding``
     Whether to disable content encoding. When set to ``True``, the ``Accept-Encoding`` header will be set to ``identity`` for all requests. This tells the server to not compress/modify the response. The default is ``False``.
@@ -675,7 +694,7 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     options = {
         'disable_encoding': True  # Tell the server not to compress the response
     }
-    driver = webdriver.Firefox(seleniumwire_options=options)
+    driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``ignore_http_methods``
     A list of HTTP methods (specified as uppercase strings) that should be ignored by Selenium Wire and not captured. The default is ``['OPTIONS']`` which ignores all OPTIONS requests. To capture all request methods, set ``ignore_http_methods`` to an empty list:
@@ -685,7 +704,7 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     options = {
         'ignore_http_methods': []  # Capture all requests, including OPTIONS requests
     }
-    driver = webdriver.Firefox(seleniumwire_options=options)
+    driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``port``
     The port number that Selenium Wire's backend listens on. You don't normally need to specify a port as a random port number is chosen automatically.
@@ -695,7 +714,7 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     options = {
         'port': 9999  # Tell the backend to listen on port 9999 (not normally necessary to set this)
     }
-    driver = webdriver.Firefox(seleniumwire_options=options)
+    driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``proxy``
     The upstream proxy server configuration (if you're using a proxy).
@@ -709,7 +728,7 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
             'no_proxy': 'localhost,127.0.0.1'
         }
     }
-    driver = webdriver.Firefox(seleniumwire_options=options)
+    driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``request_storage_base_dir``
     Captured requests and responses are stored in the current user's home folder by default. You might want to change this if you're running in an environment where you don't have access to the user's home folder.
@@ -719,7 +738,7 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     options = {
         'request_storage_base_dir': '/tmp'  # Use /tmp to store captured data
     }
-    driver = webdriver.Firefox(seleniumwire_options=options)
+    driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``suppress_connection_errors``
     Whether to suppress connection related tracebacks. The default is ``True`` so that harmless errors that commonly occur at browser shutdown do not alarm users. When suppressed, the connection error message is logged at DEBUG level without a traceback. Set to ``False`` to allow exception propagation and see full tracebacks.
@@ -730,7 +749,7 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     options = {
         'suppress_connection_errors': False  # Show full tracebacks for any connection errors
     }
-    driver = webdriver.Firefox(seleniumwire_options=options)
+    driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``verify_ssl``
     Whether SSL certificates should be verified. The default is ``False`` which prevents errors with self-signed certificates.
@@ -740,7 +759,7 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     options = {
         'verify_ssl': True  # Verify SSL certificates but beware of errors with self-signed certificates
     }
-    driver = webdriver.Firefox(seleniumwire_options=options)
+    driver = webdriver.Chrome(seleniumwire_options=options)
 
 License
 ~~~~~~~

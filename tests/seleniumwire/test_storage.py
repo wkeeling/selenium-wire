@@ -8,7 +8,7 @@ from fnmatch import fnmatch
 from io import BytesIO
 from unittest import TestCase
 
-from seleniumwire.request import Request, Response
+from seleniumwire.request import Request, Response, WebSocketMessage
 from seleniumwire.storage import RequestStorage
 
 
@@ -206,6 +206,24 @@ class RequestStorageTest(TestCase):
         last_request = storage.load_last_request()
 
         self.assertIsNone(last_request)
+
+    def test_load_request_with_ws_messages(self):
+        storage = RequestStorage(base_dir=self.base_dir)
+        request_1 = self._create_request()  # Websocket handshake request
+        request_2 = self._create_request()
+        storage.save_request(request_1)
+        storage.save_request(request_2)
+        storage.save_ws_message(request_1.id, WebSocketMessage(
+            from_client=True,
+            content='websocket test message',
+            date=datetime.now(),
+        ))
+
+        requests = storage.load_requests()
+
+        self.assertTrue(len(requests[0].ws_messages) > 0)
+        self.assertEqual('websocket test message', requests[0].ws_messages[0].content)
+        self.assertTrue(len(requests[1].ws_messages) == 0)
 
     def test_clear_requests(self):
         request_1 = self._create_request()

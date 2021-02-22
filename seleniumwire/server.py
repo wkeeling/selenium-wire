@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from seleniumwire.handler import MitmProxyRequestHandler
+from seleniumwire.handler import InterceptRequestHandler
 from seleniumwire.modifier import RequestModifier
 from seleniumwire.storage import RequestStorage
 from seleniumwire.thirdparty.mitmproxy import addons
@@ -52,7 +52,7 @@ class MitmProxy:
         self._master.server = ProxyServer(ProxyConfig(mitmproxy_opts))
         self._master.addons.add(*addons.default_addons())
         self._master.addons.add(SendToLogger())
-        self._master.addons.add(MitmProxyRequestHandler(self))
+        self._master.addons.add(InterceptRequestHandler(self))
 
         # Update the options now all addons have been added
         mitmproxy_opts.update(
