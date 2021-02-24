@@ -69,7 +69,7 @@ class MitmProxy:
     def serve_forever(self):
         """Run the server."""
         asyncio.set_event_loop(self._event_loop)
-        self._master.run()
+        self._master.run_loop(self._event_loop)
 
     def address(self):
         """Get a tuple of the address and port the proxy server

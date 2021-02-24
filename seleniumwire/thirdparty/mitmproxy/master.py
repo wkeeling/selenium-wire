@@ -77,26 +77,22 @@ class Master:
 
         exc = None
         try:
-            loop()
+            loop.run_forever()
         except Exception:  # pragma: no cover
             exc = traceback.format_exc()
         finally:
             if not self.should_exit.is_set():  # pragma: no cover
                 self.shutdown()
-            loop = asyncio.get_event_loop()
-            tasks = asyncio.all_tasks(loop) if sys.version_info >= (3, 7) else asyncio.Task.all_tasks(loop)
-            for p in tasks:
-                p.cancel()
-            loop.close()
+            if not loop.is_closed():
+                tasks = asyncio.all_tasks(loop) if sys.version_info >= (3, 7) else asyncio.Task.all_tasks(loop)
+                for p in tasks:
+                    p.cancel()
+                loop.close()
 
         if exc:  # pragma: no cover
             print(exc, file=sys.stderr)
 
         self.addons.trigger("done")
-
-    def run(self, func=None):
-        loop = asyncio.get_event_loop()
-        self.run_loop(loop.run_forever)
 
     async def _shutdown(self):
         self.should_exit.set()
