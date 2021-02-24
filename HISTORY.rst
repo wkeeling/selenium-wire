@@ -1,6 +1,13 @@
 History
 ~~~~~~~
 
+4.1.0 (2021-02-24)
+------------------
+
+* Implement websocket message capture.
+* Fix bug where closure of event loop externally would trigger exception on shutdown.
+* Fix bug preventing use of an empty password for an upstream proxy.
+
 4.0.5 (2021-02-15)
 ------------------
 
