@@ -1,11 +1,13 @@
+from datetime import datetime
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
-from seleniumwire.handler import MitmProxyRequestHandler
+from seleniumwire.handler import InterceptRequestHandler
+from seleniumwire.request import WebSocketMessage
 from seleniumwire.thirdparty.mitmproxy.net.http.headers import Headers
 
 
-class MitmProxyRequestHandlerTest(TestCase):
+class InterceptRequestHandlerTest(TestCase):
 
     def test_request_modifier_called(self):
         mock_flow = Mock()
@@ -220,6 +222,40 @@ class MitmProxyRequestHandlerTest(TestCase):
         self.assertEqual({'Content-Length': '6', 'a': 'b'}, dict(mock_flow.response.headers))
         self.assertEqual(b'foobarbaz', mock_flow.response.raw_content)
 
+    def test_save_websocket_message(self):
+        mock_handshake_flow = Mock()
+        mock_handshake_flow.request.id = '12345'
+        mock_flow = Mock()
+        mock_flow.handshake_flow = mock_handshake_flow
+        mock_flow.messages = [Mock(
+            from_client=True,
+            content='test message',
+            timestamp=1614069300.0
+        )]
+
+        self.handler.websocket_message(mock_flow)
+
+        self.proxy.storage.save_ws_message.assert_called_once_with('12345', WebSocketMessage(
+            from_client=True,
+            content='test message',
+            date=datetime.fromtimestamp(1614069300.0)
+        ))
+
+    def test_save_websocket_message_no_request(self):
+        """If the handshake request was not saved (has no id) then
+        we don't expect the websocket message to be saved.
+        """
+        mock_handshake_flow = Mock()
+        mock_handshake_flow.request = Mock()
+        mock_flow = Mock()
+        mock_flow.handshake_flow = mock_handshake_flow
+
+        with patch('seleniumwire.handler.hasattr') as mock_hasattr:
+            mock_hasattr.return_value = False
+            self.handler.websocket_message(mock_flow)
+
+        self.assertEqual(0, self.proxy.storage.save_ws_message.call_count)
+
     def setUp(self):
         self.proxy = Mock()
         self.proxy.storage = Mock()
@@ -228,4 +264,4 @@ class MitmProxyRequestHandlerTest(TestCase):
         self.proxy.scopes = []
         self.proxy.request_interceptor = None
         self.proxy.response_interceptor = None
-        self.handler = MitmProxyRequestHandler(self.proxy)
+        self.handler = InterceptRequestHandler(self.proxy)

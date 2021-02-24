@@ -7,6 +7,7 @@ import shutil
 import threading
 import uuid
 import zlib
+from collections import defaultdict
 from datetime import datetime, timedelta
 from io import BytesIO
 
@@ -46,6 +47,11 @@ class RequestStorage:
         # Index of requests received.
         # A list of tuples: [(request id, request path, response received), ...]
         self._index = []
+
+        # Sequences of websocket messages held against the
+        # id of the originating websocket request.
+        self._ws_messages = defaultdict(list)
+
         self._lock = threading.Lock()
 
     def save_request(self, request):
@@ -110,6 +116,17 @@ class RequestStorage:
 
         return None
 
+    def save_ws_message(self, request_id, message):
+        """Save a websocket message against the specified websocket
+        handshake request.
+
+        Args:
+            request_id: The ID of the original handshake request.
+            message: The websocket message.
+        """
+        with self._lock:
+            self._ws_messages[request_id].append(message)
+
     def load_requests(self):
         """Loads all previously saved requests known to the storage (known to its index).
 
@@ -137,6 +154,12 @@ class RequestStorage:
 
         with open(os.path.join(request_dir, 'request'), 'rb') as req:
             request = pickle.load(req)
+
+            ws_messages = self._ws_messages.get(request.id)
+
+            if ws_messages:
+                # Attach any websocket messages for this request if we have them
+                request.ws_messages = ws_messages
 
             try:
                 with open(os.path.join(request_dir, 'response'), 'rb') as res:
@@ -187,31 +210,32 @@ class RequestStorage:
         with self._lock:
             index = self._index[:]
             self._index.clear()
+            self._ws_messages.clear()
 
         for indexed_request in index:
             shutil.rmtree(self._get_request_dir(indexed_request.id), ignore_errors=True)
 
-    def find(self, path, check_response=True):
-        """Find the first request that matches the specified path.
+    def find(self, pat, check_response=True):
+        """Find the first request that matches the specified pattern.
 
         Requests are searched in chronological order.
 
         Args:
-            path: The request path which can be any part of the request URL.
-            check_response: Where a path matches a request, whether to check
+            pat: A pattern that will be searched in the request URL.
+            check_response: When a match is found, whether to check
                 that the request has a corresponding response. Where
                 check_response=True and no response has been received, this
                 method will skip the request and continue searching.
 
         Returns:
-            The first request in the storage that matches the path, or None
-            if no requests match.
+            The first request in the storage that matches the pattern,
+            or None if no requests match.
         """
         with self._lock:
             index = self._index[:]
 
         for indexed_request in index:
-            if re.search(path, indexed_request.url):
+            if re.search(pat, indexed_request.url):
                 if (check_response and indexed_request.has_response) or not check_response:
                     return self._load_request(indexed_request.id)
 

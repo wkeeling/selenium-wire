@@ -40,20 +40,20 @@ class InspectRequestsMixin:
         """
         return self.proxy.storage.load_last_request()
 
-    def wait_for_request(self, path: str, timeout: Union[int, float] = 10) -> Request:
-        """Wait up to the timeout period for a request with the specified
-        path to be seen.
+    def wait_for_request(self, pat: str, timeout: Union[int, float] = 10) -> Request:
+        """Wait up to the timeout period for a request matching the specified
+        pattern to be seen.
 
-        The path attribute can be can be a regex that will be searched in the
-        full request URL. If a request is not seen before the timeout then a
-        TimeoutException is raised. Only requests with corresponding responses
-        are considered.
+        The pat attribute can be can be a simple substring or a regex that will
+        be searched in the full request URL. If a request is not seen before the
+        timeout then a TimeoutException is raised. Only requests with corresponding
+        responses are considered.
 
-        Given that path can be a regex, ensure that any special characters
+        Given that pat can be a regex, ensure that any special characters
         (e.g. question marks) are escaped.
 
         Args:
-            path: The path of the request to look for. A regex can be supplied.
+            pat: The pat of the request to look for. A regex can be supplied.
             timeout: The maximum time to wait in seconds. Default 10s.
 
         Returns:
@@ -65,14 +65,16 @@ class InspectRequestsMixin:
         start = time.time()
 
         while time.time() - start < timeout:
-            request = self.proxy.storage.find(path)
+            request = self.proxy.storage.find(pat)
 
             if request is None:
                 time.sleep(1 / 5)
             else:
                 return request
 
-        raise TimeoutException('Timed out after {}s waiting for request {}'.format(timeout, path))
+        raise TimeoutException(
+            'Timed out after {}s waiting for request matching {}'.format(timeout, pat)
+        )
 
     @property
     def header_overrides(self):

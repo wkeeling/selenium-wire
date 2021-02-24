@@ -7,7 +7,10 @@ from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 
 class HTTPHeaders(HTTPMessage):
-    """Used to hold HTTP headers."""
+    """A dict-like data-structure to hold HTTP headers.
+
+    Note that duplicate key names are permitted.
+    """
 
     def __repr__(self):
         return repr(self.items())
@@ -39,7 +42,8 @@ class Request:
 
         self.body = body
         self.response = None
-        self.date = datetime.now()
+        self.date: datetime = datetime.now()
+        self.ws_messages: List[WebSocketMessage] = []
 
     @property
     def body(self) -> bytes:
@@ -175,7 +179,7 @@ class Response:
             self.headers.add_header(k, v)
 
         self.body = body
-        self.date = datetime.now()
+        self.date: datetime = datetime.now()
 
     @property
     def body(self) -> bytes:
@@ -202,3 +206,39 @@ class Response:
 
     def __str__(self):
         return '{} {}'.format(self.status_code, self.reason)
+
+
+class WebSocketMessage:
+    """Represents a websocket message transmitted between client and server
+    or vice versa.
+    """
+    def __init__(self, *,
+                 from_client: bool,
+                 content: Union[str, bytes],
+                 date: datetime):
+        """Initialise a new websocket message.
+
+        Args:
+            from_client: True if the message was sent by the client.
+            content: The text or binary message data.
+            date: The datetime the message was sent or received.
+        """
+        self.from_client = from_client
+        self.content = content
+        self.date = date
+
+    def __str__(self):
+        if isinstance(self.content, str):
+            return self.content
+        return f'<{len(self.content)} bytes of binary websocket data>'
+
+    def __eq__(self, other):
+        if not isinstance(other, WebSocketMessage):
+            return False
+        elif self is other:
+            return True
+        return (
+            self.from_client == other.from_client
+            and self.content == other.content
+            and self.date == other.date
+        )
