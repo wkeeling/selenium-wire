@@ -213,7 +213,7 @@ class MitmProxyTest(TestCase):
         proxy.serve_forever()
 
         self.mock_asyncio.set_event_loop.assert_called_once_with(proxy._event_loop)
-        self.mock_master.return_value.run.assert_called_once_with()
+        self.mock_master.return_value.run_loop.assert_called_once_with(proxy._event_loop)
 
     def test_address(self):
         self.mock_proxy_server.return_value.address = ('somehost', 12345)
