@@ -132,7 +132,7 @@ No specific configuration should be necessary except to ensure that you have dow
 OpenSSL
 -------
 
-Selenium Wire requires OpenSSL for decrypting HTTPS requests. This is normally already installed on most systems, but if not you can install it with:
+Selenium Wire requires OpenSSL for decrypting HTTPS requests. This is normally already installed on most systems, but if it's not you can install it with:
 
 **Linux**
 
@@ -333,7 +333,7 @@ Example: Add a request header
 
     # All requests will now contain New-Header
 
-How can I check that a header has been set correctly? You can print the headers from captured requests using ``driver.requests`` after the page has loaded, or alternatively point the webdriver at https://httpbin.org/headers which will echo the request headers back to the browser so you can view them.
+How can I check that a header has been set correctly? You can print the headers from captured requests after the page has loaded (using ``driver.requests``), or alternatively point the webdriver at https://httpbin.org/headers which will echo the request headers back to the browser so you can view them.
 
 Example: Replace an existing request header
 -------------------------------------------
