@@ -103,6 +103,8 @@ Table of Contents
 
   * `SOCKS`_
 
+- `Bot Detection`_
+
 - `Backends`_
 
 - `Certificates`_
@@ -123,11 +125,11 @@ Install using pip:
 Browser Setup
 -------------
 
-No specific configuration should be necessary except to ensure that you have downloaded the `Chrome driver`_ and `Gecko driver`_ for Chrome and Firefox to be remotely controlled - the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on your PATH.
+No specific configuration should be necessary except to ensure that you have downloaded the `ChromeDriver`_ and `GeckoDriver`_ for Chrome and Firefox to be remotely controlled - the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on your PATH.
 
-.. _`Chrome driver`: https://sites.google.com/a/chromium.org/chromedriver/
+.. _`ChromeDriver`: https://sites.google.com/a/chromium.org/chromedriver/
 
-.. _`Gecko driver`: https://github.com/mozilla/geckodriver/
+.. _`GeckoDriver`: https://github.com/mozilla/geckodriver/
 
 OpenSSL
 -------
@@ -590,6 +592,37 @@ As well as ``socks5``, the schemes ``socks4`` and ``socks5h`` are supported. Use
 See `this example`_ if you want to run Selenium Wire with Tor.
 
 .. _`this example`: https://gist.github.com/woswos/38b921f0b82de009c12c6494db3f50c5
+
+Bot Detection
+~~~~~~~~~~~~~
+
+Selenium Wire will automatically integrate itself with `undetected-chromedriver`_ if it finds it in your environment. This library will transparently modify ChromeDriver to prevent it from triggering anti-bot mechanisms.
+
+.. _`undetected-chromedriver`: https://github.com/ultrafunkamsterdam/undetected-chromedriver
+
+If you wish to take advantage of this, make sure you have undetected-chromedriver installed:
+
+.. code:: bash
+
+    pip install undetected-chromedriver
+
+Then just use ``webdriver.Chrome()`` as you would normally, making sure that you import it from the ``seleniumwire`` package. If you use ``ChromeOptions`` this should also be imported from the ``seleniumwire`` package:
+
+.. code:: python
+
+    from seleniumwire import webdriver
+
+    chrome_options = webdriver.ChromeOptions()
+    sw_options = {...}
+
+    driver = webdriver.Chrome(  # Optimized for bot detection
+        options=chrome_options,
+        seleniumwire_options=sw_options
+    )
+
+The first time you run the webdriver it will download and patch the ChromeDriver binary in the background.
+
+Note that this functionality is currently experimental.
 
 Backends
 ~~~~~~~~
