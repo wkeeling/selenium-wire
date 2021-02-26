@@ -109,6 +109,17 @@ class Chrome(InspectRequestsMixin, DriverCommonMixin, _Chrome):
         super().__init__(*args, **kwargs)
 
 
+try:
+    # If we find undetected_chromedriver in the environment, we
+    # assume the user intends for us to use it.
+    import undetected_chromedriver
+    undetected_chromedriver._Chrome = Chrome
+    Chrome = undetected_chromedriver.Chrome
+    ChromeOptions = undetected_chromedriver.ChromeOptions  # noqa: F811
+except ImportError:
+    pass
+
+
 class Safari(InspectRequestsMixin, DriverCommonMixin, _Safari):
     """Extends the Safari webdriver to provide additional methods for inspecting requests."""
 
