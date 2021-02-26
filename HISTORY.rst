@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+4.1.1 (2021-02-26)
+------------------
+
+* Integration with undetected-chromedriver.
+
 4.1.0 (2021-02-24)
 ------------------
 
