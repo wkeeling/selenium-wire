@@ -596,7 +596,7 @@ See `this example`_ if you want to run Selenium Wire with Tor.
 Bot Detection
 ~~~~~~~~~~~~~
 
-Selenium Wire will automatically integrate itself with `undetected-chromedriver`_ if it finds it in your environment. This library will transparently modify ChromeDriver to prevent it from triggering anti-bot mechanisms.
+Selenium Wire will automatically integrate itself with `undetected-chromedriver`_ if it finds it in your environment. This library will transparently modify ChromeDriver to prevent it from triggering anti-bot measures on websites.
 
 .. _`undetected-chromedriver`: https://github.com/ultrafunkamsterdam/undetected-chromedriver
 

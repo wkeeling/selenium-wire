@@ -47,7 +47,7 @@ class ProxyServer(tcp.TCPServer):
             if self.socket:
                 self.socket.close()
             raise exceptions.ServerException(
-                'Error starting mitmproxy server: ' + repr(e)
+                "Error starting proxy server: " + repr(e)
             ) from e
 
     def set_channel(self, channel):
