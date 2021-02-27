@@ -39,7 +39,7 @@ def create(addr='127.0.0.1', port=0, options=None):
 
         proxy = mitmproxy.MitmProxy(addr, port, options)
     else:
-        raise TypeError(
+        raise ValueError(
             "Invalid backend '{}'. "
             "Valid values are 'default' or 'mitmproxy'."
             .format(options['backend'])
