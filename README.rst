@@ -270,7 +270,7 @@ Request objects have the following attributes.
     The request URL, e.g. ``https://server/some/path/index.html?foo=bar&spam=eggs``
 
 ``ws_messages``
-    Where the request is a websocket handshake request (normally with a URL starting ``wss://``), then this attribute will contain a list of any websocket messages sent and received. See `WebSocketMessage Objects`_.
+    Where the request is a websocket handshake request (normally with a URL starting ``wss://``), then ``ws_messages`` will contain a list of any websocket messages sent and received. See `WebSocketMessage Objects`_.
 
 Request objects have the following methods.
 
@@ -283,7 +283,7 @@ Request objects have the following methods.
 WebSocketMessage Objects
 ------------------------
 
-Represent websocket messages sent between the browser and server and vice versa. They are held in a list by ``request.ws_messages`` on websocket handshake requests. They have the following attributes.
+These objects represent websocket messages sent between the browser and server and vice versa. They are held in a list by ``request.ws_messages`` on websocket handshake requests. They have the following attributes.
 
 ``content``
     The message content which may be either ``str`` or ``bytes``.
