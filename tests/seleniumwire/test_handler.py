@@ -256,6 +256,36 @@ class InterceptRequestHandlerTest(TestCase):
 
         self.assertEqual(0, self.proxy.storage.save_ws_message.call_count)
 
+    @patch('seleniumwire.handler.har')
+    def test_save_har_entry(self, mock_har):
+        self.proxy.options['enable_har'] = True
+        mock_flow = Mock()
+        mock_flow.request.id = '12345'
+        mock_flow.response.headers = {}
+        mock_flow.response.raw_content = b''
+        mock_har.create_har_entry.return_value = {'name': 'test_har_entry'}
+
+        self.handler.response(mock_flow)
+
+        self.proxy.storage.save_har_entry.assert_called_once_with(
+            '12345', {'name': 'test_har_entry'}
+        )
+        mock_har.create_har_entry.assert_called_once_with(mock_flow)
+
+    @patch('seleniumwire.handler.har')
+    def test_save_har_entry_disabled(self, mock_har):
+        self.proxy.options['enable_har'] = False
+        mock_flow = Mock()
+        mock_flow.request.id = '12345'
+        mock_flow.response.headers = {}
+        mock_flow.response.raw_content = b''
+        mock_har.create_har_entry.return_value = {'name': 'test_har_entry'}
+
+        self.handler.response(mock_flow)
+
+        self.assertEqual(0, self.proxy.storage.save_har_entry.call_count)
+        self.assertEqual(0, mock_har.create_har_entry.call_count)
+
     def setUp(self):
         self.proxy = Mock()
         self.proxy.storage = Mock()

@@ -2,6 +2,7 @@ import logging
 import re
 from datetime import datetime
 
+from seleniumwire import har
 from seleniumwire.request import Request, Response, WebSocketMessage
 from seleniumwire.thirdparty.mitmproxy.http import HTTPResponse
 from seleniumwire.thirdparty.mitmproxy.net import websockets
@@ -120,6 +121,9 @@ class InterceptRequestHandler:
         log.info('Capturing response: %s %s %s', flow.request.url, response.status_code, response.reason)
 
         self.proxy.storage.save_response(flow.request.id, response)
+
+        if self.proxy.options.get('enable_har', False):
+            self.proxy.storage.save_har_entry(flow.request.id, har.create_har_entry(flow))
 
     def _create_request(self, flow, response=None):
         request = Request(

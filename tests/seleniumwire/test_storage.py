@@ -134,6 +134,32 @@ class RequestStorageTest(TestCase):
 
         self.assertFalse(response_file_path)
 
+    def test_save_har_entry(self):
+        request = self._create_request()
+        storage = RequestStorage(base_dir=self.base_dir)
+        storage.save_request(request)
+
+        storage.save_har_entry(request.id, {'name': 'test_har_entry'})
+
+        har_file_path = self._get_stored_path(request.id, 'har_entry')
+
+        with open(har_file_path[0], 'rb') as loaded:
+            loaded_har = pickle.load(loaded)
+
+        self.assertEqual(loaded_har['name'], 'test_har_entry')
+
+    def test_save_har_entry_no_request(self):
+        request = self._create_request()
+        storage = RequestStorage(base_dir=self.base_dir)
+        storage.save_request(request)
+        storage.clear_requests()
+
+        storage.save_har_entry(request.id, {'name': 'test_har_entry'})
+
+        har_file_path = self._get_stored_path(request.id, 'har_entry')
+
+        self.assertFalse(har_file_path)
+
     def test_load_requests(self):
         request_1 = self._create_request()
         request_2 = self._create_request()

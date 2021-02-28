@@ -10,6 +10,7 @@ from unittest.mock import patch
 import pytest
 from selenium.common.exceptions import TimeoutException
 
+import seleniumwire
 from seleniumwire import webdriver
 from seleniumwire.thirdparty.mitmproxy.exceptions import ServerException
 from tests import utils as testutils
@@ -515,5 +516,23 @@ def test_address_in_use(driver_path, chrome_options, httpbin):
 
     with pytest.raises(ServerException, match='.*Address already in use.*'):
         create_driver(driver_path, chrome_options, sw_options)
+
+    driver.quit()
+
+
+def test_har(driver_path, chrome_options, httpbin):
+    driver = create_driver(
+        driver_path,
+        chrome_options,
+        {'enable_har': True}
+    )
+    driver.get(f'{httpbin}/html')
+
+    har = json.loads(driver.har)
+
+    assert har['log']['creator']['comment'] == f'Selenium Wire version {seleniumwire.__version__}'
+    assert len(har['log']['entries']) == 1
+    assert har['log']['entries'][0]['request']['url'] == f'{httpbin}/html'
+    assert har['log']['entries'][0]['response']['status'] == 200
 
     driver.quit()

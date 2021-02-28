@@ -60,6 +60,7 @@ Features
 * Intercept requests and responses
 * Modify headers, parameters, body content on the fly
 * Capture websocket messages
+* HAR format supported
 * Proxy server support
 
 Compatibilty
@@ -207,7 +208,7 @@ Selenium Wire captures all HTTP/HTTPS traffic made by the browser :superscript:`
     Convenience attribute for retrieving the most recently captured request. This is more efficient than using ``driver.requests[-1]``.
 
 ``driver.wait_for_request(pat, timeout=10)``
-    This method will wait until it sees a request matching a pattern. The ``pat`` attribute will be matched within the request URL and the value of ``pat`` can be a regex. Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action - and it will return the first request it finds. Also note that since ``pat`` can be a regex, you must escape special characters such as question marks with a slash. A ``TimeoutException`` is raised if no match is found within the timeout period.
+    This method will wait until it sees a request matching a pattern. The ``pat`` attribute will be matched within the request URL. ``pat`` can be a simple sub-string or a regex. Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action - and it will return the first request it finds. Also note that since ``pat`` can be a regex, you must escape special characters such as question marks with a slash. A ``TimeoutException`` is raised if no match is found within the timeout period.
 
     For example, to wait for an AJAX request to return after a button is clicked:
 
@@ -217,7 +218,10 @@ Selenium Wire captures all HTTP/HTTPS traffic made by the browser :superscript:`
         button_element.click()
 
         # Wait for the request/response to complete
-        request = driver.wait_for_request('/api/products/12345/$')
+        request = driver.wait_for_request('/api/products/12345/')
+
+``driver.har``
+    A JSON formatted HAR archive of HTTP transactions that have taken place. HAR capture is turned off by default, and you must set the ``enable_har`` `option`_ to ``True`` before using ``driver.har``.
 
 ``driver.request_interceptor``
     Used to set a request interceptor.
@@ -227,7 +231,7 @@ Selenium Wire captures all HTTP/HTTPS traffic made by the browser :superscript:`
 
 **Clearing Requests**
 
-To clear previously captured requests, use ``del``:
+To clear previously captured requests and HAR entries, use ``del``:
 
 .. code:: python
 
@@ -709,6 +713,16 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     }
     driver = webdriver.Chrome(seleniumwire_options=options)
 
+``enable_har``
+    When ``True`` a HAR archive of HTTP transactions will be kept which can be retrieved with ``driver.har``. ``False`` by default.
+
+.. code:: python
+
+    options = {
+        'enable_har': True  # Capture HAR data, retrieve with driver.har
+    }
+    driver = webdriver.Chrome(seleniumwire_options=options)
+
 ``exclude_hosts``
     A list of addresses for which Selenium Wire should be bypassed entirely. Note that if you have configured an upstream proxy then requests to excluded hosts will also bypass that proxy.
 
@@ -720,12 +734,12 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``disable_encoding``
-    Whether to disable content encoding. When set to ``True``, the ``Accept-Encoding`` header will be set to ``identity`` for all requests. This tells the server to not compress/modify the response. The default is ``False``.
+    Whether to ask the server to send back un-compressed data. When ``True`` this sets the ``Accept-Encoding`` header to ``identity`` for all outbound requests. Note that it won't always work - sometimes the server may ignore it. The default is ``False``.
 
 .. code:: python
 
     options = {
-        'disable_encoding': True  # Tell the server not to compress the response
+        'disable_encoding': True  # Ask the server not to compress the response
     }
     driver = webdriver.Chrome(seleniumwire_options=options)
 

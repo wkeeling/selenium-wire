@@ -2,7 +2,7 @@ import re
 import threading
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
-from .utils import is_list_alike
+from seleniumwire.utils import is_list_alike
 
 
 class RequestModifier:
