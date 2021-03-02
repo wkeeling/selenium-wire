@@ -40,7 +40,6 @@ class RequestStorage:
         if base_dir is None:
             base_dir = os.path.expanduser('~')
 
-        """"""
         self.home_dir = os.path.join(base_dir, '.seleniumwire')
         self.session_dir = os.path.join(self.home_dir, 'storage-{}'.format(str(uuid.uuid4())))
         os.makedirs(self.session_dir, exist_ok=True)
@@ -148,8 +147,7 @@ class RequestStorage:
         were saved. Each request will have any associated response and websocket messages
         attached - assuming they exist.
 
-        Returns:
-            A list of request objects.
+        Returns: A list of request objects.
         """
         with self._lock:
             index = self._index[:]
@@ -209,8 +207,8 @@ class RequestStorage:
     def load_last_request(self):
         """Load the last saved request.
 
-        Returns:
-            The last saved request or None if no requests have yet been stored.
+        Returns: The last saved request or None if no requests have
+            yet been stored.
         """
         with self._lock:
             if self._index:
@@ -243,6 +241,17 @@ class RequestStorage:
 
         return entries
 
+    def iter_requests(self):
+        """Return an iterator of requests known to the storage.
+
+        Returns: An iterator of request objects.
+        """
+        with self._lock:
+            index = self._index[:]
+
+        for indexed_request in index:
+            yield self._load_request(indexed_request.id)
+
     def clear_requests(self):
         """Clears all requests currently known to this storage."""
         with self._lock:
@@ -264,9 +273,8 @@ class RequestStorage:
                 a corresponding response. Where check_response=True and no response has
                 been received, this method will skip the request and continue searching.
 
-        Returns:
-            The first request in the storage that matches the pattern, or None if no
-            requests match.
+        Returns: The first request in the storage that matches the pattern,
+            or None if no requests match.
         """
         with self._lock:
             index = self._index[:]

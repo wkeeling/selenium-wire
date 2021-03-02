@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -31,6 +32,11 @@ class InspectRequestsMixinTest(TestCase):
         del self.driver.requests
 
         self.mock_proxy.storage.clear_requests.assert_called_once_with()
+
+    def test_iter_requests(self):
+        self.mock_proxy.storage.iter_requests.return_value = iter([Mock()])
+
+        self.assertIsInstance(self.driver.iter_requests(), Iterator)
 
     def test_last_request(self):
         self.mock_proxy.storage.load_last_request.return_value = Mock()

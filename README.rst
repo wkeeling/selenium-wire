@@ -223,6 +223,9 @@ Selenium Wire captures all HTTP/HTTPS traffic made by the browser :superscript:`
 ``driver.har``
     A JSON formatted HAR archive of HTTP transactions that have taken place. HAR capture is turned off by default, and you must set the ``enable_har`` `option`_ to ``True`` before using ``driver.har``.
 
+``driver.iter_requests()``
+    Returns an iterator over captured requests. Useful when dealing with a large number of requests.
+
 ``driver.request_interceptor``
     Used to set a request interceptor.
 
