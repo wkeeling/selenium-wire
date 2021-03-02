@@ -5,11 +5,11 @@ import time
 import h2.exceptions
 
 from seleniumwire.thirdparty.mitmproxy import connections  # noqa
-from seleniumwire.thirdparty.mitmproxy import exceptions, http
-from seleniumwire.thirdparty.mitmproxy import flow
+from seleniumwire.thirdparty.mitmproxy import exceptions, flow, http
 from seleniumwire.thirdparty.mitmproxy.net import websockets
 from seleniumwire.thirdparty.mitmproxy.server.protocol import base
-from seleniumwire.thirdparty.mitmproxy.server.protocol.websocket import WebSocketLayer
+from seleniumwire.thirdparty.mitmproxy.server.protocol.websocket import \
+    WebSocketLayer
 
 
 class _HttpTransmissionLayer(base.Layer):
@@ -250,6 +250,28 @@ class HttpLayer(base.Layer):
             return layer()
         return False
 
+    def _switch_mode_when_no_proxy(self, f):
+        """Checks whether the request hostname is in the no_proxy list
+        and if so, switches the mode to regular if it's upstream.
+        """
+        no_proxy = False
+
+        for addr in self.config.options.no_proxy:
+            host, *port = addr.split(':')
+
+            if host == f.request.host:
+                no_proxy = True
+
+                if port:
+                    # The user has specified a port, so this also needs to match
+                    no_proxy = int(port[0]) == f.request.port
+
+            if no_proxy:
+                break
+
+        if self.mode is HTTPMode.upstream and no_proxy:
+            self.mode = HTTPMode.regular
+
     def _process_flow(self, f):
         try:
             try:
@@ -270,6 +292,8 @@ class HttpLayer(base.Layer):
                 f.request.data.trailers = self.read_request_trailers(f.request)
                 f.request.timestamp_end = time.time()
                 self.channel.ask("http_connect", f)
+
+                self._switch_mode_when_no_proxy(f)
 
                 if self.mode is HTTPMode.regular:
                     return self.handle_regular_connect(f)

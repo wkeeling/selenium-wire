@@ -99,6 +99,10 @@ class Options(optmanager.OptManager):
             """
         )
         self.add_option(
+            "no_proxy", Sequence[str], [],
+            "List of hosts for which an upstream proxy will be bypassed."
+        )
+        self.add_option(
             "upstream_cert", bool, True,
             "Connect to upstream server to look up certificate details."
         )

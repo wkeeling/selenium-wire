@@ -377,12 +377,11 @@ def test_upstream_socks_proxy(driver_path, chrome_options, httpbin, socksproxy):
     driver.quit()
 
 
-@pytest.mark.skip('Skipping until no_proxy option has been fixed')
 def test_bypass_upstream_http_proxy(driver_path, chrome_options, httpbin, httpproxy):
     sw_options = {
         'proxy': {
             'https': f'{httpproxy}',
-            'no_proxy': 'localhost'
+            'no_proxy': 'localhost:8085'
         }
     }
 

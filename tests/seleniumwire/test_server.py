@@ -176,6 +176,23 @@ class MitmProxyTest(TestCase):
                 }
             })
 
+    def test_upstream_proxy_no_proxy(self):
+        MitmProxy('somehost', 12345, {
+            'request_storage_base_dir': '/some/dir',
+            'proxy': {
+                'https': 'https://proxyserver:8080',
+                'no_proxy': 'localhost:9090, example.com'
+            }
+        })
+
+        self.mock_options.return_value.update.assert_has_calls([
+            self.base_options_update(
+                mode='upstream:https://proxyserver:8080',
+                no_proxy=['localhost:9090', 'example.com']
+            ),
+            call()
+        ])
+
     def test_new_event_loop(self):
         proxy = MitmProxy('somehost', 12345, {
             'request_storage_base_dir': '/some/dir',
