@@ -22,6 +22,8 @@ def get_upstream_proxy(options):
     'https' and 'no_proxy'. The value of the 'http' and 'https' keys will
     be a named tuple with the attributes:
         scheme, username, password, hostport
+    The value of 'no_proxy' will be a list.
+
     Note that the keys will only be present in the dictionary when relevant
     proxy configuration exists.
 
@@ -45,6 +47,10 @@ def get_upstream_proxy(options):
         merged['no_proxy'] = no_proxy
 
     merged.update(proxy_options)
+
+    no_proxy = merged.get('no_proxy')
+    if isinstance(no_proxy, str):
+        merged['no_proxy'] = [h.strip() for h in no_proxy.split(',')]
 
     conf = namedtuple('ProxyConf', 'scheme username password hostport')
 

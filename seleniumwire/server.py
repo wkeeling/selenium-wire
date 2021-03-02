@@ -114,6 +114,11 @@ class MitmProxy:
             if custom_auth:
                 args['upstream_custom_auth'] = custom_auth
 
+            no_proxy = proxy_config.get('no_proxy')
+
+            if no_proxy:
+                args['no_proxy'] = no_proxy
+
         return args
 
 

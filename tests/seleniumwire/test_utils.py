@@ -33,7 +33,7 @@ class GetUpstreamProxyTest(TestCase):
         self.assertEqual('password2', https.password)
         self.assertEqual('server2:8888', https.hostport)
 
-        self.assertEqual('localhost', proxy['no_proxy'])
+        self.assertEqual(['localhost'], proxy['no_proxy'])
 
     def test_get_from_env(self):
         with self.set_env(HTTP_PROXY='http://username1:password1@server1:8888',
@@ -54,7 +54,7 @@ class GetUpstreamProxyTest(TestCase):
             self.assertEqual('password2', https.password)
             self.assertEqual('server2:8888', https.hostport)
 
-            self.assertEqual('localhost', proxy['no_proxy'])
+            self.assertEqual(['localhost'], proxy['no_proxy'])
 
     def test_merge(self):
         options = {
@@ -83,7 +83,7 @@ class GetUpstreamProxyTest(TestCase):
             self.assertEqual('password3', https.password)
             self.assertEqual('server3:8888', https.hostport)
 
-            self.assertEqual('localhost', proxy['no_proxy'])
+            self.assertEqual(['localhost'], proxy['no_proxy'])
 
     def test_empty_password(self):
         options = {
@@ -99,6 +99,38 @@ class GetUpstreamProxyTest(TestCase):
         self.assertEqual('username', https.username)
         self.assertEqual('', https.password)
         self.assertEqual('server:8888', https.hostport)
+
+    def test_no_proxy(self):
+        options = {
+            'proxy': {
+                'https': 'https://username:@server:8888',
+                'no_proxy': 'localhost:8081, example.com  , test.com:80'
+            }
+        }
+
+        proxy = get_upstream_proxy(options)
+
+        self.assertEqual([
+            'localhost:8081',
+            'example.com',
+            'test.com:80'
+        ], proxy['no_proxy'])
+
+    def test_no_proxy_as_list(self):
+        options = {
+            'proxy': {
+                'https': 'https://username:@server:8888',
+                'no_proxy': ['localhost:8081', 'example.com', 'test.com:80']
+            }
+        }
+
+        proxy = get_upstream_proxy(options)
+
+        self.assertEqual([
+            'localhost:8081',
+            'example.com',
+            'test.com:80'
+        ], proxy['no_proxy'])
 
     def test_none(self):
         options = None
