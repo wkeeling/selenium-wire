@@ -572,7 +572,7 @@ The proxy configuration can also be loaded through environment variables called 
     $ export HTTPS_PROXY="https://192.168.10.100:8888"
     $ export NO_PROXY="localhost,127.0.0.1"
 
-**I just want the proxy functionality, I'm not interested in request capture**
+**I just want the proxy functionality, I don't care about request capture**
 
 In which case you can disable request capture using the ``disable_capture`` `option`_. When this option is set to ``True`` Selenium Wire will just pass everything straight through to the upstream proxy. No decryption, interception or capture will take place - which should improve performance.
 
