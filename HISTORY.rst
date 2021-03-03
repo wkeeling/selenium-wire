@@ -1,6 +1,14 @@
 History
 ~~~~~~~
 
+4.2.0 (2021-03-03)
+------------------
+
+* Add support for HAR format.
+* Add disable_capture option.
+* Add driver.iter_requests().
+* Fix bug where no_proxy was being ignored in proxy configuration.
+
 4.1.1 (2021-02-26)
 ------------------
 
