@@ -1,6 +1,6 @@
 import inspect
 import time
-from typing import List, Optional, Union
+from typing import Iterator, List, Optional, Union
 
 from selenium.common.exceptions import TimeoutException
 
@@ -28,6 +28,13 @@ class InspectRequestsMixin:
     @requests.deleter
     def requests(self):
         self.proxy.storage.clear_requests()
+
+    def iter_requests(self) -> Iterator[Request]:
+        """Return an iterator of requests.
+
+        Returns: An iterator.
+        """
+        yield from self.proxy.storage.iter_requests()
 
     @property
     def last_request(self) -> Optional[Request]:

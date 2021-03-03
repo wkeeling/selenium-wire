@@ -3,6 +3,7 @@ import gzip
 import os
 import pickle
 import shutil
+from collections.abc import Iterator
 from datetime import datetime, timedelta
 from fnmatch import fnmatch
 from io import BytesIO
@@ -174,6 +175,21 @@ class RequestStorageTest(TestCase):
         self.assertEqual(request_2.id, requests[1].id)
         self.assertIsNone(requests[0].response)
         self.assertIsNone(requests[1].response)
+
+    def test_iter_requests(self):
+        request_1 = self._create_request()
+        request_2 = self._create_request()
+        storage = RequestStorage(base_dir=self.base_dir)
+        storage.save_request(request_1)
+        storage.save_request(request_2)
+
+        requests = storage.iter_requests()
+
+        self.assertIsInstance(requests, Iterator)
+        requests = list(requests)
+        self.assertEqual(2, len(requests))
+        self.assertEqual(request_1.id, requests[0].id)
+        self.assertEqual(request_2.id, requests[1].id)
 
     def test_load_response(self):
         request = self._create_request()
