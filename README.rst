@@ -415,7 +415,7 @@ Example: Update JSON in a POST request body
 Example: Block a request
 ------------------------
 
-You can use ``request.abort()`` to block a request and send an immediate response back to the client. An optional error code can be supplied. The default is 403 (forbidden).
+You can use ``request.abort()`` to block a request and send an immediate response back to the browser. An optional error code can be supplied. The default is 403 (forbidden).
 
 .. code:: python
 
@@ -432,7 +432,7 @@ You can use ``request.abort()`` to block a request and send an immediate respons
 Example: Mock a response
 ------------------------
 
-You can use ``request.create_response()`` to send a custom reply back to the client. No data will be sent to the remote server.
+You can use ``request.create_response()`` to send a custom reply back to the browser. No data will be sent to the remote server.
 
 .. code:: python
 
