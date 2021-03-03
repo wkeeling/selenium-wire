@@ -719,16 +719,6 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     }
     driver = webdriver.Chrome(seleniumwire_options=options)
 
-``enable_har``
-    When ``True`` a HAR archive of HTTP transactions will be kept which can be retrieved with ``driver.har``. ``False`` by default.
-
-.. code:: python
-
-    options = {
-        'enable_har': True  # Capture HAR data, retrieve with driver.har
-    }
-    driver = webdriver.Chrome(seleniumwire_options=options)
-
 ``disable_capture``
     Disable request capture and interception. When ``True`` all requests are passed straight through and no HTTPS decryption takes place. Useful for boosting performance if all you want is the upstream proxy functionality.
 
@@ -746,6 +736,16 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
 
     options = {
         'disable_encoding': True  # Ask the server not to compress the response
+    }
+    driver = webdriver.Chrome(seleniumwire_options=options)
+
+``enable_har``
+    When ``True`` a HAR archive of HTTP transactions will be kept which can be retrieved with ``driver.har``. ``False`` by default.
+
+.. code:: python
+
+    options = {
+        'enable_har': True  # Capture HAR data, retrieve with driver.har
     }
     driver = webdriver.Chrome(seleniumwire_options=options)
 
