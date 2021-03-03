@@ -470,7 +470,7 @@ Limiting Request Capture
 Selenium Wire works by redirecting browser traffic through an internal proxy server it spins up in the background. As requests flow through the proxy they are intercepted and captured. Capturing requests can slow things down a little, but there are a few things you can do to restrict what gets captured.
 
 ``driver.scopes``
-    This accepts a list of regular expressions that will match the hostnames of URLs to be captured. It should be set on the driver before making any requests. When empty (the default) all hosts are captured.
+    This accepts a list of regular expressions that will match the URLs to be captured. It should be set on the driver before making any requests. When empty (the default) all URLs are captured.
 
     .. code:: python
 
@@ -485,17 +485,15 @@ Selenium Wire works by redirecting browser traffic through an internal proxy ser
 
     Note that even if a request is out of scope and not captured, it will still travel through Selenium Wire.
 
-``seleniumwire_options.ignore_http_methods``
-    Use this option to prevent capturing certain HTTP methods. By default, OPTIONS requests are ignored, but you might want to expand the list with other request methods.
+``seleniumwire_options.disable_capture``
+    Use this option to switch off request capture and interception. Requests will still pass through Selenium Wire and through any upstream proxy you have configured, but they won't be decrypted and nothing will be stored. Useful for boosting performance if all you want is the upstream proxy functionality.
 
     .. code:: python
 
         options = {
-            'ignore_http_methods': ['HEAD', 'OPTIONS']  # Ignore all HEAD and OPTIONS requests
+            'disable_capture': True  # Pass all requests straight through
         }
         driver = webdriver.Chrome(seleniumwire_options=options)
-
-    Note that even if a request is ignored and not captured, it will still travel through Selenium Wire.
 
 ``seleniumwire_options.exclude_hosts``
     Use this option to bypass Selenium Wire entirely. Any requests made to addresses listed here will go direct from the browser to the server without involving Selenium Wire. Note that if you've configured an upstream proxy then these requests will also bypass that proxy.
@@ -573,6 +571,11 @@ The proxy configuration can also be loaded through environment variables called 
     $ export HTTP_PROXY="http://192.168.10.100:8888"
     $ export HTTPS_PROXY="https://192.168.10.100:8888"
     $ export NO_PROXY="localhost,127.0.0.1"
+
+**I just want the proxy functionality, I'm not interested in request capture**
+
+In which case you can disable request capture using the ``disable_capture`` `option`_. When this option is set to ``True`` Selenium Wire will just pass everything straight through to the upstream proxy. No decryption, interception or capture will take place - which should improve performance.
+
 
 SOCKS
 -----
@@ -726,6 +729,26 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     }
     driver = webdriver.Chrome(seleniumwire_options=options)
 
+``disable_capture``
+    Disable request capture and interception. When ``True`` all requests are passed straight through and no HTTPS decryption takes place. Useful for boosting performance if all you want is the upstream proxy functionality.
+
+.. code:: python
+
+    options = {
+        'disable_capture': True  # Pass all requests straight through.
+    }
+    driver = webdriver.Chrome(seleniumwire_options=options)
+
+``disable_encoding``
+    Ask the server to send back un-compressed data. When ``True`` this sets the ``Accept-Encoding`` header to ``identity`` for all outbound requests. Note that it won't always work - sometimes the server may ignore it. The default is ``False``.
+
+.. code:: python
+
+    options = {
+        'disable_encoding': True  # Ask the server not to compress the response
+    }
+    driver = webdriver.Chrome(seleniumwire_options=options)
+
 ``exclude_hosts``
     A list of addresses for which Selenium Wire should be bypassed entirely. Note that if you have configured an upstream proxy then requests to excluded hosts will also bypass that proxy.
 
@@ -733,16 +756,6 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
 
     options = {
         'exclude_hosts': ['google-analytics.com']  # Bypass these hosts
-    }
-    driver = webdriver.Chrome(seleniumwire_options=options)
-
-``disable_encoding``
-    Whether to ask the server to send back un-compressed data. When ``True`` this sets the ``Accept-Encoding`` header to ``identity`` for all outbound requests. Note that it won't always work - sometimes the server may ignore it. The default is ``False``.
-
-.. code:: python
-
-    options = {
-        'disable_encoding': True  # Ask the server not to compress the response
     }
     driver = webdriver.Chrome(seleniumwire_options=options)
 
