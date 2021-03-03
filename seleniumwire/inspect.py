@@ -4,7 +4,8 @@ from typing import List, Optional, Union
 
 from selenium.common.exceptions import TimeoutException
 
-from .request import Request
+from seleniumwire import har
+from seleniumwire.request import Request
 
 
 class InspectRequestsMixin:
@@ -75,6 +76,17 @@ class InspectRequestsMixin:
         raise TimeoutException(
             'Timed out after {}s waiting for request matching {}'.format(timeout, pat)
         )
+
+    @property
+    def har(self) -> str:
+        """Get a HAR archive of HTTP transactions that have taken place.
+
+        Note that the enable_har option needs to be set before HAR
+        data will be captured.
+
+        Returns: A JSON string of HAR data.
+        """
+        return har.generate_har(self.proxy.storage.load_har_entries())
 
     @property
     def header_overrides(self):

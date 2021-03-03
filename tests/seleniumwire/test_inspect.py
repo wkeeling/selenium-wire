@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from seleniumwire.inspect import InspectRequestsMixin, TimeoutException
 
@@ -64,6 +64,23 @@ class InspectRequestsMixinTest(TestCase):
 
         self.assertTrue(self.mock_proxy.storage.find.call_count > 0)
         self.assertTrue(self.mock_proxy.storage.find.call_count <= 5)
+
+    @patch('seleniumwire.inspect.har')
+    def test_har(self, mock_har):
+        self.mock_proxy.storage.load_har_entries.return_value = [
+            'test_entry1',
+            'test_entry2',
+        ]
+        mock_har.generate_har.return_value = 'test_har'
+
+        har = self.driver.har
+
+        self.assertEqual('test_har', har)
+        self.mock_proxy.storage.load_har_entries.assert_called_once_with()
+        mock_har.generate_har.assert_called_once_with([
+            'test_entry1',
+            'test_entry2',
+        ])
 
     def test_set_header_overrides(self):
         header_overrides = {

@@ -18,14 +18,16 @@ REMOVE_DATA_OLDER_THAN_DAYS = 1
 
 
 class RequestStorage:
-    """Responsible for saving request and response data that passes through the proxy server,
-    and provding an API to retrieve that data.
+    """Responsible for saving request and response data that passes through the proxy server.
 
     Requests and responses are saved separately. However, when a request is loaded, the
-    response, if there is one, is automatically loaded and attached to the request.
+    response, if there is one, is automatically loaded and attached to the request. As are
+    any websocket messages.
 
     This implementation writes the request and response data to disk, but keeps an in-memory
-    index of what is on disk for fast retrieval. Instances are designed to be threadsafe.
+    index for sequencing and fast retrieval.
+
+    Instances are designed to be threadsafe.
     """
 
     def __init__(self, base_dir=None):
@@ -55,7 +57,7 @@ class RequestStorage:
         self._lock = threading.Lock()
 
     def save_request(self, request):
-        """Saves the request to storage.
+        """Save a request to storage.
 
         Args:
             request: The request to save.
@@ -80,13 +82,11 @@ class RequestStorage:
         return request_id
 
     def _save(self, obj, dirname, filename):
-        request_dir = os.path.join(self.session_dir, dirname)
-
-        with open(os.path.join(request_dir, filename), 'wb') as out:
+        with open(os.path.join(dirname, filename), 'wb') as out:
             pickle.dump(obj, out)
 
     def save_response(self, request_id, response):
-        """Saves the response to storage.
+        """Save a response to storage against a request with the specified id.
 
         Args:
             request_id: The id of the original request.
@@ -95,9 +95,7 @@ class RequestStorage:
         indexed_request = self._get_indexed_request(request_id)
 
         if indexed_request is None:
-            # Request has been cleared from storage before
-            # the response arrived back
-            log.debug('Cannot save response as request {} is no longer stored'.format(request_id))
+            log.debug('Cannot save response as request %s is no longer stored' % request_id)
             return
 
         request_dir = self._get_request_dir(request_id)
@@ -117,23 +115,38 @@ class RequestStorage:
         return None
 
     def save_ws_message(self, request_id, message):
-        """Save a websocket message against the specified websocket
-        handshake request.
+        """Save a websocket message against a request with the specified id.
 
         Args:
-            request_id: The ID of the original handshake request.
-            message: The websocket message.
+            request_id: The id of the original handshake request.
+            message: The websocket message to save.
         """
         with self._lock:
             self._ws_messages[request_id].append(message)
 
+    def save_har_entry(self, request_id, entry):
+        """Save a HAR entry to storage against a request with the specified id.
+
+        Args:
+            request_id: The id of the original request.
+            entry: The HAR entry to save.
+        """
+        indexed_request = self._get_indexed_request(request_id)
+
+        if indexed_request is None:
+            log.debug('Cannot save HAR entry as request %s is no longer stored' % request_id)
+            return
+
+        request_dir = self._get_request_dir(request_id)
+
+        self._save(entry, request_dir, 'har_entry')
+
     def load_requests(self):
-        """Loads all previously saved requests known to the storage (known to its index).
+        """Load all previously saved requests known to the storage (known to its index).
 
-        The requests are returned as a list of request objects.
-
-        Where a request does not have a corresponding response its 'response' attribute
-        will be None.
+        The requests are returned as a list of request objects in the order in which they
+        were saved. Each request will have any associated response and websocket messages
+        attached - assuming they exist.
 
         Returns:
             A list of request objects.
@@ -162,9 +175,12 @@ class RequestStorage:
                 request.ws_messages = ws_messages
 
             try:
+                # Attach the response if there is one.
                 with open(os.path.join(request_dir, 'response'), 'rb') as res:
                     response = pickle.load(res)
-                    response.body = self._decode(response.body, response.headers.get('Content-Encoding', 'identity'))
+                    response.body = self._decode(
+                        response.body, response.headers.get('Content-Encoding', 'identity')
+                    )
                     request.response = response
             except (FileNotFoundError, EOFError):
                 pass
@@ -191,11 +207,10 @@ class RequestStorage:
         return data
 
     def load_last_request(self):
-        """Loads the last saved request.
+        """Load the last saved request.
 
         Returns:
-            The last saved request dictionary or None if no requests
-            have yet been stored.
+            The last saved request or None if no requests have yet been stored.
         """
         with self._lock:
             if self._index:
@@ -204,6 +219,29 @@ class RequestStorage:
                 return None
 
         return self._load_request(last_request.id)
+
+    def load_har_entries(self):
+        """Load all HAR entries known to this storage.
+
+        Returns: A list of HAR entries.
+        """
+        with self._lock:
+            index = self._index[:]
+
+        entries = []
+
+        for indexed_request in index:
+            request_dir = self._get_request_dir(indexed_request.id)
+
+            try:
+                with open(os.path.join(request_dir, 'har_entry'), 'rb') as f:
+                    entry = pickle.load(f)
+                    entries.append(entry)
+            except FileNotFoundError:
+                # HAR entries aren't necessarily saved with each request.
+                pass
+
+        return entries
 
     def clear_requests(self):
         """Clears all requests currently known to this storage."""
@@ -222,14 +260,13 @@ class RequestStorage:
 
         Args:
             pat: A pattern that will be searched in the request URL.
-            check_response: When a match is found, whether to check
-                that the request has a corresponding response. Where
-                check_response=True and no response has been received, this
-                method will skip the request and continue searching.
+            check_response: When a match is found, whether to check that the request has
+                a corresponding response. Where check_response=True and no response has
+                been received, this method will skip the request and continue searching.
 
         Returns:
-            The first request in the storage that matches the pattern,
-            or None if no requests match.
+            The first request in the storage that matches the pattern, or None if no
+            requests match.
         """
         with self._lock:
             index = self._index[:]
@@ -245,9 +282,9 @@ class RequestStorage:
         return os.path.join(self.session_dir, 'request-{}'.format(request_id))
 
     def cleanup(self):
-        """Removes all stored requests, the storage directory containing those
-        requests, and if that is the only storage directory, also removes the
-        top level parent directory.
+        """Remove all stored requests, the storage directory containing those
+        requests, and if that is the only storage directory, also the top level
+        parent directory.
         """
         log.debug('Cleaning up %s', self.session_dir)
         self.clear_requests()
@@ -260,8 +297,8 @@ class RequestStorage:
             pass
 
     def _cleanup_old_dirs(self):
-        """Cleans up and removes any old storage directories that were not previously
-        cleaned up properly by _cleanup().
+        """Clean up and remove any old storage directories that were not previously
+        cleaned up properly by cleanup().
         """
         parent_dir = os.path.dirname(self.session_dir)
         for storage_dir in os.listdir(parent_dir):
