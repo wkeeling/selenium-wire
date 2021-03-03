@@ -536,3 +536,16 @@ def test_har(driver_path, chrome_options, httpbin):
     assert har['log']['entries'][0]['response']['status'] == 200
 
     driver.quit()
+
+
+def test_disable_capture(driver_path, chrome_options, httpbin):
+    sw_options = {
+        'disable_capture': True
+    }
+
+    driver = create_driver(driver_path, chrome_options, sw_options)
+    driver.get(f'{httpbin}/html')
+
+    assert not driver.requests
+
+    driver.quit()
