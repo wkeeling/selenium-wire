@@ -42,6 +42,8 @@ jobs:
           python-version: ${{ matrix.py }}
       - run: pip install tox
       - run: tox -e py
+      - uses: codecov/codecov-action@v1
+        if: matrix.os == 'ubuntu-latest' && matrix.py == '3.9'
 
   end2end_tests:
     runs-on: ubuntu-latest
