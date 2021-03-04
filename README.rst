@@ -486,7 +486,7 @@ Selenium Wire works by redirecting browser traffic through an internal proxy ser
     Note that even if a request is out of scope and not captured, it will still travel through Selenium Wire.
 
 ``seleniumwire_options.disable_capture``
-    Use this option to switch off request capture and interception. Requests will still pass through Selenium Wire and through any upstream proxy you have configured, but they won't be decrypted and nothing will be stored. Useful for boosting performance if all you want is the upstream proxy functionality.
+    Use this option to switch off request interception and capture. Requests will still pass through Selenium Wire and through any upstream proxy you have configured, but they won't be decrypted and nothing will be stored. Useful for boosting performance if all you want is the upstream proxy functionality.
 
     .. code:: python
 
@@ -574,7 +574,7 @@ The proxy configuration can also be loaded through environment variables called 
 
 **I just want the proxy functionality, I don't care about request capture**
 
-In which case you can disable request capture using the ``disable_capture`` `option`_. When this option is set to ``True`` Selenium Wire will just pass everything straight through to the upstream proxy. No decryption, interception or capture will take place - which should improve performance.
+In which case you can disable request capture using the ``disable_capture`` `option`_. When this option is set to ``True`` Selenium Wire will just pass everything straight through to the upstream proxy. No interception, decryption or capture will take place, which should improve performance.
 
 
 SOCKS
@@ -720,7 +720,7 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``disable_capture``
-    Disable request capture and interception. When ``True`` all requests are passed straight through and no HTTPS decryption takes place. Useful for boosting performance if all you want is the upstream proxy functionality.
+    Disable request interception and capture. When ``True`` all requests are passed straight through and no HTTPS decryption takes place. Useful for boosting performance if all you want is the upstream proxy functionality.
 
 .. code:: python
 
