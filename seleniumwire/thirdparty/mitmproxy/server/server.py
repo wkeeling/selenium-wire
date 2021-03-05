@@ -125,9 +125,11 @@ class ConnectionHandler:
                 self.log(str(e), "warn")
                 self.log("Invalid certificate, closing connection. Pass --ssl-insecure to disable validation.", "warn")
             else:
-                self.log(str(e), "warn")
+                if self.config.options.suppress_connection_errors:
+                    self.log(repr(e), "debug")
+                else:
+                    self.log(str(e), "warn")
 
-                self.log(repr(e), "debug")
             # If an error propagates to the topmost level,
             # we send an HTTP error response, which is both
             # understandable by HTTP clients and humans.
