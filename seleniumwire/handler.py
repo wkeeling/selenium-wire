@@ -103,12 +103,7 @@ class InterceptRequestHandler:
 
         # Convert the mitmproxy specific response to one of our responses
         # for handling.
-        response = Response(
-            status_code=flow.response.status_code,
-            reason=flow.response.reason,
-            headers=[(k, v) for k, v in flow.response.headers.items()],
-            body=flow.response.raw_content
-        )
+        response = self._create_response(flow)
 
         # Call the response interceptor if set
         if self.proxy.response_interceptor is not None:
@@ -141,6 +136,27 @@ class InterceptRequestHandler:
         request.response = response
 
         return request
+
+    def _create_response(self, flow):
+        response = Response(
+            status_code=flow.response.status_code,
+            reason=flow.response.reason,
+            headers=[(k, v) for k, v in flow.response.headers.items()],
+            body=flow.response.raw_content
+        )
+
+        cert = flow.server_conn.cert
+        if cert is not None:
+            response.cert = dict(
+                subject=cert.subject,
+                serial=cert.serial,
+                key=cert.keyinfo,
+                signature_algorithm=cert.x509.get_signature_algorithm(),
+                expired=cert.has_expired,
+                issuer=cert.issuer
+            )
+
+        return response
 
     def _to_headers_obj(self, headers):
         return Headers([(k.encode('utf-8'), v.encode('utf-8')) for k, v in headers.items()])

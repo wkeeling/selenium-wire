@@ -78,6 +78,14 @@ class InterceptRequestHandlerTest(TestCase):
         mock_flow.response.reason = 'OK'
         mock_flow.response.headers = Headers([(b'Content-Length', b'6')])
         mock_flow.response.raw_content = b'foobar'
+        mock_cert = Mock()
+        mock_cert.subject = 'test_subject'
+        mock_cert.serial = 'test_serial'
+        mock_cert.keyinfo = 'test_key'
+        mock_cert.x509.get_signature_algorithm.return_value = 'test_algo'
+        mock_cert.has_expired = False
+        mock_cert.issuer = 'test_issuer'
+        mock_flow.server_conn.cert = mock_cert
         saved_response = None
 
         def save_response(_, response):
@@ -93,6 +101,12 @@ class InterceptRequestHandlerTest(TestCase):
         self.assertEqual('OK', saved_response.reason)
         self.assertEqual({'Content-Length': '6'}, dict(saved_response.headers))
         self.assertEqual(b'foobar', saved_response.body)
+        self.assertEqual('test_subject', saved_response.cert['subject'])
+        self.assertEqual('test_serial', saved_response.cert['serial'])
+        self.assertEqual('test_key', saved_response.cert['key'])
+        self.assertEqual('test_algo', saved_response.cert['signature_algorithm'])
+        self.assertFalse(saved_response.cert['expired'])
+        self.assertEqual('test_issuer', saved_response.cert['issuer'])
 
     def test_ignore_response_when_no_request(self):
         mock_flow = Mock()

@@ -309,6 +309,9 @@ Response objects have the following attributes.
 ``body``
     The response body as ``bytes``. If the response has no body the value of ``body`` will be empty, i.e. ``b''``.
 
+``cert``
+    Information about the server SSL certificate in dictionary format. Empty for non-HTTPS requests.
+
 ``date``
     The datetime the response was received.
 

@@ -180,6 +180,7 @@ class Response:
 
         self.body = body
         self.date: datetime = datetime.now()
+        self.cert: dict = {}
 
     @property
     def body(self) -> bytes:
