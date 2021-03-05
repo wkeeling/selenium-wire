@@ -1,4 +1,5 @@
 import enum
+import logging
 import textwrap
 import time
 
@@ -10,6 +11,8 @@ from seleniumwire.thirdparty.mitmproxy.net import websockets
 from seleniumwire.thirdparty.mitmproxy.server.protocol import base
 from seleniumwire.thirdparty.mitmproxy.server.protocol.websocket import \
     WebSocketLayer
+
+log = logging.getLogger(__name__)
 
 
 class _HttpTransmissionLayer(base.Layer):
@@ -248,6 +251,8 @@ class HttpLayer(base.Layer):
         if is_ok(f.response.status_code):
             layer = UpstreamConnectLayer(self, f.request)
             return layer()
+        elif f.response.status_code == 407:
+            log.warning('Invalid proxy server credentials supplied')
         return False
 
     def _switch_mode_when_no_proxy(self, f):
