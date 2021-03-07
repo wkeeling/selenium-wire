@@ -267,6 +267,18 @@ class RequestStorageTest(TestCase):
         self.assertEqual('websocket test message', requests[0].ws_messages[0].content)
         self.assertTrue(len(requests[1].ws_messages) == 0)
 
+    def test_load_request_cert_data(self):
+        storage = RequestStorage(base_dir=self.base_dir)
+        request = self._create_request()
+        storage.save_request(request)
+        response = self._create_response()
+        response.cert = {'subject': 'test_cert'}
+        storage.save_response(request.id, response)
+
+        requests = storage.load_requests()
+
+        self.assertEqual({'subject': 'test_cert'}, requests[0].cert)
+
     def test_clear_requests(self):
         request_1 = self._create_request()
         request_2 = self._create_request()
