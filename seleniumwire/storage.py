@@ -180,6 +180,12 @@ class RequestStorage:
                         response.body, response.headers.get('Content-Encoding', 'identity')
                     )
                     request.response = response
+
+                    # The certificate data has been stored on the response but we make
+                    # it available on the request which is a more logical location.
+                    if hasattr(response, 'cert'):
+                        request.cert = response.cert
+                        del response.cert
             except (FileNotFoundError, EOFError):
                 pass
 

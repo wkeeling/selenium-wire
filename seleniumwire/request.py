@@ -44,6 +44,7 @@ class Request:
         self.response = None
         self.date: datetime = datetime.now()
         self.ws_messages: List[WebSocketMessage] = []
+        self.cert: dict = {}
 
     @property
     def body(self) -> bytes:
@@ -180,7 +181,6 @@ class Response:
 
         self.body = body
         self.date: datetime = datetime.now()
-        self.cert: dict = {}
 
     @property
     def body(self) -> bytes:
