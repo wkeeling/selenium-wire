@@ -123,6 +123,8 @@ Install using pip:
 
     pip install selenium-wire
 
+If you get an error about not being able to build cryptography, you may be running an old version of pip. Try upgrading pip with ``python -m pip install --upgrade pip``, and then re-run the above command.
+
 Browser Setup
 -------------
 
