@@ -1,7 +1,7 @@
 Selenium Wire
 =============
 
-Selenium Wire extends Selenium's Python bindings to give you access to the underlying requests made by the browser. You author your code in the same way as you would with Selenium, but you get extra APIs for inspecting requests and responses and making changes to them on the fly.
+Selenium Wire extends Selenium's Python bindings to give you access to the underlying requests made by the browser. You author your code in the same way as you do with Selenium, but you get extra APIs for inspecting requests and responses and making changes to them on the fly.
 
 .. image:: https://github.com/wkeeling/selenium-wire/workflows/build/badge.svg
         :target: https://github.com/wkeeling/selenium-wire/actions
