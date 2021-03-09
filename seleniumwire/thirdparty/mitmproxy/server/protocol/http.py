@@ -252,7 +252,7 @@ class HttpLayer(base.Layer):
             layer = UpstreamConnectLayer(self, f.request)
             return layer()
         elif f.response.status_code == 407:
-            log.warning('Invalid proxy server credentials supplied')
+            log.error('Invalid proxy server credentials supplied')
         return False
 
     def _switch_mode_when_no_proxy(self, f):
