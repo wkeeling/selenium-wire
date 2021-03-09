@@ -1,6 +1,13 @@
 History
 ~~~~~~~
 
+4.2.1 (2021-03-09)
+------------------
+
+* Make SSL certificate metadata available via request.cert
+* Suppress connection aborted error by default.
+* Log error on proxy authentication failure.
+
 4.2.0 (2021-03-03)
 ------------------
 
