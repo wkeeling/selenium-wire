@@ -198,6 +198,10 @@ Selenium Wire has limited support for using the remote webdriver client. When yo
         seleniumwire_options=options
     )
 
+If the machine running the browser needs to use a different address to talk to the machine running Selenium Wire, you need to configure the browser manually. `This issue`_ goes into more detail.
+
+.. _`This issue`: https://github.com/wkeeling/selenium-wire/issues/220
+
 Accessing Requests
 ~~~~~~~~~~~~~~~~~~
 
@@ -636,6 +640,25 @@ Then just use ``webdriver.Chrome()`` as you would normally, making sure that you
     )
 
 The first time you run the webdriver it will download and patch the ChromeDriver binary in the background.
+
+You can check that undetected_chromedriver is being used by looking for the log messages it generates. You just need to ensure that you've activated logging at the top of your script or program first - for example:
+
+.. code:: python
+
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logging.getLogger('undetected_chromedriver').level = logging.INFO
+
+    from seleniumwire import webdriver
+
+    ... code ...
+
+You should see messages similar to:
+
+.. code:: bash
+
+    INFO:undetected_chromedriver:Selenium patched. Safe to import Chrome / ChromeOptions
+    INFO:undetected_chromedriver:starting undetected_chromedriver.Chrome((), ...
 
 Note that this functionality is currently experimental.
 
