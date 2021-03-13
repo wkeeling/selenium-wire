@@ -180,9 +180,12 @@ Ensure that you import ``webdriver`` from the ``seleniumwire`` package:
 
 **Chrome and Firefox**
 
-For Chrome and Firefox, you don't need to do anything special. Just instantiate the webdriver as you would normally with ``webdriver.Chrome()`` or ``webdriver.Firefox()``, passing in any Selenium specific options. Selenium Wire also has it's `own options`_ that can be passed in the ``seleniumwire_options`` attribute.
+For Chrome and Firefox, you don't need to do anything special. Just instantiate the webdriver as you would normally with ``webdriver.Chrome()`` or ``webdriver.Firefox()`` passing in any `desired capabilities`_ and browser specific options for `Chrome`_ or `Firefox`_ (such as the executable path, headless mode etc.). Selenium Wire also has it's `own options`_ that can be passed in the ``seleniumwire_options`` attribute.
 
 .. _`own options`: #all-options
+.. _`desired capabilities`: https://selenium-python.readthedocs.io/api.html#desired-capabilities
+.. _`Chrome`: https://selenium-python.readthedocs.io/api.html#module-selenium.webdriver.chrome.options
+.. _`Firefox`: https://selenium-python.readthedocs.io/api.html#module-selenium.webdriver.firefox.options
 
 **Remote**
 
