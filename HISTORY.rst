@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+4.2.2 (2021-03-19)
+------------------
+
+* Fix concurrency issue in RequestStorage that allowed partially stored requests to be retrieved.
+
 4.2.1 (2021-03-09)
 ------------------
 
