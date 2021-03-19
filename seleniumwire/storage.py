@@ -61,15 +61,12 @@ class RequestStorage:
         Args:
             request: The request to save.
         """
-        request_id = self._index_request(request)
-        request.id = request_id
+        request_id = str(uuid.uuid4())
         request_dir = self._get_request_dir(request_id)
         os.mkdir(request_dir)
+        request.id = request_id
 
         self._save(request, request_dir, 'request')
-
-    def _index_request(self, request):
-        request_id = str(uuid.uuid4())
 
         with self._lock:
             self._index.append(_IndexedRequest(
@@ -77,8 +74,6 @@ class RequestStorage:
                 url=request.url,
                 has_response=False)
             )
-
-        return request_id
 
     def _save(self, obj, dirname, filename):
         with open(os.path.join(dirname, filename), 'wb') as out:
