@@ -201,9 +201,7 @@ Selenium Wire has limited support for using the remote webdriver client. When yo
         seleniumwire_options=options
     )
 
-If the machine running the browser needs to use a different address to talk to the machine running Selenium Wire, you need to configure the browser manually. `This issue`_ goes into more detail.
-
-.. _`This issue`: https://github.com/wkeeling/selenium-wire/issues/220
+If the machine running the browser needs to use a different address to talk to the machine running Selenium Wire, you need to configure the browser manually. `This issue <https://github.com/wkeeling/selenium-wire/issues/220>`_ goes into more detail.
 
 Accessing Requests
 ~~~~~~~~~~~~~~~~~~
@@ -572,7 +570,7 @@ For authentication other than Basic, you can supply the full value for the ``Pro
         }
     }
 
-Note that the ``custom_authorization`` option is only supported by the `default backend`_.
+Note that the ``custom_authorization`` option is only supported by the `default backend`_. More info on the ``Proxy-Authorization`` header can be found `here <https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Proxy-Authorization>`_.
 
 .. _`default backend`: #backends
 
@@ -592,7 +590,7 @@ In which case you can disable request capture using the ``disable_capture`` `opt
 SOCKS
 -----
 
-Using a SOCKS proxy is the same as using an HTTP based one:
+Using a SOCKS proxy is the same as using an HTTP based one, but with the scheme set to ``socks5``:
 
 .. code:: python
 
@@ -611,9 +609,7 @@ As well as ``socks5``, the schemes ``socks4`` and ``socks5h`` are supported. Use
 
 **Using Selenium Wire with Tor**
 
-See `this example`_ if you want to run Selenium Wire with Tor.
-
-.. _`this example`: https://gist.github.com/woswos/38b921f0b82de009c12c6494db3f50c5
+See `this example <https://gist.github.com/woswos/38b921f0b82de009c12c6494db3f50c5>`_ if you want to run Selenium Wire with Tor.
 
 Bot Detection
 ~~~~~~~~~~~~~
@@ -712,13 +708,9 @@ Certificates
 
 Selenium Wire uses it's own CA certificate to decrypt HTTPS traffic. It is not normally necessary for the browser to trust this certificate because Selenium Wire tells the browser to add it as an exception. This will allow the browser to function normally, but it will display a "Not Secure" message in the address bar. If you wish to get rid of this message you can install the CA certificate manually.
 
-For the default backend, you can download the CA certificate `here`_. Once downloaded, navigate to "Certificates" in your browser settings and import the certificate in the "Authorities" section.
+For the default backend, you can download the CA certificate `here <https://github.com/wkeeling/selenium-wire/raw/master/seleniumwire/ca.crt>`_. Once downloaded, navigate to "Certificates" in your browser settings and import the certificate in the "Authorities" section.
 
-.. _`here`: https://github.com/wkeeling/selenium-wire/raw/master/seleniumwire/ca.crt
-
-If you are using the mitmproxy backend, you can follow `these instructions`_ to install the CA certificate.
-
-.. _`these instructions`: https://docs.mitmproxy.org/stable/concepts-certificates/#installing-the-mitmproxy-ca-certificate-manually
+If you are using the mitmproxy backend, you can follow `these instructions <https://docs.mitmproxy.org/stable/concepts-certificates/#installing-the-mitmproxy-ca-certificate-manually>`_ to install the CA certificate.
 
 All Options
 ~~~~~~~~~~~
