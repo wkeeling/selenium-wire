@@ -18,6 +18,9 @@ Selenium Wire extends Selenium's Python bindings to give you access to the under
 .. image:: https://img.shields.io/pypi/l/selenium-wire.svg
         :target: https://pypi.python.org/pypi/selenium-wire
 
+.. image:: https://pepy.tech/badge/selenium-wire/month
+        :target: https://pepy.tech/project/selenium-wire
+
 Simple Example
 ~~~~~~~~~~~~~~
 
