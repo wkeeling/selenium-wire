@@ -1,7 +1,7 @@
 Selenium Wire
 =============
 
-Selenium Wire extends Selenium's Python bindings giving you access to the underlying requests made by the browser. You author your code in the same way as you do with Selenium, but you get extra APIs for inspecting requests and responses and making changes to them on the fly.
+Selenium Wire extends Selenium's Python bindings to give you access to the underlying requests made by the browser. You author your code in the same way as you do with Selenium, but you get extra APIs for inspecting requests and responses and making changes to them on the fly.
 
 .. image:: https://pepy.tech/badge/selenium-wire/month
         :target: https://pepy.tech/project/selenium-wire
@@ -174,7 +174,7 @@ Ensure that you import ``webdriver`` from the ``seleniumwire`` package:
 
     from seleniumwire import webdriver
 
-* For sub-packages of ``webdriver``, you should continue to import these directly from ``selenium``. For example, to import ``WebDriverWait``:
+For sub-packages of ``webdriver``, you should continue to import these directly from ``selenium``. For example, to import ``WebDriverWait``:
 
 .. code:: python
 
@@ -183,7 +183,7 @@ Ensure that you import ``webdriver`` from the ``seleniumwire`` package:
 
 **Chrome and Firefox**
 
-For Chrome and Firefox, you don't need to do anything special. Just instantiate the webdriver as you would normally with ``webdriver.Chrome()`` or ``webdriver.Firefox()`` passing in any `desired capabilities`_ and browser specific options for `Chrome`_ or `Firefox`_ (such as the executable path, headless mode etc.). Selenium Wire also has it's `own options`_ that can be passed in the ``seleniumwire_options`` attribute.
+For Chrome and Firefox, you don't need to do anything special. Just instantiate the webdriver as you would normally with ``webdriver.Chrome()`` or ``webdriver.Firefox()`` passing in any `desired capabilities`_ and browser specific options for `Chrome`_ or `Firefox`_ , such as the executable path, headless mode etc. Selenium Wire also has it's `own options`_ that can be passed in the ``seleniumwire_options`` attribute.
 
 .. _`own options`: #all-options
 .. _`desired capabilities`: https://selenium-python.readthedocs.io/api.html#desired-capabilities
@@ -209,7 +209,7 @@ If the machine running the browser needs to use a different address to talk to t
 Accessing Requests
 ~~~~~~~~~~~~~~~~~~
 
-Selenium Wire captures all HTTP/HTTPS traffic made by the browser :superscript:`1`.
+Selenium Wire captures all HTTP/HTTPS traffic made by the browser [1]_.
 
 ``driver.requests``
     The list of captured requests in chronological order.
@@ -250,7 +250,7 @@ To clear previously captured requests and HAR entries, use ``del``:
 
     del driver.requests
 
-1. Selenium Wire ignores OPTIONS requests by default, as these are typically uninteresting and just add overhead. If you want to capture OPTIONS requests, you need to set the ``ignore_http_methods`` `option`_ to ``[]``.
+.. [1] Selenium Wire ignores OPTIONS requests by default, as these are typically uninteresting and just add overhead. If you want to capture OPTIONS requests, you need to set the ``ignore_http_methods`` `option`_ to ``[]``.
 
 .. _`option`: #all-options
 
@@ -272,7 +272,7 @@ Request objects have the following attributes.
     A dictionary-like object of request headers. Headers are case-insensitive and duplicates are permitted. Asking for ``request.headers['user-agent']`` will return the value of the ``User-Agent`` header. If you wish to replace a header, make sure you delete the existing header first with ``del request.headers['header-name']``, otherwise you'll create a duplicate.
 
 ``method``
-    The HTTP method type, e.g. ``GET`` or ``POST`` etc.
+    The HTTP method, e.g. ``GET`` or ``POST`` etc.
 
 ``params``
     A dictionary of request parameters. If a parameter with the same name appears more than once in the request, it's value in the dictionary will be a list.
@@ -465,7 +465,7 @@ You can use ``request.create_response()`` to send a custom reply back to the bro
 
     # Requests to https://server.com/some/path will have their responses mocked
 
-*Have any other examples you think could be useful? Feel free to submit a PR :)*
+*Have any other examples you think could be useful? Feel free to submit a PR.*
 
 Unset an interceptor
 --------------------
