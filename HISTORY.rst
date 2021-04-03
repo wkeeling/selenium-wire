@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+4.2.3 (2021-04-03)
+------------------
+
+* Fix bug where it was not possible to specify socks4 in proxy configuration.
+
 4.2.2 (2021-03-19)
 ------------------
 
