@@ -573,7 +573,7 @@ For authentication other than Basic, you can supply the full value for the ``Pro
         }
     }
 
-Note that the ``custom_authorization`` option is only supported by the `default backend`_. More info on the ``Proxy-Authorization`` header can be found `here <https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Proxy-Authorization>`_.
+Note that the ``custom_authorization`` option is only supported by the `default backend`_. More info on the ``Proxy-Authorization`` header can be found `here <https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Proxy-Authorization>`__.
 
 .. _`default backend`: #backends
 
@@ -711,7 +711,7 @@ Certificates
 
 Selenium Wire uses it's own CA certificate to decrypt HTTPS traffic. It is not normally necessary for the browser to trust this certificate because Selenium Wire tells the browser to add it as an exception. This will allow the browser to function normally, but it will display a "Not Secure" message in the address bar. If you wish to get rid of this message you can install the CA certificate manually.
 
-For the default backend, you can download the CA certificate `here <https://github.com/wkeeling/selenium-wire/raw/master/seleniumwire/ca.crt>`_. Once downloaded, navigate to "Certificates" in your browser settings and import the certificate in the "Authorities" section.
+For the default backend, you can download the CA certificate `here <https://github.com/wkeeling/selenium-wire/raw/master/seleniumwire/ca.crt>`__. Once downloaded, navigate to "Certificates" in your browser settings and import the certificate in the "Authorities" section.
 
 If you are using the mitmproxy backend, you can follow `these instructions <https://docs.mitmproxy.org/stable/concepts-certificates/#installing-the-mitmproxy-ca-certificate-manually>`_ to install the CA certificate.
 
