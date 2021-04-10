@@ -66,7 +66,7 @@ class Firefox(InspectRequestsMixin, DriverCommonMixin, _Firefox):
         if seleniumwire_options.get('auto_config', True):
             capabilities = kwargs.get('capabilities', kwargs.get('desired_capabilities'))
             if capabilities is None:
-                capabilities = DesiredCapabilities.FIREFOX.copy()
+                capabilities = DesiredCapabilities.FIREFOX
 
             capabilities = self._configure(capabilities, seleniumwire_options)
 
@@ -95,7 +95,7 @@ class Chrome(InspectRequestsMixin, DriverCommonMixin, _Chrome):
         if seleniumwire_options.get('auto_config', True):
             capabilities = kwargs.get('desired_capabilities')
             if capabilities is None:
-                capabilities = DesiredCapabilities.CHROME.copy()
+                capabilities = DesiredCapabilities.CHROME
 
             capabilities = self._configure(capabilities, seleniumwire_options)
 
@@ -198,7 +198,7 @@ class Remote(InspectRequestsMixin, DriverCommonMixin, _Remote):
         if seleniumwire_options.get('auto_config', True):
             capabilities = kwargs.get('desired_capabilities')
             if capabilities is None:
-                capabilities = DesiredCapabilities.FIREFOX.copy()
+                capabilities = DesiredCapabilities.FIREFOX
 
             capabilities = self._configure(capabilities, seleniumwire_options)
 
