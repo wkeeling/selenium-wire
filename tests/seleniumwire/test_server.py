@@ -200,12 +200,6 @@ class MitmProxyTest(TestCase):
         })
 
         self.assertEqual(['$^'], proxy.scopes)
-        self.mock_options.return_value.update.assert_has_calls([
-            self.base_options_update(),
-            call(
-                ignore_hosts=['.*']
-            )
-        ])
 
     def test_new_event_loop(self):
         proxy = MitmProxy('somehost', 12345, {
