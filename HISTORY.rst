@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+4.2.4 (2021-04-13)
+------------------
+
+* Fix bug where disable_capture would break upstream proxy authentication.
+
 4.2.3 (2021-04-03)
 ------------------
 
