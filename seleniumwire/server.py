@@ -65,7 +65,6 @@ class MitmProxy:
 
         if options.get('disable_capture', False):
             self.scopes = ['$^']
-            mitmproxy_opts.update(ignore_hosts=['.*'])
 
         # Options that are prefixed mitm_ are passed through to mitmproxy
         mitmproxy_opts.update(**{k[5:]: v for k, v in options.items() if k.startswith('mitm_')})
