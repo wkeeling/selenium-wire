@@ -126,12 +126,12 @@ Install using pip:
 
     pip install selenium-wire
 
-If you get an error about not being able to build cryptography, you may be running an old version of pip. Try upgrading pip with ``python -m pip install --upgrade pip``, and then re-run the above command.
+If you get an error about not being able to build cryptography you may be running an old version of pip. Try upgrading pip with ``python -m pip install --upgrade pip`` and then re-run the above command.
 
 Browser Setup
 -------------
 
-No specific configuration should be necessary except to ensure that you have downloaded the `ChromeDriver`_ and `GeckoDriver`_ for Chrome and Firefox to be remotely controlled - the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on your PATH.
+No specific configuration should be necessary except to ensure that you have downloaded the `ChromeDriver`_ and `GeckoDriver`_ for Chrome and Firefox to be remotely controlled, the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on your PATH.
 
 .. _`ChromeDriver`: https://sites.google.com/a/chromium.org/chromedriver/
 
@@ -183,7 +183,7 @@ For sub-packages of ``webdriver``, you should continue to import these directly 
 
 **Chrome and Firefox**
 
-For Chrome and Firefox, you don't need to do anything special. Just instantiate the webdriver as you would normally with ``webdriver.Chrome()`` or ``webdriver.Firefox()`` passing in any `desired capabilities`_ and browser specific options for `Chrome`_ or `Firefox`_ , such as the executable path, headless mode etc. Selenium Wire also has it's `own options`_ that can be passed in the ``seleniumwire_options`` attribute.
+For Chrome and Firefox you don't need to do anything special. Just instantiate the webdriver as you would normally with ``webdriver.Chrome()`` or ``webdriver.Firefox()`` passing in any `desired capabilities`_ and browser specific options for `Chrome`_ or `Firefox`_ , such as the executable path, headless mode etc. Selenium Wire also has it's `own options`_ that can be passed in the ``seleniumwire_options`` attribute.
 
 .. _`own options`: #all-options
 .. _`desired capabilities`: https://selenium-python.readthedocs.io/api.html#desired-capabilities
@@ -204,7 +204,7 @@ Selenium Wire has limited support for using the remote webdriver client. When yo
         seleniumwire_options=options
     )
 
-If the machine running the browser needs to use a different address to talk to the machine running Selenium Wire, you need to configure the browser manually. `This issue <https://github.com/wkeeling/selenium-wire/issues/220>`_ goes into more detail.
+If the machine running the browser needs to use a different address to talk to the machine running Selenium Wire you need to configure the browser manually. `This issue <https://github.com/wkeeling/selenium-wire/issues/220>`_ goes into more detail.
 
 Accessing Requests
 ~~~~~~~~~~~~~~~~~~
@@ -218,7 +218,7 @@ Selenium Wire captures all HTTP/HTTPS traffic made by the browser [1]_.
     Convenience attribute for retrieving the most recently captured request. This is more efficient than using ``driver.requests[-1]``.
 
 ``driver.wait_for_request(pat, timeout=10)``
-    This method will wait until it sees a request matching a pattern. The ``pat`` attribute will be matched within the request URL. ``pat`` can be a simple sub-string or a regex. Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action - and it will return the first request it finds. Also note that since ``pat`` can be a regex, you must escape special characters such as question marks with a slash. A ``TimeoutException`` is raised if no match is found within the timeout period.
+    This method will wait until it sees a request matching a pattern. The ``pat`` attribute will be matched within the request URL. ``pat`` can be a simple sub-string or a regex. Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action and it will return the first request it finds. Also note that since ``pat`` can be a regex, you must escape special characters such as question marks with a slash. A ``TimeoutException`` is raised if no match is found within the timeout period.
 
     For example, to wait for an AJAX request to return after a button is clicked:
 
@@ -231,7 +231,7 @@ Selenium Wire captures all HTTP/HTTPS traffic made by the browser [1]_.
         request = driver.wait_for_request('/api/products/12345/')
 
 ``driver.har``
-    A JSON formatted HAR archive of HTTP transactions that have taken place. HAR capture is turned off by default, and you must set the ``enable_har`` `option`_ to ``True`` before using ``driver.har``.
+    A JSON formatted HAR archive of HTTP transactions that have taken place. HAR capture is turned off by default and you must set the ``enable_har`` `option`_ to ``True`` before using ``driver.har``.
 
 ``driver.iter_requests()``
     Returns an iterator over captured requests. Useful when dealing with a large number of requests.
@@ -290,7 +290,7 @@ Request objects have the following attributes.
     The request URL, e.g. ``https://server/some/path/index.html?foo=bar&spam=eggs``
 
 ``ws_messages``
-    Where the request is a websocket handshake request (normally with a URL starting ``wss://``), then ``ws_messages`` will contain a list of any websocket messages sent and received. See `WebSocketMessage Objects`_.
+    Where the request is a websocket handshake request (normally with a URL starting ``wss://``) then ``ws_messages`` will contain a list of any websocket messages sent and received. See `WebSocketMessage Objects`_.
 
 Request objects have the following methods.
 
@@ -480,7 +480,7 @@ To unset an interceptor, use ``del``:
 Limiting Request Capture
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Selenium Wire works by redirecting browser traffic through an internal proxy server it spins up in the background. As requests flow through the proxy they are intercepted and captured. Capturing requests can slow things down a little, but there are a few things you can do to restrict what gets captured.
+Selenium Wire works by redirecting browser traffic through an internal proxy server it spins up in the background. As requests flow through the proxy they are intercepted and captured. Capturing requests can slow things down a little but there are a few things you can do to restrict what gets captured.
 
 ``driver.scopes``
     This accepts a list of regular expressions that will match the URLs to be captured. It should be set on the driver before making any requests. When empty (the default) all URLs are captured.
@@ -499,7 +499,7 @@ Selenium Wire works by redirecting browser traffic through an internal proxy ser
     Note that even if a request is out of scope and not captured, it will still travel through Selenium Wire.
 
 ``seleniumwire_options.disable_capture``
-    Use this option to switch off request capture. Requests will still pass through Selenium Wire and through any upstream proxy you have configured, but they won't be stored.
+    Use this option to switch off request capture. Requests will still pass through Selenium Wire and through any upstream proxy you have configured but they won't be stored.
 
     .. code:: python
 
@@ -588,7 +588,7 @@ The proxy configuration can also be loaded through environment variables called 
 SOCKS
 -----
 
-Using a SOCKS proxy is the same as using an HTTP based one, but with the scheme set to ``socks5``:
+Using a SOCKS proxy is the same as using an HTTP based one but you set the scheme to ``socks5``:
 
 .. code:: python
 
@@ -616,7 +616,7 @@ Selenium Wire will automatically integrate itself with `undetected-chromedriver`
 
 .. _`undetected-chromedriver`: https://github.com/ultrafunkamsterdam/undetected-chromedriver
 
-If you wish to take advantage of this, make sure you have undetected-chromedriver installed:
+If you wish to take advantage of this make sure you have undetected-chromedriver installed:
 
 .. code:: bash
 
@@ -638,7 +638,7 @@ Then just use ``webdriver.Chrome()`` as you would normally, making sure that you
 
 The first time you run the webdriver it will download and patch the ChromeDriver binary in the background.
 
-You can check that undetected_chromedriver is being used by looking for the log messages it generates. You just need to ensure that you've activated logging at the top of your script or program first - for example:
+You can check that undetected_chromedriver is being used by looking for the log messages it generates. You just need to ensure that you've activated logging at the top of your script or program first, for example:
 
 .. code:: python
 
