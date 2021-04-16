@@ -499,12 +499,12 @@ Selenium Wire works by redirecting browser traffic through an internal proxy ser
     Note that even if a request is out of scope and not captured, it will still travel through Selenium Wire.
 
 ``seleniumwire_options.disable_capture``
-    Use this option to switch off request capture. Requests will still pass through Selenium Wire and through any upstream proxy you have configured but they won't be stored.
+    Use this option to switch off request capture. Requests will still pass through Selenium Wire and through any upstream proxy you have configured but they won't be intercepted or stored. Request interceptors will not execute.
 
     .. code:: python
 
         options = {
-            'disable_capture': True  # Don't store any requests
+            'disable_capture': True  # Don't intercept/store any requests
         }
         driver = webdriver.Chrome(seleniumwire_options=options)
 
@@ -741,12 +741,12 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``disable_capture``
-    Disable request capture. When ``True`` nothing gets stored.
+    Disable request capture. When ``True`` nothing gets intercepted or stored.
 
 .. code:: python
 
     options = {
-        'disable_capture': True  # Don't store any requests.
+        'disable_capture': True  # Don't intercept/store any requests.
     }
     driver = webdriver.Chrome(seleniumwire_options=options)
 
