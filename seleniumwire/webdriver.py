@@ -202,13 +202,13 @@ class _SeleniumWireRemote(InspectRequestsMixin, DriverCommonMixin, _Remote):
         super().__init__(*args, **kwargs)
 
 
-class Firefox:
+class Firefox(InspectRequestsMixin, DriverCommonMixin, _Firefox):
     def __new__(cls, *args, use_seleniumwire=True, **kwargs):
         clazz = _SeleniumWireFirefox if use_seleniumwire else _Firefox
         return clazz(*args, **kwargs)
 
 
-class Chrome:
+class Chrome(InspectRequestsMixin, DriverCommonMixin, _Chrome):
     def __new__(cls, *args, use_seleniumwire=True, **kwargs):
         clazz = _SeleniumWireChrome if use_seleniumwire else _Chrome
 
@@ -226,19 +226,19 @@ class Chrome:
         return clazz(*args, **kwargs)
 
 
-class Safari:
+class Safari(InspectRequestsMixin, DriverCommonMixin, _Safari):
     def __new__(cls, *args, use_seleniumwire=True, **kwargs):
         clazz = _SeleniumWireSafari if use_seleniumwire else _Safari
         return clazz(*args, **kwargs)
 
 
-class Edge:
+class Edge(InspectRequestsMixin, DriverCommonMixin, _Edge):
     def __new__(cls, *args, use_seleniumwire=True, **kwargs):
         clazz = _SeleniumWireEdge if use_seleniumwire else _Edge
         return clazz(*args, **kwargs)
 
 
-class Remote:
+class Remote(InspectRequestsMixin, DriverCommonMixin, _Remote):
     def __new__(cls, *args, use_seleniumwire=True, **kwargs):
         clazz = _SeleniumWireRemote if use_seleniumwire else _Remote
         return clazz(*args, **kwargs)
