@@ -206,6 +206,12 @@ Selenium Wire has limited support for using the remote webdriver client. When yo
 
 If the machine running the browser needs to use a different address to talk to the machine running Selenium Wire you need to configure the browser manually. `This issue <https://github.com/wkeeling/selenium-wire/issues/220>`_ goes into more detail.
 
+If you need to completely disable the use of selenium-wire:
+
+.. code:: python
+
+    driver = webdriver.Chrome(use_seleniumwire=False)
+
 Accessing Requests
 ~~~~~~~~~~~~~~~~~~
 
