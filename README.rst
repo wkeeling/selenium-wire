@@ -206,12 +206,6 @@ Selenium Wire has limited support for using the remote webdriver client. When yo
 
 If the machine running the browser needs to use a different address to talk to the machine running Selenium Wire you need to configure the browser manually. `This issue <https://github.com/wkeeling/selenium-wire/issues/220>`_ goes into more detail.
 
-If you need to completely disable the use of selenium-wire:
-
-.. code:: python
-
-    driver = webdriver.Chrome(use_seleniumwire=False)
-
 Accessing Requests
 ~~~~~~~~~~~~~~~~~~
 
@@ -840,6 +834,13 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
         'suppress_connection_errors': False  # Show full tracebacks for any connection errors
     }
     driver = webdriver.Chrome(seleniumwire_options=options)
+
+``request_storage_base_dir``
+    Completely disable the use of selenium-wire. The default is ``True``.
+    
+.. code:: python
+
+    driver = webdriver.Chrome(use_seleniumwire=False)
 
 ``verify_ssl``
     Whether SSL certificates should be verified. The default is ``False`` which prevents errors with self-signed certificates.
