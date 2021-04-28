@@ -16,7 +16,7 @@ from seleniumwire.inspect import InspectRequestsMixin
 
 try:
     # noinspection PyUnresolvedReferences
-    from undetected_chromedriver import ChromeOptions
+    from undetected_chromedriver import ChromeOptions  # noqa
 except ImportError:
     pass
 
