@@ -82,6 +82,11 @@ class RequestTest(TestCase):
 
         self.assertEqual('a=b', request.body.decode('utf-8'))
 
+    def test_host(self):
+        request = self._create_request()
+
+        self.assertEqual('www.example.com', request.host)
+
     def test_path(self):
         request = self._create_request()
 

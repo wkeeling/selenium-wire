@@ -277,6 +277,9 @@ Request objects have the following attributes.
 ``params``
     A dictionary of request parameters. If a parameter with the same name appears more than once in the request, it's value in the dictionary will be a list.
 
+``host``
+    The request host, e.g. ``wwww.example.com``
+
 ``path``
     The request path, e.g. ``/some/path/index.html``
 

@@ -116,6 +116,14 @@ class Request:
         """
         return urlsplit(self.url).path
 
+    @property
+    def host(self) -> str:
+        """Get the request host.
+
+        Returns: The request host.
+        """
+        return urlsplit(self.url).netloc
+
     @path.setter
     def path(self, p: str):
         parts = list(urlsplit(self.url))
