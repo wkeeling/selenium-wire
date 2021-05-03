@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+4.2.5 (2021-05-03)
+------------------
+
+* Switch to upstream_cert=True by default, enabling HTTP/2.
+
 4.2.4 (2021-04-13)
 ------------------
 
