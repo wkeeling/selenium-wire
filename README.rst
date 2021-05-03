@@ -838,6 +838,13 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     }
     driver = webdriver.Chrome(seleniumwire_options=options)
 
+``request_storage_base_dir``
+    Completely disable the use of selenium-wire. The default is ``True``.
+    
+.. code:: python
+
+    driver = webdriver.Chrome(use_seleniumwire=False)
+
 ``verify_ssl``
     Whether SSL certificates should be verified. The default is ``False`` which prevents errors with self-signed certificates.
 
