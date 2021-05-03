@@ -271,14 +271,14 @@ Request objects have the following attributes.
 ``headers``
     A dictionary-like object of request headers. Headers are case-insensitive and duplicates are permitted. Asking for ``request.headers['user-agent']`` will return the value of the ``User-Agent`` header. If you wish to replace a header, make sure you delete the existing header first with ``del request.headers['header-name']``, otherwise you'll create a duplicate.
 
+``host``
+    The request host, e.g. ``wwww.example.com``
+
 ``method``
     The HTTP method, e.g. ``GET`` or ``POST`` etc.
 
 ``params``
     A dictionary of request parameters. If a parameter with the same name appears more than once in the request, it's value in the dictionary will be a list.
-
-``host``
-    The request host, e.g. ``wwww.example.com``
 
 ``path``
     The request path, e.g. ``/some/path/index.html``
