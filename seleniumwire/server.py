@@ -12,7 +12,6 @@ from seleniumwire.utils import extract_cert_and_key, get_upstream_proxy
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_UPSTREAM_CERT = False
 DEFAULT_STREAM_WEBSOCKETS = True
 
 
@@ -57,7 +56,6 @@ class MitmProxy:
         # Update the options now all addons have been added
         mitmproxy_opts.update(
             ssl_insecure=options.get('verify_ssl', True),
-            upstream_cert=DEFAULT_UPSTREAM_CERT,
             stream_websockets=DEFAULT_STREAM_WEBSOCKETS,
             suppress_connection_errors=options.get('suppress_connection_errors', True),
             **self._get_upstream_proxy_args(),

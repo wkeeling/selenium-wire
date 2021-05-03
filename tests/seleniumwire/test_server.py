@@ -10,7 +10,6 @@ class MitmProxyTest(TestCase):
     base_options_update = functools.partial(
         call,
         ssl_insecure=True,
-        upstream_cert=False,
         stream_websockets=True,
         suppress_connection_errors=True,
     )
