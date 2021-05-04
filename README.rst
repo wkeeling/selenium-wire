@@ -641,24 +641,20 @@ Then just use ``webdriver.Chrome()`` as you would normally, making sure that you
 
 The first time you run the webdriver it will download and patch the ChromeDriver binary in the background.
 
-You can check that undetected_chromedriver is being used by looking for the log messages it generates. You just need to ensure that you've activated logging at the top of your script or program first, for example:
+You can check that undetected_chromedriver is being used by looking for the presence of a log message. You just need to ensure that you've activated logging at the top of your script or program first, for example:
 
 .. code:: python
 
     import logging
     logging.basicConfig(level=logging.INFO)
-    logging.getLogger('undetected_chromedriver').level = logging.INFO
-
-    from seleniumwire import webdriver
 
     ... code ...
 
-You should see messages similar to:
+Then when you run Selenium Wire you should see the following message near the top of the terminal output:
 
 .. code:: bash
 
-    INFO:undetected_chromedriver:Selenium patched. Safe to import Chrome / ChromeOptions
-    INFO:undetected_chromedriver:starting undetected_chromedriver.Chrome((), ...
+    INFO:seleniumwire.webdriver:Using undetected_chromedriver
 
 Note that this functionality is currently experimental.
 
