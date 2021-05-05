@@ -1,5 +1,3 @@
-import logging
-
 from selenium.webdriver import ActionChains  # noqa
 from selenium.webdriver import Chrome as _Chrome
 from selenium.webdriver import ChromeOptions
@@ -15,8 +13,7 @@ from selenium.webdriver import TouchActions  # noqa
 
 from seleniumwire import backend
 from seleniumwire.inspect import InspectRequestsMixin
-
-log = logging.getLogger(__name__)
+from seleniumwire.utils import urlsafe_address
 
 
 class DriverCommonMixin:
@@ -79,16 +76,6 @@ class Firefox(InspectRequestsMixin, DriverCommonMixin, _Firefox):
         super().__init__(*args, **kwargs)
 
 
-try:
-    # If we find undetected_chromedriver in the environment, we
-    # assume the user intends for us to use it.
-    import undetected_chromedriver.v2 as uc
-    _Chrome = uc.Chrome  # noqa: F811
-    ChromeOptions = uc.ChromeOptions  # noqa: F811
-except ImportError:
-    pass
-
-
 class Chrome(InspectRequestsMixin, DriverCommonMixin, _Chrome):
     """Extends the Chrome webdriver to provide additional methods for inspecting requests."""
 
@@ -123,17 +110,6 @@ class Chrome(InspectRequestsMixin, DriverCommonMixin, _Chrome):
         # Prevent Chrome from bypassing the Selenium Wire proxy
         # for localhost addresses.
         chrome_options.add_argument('--proxy-bypass-list=<-loopback>')
-
-        try:
-            uc  # noqa
-            log.info('Using undetected_chromedriver')
-
-            # We need to point Chrome back to Selenium Wire
-            addr, port = urlsafe_address(self.proxy.address())
-            chrome_options.add_argument(f'--proxy-server={addr}:{port}')
-        except NameError:
-            pass
-
         kwargs['options'] = chrome_options
 
         super().__init__(*args, **kwargs)
@@ -219,20 +195,3 @@ class Remote(InspectRequestsMixin, DriverCommonMixin, _Remote):
             kwargs['desired_capabilities'] = capabilities
 
         super().__init__(*args, **kwargs)
-
-
-def urlsafe_address(address):
-    """Make an address safe to use in a URL.
-
-    Args:
-        address: A tuple of address information.
-    Returns:
-        A 2-tuple of url-safe (address, port)
-    """
-    addr, port, *rest = address
-
-    if rest:
-        # An IPv6 address needs to be surrounded by square brackets
-        addr = f'[{addr}]'
-
-    return addr, port

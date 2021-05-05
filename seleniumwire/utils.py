@@ -102,3 +102,20 @@ def extract_cert_and_key(dest_folder, check_exists=True):
 def is_list_alike(container):
     return (isinstance(container, collections.abc.Sequence) and not
             isinstance(container, str))
+
+
+def urlsafe_address(address):
+    """Make an address safe to use in a URL.
+
+    Args:
+        address: A tuple of address information.
+    Returns:
+        A 2-tuple of url-safe (address, port)
+    """
+    addr, port, *rest = address
+
+    if rest:
+        # An IPv6 address needs to be surrounded by square brackets
+        addr = f'[{addr}]'
+
+    return addr, port
