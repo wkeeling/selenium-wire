@@ -615,52 +615,31 @@ See `this example <https://gist.github.com/woswos/38b921f0b82de009c12c6494db3f50
 Bot Detection
 ~~~~~~~~~~~~~
 
-Selenium Wire will automatically integrate itself with `undetected-chromedriver`_ if it finds it in your environment. This library will transparently modify ChromeDriver to prevent it from triggering anti-bot measures on websites.
+Selenium Wire will integrate with `undetected-chromedriver`_ if it finds it in your environment. This library will transparently modify ChromeDriver to prevent it from triggering anti-bot measures on websites.
 
 .. _`undetected-chromedriver`: https://github.com/ultrafunkamsterdam/undetected-chromedriver
 
-If you wish to take advantage of this make sure you have undetected-chromedriver installed:
+If you wish to take advantage of this make sure you have undetected_chromedriver installed:
 
 .. code:: bash
 
     pip install undetected-chromedriver
 
-Then just use ``webdriver.Chrome()`` as you would normally, making sure that you import it from the ``seleniumwire`` package. If you use ``ChromeOptions`` this should also be imported from the ``seleniumwire`` package:
+Then you can select the version of undetected_chromedriver you want to use by importing ``Chrome`` and ``ChromeOptions`` from the appropriate package.
+
+For undetected_chromedriver version 1:
 
 .. code:: python
 
-    from seleniumwire import webdriver
+    from seleniumwire.undetected_chromedriver import Chrome, ChromeOptions
 
-    chrome_options = webdriver.ChromeOptions()
-    sw_options = {...}
-
-    driver = webdriver.Chrome(  # Optimized for bot detection
-        options=chrome_options,
-        seleniumwire_options=sw_options
-    )
-
-The first time you run the webdriver it will download and patch the ChromeDriver binary in the background.
-
-You can check that undetected_chromedriver is being used by looking for the log messages it generates. You just need to ensure that you've activated logging at the top of your script or program first, for example:
+For undetected_chromedriver version 2:
 
 .. code:: python
 
-    import logging
-    logging.basicConfig(level=logging.INFO)
-    logging.getLogger('undetected_chromedriver').level = logging.INFO
+    from seleniumwire.undetected_chromedriver.v2 import Chrome, ChromeOptions
 
-    from seleniumwire import webdriver
-
-    ... code ...
-
-You should see messages similar to:
-
-.. code:: bash
-
-    INFO:undetected_chromedriver:Selenium patched. Safe to import Chrome / ChromeOptions
-    INFO:undetected_chromedriver:starting undetected_chromedriver.Chrome((), ...
-
-Note that this functionality is currently experimental.
+See the `undetected_chromedriver docs <https://github.com/ultrafunkamsterdam/undetected-chromedriver>`_ for differences between the two versions.
 
 Backends
 ~~~~~~~~

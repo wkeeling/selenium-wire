@@ -5,7 +5,7 @@ from unittest import TestCase
 from unittest.mock import call, mock_open, patch
 
 from seleniumwire.utils import (extract_cert, extract_cert_and_key,
-                                get_upstream_proxy)
+                                get_upstream_proxy, urlsafe_address)
 
 
 class GetUpstreamProxyTest(TestCase):
@@ -215,3 +215,11 @@ class TestExtractCert(TestCase):
             extract_cert_and_key(Path('some', 'path'), check_exists=False)
 
         m_open.assert_called_once()
+
+
+def test_urlsafe_address_ipv4():
+    assert urlsafe_address(('192.168.0.1', 9999)) == ('192.168.0.1', 9999)
+
+
+def test_urlsafe_address_ipv6():
+    assert urlsafe_address(('::ffff:127.0.0.1', 9999, 0, 0)) == ('[::ffff:127.0.0.1]', 9999)

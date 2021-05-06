@@ -13,6 +13,7 @@ from selenium.webdriver import TouchActions  # noqa
 
 from seleniumwire import backend
 from seleniumwire.inspect import InspectRequestsMixin
+from seleniumwire.utils import urlsafe_address
 
 
 class DriverCommonMixin:
@@ -108,21 +109,10 @@ class Chrome(InspectRequestsMixin, DriverCommonMixin, _Chrome):
 
         # Prevent Chrome from bypassing the Selenium Wire proxy
         # for localhost addresses.
-        chrome_options.add_argument('proxy-bypass-list=<-loopback>')
+        chrome_options.add_argument('--proxy-bypass-list=<-loopback>')
         kwargs['options'] = chrome_options
 
         super().__init__(*args, **kwargs)
-
-
-try:
-    # If we find undetected_chromedriver in the environment, we
-    # assume the user intends for us to use it.
-    import undetected_chromedriver
-    undetected_chromedriver._Chrome = Chrome
-    Chrome = undetected_chromedriver.Chrome
-    ChromeOptions = undetected_chromedriver.ChromeOptions  # noqa: F811
-except ImportError:
-    pass
 
 
 class Safari(InspectRequestsMixin, DriverCommonMixin, _Safari):
@@ -205,20 +195,3 @@ class Remote(InspectRequestsMixin, DriverCommonMixin, _Remote):
             kwargs['desired_capabilities'] = capabilities
 
         super().__init__(*args, **kwargs)
-
-
-def urlsafe_address(address):
-    """Make an address safe to use in a URL.
-
-    Args:
-        address: A tuple of address information.
-    Returns:
-        A 2-tuple of url-safe (address, port)
-    """
-    addr, port, *rest = address
-
-    if rest:
-        # An IPv6 address needs to be surrounded by square brackets
-        addr = f'[{addr}]'
-
-    return addr, port
