@@ -1,6 +1,12 @@
 History
 ~~~~~~~
 
+4.3.0 (2021-05-06)
+------------------
+
+* Allow selection of undetected_chromedriver version.
+* Add new attribute request.host
+
 4.2.5 (2021-05-03)
 ------------------
 
