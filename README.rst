@@ -197,7 +197,7 @@ Selenium Wire has limited support for using the remote webdriver client. When yo
 .. code:: python
 
     options = {
-        'addr': 'hostname_or_ip'  # Address of the machine running Selenium Wire
+        'addr': 'hostname_or_ip'  # Address of the machine running Selenium Wire. Explicitly use 127.0.0.1 rather than localhost if remote session is running locally.
     }
     driver = webdriver.Remote(
         command_executor='http://www.example.com',
