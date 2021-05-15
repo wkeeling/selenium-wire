@@ -1,15 +1,14 @@
 from selenium.webdriver import ActionChains  # noqa
-from selenium.webdriver import Chrome as _Chrome
-from selenium.webdriver import ChromeOptions
-from selenium.webdriver import DesiredCapabilities
-from selenium.webdriver import Edge as _Edge
-from selenium.webdriver import Firefox as _Firefox
 from selenium.webdriver import FirefoxOptions  # noqa
 from selenium.webdriver import FirefoxProfile  # noqa
-from selenium.webdriver import Remote as _Remote
-from selenium.webdriver import Safari as _Safari
 from selenium.webdriver import Proxy  # noqa
 from selenium.webdriver import TouchActions  # noqa
+from selenium.webdriver import Chrome as _Chrome
+from selenium.webdriver import ChromeOptions, DesiredCapabilities
+from selenium.webdriver import Edge as _Edge
+from selenium.webdriver import Firefox as _Firefox
+from selenium.webdriver import Remote as _Remote
+from selenium.webdriver import Safari as _Safari
 
 from seleniumwire import backend
 from seleniumwire.inspect import InspectRequestsMixin
@@ -180,7 +179,7 @@ class Remote(InspectRequestsMixin, DriverCommonMixin, _Remote):
             seleniumwire_options = {}
 
         self.proxy = backend.create(
-            addr=seleniumwire_options.pop('addr'),
+            addr=seleniumwire_options.pop('addr', '127.0.0.1'),
             port=seleniumwire_options.get('port', 0),
             options=seleniumwire_options
         )
