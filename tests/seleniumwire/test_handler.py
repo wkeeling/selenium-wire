@@ -120,6 +120,26 @@ class InterceptRequestHandlerTest(TestCase):
         self.assertEqual(b'*.cdn.mozilla.net', saved_response.cert['cn'])
         self.assertEqual([b'*.cdn.mozilla.net', b'cdn.mozilla.net'], saved_response.cert['altnames'])
 
+    def test_multiple_response_headers(self):
+        mock_flow = Mock()
+        mock_flow.request.id = '12345'
+        mock_flow.request.url = 'http://somewhere.com/some/path'
+        mock_flow.response.status_code = 200
+        mock_flow.response.reason = 'OK'
+        mock_flow.response.headers = Headers([(b'Set-Cookie', b'12345'), (b'Set-Cookie', b'67890')])
+        mock_flow.response.raw_content = b'foobar'
+        saved_response = None
+
+        def save_response(_, response):
+            nonlocal saved_response
+            saved_response = response
+
+        self.proxy.storage.save_response.side_effect = save_response
+
+        self.handler.response(mock_flow)
+
+        self.assertEqual([('Set-Cookie', '12345'), ('Set-Cookie', '67890')], saved_response.headers.items())
+
     def test_ignore_response_when_no_request(self):
         mock_flow = Mock()
         mock_flow.request = object()  # Make it a real object so hasattr() works as expected
@@ -287,7 +307,7 @@ class InterceptRequestHandlerTest(TestCase):
         self.proxy.options['enable_har'] = True
         mock_flow = Mock()
         mock_flow.request.id = '12345'
-        mock_flow.response.headers = {}
+        mock_flow.response.headers = Headers()
         mock_flow.response.raw_content = b''
         mock_har.create_har_entry.return_value = {'name': 'test_har_entry'}
 
@@ -303,7 +323,7 @@ class InterceptRequestHandlerTest(TestCase):
         self.proxy.options['enable_har'] = False
         mock_flow = Mock()
         mock_flow.request.id = '12345'
-        mock_flow.response.headers = {}
+        mock_flow.response.headers = Headers()
         mock_flow.response.raw_content = b''
         mock_har.create_har_entry.return_value = {'name': 'test_har_entry'}
 
