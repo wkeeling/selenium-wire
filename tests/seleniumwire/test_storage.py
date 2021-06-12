@@ -278,6 +278,7 @@ class RequestStorageTest(TestCase):
         requests = storage.load_requests()
 
         self.assertEqual({'subject': 'test_cert'}, requests[0].cert)
+        self.assertFalse(hasattr(requests[0].response, 'cert'))
 
     def test_clear_requests(self):
         request_1 = self._create_request()
