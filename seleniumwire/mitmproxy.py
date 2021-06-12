@@ -149,7 +149,7 @@ class MitmProxyRequestHandler(CaptureMixin):
         response = Response(
             status_code=flow.response.status_code,
             reason=flow.response.reason,
-            headers=[(k, v) for k, v in flow.response.headers.items()],
+            headers=[(k, v) for k, v in flow.response.headers.items(multi=True)],
             body=flow.response.raw_content
         )
 

@@ -93,6 +93,26 @@ class MitmProxyRequestHandlerTest(TestCase):
         self.assertEqual({'Content-Length': '6'}, dict(captured_response.headers))
         self.assertEqual(b'foobar', captured_response.body)
 
+    def test_multiple_response_headers(self):
+        mock_flow = Mock()
+        mock_flow.request.id = '12345'
+        mock_flow.request.url = 'http://somewhere.com/some/path'
+        mock_flow.response.status_code = 200
+        mock_flow.response.reason = 'OK'
+        mock_flow.response.headers = Headers([(b'Set-Cookie', b'12345'), (b'Set-Cookie', b'67890')])
+        mock_flow.response.raw_content = b'foobar'
+        captured_response = None
+
+        def capture_response(*args):
+            nonlocal captured_response
+            captured_response = args[2]
+
+        self.capture_response.side_effect = capture_response
+
+        self.handler.response(mock_flow)
+
+        self.assertEqual([('Set-Cookie', '12345'), ('Set-Cookie', '67890')], captured_response.headers.items())
+
     def test_ignore_response_when_no_request(self):
         mock_flow = Mock()
         mock_flow.request = object()  # Make it a real object so hasattr() works as expected
