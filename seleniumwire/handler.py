@@ -153,7 +153,12 @@ class InterceptRequestHandler:
                 key=cert.keyinfo,
                 signature_algorithm=cert.x509.get_signature_algorithm(),
                 expired=cert.has_expired,
-                issuer=cert.issuer
+                issuer=cert.issuer,
+                notbefore=cert.notbefore,
+                notafter=cert.notafter,
+                organization=cert.organization,
+                cn=cert.cn,
+                altnames=cert.altnames,
             )
 
         return response

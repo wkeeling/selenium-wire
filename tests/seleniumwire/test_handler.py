@@ -79,12 +79,19 @@ class InterceptRequestHandlerTest(TestCase):
         mock_flow.response.headers = Headers([(b'Content-Length', b'6')])
         mock_flow.response.raw_content = b'foobar'
         mock_cert = Mock()
-        mock_cert.subject = 'test_subject'
-        mock_cert.serial = 'test_serial'
-        mock_cert.keyinfo = 'test_key'
-        mock_cert.x509.get_signature_algorithm.return_value = 'test_algo'
+        mock_cert.subject = [(b'C', b'US'), (b'O', b'Mozilla Corporation')]
+        mock_cert.serial = 123456789
+        mock_cert.keyinfo = ('RSA', 2048)
+        mock_cert.x509.get_signature_algorithm.return_value = b'test_algo'
         mock_cert.has_expired = False
-        mock_cert.issuer = 'test_issuer'
+        mock_cert.issuer = [(b'CN', b'DigiCert SHA2 Secure Server CA')]
+        mock_cert.organization = b'Mozilla Corporation'
+        mock_cert.cn = b'*.cdn.mozilla.net'
+        mock_cert.altnames = [b'*.cdn.mozilla.net', b'cdn.mozilla.net']
+        notbefore = datetime.now()
+        notafter = datetime.now()
+        mock_cert.notbefore = notbefore
+        mock_cert.notafter = notafter
         mock_flow.server_conn.cert = mock_cert
         saved_response = None
 
@@ -101,12 +108,17 @@ class InterceptRequestHandlerTest(TestCase):
         self.assertEqual('OK', saved_response.reason)
         self.assertEqual({'Content-Length': '6'}, dict(saved_response.headers))
         self.assertEqual(b'foobar', saved_response.body)
-        self.assertEqual('test_subject', saved_response.cert['subject'])
-        self.assertEqual('test_serial', saved_response.cert['serial'])
-        self.assertEqual('test_key', saved_response.cert['key'])
-        self.assertEqual('test_algo', saved_response.cert['signature_algorithm'])
+        self.assertEqual([(b'C', b'US'), (b'O', b'Mozilla Corporation')], saved_response.cert['subject'])
+        self.assertEqual(123456789, saved_response.cert['serial'])
+        self.assertEqual(('RSA', 2048), saved_response.cert['key'])
+        self.assertEqual(b'test_algo', saved_response.cert['signature_algorithm'])
         self.assertFalse(saved_response.cert['expired'])
-        self.assertEqual('test_issuer', saved_response.cert['issuer'])
+        self.assertEqual([(b'CN', b'DigiCert SHA2 Secure Server CA')], saved_response.cert['issuer'])
+        self.assertEqual(notbefore, saved_response.cert['notbefore'])
+        self.assertEqual(notafter, saved_response.cert['notafter'])
+        self.assertEqual(b'Mozilla Corporation', saved_response.cert['organization'])
+        self.assertEqual(b'*.cdn.mozilla.net', saved_response.cert['cn'])
+        self.assertEqual([b'*.cdn.mozilla.net', b'cdn.mozilla.net'], saved_response.cert['altnames'])
 
     def test_ignore_response_when_no_request(self):
         mock_flow = Mock()
