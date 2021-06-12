@@ -51,6 +51,7 @@ setup(
             "dataclasses>=0.7",
         ],
         'dev': [
+            'bumpversion',
             'coverage',
             'flake8',
             'gunicorn',
