@@ -1,6 +1,12 @@
 History
 ~~~~~~~
 
+4.3.1 (2021-06-13)
+------------------
+
+* Don't fold separate Set-Cookie response headers into a single header.
+* Add additional SSL certificate properties to request.cert
+
 4.3.0 (2021-05-06)
 ------------------
 
