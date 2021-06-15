@@ -2,6 +2,7 @@ import os
 import time
 import typing
 import uuid
+import socket
 
 import socks
 
@@ -102,7 +103,7 @@ class ClientConnection(tcp.BaseHandler, stateobject.StateObject):
 
     def send(self, message):
         if isinstance(message, list):
-            message = b''.join(message)
+            message = b"".join(message)
         self.wfile.write(message)
         self.wfile.flush()
 
@@ -114,21 +115,23 @@ class ClientConnection(tcp.BaseHandler, stateobject.StateObject):
 
     @classmethod
     def make_dummy(cls, address):
-        return cls.from_state(dict(
-            id=str(uuid.uuid4()),
-            address=address,
-            clientcert=None,
-            mitmcert=None,
-            tls_established=False,
-            timestamp_start=None,
-            timestamp_end=None,
-            timestamp_tls_setup=None,
-            sni=None,
-            cipher_name=None,
-            alpn_proto_negotiated=None,
-            tls_version=None,
-            tls_extensions=None,
-        ))
+        return cls.from_state(
+            dict(
+                id=str(uuid.uuid4()),
+                address=address,
+                clientcert=None,
+                mitmcert=None,
+                tls_established=False,
+                timestamp_start=None,
+                timestamp_end=None,
+                timestamp_tls_setup=None,
+                sni=None,
+                cipher_name=None,
+                alpn_proto_negotiated=None,
+                tls_version=None,
+                tls_extensions=None,
+            )
+        )
 
     def convert_to_tls(self, cert, *args, **kwargs):
         # Unfortunately OpenSSL provides no way to expose all TLS extensions, so we do this dance
@@ -243,22 +246,24 @@ class ServerConnection(tcp.TCPClient, stateobject.StateObject):
 
     @classmethod
     def make_dummy(cls, address):
-        return cls.from_state(dict(
-            id=str(uuid.uuid4()),
-            address=address,
-            ip_address=address,
-            cert=None,
-            sni=address[0],
-            alpn_proto_negotiated=None,
-            tls_version=None,
-            source_address=('', 0),
-            tls_established=False,
-            timestamp_start=None,
-            timestamp_tcp_setup=None,
-            timestamp_tls_setup=None,
-            timestamp_end=None,
-            via=None
-        ))
+        return cls.from_state(
+            dict(
+                id=str(uuid.uuid4()),
+                address=address,
+                ip_address=address,
+                cert=None,
+                sni=address[0],
+                alpn_proto_negotiated=None,
+                tls_version=None,
+                source_address=("", 0),
+                tls_established=False,
+                timestamp_start=None,
+                timestamp_tcp_setup=None,
+                timestamp_tls_setup=None,
+                timestamp_end=None,
+                via=None,
+            )
+        )
 
     def connect(self):
         self.timestamp_start = time.time()
@@ -267,7 +272,7 @@ class ServerConnection(tcp.TCPClient, stateobject.StateObject):
 
     def send(self, message):
         if isinstance(message, list):
-            message = b''.join(message)
+            message = b"".join(message)
         self.wfile.write(message)
         self.wfile.flush()
 
@@ -282,7 +287,7 @@ class ServerConnection(tcp.TCPClient, stateobject.StateObject):
             else:
                 path = os.path.join(
                     client_certs,
-                    (sni or self.address[0].encode("idna").decode()) + ".pem"
+                    (sni or self.address[0].encode("idna").decode()) + ".pem",
                 )
                 if os.path.exists(path):
                     client_cert = path
@@ -302,28 +307,32 @@ ServerConnection._stateobject_attributes["via"] = ServerConnection
 
 
 class SocksServerConnection(ServerConnection):
-
     def __init__(self, socks_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.socks_config = socks_config
+
+    def getaddrinfo(self, host, port, *args, **kwargs):
+        if self.socks_config.scheme == "socks5h":
+            return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (host, port))]
+        return super().getaddrinfo(*args, **kwargs)
 
     def makesocket(self, family, type, proto):
         try:
             socks_type = dict(
                 socks4=socks.PROXY_TYPE_SOCKS4,
                 socks5=socks.PROXY_TYPE_SOCKS5,
-                socks5h=socks.PROXY_TYPE_SOCKS5
+                socks5h=socks.PROXY_TYPE_SOCKS5,
             )[self.socks_config.scheme]
         except KeyError:
-            raise TypeError('Invalid SOCKS scheme: {}'.format(self.socks_config.scheme))
+            raise TypeError("Invalid SOCKS scheme: {}".format(self.socks_config.scheme))
 
         s = socks.socksocket(family, type, proto)
         s.set_proxy(
             socks_type,
             self.socks_config.address,
             self.socks_config.port,
-            self.socks_config.scheme == 'socks5h',
+            self.socks_config.scheme == "socks5h",
             self.socks_config.username,
-            self.socks_config.password
+            self.socks_config.password,
         )
         return s
