@@ -314,7 +314,7 @@ class SocksServerConnection(ServerConnection):
     def getaddrinfo(self, host, port, *args, **kwargs):
         if self.socks_config.scheme == "socks5h":
             return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (host, port))]
-        return super().getaddrinfo(*args, **kwargs)
+        return super().getaddrinfo(host, port, *args, **kwargs)
 
     def makesocket(self, family, type, proto):
         try:
