@@ -411,12 +411,15 @@ class TCPClient(_Connection):
         # some parties (cuckoo sandbox) need to hook this
         return socket.socket(family, type, proto)
 
+    def getaddrinfo(self, *args, **kwargs):
+        return socket.getaddrinfo(*args, **kwargs)
+
     def create_connection(self, timeout=None):
         # Based on the official socket.create_connection implementation of Python 3.6.
         # https://github.com/python/cpython/blob/3cc5817cfaf5663645f4ee447eaed603d2ad290a/Lib/socket.py
 
         err = None
-        for res in socket.getaddrinfo(self.address[0], self.address[1], 0, socket.SOCK_STREAM):
+        for res in self.getaddrinfo(self.address[0], self.address[1], 0, socket.SOCK_STREAM):
             af, socktype, proto, canonname, sa = res
             sock = None
             try:
