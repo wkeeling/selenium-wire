@@ -38,6 +38,7 @@ class ProxyConfig:
         self.check_tcp: typing.Optional[HostMatcher] = None
         self.upstream_server: typing.Optional[server_spec.ServerSpec] = None
         self.configure(options, set(options.keys()))
+        self.pac_file: typing.Optional[PACFile] = None
         options.changed.connect(self.configure)
 
     def configure(self, options: moptions.Options, updated: typing.Any) -> None:
@@ -89,3 +90,4 @@ class ProxyConfig:
         if m.startswith("upstream:") or m.startswith("reverse:"):
             _, spec = server_spec.parse_with_mode(options.mode)
             self.upstream_server = spec
+            # Create self.PACFile here
