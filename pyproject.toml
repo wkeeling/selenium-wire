@@ -1,0 +1,6 @@
+[tool.black]
+line-length = 119
+skip-string-normalization = true
+extend-exlcude = """
+seleniumwire/thirdparty/
+"""

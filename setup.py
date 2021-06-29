@@ -51,6 +51,7 @@ setup(
             "dataclasses>=0.7",
         ],
         'dev': [
+            'black',
             'bumpversion',
             'coverage',
             'flake8',
