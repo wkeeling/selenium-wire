@@ -72,6 +72,16 @@ class Firefox(InspectRequestsMixin, DriverCommonMixin, _Firefox):
 
             kwargs['capabilities'] = capabilities
 
+        try:
+            firefox_options = kwargs['options']
+        except KeyError:
+            firefox_options = FirefoxOptions()
+
+        # Prevent Firefox from bypassing the Selenium Wire proxy
+        # for localhost addresses.
+        firefox_options.set_preference('network.proxy.allow_hijacking_localhost', True)
+        kwargs['options'] = firefox_options
+
         super().__init__(*args, **kwargs)
 
 

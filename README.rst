@@ -237,10 +237,10 @@ Selenium Wire captures all HTTP/HTTPS traffic made by the browser [1]_.
     Returns an iterator over captured requests. Useful when dealing with a large number of requests.
 
 ``driver.request_interceptor``
-    Used to set a request interceptor.
+    Used to set a request interceptor. See `Intercepting Requests and Responses`_.
 
 ``driver.response_interceptor``
-    Used to set a response interceptor. See `Intercepting Requests and Responses`_.
+    Used to set a response interceptor.
 
 **Clearing Requests**
 
