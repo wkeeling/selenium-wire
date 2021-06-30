@@ -7,7 +7,6 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class BrowserIntegrationTest(TestCase):
-
     def test_simple_example(self):
         # Create a new instance of the Firefox driver
         driver = webdriver.Firefox()
@@ -18,11 +17,7 @@ class BrowserIntegrationTest(TestCase):
         # Access requests via the `requests` attribute
         for request in driver.requests:
             if request.response:
-                print(
-                    request.url,
-                    request.response.status_code,
-                    request.response.headers['Content-Type']
-                )
+                print(request.url, request.response.status_code, request.response.headers['Content-Type'])
 
         driver.quit()
 
@@ -76,12 +71,14 @@ class BrowserIntegrationTest(TestCase):
         options = webdriver.ChromeOptions()
         options.add_experimental_option("debuggerAddress", "127.0.0.1:12264")
         chromeadres = '/usr/bin/google-chrome-stable'
-        subprocess.Popen([
-            chromeadres,
-            "--remote-debugging-port=12264",
-            "--ignore-certificate-errors",
-            "--proxy-server=http://localhost:12345"
-        ])
+        subprocess.Popen(
+            [
+                chromeadres,
+                "--remote-debugging-port=12264",
+                "--ignore-certificate-errors",
+                "--proxy-server=http://localhost:12345",
+            ]
+        )
         time.sleep(0.3)
         driver = webdriver.Chrome(chrome_options=options, seleniumwire_options={'port': 12345})
         driver.request_interceptor = interceptor
@@ -91,9 +88,7 @@ class BrowserIntegrationTest(TestCase):
 
     def test_safari_can_access_requests(self):
         url = 'https://github.com/'
-        options = {
-            'port': 12345
-        }
+        options = {'port': 12345}
         driver = webdriver.Safari(seleniumwire_options=options)
         driver.get(url)
 
@@ -106,9 +101,7 @@ class BrowserIntegrationTest(TestCase):
 
     def test_edge_can_access_requests(self):
         url = 'https://google.com/'
-        options = {
-            'port': 12345
-        }
+        options = {'port': 12345}
         driver = webdriver.Edge(seleniumwire_options=options)
         driver.get(url)
 
@@ -121,8 +114,10 @@ class BrowserIntegrationTest(TestCase):
 
     def test_intercept_request(self):
         url = 'https://python.org'
-        user_agent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) ' \
-                     'Chrome/28.0.1500.52 Safari/537.36 OPR/15.0.1147.100'
+        user_agent = (
+            'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) '
+            'Chrome/28.0.1500.52 Safari/537.36 OPR/15.0.1147.100'
+        )
         driver = webdriver.Firefox()
 
         def intercept(req):
@@ -153,13 +148,13 @@ class BrowserIntegrationTest(TestCase):
         driver.quit()
 
     def test_modify_user_agent(self):
-        user_agent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) ' \
-                     'Chrome/28.0.1500.52 Safari/537.36 OPR/15.0.1147.100'
+        user_agent = (
+            'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) '
+            'Chrome/28.0.1500.52 Safari/537.36 OPR/15.0.1147.100'
+        )
         url = 'https://www.python.org/'
         driver = webdriver.Firefox()
-        driver.header_overrides = {
-            'User-Agent': user_agent
-        }
+        driver.header_overrides = {'User-Agent': user_agent}
         driver.get(url)
 
         request = driver.wait_for_request(url)
@@ -171,9 +166,7 @@ class BrowserIntegrationTest(TestCase):
     def test_add_cache_control(self):
         url = 'https://www.python.org/'
         driver = webdriver.Firefox()
-        driver.header_overrides = {
-            'response:Cache-Control': 'none'
-        }
+        driver.header_overrides = {'response:Cache-Control': 'none'}
         driver.get(url)
 
         request = driver.wait_for_request(url)
@@ -184,9 +177,7 @@ class BrowserIntegrationTest(TestCase):
 
     def test_modify_param(self):
         driver = webdriver.Firefox()
-        driver.param_overrides = {
-            'foo': 'baz'
-        }
+        driver.param_overrides = {'foo': 'baz'}
         driver.get('https://httpbin.org/get?foo=bar')
 
         request = driver.wait_for_request(r'https://httpbin.org/get\?foo=baz')
@@ -196,13 +187,7 @@ class BrowserIntegrationTest(TestCase):
         driver.quit()
 
     def test_modify_querystring(self):
-        options = {
-            'backend': 'mitmproxy',
-            'disable_encoding': True,
-            'proxy': {
-                'https': 'https://localhost:8080'
-            }
-        }
+        options = {'backend': 'mitmproxy', 'disable_encoding': True, 'proxy': {'https': 'https://localhost:8080'}}
         driver = webdriver.Firefox(seleniumwire_options=options)
         driver.querystring_overrides = 'foo=baz'
         driver.get('https://httpbin.org/get?foo=bar')
@@ -215,9 +200,7 @@ class BrowserIntegrationTest(TestCase):
 
     def test_rewrite_url(self):
         driver = webdriver.Firefox()
-        driver.rewrite_rules = [
-            (r'(https?://)www.python.org/', r'\1www.wikipedia.org/')
-        ]
+        driver.rewrite_rules = [(r'(https?://)www.python.org/', r'\1www.wikipedia.org/')]
 
         driver.get('https://www.python.org/')
 

@@ -11,7 +11,6 @@ class Driver(InspectRequestsMixin):
 
 
 class InspectRequestsMixinTest(TestCase):
-
     def setUp(self):
         self.mock_proxy = Mock()
         self.driver = Driver(self.mock_proxy)
@@ -83,44 +82,35 @@ class InspectRequestsMixinTest(TestCase):
 
         self.assertEqual('test_har', har)
         self.mock_proxy.storage.load_har_entries.assert_called_once_with()
-        mock_har.generate_har.assert_called_once_with([
-            'test_entry1',
-            'test_entry2',
-        ])
+        mock_har.generate_har.assert_called_once_with(
+            [
+                'test_entry1',
+                'test_entry2',
+            ]
+        )
 
     def test_set_header_overrides(self):
-        header_overrides = {
-            'User-Agent': 'Test_User_Agent_String',
-            'Accept-Encoding': None
-        }
+        header_overrides = {'User-Agent': 'Test_User_Agent_String', 'Accept-Encoding': None}
 
         self.driver.header_overrides = header_overrides
 
         self.assertEqual(header_overrides, self.mock_proxy.modifier.headers)
 
     def test_set_header_overrides_non_str(self):
-        header_overrides = {
-            'MyHeader': 99
-        }
+        header_overrides = {'MyHeader': 99}
 
         with self.assertRaises(AssertionError):
             self.driver.header_overrides = header_overrides
 
     def test_delete_header_overrides(self):
-        self.mock_proxy.modifier.headers = {
-            'User-Agent': 'Test_User_Agent_String',
-            'Accept-Encoding': None
-        }
+        self.mock_proxy.modifier.headers = {'User-Agent': 'Test_User_Agent_String', 'Accept-Encoding': None}
 
         del self.driver.header_overrides
 
         self.assertFalse(hasattr(self.mock_proxy.modifier, 'headers'))
 
     def test_get_header_overrides(self):
-        header_overrides = {
-            'User-Agent': 'Test_User_Agent_String',
-            'Accept-Encoding': None
-        }
+        header_overrides = {'User-Agent': 'Test_User_Agent_String', 'Accept-Encoding': None}
         self.mock_proxy.modifier.headers = header_overrides
 
         self.assertEqual(header_overrides, self.driver.header_overrides)
@@ -170,7 +160,7 @@ class InspectRequestsMixinTest(TestCase):
     def test_set_rewrite_rules(self):
         rewrite_rules = [
             ('http://somewhere.com/', 'https://www.somewhere.com'),
-            ('http://otherplace.com/', 'http://otherplace.com/api/')
+            ('http://otherplace.com/', 'http://otherplace.com/api/'),
         ]
 
         self.driver.rewrite_rules = rewrite_rules
@@ -180,7 +170,7 @@ class InspectRequestsMixinTest(TestCase):
     def test_delete_rewrite_rules(self):
         self.mock_proxy.modifier.rewrite_rules = [
             ('http://somewhere.com/', 'https://www.somewhere.com'),
-            ('http://otherplace.com/', 'http://otherplace.com/api/')
+            ('http://otherplace.com/', 'http://otherplace.com/api/'),
         ]
 
         del self.driver.rewrite_rules
@@ -190,7 +180,7 @@ class InspectRequestsMixinTest(TestCase):
     def test_get_rewrite_rules(self):
         rewrite_rules = [
             ('http://somewhere.com/', 'https://www.somewhere.com'),
-            ('http://otherplace.com/', 'http://otherplace.com/api/')
+            ('http://otherplace.com/', 'http://otherplace.com/api/'),
         ]
 
         self.mock_proxy.modifier.rewrite_rules = rewrite_rules
@@ -198,30 +188,21 @@ class InspectRequestsMixinTest(TestCase):
         self.assertEqual(rewrite_rules, self.driver.rewrite_rules)
 
     def test_set_scopes(self):
-        scopes = [
-            '.*stackoverflow.*',
-            '.*github.*'
-        ]
+        scopes = ['.*stackoverflow.*', '.*github.*']
 
         self.driver.scopes = scopes
 
         self.assertEqual(scopes, self.mock_proxy.scopes)
 
     def test_delete_scopes(self):
-        self.mock_proxy.scopes = [
-            '.*stackoverflow.*',
-            '.*github.*'
-        ]
+        self.mock_proxy.scopes = ['.*stackoverflow.*', '.*github.*']
 
         del self.driver.scopes
 
         self.assertEqual([], self.mock_proxy.scopes)
 
     def test_get_scopes(self):
-        scopes = [
-            '.*stackoverflow.*',
-            '.*github.*'
-        ]
+        scopes = ['.*stackoverflow.*', '.*github.*']
 
         self.mock_proxy.scopes = scopes
 

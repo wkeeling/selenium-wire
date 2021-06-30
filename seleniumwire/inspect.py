@@ -80,9 +80,7 @@ class InspectRequestsMixin:
             else:
                 return request
 
-        raise TimeoutException(
-            'Timed out after {}s waiting for request matching {}'.format(timeout, pat)
-        )
+        raise TimeoutException('Timed out after {}s waiting for request matching {}'.format(timeout, pat))
 
     @property
     def har(self) -> str:

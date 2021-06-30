@@ -2,8 +2,7 @@ try:
     import undetected_chromedriver as uc
 except ImportError as e:
     raise ImportError(
-        'undetected_chromedriver not found. '
-        'Install it with `pip install undetected_chromedriver`.'
+        'undetected_chromedriver not found. ' 'Install it with `pip install undetected_chromedriver`.'
     ) from e
 
 from seleniumwire.webdriver import Chrome

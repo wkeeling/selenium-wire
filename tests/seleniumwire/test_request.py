@@ -4,7 +4,6 @@ from seleniumwire.request import Request, Response
 
 
 class RequestTest(TestCase):
-
     def test_create_request(self):
         request = self._create_request()
 
@@ -102,9 +101,7 @@ class RequestTest(TestCase):
     def test_create_response(self):
         request = self._create_request()
 
-        request.create_response(
-            200, {'header-name': 'header-val'}, b'test body'
-        )
+        request.create_response(200, {'header-name': 'header-val'}, b'test body')
 
         self.assertEqual(200, request.response.status_code)
         self.assertEqual({'header-name': 'header-val'}, dict(request.response.headers))
@@ -132,9 +129,14 @@ class RequestTest(TestCase):
 
         self.assertEqual('GET', request2.method)
         self.assertEqual('http://www.example.com/some/path/?foo=bar&hello=world&foo=baz&other=', request2.url)
-        self.assertEqual({'Accept': '*/*', 'Host': 'www.example.com',
-                          'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'},
-                         dict(request2.headers))
+        self.assertEqual(
+            {
+                'Accept': '*/*',
+                'Host': 'www.example.com',
+                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0',
+            },
+            dict(request2.headers),
+        )
         self.assertEqual(b'', request2.body)
 
     def test_request_str(self):
@@ -149,16 +151,15 @@ class RequestTest(TestCase):
             headers=[
                 ('Accept', '*/*'),
                 ('Host', 'www.example.com'),
-                ('User-Agent', 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0')
+                ('User-Agent', 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'),
             ],
-            body=body
+            body=body,
         )
 
         return request
 
 
 class ResponseTest(TestCase):
-
     def test_create_response(self):
         response = self._create_response()
 
@@ -193,10 +194,7 @@ class ResponseTest(TestCase):
 
         self.assertEqual(200, response2.status_code)
         self.assertEqual('OK', response2.reason)
-        self.assertEqual({
-            'Content-Type': 'application/json',
-            'Content-Length': '120'
-        }, dict(response2.headers))
+        self.assertEqual({'Content-Type': 'application/json', 'Content-Length': '120'}, dict(response2.headers))
         self.assertEqual(b'', response2.body)
 
     def test_response_str(self):
@@ -212,6 +210,6 @@ class ResponseTest(TestCase):
                 ('Content-Type', 'application/json'),
                 ('Content-Length', '120'),
             ],
-            body=body
+            body=body,
         )
         return response

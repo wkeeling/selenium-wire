@@ -7,7 +7,6 @@ from seleniumwire.mitmproxy import MitmProxy, MitmProxyRequestHandler
 
 
 class MitmProxyRequestHandlerTest(TestCase):
-
     def test_request_modifier_called(self):
         mock_flow = Mock()
         mock_flow.request.url = 'http://somewhere.com/some/path'
@@ -173,11 +172,7 @@ class MitmProxyRequestHandlerTest(TestCase):
         mock_flow.request.raw_content = b''
 
         def intercept(req):
-            req.create_response(
-                status_code=200,
-                headers={'a': 'b'},
-                body=b'foobarbaz'
-            )
+            req.create_response(status_code=200, headers={'a': 'b'}, body=b'foobarbaz')
 
         self.server.request_interceptor = intercept
 
@@ -230,185 +225,217 @@ class MitmProxyRequestHandlerTest(TestCase):
 
 
 class MitmProxyTest(TestCase):
-
     def test_creates_storage(self):
-        proxy = MitmProxy('somehost', 12345, {
-            'request_storage_base_dir': '/some/dir',
-        })
+        proxy = MitmProxy(
+            'somehost',
+            12345,
+            {
+                'request_storage_base_dir': '/some/dir',
+            },
+        )
 
         self.assertEqual(self.mock_storage.return_value, proxy.storage)
         self.mock_storage.assert_called_once_with(base_dir='/some/dir')
 
     def test_creates_master(self):
-        proxy = MitmProxy('somehost', 12345, {
-            'request_storage_base_dir': '/some/dir',
-        })
-        self.assertEqual(self.mock_master.return_value, proxy._master)
-        self.mock_options.assert_called_once_with(
-            confdir='~/.mitmproxy',
-            listen_host='somehost',
-            listen_port=12345
+        proxy = MitmProxy(
+            'somehost',
+            12345,
+            {
+                'request_storage_base_dir': '/some/dir',
+            },
         )
+        self.assertEqual(self.mock_master.return_value, proxy._master)
+        self.mock_options.assert_called_once_with(confdir='~/.mitmproxy', listen_host='somehost', listen_port=12345)
         self.mock_master.assert_called_once_with(self.mock_options.return_value)
         self.assertEqual(self.mock_proxy_server.return_value, self.mock_master.return_value.server)
         self.mock_proxy_config.assert_called_once_with(self.mock_options.return_value)
         self.mock_proxy_server.assert_called_once_with(self.mock_proxy_config.return_value)
-        self.mock_master.return_value.addons.add.assert_has_calls([
-            call(),
-            call(self.mock_logger.return_value),
-            call(self.mock_handler.return_value)
-        ])
+        self.mock_master.return_value.addons.add.assert_has_calls(
+            [call(), call(self.mock_logger.return_value), call(self.mock_handler.return_value)]
+        )
         self.mock_addons.default_addons.assert_called_once_with()
         self.mock_handler.assert_called_once_with(proxy)
 
     def test_override_confdir(self):
-        proxy = MitmProxy('somehost', 12345, {
-            'request_storage_base_dir': '/some/dir',
-            'mitm_confdir': '/tmp/.mitmproxy'
-        })
-        self.assertEqual(self.mock_master.return_value, proxy._master)
-        self.mock_options.assert_called_once_with(
-            confdir='/tmp/.mitmproxy',
-            listen_host='somehost',
-            listen_port=12345
+        proxy = MitmProxy(
+            'somehost', 12345, {'request_storage_base_dir': '/some/dir', 'mitm_confdir': '/tmp/.mitmproxy'}
         )
+        self.assertEqual(self.mock_master.return_value, proxy._master)
+        self.mock_options.assert_called_once_with(confdir='/tmp/.mitmproxy', listen_host='somehost', listen_port=12345)
 
     def test_update_mitmproxy_options(self):
-        MitmProxy('somehost', 12345, {
-            'request_storage_base_dir': '/some/dir',
-            'mitm_test': 'foobar'
-        })
+        MitmProxy('somehost', 12345, {'request_storage_base_dir': '/some/dir', 'mitm_test': 'foobar'})
 
-        self.mock_options.return_value.update.assert_has_calls([
-            call(
-                ssl_insecure=True,
-                upstream_cert=False,
-                stream_websockets=True,
-            ),
-            call(
-                test='foobar'
-            )
-        ])
+        self.mock_options.return_value.update.assert_has_calls(
+            [
+                call(
+                    ssl_insecure=True,
+                    upstream_cert=False,
+                    stream_websockets=True,
+                ),
+                call(test='foobar'),
+            ]
+        )
 
     def test_update_mitmproxy_options_with_override(self):
-        MitmProxy('somehost', 12345, {
-            'request_storage_base_dir': '/some/dir',
-            'mitm_test': 'foobar',
-            'mitm_confdir': '/tmp/.mitmproxy'
-        })
+        MitmProxy(
+            'somehost',
+            12345,
+            {'request_storage_base_dir': '/some/dir', 'mitm_test': 'foobar', 'mitm_confdir': '/tmp/.mitmproxy'},
+        )
 
-        self.mock_options.return_value.update.assert_has_calls([
-            call(
-                ssl_insecure=True,
-                upstream_cert=False,
-                stream_websockets=True,
-            ),
-            call(
-                test='foobar',
-            )
-        ])
+        self.mock_options.return_value.update.assert_has_calls(
+            [
+                call(
+                    ssl_insecure=True,
+                    upstream_cert=False,
+                    stream_websockets=True,
+                ),
+                call(
+                    test='foobar',
+                ),
+            ]
+        )
 
     def test_upstream_proxy(self):
-        MitmProxy('somehost', 12345, {
-            'request_storage_base_dir': '/some/dir',
-            'proxy': {
-                'http': 'http://proxyserver:8080',
-                # We pick https when both are specified and the same
-                'https': 'https://proxyserver:8080'
-            }
-        })
+        MitmProxy(
+            'somehost',
+            12345,
+            {
+                'request_storage_base_dir': '/some/dir',
+                'proxy': {
+                    'http': 'http://proxyserver:8080',
+                    # We pick https when both are specified and the same
+                    'https': 'https://proxyserver:8080',
+                },
+            },
+        )
 
-        self.mock_options.return_value.update.assert_has_calls([
-            call(
-                ssl_insecure=True,
-                upstream_cert=False,
-                stream_websockets=True,
-                mode='upstream:https://proxyserver:8080'
-            ),
-            call()
-        ])
+        self.mock_options.return_value.update.assert_has_calls(
+            [
+                call(
+                    ssl_insecure=True,
+                    upstream_cert=False,
+                    stream_websockets=True,
+                    mode='upstream:https://proxyserver:8080',
+                ),
+                call(),
+            ]
+        )
 
     def test_upstream_proxy_single(self):
-        MitmProxy('somehost', 12345, {
-            'request_storage_base_dir': '/some/dir',
-            'proxy': {
-                'http': 'http://proxyserver:8080',
-            }
-        })
+        MitmProxy(
+            'somehost',
+            12345,
+            {
+                'request_storage_base_dir': '/some/dir',
+                'proxy': {
+                    'http': 'http://proxyserver:8080',
+                },
+            },
+        )
 
-        self.mock_options.return_value.update.assert_has_calls([
-            call(
-                ssl_insecure=True,
-                upstream_cert=False,
-                stream_websockets=True,
-                mode='upstream:http://proxyserver:8080'
-            ),
-            call()
-        ])
+        self.mock_options.return_value.update.assert_has_calls(
+            [
+                call(
+                    ssl_insecure=True,
+                    upstream_cert=False,
+                    stream_websockets=True,
+                    mode='upstream:http://proxyserver:8080',
+                ),
+                call(),
+            ]
+        )
 
     def test_upstream_proxy_auth(self):
-        MitmProxy('somehost', 12345, {
-            'request_storage_base_dir': '/some/dir',
-            'proxy': {
-                'https': 'https://user:pass@proxyserver:8080',
-            }
-        })
+        MitmProxy(
+            'somehost',
+            12345,
+            {
+                'request_storage_base_dir': '/some/dir',
+                'proxy': {
+                    'https': 'https://user:pass@proxyserver:8080',
+                },
+            },
+        )
 
-        self.mock_options.return_value.update.assert_has_calls([
-            call(
-                ssl_insecure=True,
-                upstream_cert=False,
-                stream_websockets=True,
-                mode='upstream:https://proxyserver:8080',
-                upstream_auth='user:pass'
-            ),
-            call()
-        ])
+        self.mock_options.return_value.update.assert_has_calls(
+            [
+                call(
+                    ssl_insecure=True,
+                    upstream_cert=False,
+                    stream_websockets=True,
+                    mode='upstream:https://proxyserver:8080',
+                    upstream_auth='user:pass',
+                ),
+                call(),
+            ]
+        )
 
     def test_upstream_proxy_different(self):
         with self.assertRaises(ValueError):
-            MitmProxy('somehost', 12345, {
-                'request_storage_base_dir': '/some/dir',
-                'proxy': {
-                    'http': 'http://proxyserver1:8080',
-                    'https': 'https://proxyserver2:8080'
-                }
-            })
+            MitmProxy(
+                'somehost',
+                12345,
+                {
+                    'request_storage_base_dir': '/some/dir',
+                    'proxy': {'http': 'http://proxyserver1:8080', 'https': 'https://proxyserver2:8080'},
+                },
+            )
 
     def test_new_event_loop(self):
-        proxy = MitmProxy('somehost', 12345, {
-            'request_storage_base_dir': '/some/dir',
-        })
+        proxy = MitmProxy(
+            'somehost',
+            12345,
+            {
+                'request_storage_base_dir': '/some/dir',
+            },
+        )
 
         self.assertEqual(self.mock_asyncio.new_event_loop.return_value, proxy._event_loop)
         self.mock_asyncio.new_event_loop.assert_called_once_with()
 
     def test_serve_forever(self):
         self.mock_asyncio.get_event_loop.return_value.is_closed.return_value = False
-        proxy = MitmProxy('somehost', 12345, {
-            'request_storage_base_dir': '/some/dir',
-        })
+        proxy = MitmProxy(
+            'somehost',
+            12345,
+            {
+                'request_storage_base_dir': '/some/dir',
+            },
+        )
 
         proxy.serve_forever()
 
-        self.mock_asyncio.set_event_loop.assert_has_calls([
-            call(proxy._event_loop),
-            call(proxy._event_loop),
-        ])
+        self.mock_asyncio.set_event_loop.assert_has_calls(
+            [
+                call(proxy._event_loop),
+                call(proxy._event_loop),
+            ]
+        )
         self.mock_master.return_value.run.assert_called_once_with()
 
     def test_address(self):
         self.mock_proxy_server.return_value.address = ('somehost', 12345)
-        proxy = MitmProxy('somehost', 12345, {
-            'request_storage_base_dir': '/some/dir',
-        })
+        proxy = MitmProxy(
+            'somehost',
+            12345,
+            {
+                'request_storage_base_dir': '/some/dir',
+            },
+        )
 
         self.assertEqual(('somehost', 12345), proxy.address())
 
     def test_shutdown(self):
-        proxy = MitmProxy('somehost', 12345, {
-            'request_storage_base_dir': '/some/dir',
-        })
+        proxy = MitmProxy(
+            'somehost',
+            12345,
+            {
+                'request_storage_base_dir': '/some/dir',
+            },
+        )
 
         proxy.shutdown()
 

@@ -58,10 +58,7 @@ class Firefox(InspectRequestsMixin, DriverCommonMixin, _Firefox):
         if seleniumwire_options is None:
             seleniumwire_options = {}
 
-        self.proxy = backend.create(
-            port=seleniumwire_options.get('port', 0),
-            options=seleniumwire_options
-        )
+        self.proxy = backend.create(port=seleniumwire_options.get('port', 0), options=seleniumwire_options)
 
         if seleniumwire_options.get('auto_config', True):
             capabilities = kwargs.get('capabilities', kwargs.get('desired_capabilities'))
@@ -97,10 +94,7 @@ class Chrome(InspectRequestsMixin, DriverCommonMixin, _Chrome):
         if seleniumwire_options is None:
             seleniumwire_options = {}
 
-        self.proxy = backend.create(
-            port=seleniumwire_options.get('port', 0),
-            options=seleniumwire_options
-        )
+        self.proxy = backend.create(port=seleniumwire_options.get('port', 0), options=seleniumwire_options)
 
         if seleniumwire_options.get('auto_config', True):
             capabilities = kwargs.get('desired_capabilities')
@@ -142,10 +136,7 @@ class Safari(InspectRequestsMixin, DriverCommonMixin, _Safari):
         # be passed in the options.
         assert 'port' in seleniumwire_options, 'You must set a port number in the seleniumwire_options'
 
-        self.proxy = backend.create(
-            port=seleniumwire_options.pop('port', 0),
-            options=seleniumwire_options
-        )
+        self.proxy = backend.create(port=seleniumwire_options.pop('port', 0), options=seleniumwire_options)
 
         super().__init__(*args, **kwargs)
 
@@ -168,10 +159,7 @@ class Edge(InspectRequestsMixin, DriverCommonMixin, _Edge):
         # be passed in the options.
         assert 'port' in seleniumwire_options, 'You must set a port number in the seleniumwire_options'
 
-        self.proxy = backend.create(
-            port=seleniumwire_options.pop('port', 0),
-            options=seleniumwire_options
-        )
+        self.proxy = backend.create(port=seleniumwire_options.pop('port', 0), options=seleniumwire_options)
 
         super().__init__(*args, **kwargs)
 
@@ -191,7 +179,7 @@ class Remote(InspectRequestsMixin, DriverCommonMixin, _Remote):
         self.proxy = backend.create(
             addr=seleniumwire_options.pop('addr', '127.0.0.1'),
             port=seleniumwire_options.get('port', 0),
-            options=seleniumwire_options
+            options=seleniumwire_options,
         )
 
         if seleniumwire_options.get('auto_config', True):

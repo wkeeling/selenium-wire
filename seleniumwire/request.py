@@ -19,11 +19,7 @@ class HTTPHeaders(HTTPMessage):
 class Request:
     """Represents an HTTP request."""
 
-    def __init__(self, *,
-                 method: str,
-                 url: str,
-                 headers: Iterable[Tuple[str, str]],
-                 body: bytes = b''):
+    def __init__(self, *, method: str, url: str, headers: Iterable[Tuple[str, str]], body: bytes = b''):
         """Initialise a new Request object.
 
         Args:
@@ -94,8 +90,7 @@ class Request:
         if self.headers.get('Content-Type') == 'application/x-www-form-urlencoded' and self.body:
             qs = self.body.decode('utf-8', errors='replace')
 
-        return {name: val[0] if len(val) == 1 else val
-                for name, val in parse_qs(qs, keep_blank_values=True).items()}
+        return {name: val[0] if len(val) == 1 else val for name, val in parse_qs(qs, keep_blank_values=True).items()}
 
     @params.setter
     def params(self, p: Dict[str, Union[str, List[str]]]):
@@ -130,10 +125,9 @@ class Request:
         parts[2] = p
         self.url = urlunsplit(parts)
 
-    def create_response(self,
-                        status_code: int,
-                        headers: Union[Dict[str, str], Iterable[Tuple[str, str]]] = (),
-                        body: bytes = b''):
+    def create_response(
+        self, status_code: int, headers: Union[Dict[str, str], Iterable[Tuple[str, str]]] = (), body: bytes = b''
+    ):
         """Create a response object and attach it to this request."""
         try:
             reason = {v: v.phrase for v in HTTPStatus.__members__.values()}[status_code]
@@ -143,12 +137,7 @@ class Request:
         if isinstance(headers, dict):
             headers = headers.items()
 
-        self.response = Response(
-            status_code=status_code,
-            reason=reason,
-            headers=headers,
-            body=body
-        )
+        self.response = Response(status_code=status_code, reason=reason, headers=headers, body=body)
 
     def abort(self, error_code: int = HTTPStatus.FORBIDDEN):
         """Convenience method for signalling that this request is to be terminated
@@ -157,8 +146,7 @@ class Request:
         self.create_response(status_code=error_code)
 
     def __repr__(self):
-        return 'Request(method={method!r}, url={url!r}, headers={headers!r}, body={_body!r})' \
-            .format_map(vars(self))
+        return 'Request(method={method!r}, url={url!r}, headers={headers!r}, body={_body!r})'.format_map(vars(self))
 
     def __str__(self):
         return self.url
@@ -167,11 +155,7 @@ class Request:
 class Response:
     """Represents an HTTP response."""
 
-    def __init__(self, *,
-                 status_code: int,
-                 reason: str,
-                 headers: Iterable[Tuple[str, str]],
-                 body: bytes = b''):
+    def __init__(self, *, status_code: int, reason: str, headers: Iterable[Tuple[str, str]], body: bytes = b''):
         """Initialise a new Response object.
 
         Args:
@@ -210,8 +194,10 @@ class Response:
             self._body = b
 
     def __repr__(self):
-        return 'Response(status_code={status_code!r}, reason={reason!r}, headers={headers!r}, ' \
-               'body={_body!r})'.format_map(vars(self))
+        return (
+            'Response(status_code={status_code!r}, reason={reason!r}, headers={headers!r}, '
+            'body={_body!r})'.format_map(vars(self))
+        )
 
     def __str__(self):
         return '{} {}'.format(self.status_code, self.reason)
@@ -221,10 +207,8 @@ class WebSocketMessage:
     """Represents a websocket message transmitted between client and server
     or vice versa.
     """
-    def __init__(self, *,
-                 from_client: bool,
-                 content: Union[str, bytes],
-                 date: datetime):
+
+    def __init__(self, *, from_client: bool, content: Union[str, bytes], date: datetime):
         """Initialise a new websocket message.
 
         Args:
@@ -246,8 +230,4 @@ class WebSocketMessage:
             return False
         elif self is other:
             return True
-        return (
-            self.from_client == other.from_client
-            and self.content == other.content
-            and self.date == other.date
-        )
+        return self.from_client == other.from_client and self.content == other.content and self.date == other.date

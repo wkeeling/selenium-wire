@@ -4,18 +4,16 @@ from pathlib import Path
 from unittest import TestCase
 from unittest.mock import call, mock_open, patch
 
-from seleniumwire.utils import (extract_cert, extract_cert_and_key,
-                                get_upstream_proxy, urlsafe_address)
+from seleniumwire.utils import extract_cert, extract_cert_and_key, get_upstream_proxy, urlsafe_address
 
 
 class GetUpstreamProxyTest(TestCase):
-
     def test_get_config(self):
         options = {
             'proxy': {
                 'http': 'http://username1:password1@server1:8888',
                 'https': 'https://username2:password2@server2:8888',
-                'no_proxy': 'localhost'
+                'no_proxy': 'localhost',
             }
         }
 
@@ -36,9 +34,11 @@ class GetUpstreamProxyTest(TestCase):
         self.assertEqual(['localhost'], proxy['no_proxy'])
 
     def test_get_from_env(self):
-        with self.set_env(HTTP_PROXY='http://username1:password1@server1:8888',
-                          HTTPS_PROXY='https://username2:password2@server2:8888',
-                          NO_PROXY='localhost'):
+        with self.set_env(
+            HTTP_PROXY='http://username1:password1@server1:8888',
+            HTTPS_PROXY='https://username2:password2@server2:8888',
+            NO_PROXY='localhost',
+        ):
 
             proxy = get_upstream_proxy({})
 
@@ -57,16 +57,13 @@ class GetUpstreamProxyTest(TestCase):
             self.assertEqual(['localhost'], proxy['no_proxy'])
 
     def test_merge(self):
-        options = {
-            'proxy': {
-                'https': 'https://username3:password3@server3:8888',
-                'no_proxy': 'localhost'
-            }
-        }
+        options = {'proxy': {'https': 'https://username3:password3@server3:8888', 'no_proxy': 'localhost'}}
 
-        with self.set_env(HTTP_PROXY='http://username1:password1@server1:8888',
-                          HTTPS_PROXY='https://username2:password2@server2:8888',
-                          NO_PROXY='127.0.0.1'):
+        with self.set_env(
+            HTTP_PROXY='http://username1:password1@server1:8888',
+            HTTPS_PROXY='https://username2:password2@server2:8888',
+            NO_PROXY='127.0.0.1',
+        ):
 
             proxy = get_upstream_proxy(options)
 
@@ -104,33 +101,25 @@ class GetUpstreamProxyTest(TestCase):
         options = {
             'proxy': {
                 'https': 'https://username:@server:8888',
-                'no_proxy': 'localhost:8081, example.com  , test.com:80'
+                'no_proxy': 'localhost:8081, example.com  , test.com:80',
             }
         }
 
         proxy = get_upstream_proxy(options)
 
-        self.assertEqual([
-            'localhost:8081',
-            'example.com',
-            'test.com:80'
-        ], proxy['no_proxy'])
+        self.assertEqual(['localhost:8081', 'example.com', 'test.com:80'], proxy['no_proxy'])
 
     def test_no_proxy_as_list(self):
         options = {
             'proxy': {
                 'https': 'https://username:@server:8888',
-                'no_proxy': ['localhost:8081', 'example.com', 'test.com:80']
+                'no_proxy': ['localhost:8081', 'example.com', 'test.com:80'],
             }
         }
 
         proxy = get_upstream_proxy(options)
 
-        self.assertEqual([
-            'localhost:8081',
-            'example.com',
-            'test.com:80'
-        ], proxy['no_proxy'])
+        self.assertEqual(['localhost:8081', 'example.com', 'test.com:80'], proxy['no_proxy'])
 
     def test_none(self):
         options = None
@@ -152,7 +141,6 @@ class GetUpstreamProxyTest(TestCase):
 
 
 class TestExtractCert(TestCase):
-
     @patch('seleniumwire.utils.os.getcwd')
     @patch('seleniumwire.utils.pkgutil')
     def test_extract_cert(self, mock_pkgutil, mock_getcwd):
@@ -189,10 +177,7 @@ class TestExtractCert(TestCase):
             extract_cert_and_key(Path('some', 'path'))
 
         mock_path.assert_called_once_with(Path('some', 'path'), 'seleniumwire-ca.pem')
-        mock_pkgutil.get_data.assert_has_calls([
-            call('seleniumwire', 'ca.crt'),
-            call('seleniumwire', 'ca.key')
-        ])
+        mock_pkgutil.get_data.assert_has_calls([call('seleniumwire', 'ca.crt'), call('seleniumwire', 'ca.key')])
         m_open.assert_called_once_with(mock_path.return_value, 'wb')
         m_open.return_value.write.assert_called_once_with(b'cert_datakey_data')
 

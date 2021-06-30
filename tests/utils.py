@@ -41,17 +41,18 @@ def get_httpbin(port=8085):
     if os.name != 'nt':  # Gunicorn doesn't work on Windows
         cert = Path(__file__).parent / 'server.crt'
         key = Path(__file__).parent / 'server.key'
-        proc = subprocess.Popen([
-            'gunicorn',
-            f'--certfile={cert}',
-            f'--keyfile={key}',
-            '--bind',
-            f'0.0.0.0:{port}',
-            'httpbin:app',
-        ],
+        proc = subprocess.Popen(
+            [
+                'gunicorn',
+                f'--certfile={cert}',
+                f'--keyfile={key}',
+                '--bind',
+                f'0.0.0.0:{port}',
+                'httpbin:app',
+            ],
             bufsize=0,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
         )
 
         try:
@@ -142,32 +143,30 @@ def get_proxy(port=8086, mode='http', auth=''):
         'socks': 'socks5',
     }
 
-    auth_args = [
-        '--set',
-        f'proxyauth={auth}'
-    ] if auth else []
+    auth_args = ['--set', f'proxyauth={auth}'] if auth else []
 
     message = f"This passed through a {'authenticated ' if auth else ''}{mode} proxy"
 
-    proc = subprocess.Popen([
-        'mitmdump',
-        '--listen-port',
-        f'{port}',
-        '--set',
-        f'mode={mode_map[mode]}',
-        '--set',
-        'flow_detail=0',
-        '--set',
-        'ssl_insecure',
-        *auth_args,
-        '-s',
-        Path(__file__).parent / f'inject_message.py',
-        '--set',
-        f'message={message}',
-    ],
+    proc = subprocess.Popen(
+        [
+            'mitmdump',
+            '--listen-port',
+            f'{port}',
+            '--set',
+            f'mode={mode_map[mode]}',
+            '--set',
+            'flow_detail=0',
+            '--set',
+            'ssl_insecure',
+            *auth_args,
+            '-s',
+            Path(__file__).parent / 'inject_message.py',
+            '--set',
+            f'message={message}',
+        ],
         bufsize=0,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        stderr=subprocess.PIPE,
     )
 
     try:

@@ -14,7 +14,6 @@ from seleniumwire.storage import RequestStorage
 
 
 class RequestStorageTest(TestCase):
-
     def test_initialise(self):
         RequestStorage(base_dir=self.base_dir)
         storage_dir = glob.glob(os.path.join(self.base_dir, '.seleniumwire', 'storage-*'))
@@ -66,10 +65,7 @@ class RequestStorageTest(TestCase):
         self.assertEqual(request.id, loaded_request.id)
         self.assertEqual('http://www.example.com/test/path/', loaded_request.url)
         self.assertEqual('GET', loaded_request.method)
-        self.assertEqual({
-            'Host': 'www.example.com',
-            'Accept': '*/*'
-        }, dict(loaded_request.headers))
+        self.assertEqual({'Host': 'www.example.com', 'Accept': '*/*'}, dict(loaded_request.headers))
         self.assertIsNone(loaded_request.response)
 
     def test_save_request_with_body(self):
@@ -101,10 +97,7 @@ class RequestStorageTest(TestCase):
 
         self.assertEqual(200, loaded_response.status_code)
         self.assertEqual('OK', loaded_response.reason)
-        self.assertEqual({
-            'Content-Type': 'application/json',
-            'Content-Length': '500'
-        }, dict(loaded_response.headers))
+        self.assertEqual({'Content-Type': 'application/json', 'Content-Length': '500'}, dict(loaded_response.headers))
 
     def test_save_response_with_body(self):
         body = b'some response body'
@@ -255,11 +248,14 @@ class RequestStorageTest(TestCase):
         request_2 = self._create_request()
         storage.save_request(request_1)
         storage.save_request(request_2)
-        storage.save_ws_message(request_1.id, WebSocketMessage(
-            from_client=True,
-            content='websocket test message',
-            date=datetime.now(),
-        ))
+        storage.save_ws_message(
+            request_1.id,
+            WebSocketMessage(
+                from_client=True,
+                content='websocket test message',
+                date=datetime.now(),
+            ),
+        )
 
         requests = storage.load_requests()
 
@@ -337,21 +333,16 @@ class RequestStorageTest(TestCase):
         self.assertEqual(request_2.id, storage.find('https://192.168.1.1/redfish$').id)
 
     def _get_stored_path(self, request_id, filename):
-        return glob.glob(os.path.join(self.base_dir, '.seleniumwire', 'storage-*',
-                                      'request-{}'.format(request_id), filename))
+        return glob.glob(
+            os.path.join(self.base_dir, '.seleniumwire', 'storage-*', 'request-{}'.format(request_id), filename)
+        )
 
     def _create_request(self, url='http://www.example.com/test/path/', body=b''):
-        headers = [
-            ('Host', 'www.example.com'),
-            ('Accept', '*/*')
-        ]
+        headers = [('Host', 'www.example.com'), ('Accept', '*/*')]
         return Request(method='GET', url=url, headers=headers, body=body)
 
     def _create_response(self, body=b''):
-        headers = [
-            ('Content-Type', 'application/json'),
-            ('Content-Length', '500')
-        ]
+        headers = [('Content-Type', 'application/json'), ('Content-Length', '500')]
         return Response(status_code=200, reason='OK', headers=headers, body=body)
 
     def setUp(self):

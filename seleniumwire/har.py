@@ -30,12 +30,10 @@ def create_har_entry(flow: HTTPFlow) -> dict:
     connect_time = -1
 
     if flow.server_conn and flow.server_conn not in SERVERS_SEEN:
-        connect_time = (flow.server_conn.timestamp_tcp_setup -
-                        flow.server_conn.timestamp_start)
+        connect_time = flow.server_conn.timestamp_tcp_setup - flow.server_conn.timestamp_start
 
         if flow.server_conn.timestamp_tls_setup is not None:
-            ssl_time = (flow.server_conn.timestamp_tls_setup -
-                        flow.server_conn.timestamp_tcp_setup)
+            ssl_time = flow.server_conn.timestamp_tls_setup - flow.server_conn.timestamp_tcp_setup
 
         SERVERS_SEEN.add(flow.server_conn)
 
@@ -54,10 +52,7 @@ def create_har_entry(flow: HTTPFlow) -> dict:
     }
 
     # HAR timings are integers in ms, so we re-encode the raw timings to that format.
-    timings = {
-        k: int(1000 * v) if v != -1 else -1
-        for k, v in timings_raw.items()
-    }
+    timings = {k: int(1000 * v) if v != -1 else -1 for k, v in timings_raw.items()}
 
     # full_time is the sum of all timings.
     # Timings set to -1 will be ignored as per spec.
@@ -92,7 +87,7 @@ def create_har_entry(flow: HTTPFlow) -> dict:
             "content": {
                 "size": response_body_size,
                 "compression": response_body_compression,
-                "mimeType": flow.response.headers.get('Content-Type', '')
+                "mimeType": flow.response.headers.get('Content-Type', ''),
             },
             "redirectURL": flow.response.headers.get('Location', ''),
             "headersSize": len(str(flow.response.headers)),
@@ -110,14 +105,11 @@ def create_har_entry(flow: HTTPFlow) -> dict:
         entry["response"]["content"]["text"] = flow.response.get_text(strict=False)
 
     if flow.request.method in ["POST", "PUT", "PATCH"]:
-        params = [
-            {"name": a, "value": b}
-            for a, b in flow.request.urlencoded_form.items(multi=True)
-        ]
+        params = [{"name": a, "value": b} for a, b in flow.request.urlencoded_form.items(multi=True)]
         entry["request"]["postData"] = {
             "mimeType": flow.request.headers.get("Content-Type", ""),
             "text": flow.request.get_text(strict=False),
-            "params": params
+            "params": params,
         }
 
     if flow.server_conn.connected():
@@ -164,7 +156,7 @@ def _format_response_cookies(fields):
 
 def _name_value(obj):
     """
-        Convert (key, value) pairs to HAR format.
+    Convert (key, value) pairs to HAR format.
     """
     return [{"name": k, "value": v} for k, v in obj.items()]
 
@@ -182,9 +174,9 @@ def generate_har(entries: List[dict]) -> str:
             "creator": {
                 "name": "Selenium Wire HAR dump",
                 "version": "0.1",
-                "comment": f"Selenium Wire version {seleniumwire.__version__}"
+                "comment": f"Selenium Wire version {seleniumwire.__version__}",
             },
-            "entries": entries
+            "entries": entries,
         }
     }
 

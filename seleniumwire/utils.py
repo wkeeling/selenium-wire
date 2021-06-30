@@ -73,8 +73,7 @@ def extract_cert(cert_name='ca.crt'):
     else:
         with open(Path(os.getcwd(), cert_name), 'wb') as out:
             out.write(cert)
-        log.info('{} extracted. You can now import this into a browser.'.format(
-            cert_name))
+        log.info('{} extracted. You can now import this into a browser.'.format(cert_name))
 
 
 def extract_cert_and_key(dest_folder, check_exists=True):
@@ -100,8 +99,7 @@ def extract_cert_and_key(dest_folder, check_exists=True):
 
 
 def is_list_alike(container):
-    return (isinstance(container, collections.abc.Sequence) and not
-            isinstance(container, str))
+    return isinstance(container, collections.abc.Sequence) and not isinstance(container, str)
 
 
 def urlsafe_address(address):

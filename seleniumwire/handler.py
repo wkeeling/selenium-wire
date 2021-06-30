@@ -46,7 +46,7 @@ class InterceptRequestHandler:
                 flow.response = HTTPResponse.make(
                     status_code=int(request.response.status_code),
                     content=request.response.body,
-                    headers=[(k.encode('utf-8'), v.encode('utf-8')) for k, v in request.response.headers.items()]
+                    headers=[(k.encode('utf-8'), v.encode('utf-8')) for k, v in request.response.headers.items()],
                 )
             else:
                 flow.request.method = request.method
@@ -125,7 +125,7 @@ class InterceptRequestHandler:
             method=flow.request.method,
             url=flow.request.url,
             headers=[(k, v) for k, v in flow.request.headers.items()],
-            body=flow.request.raw_content
+            body=flow.request.raw_content,
         )
 
         # For websocket requests, the scheme of the request is overwritten with https
@@ -142,7 +142,7 @@ class InterceptRequestHandler:
             status_code=flow.response.status_code,
             reason=flow.response.reason,
             headers=[(k, v) for k, v in flow.response.headers.items(multi=True)],
-            body=flow.response.raw_content
+            body=flow.response.raw_content,
         )
 
         cert = flow.server_conn.cert

@@ -8,7 +8,6 @@ from seleniumwire.thirdparty.mitmproxy.net.http.headers import Headers
 
 
 class InterceptRequestHandlerTest(TestCase):
-
     def test_request_modifier_called(self):
         mock_flow = Mock()
         mock_flow.request.url = 'http://somewhere.com/some/path'
@@ -227,11 +226,7 @@ class InterceptRequestHandlerTest(TestCase):
         mock_flow.request.raw_content = b''
 
         def intercept(req):
-            req.create_response(
-                status_code=200,
-                headers={'a': 'b'},
-                body=b'foobarbaz'
-            )
+            req.create_response(status_code=200, headers={'a': 'b'}, body=b'foobarbaz')
 
         self.proxy.request_interceptor = intercept
 
@@ -273,19 +268,14 @@ class InterceptRequestHandlerTest(TestCase):
         mock_handshake_flow.request.id = '12345'
         mock_flow = Mock()
         mock_flow.handshake_flow = mock_handshake_flow
-        mock_flow.messages = [Mock(
-            from_client=True,
-            content='test message',
-            timestamp=1614069300.0
-        )]
+        mock_flow.messages = [Mock(from_client=True, content='test message', timestamp=1614069300.0)]
 
         self.handler.websocket_message(mock_flow)
 
-        self.proxy.storage.save_ws_message.assert_called_once_with('12345', WebSocketMessage(
-            from_client=True,
-            content='test message',
-            date=datetime.fromtimestamp(1614069300.0)
-        ))
+        self.proxy.storage.save_ws_message.assert_called_once_with(
+            '12345',
+            WebSocketMessage(from_client=True, content='test message', date=datetime.fromtimestamp(1614069300.0)),
+        )
 
     def test_save_websocket_message_no_request(self):
         """If the handshake request was not saved (has no id) then
@@ -313,9 +303,7 @@ class InterceptRequestHandlerTest(TestCase):
 
         self.handler.response(mock_flow)
 
-        self.proxy.storage.save_har_entry.assert_called_once_with(
-            '12345', {'name': 'test_har_entry'}
-        )
+        self.proxy.storage.save_har_entry.assert_called_once_with('12345', {'name': 'test_har_entry'})
         mock_har.create_har_entry.assert_called_once_with(mock_flow)
 
     @patch('seleniumwire.handler.har')

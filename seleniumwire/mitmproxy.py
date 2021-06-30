@@ -15,8 +15,9 @@ from seleniumwire.utils import get_upstream_proxy, is_list_alike
 try:
     import mitmproxy  # noqa:F401  # isort:skip
 except ImportError as e:
-    raise ImportError("To use the mitmproxy backend you must first "
-                      "install mitmproxy with 'pip install mitmproxy'.") from e
+    raise ImportError(
+        "To use the mitmproxy backend you must first " "install mitmproxy with 'pip install mitmproxy'."
+    ) from e
 
 from mitmproxy import addons, http  # isort:skip
 from mitmproxy.exceptions import Timeout  # isort:skip
@@ -51,8 +52,7 @@ class CaptureMixin:
             request: The request to capture.
         Returns: The captured request id.
         """
-        ignore_method = request.method in self.server.options.get(
-            'ignore_http_methods', ['OPTIONS'])
+        ignore_method = request.method in self.server.options.get('ignore_http_methods', ['OPTIONS'])
         not_in_scope = not self.in_scope(self.server.scopes, request.url)
         if ignore_method or not_in_scope:
             logger.debug('Not capturing %s request: %s', request.method, request.url)
@@ -118,7 +118,7 @@ class MitmProxyRequestHandler(CaptureMixin):
                 flow.response = http.HTTPResponse.make(
                     status_code=int(request.response.status_code),
                     content=request.response.body,
-                    headers=[(k.encode('utf-8'), v.encode('utf-8')) for k, v in request.response.headers.items()]
+                    headers=[(k.encode('utf-8'), v.encode('utf-8')) for k, v in request.response.headers.items()],
                 )
                 return
 
@@ -150,7 +150,7 @@ class MitmProxyRequestHandler(CaptureMixin):
             status_code=flow.response.status_code,
             reason=flow.response.reason,
             headers=[(k, v) for k, v in flow.response.headers.items(multi=True)],
-            body=flow.response.raw_content
+            body=flow.response.raw_content,
         )
 
         # Call the response interceptor if set
@@ -173,7 +173,7 @@ class MitmProxyRequestHandler(CaptureMixin):
             method=flow.request.method,
             url=flow.request.url,
             headers=[(k, v) for k, v in flow.request.headers.items()],
-            body=flow.request.raw_content
+            body=flow.request.raw_content,
         )
         request.response = response
 
@@ -193,9 +193,7 @@ class MitmProxy:
         self.options = options
 
         # Used to stored captured requests
-        self.storage = RequestStorage(
-            base_dir=options.pop('request_storage_base_dir', None)
-        )
+        self.storage = RequestStorage(base_dir=options.pop('request_storage_base_dir', None))
 
         # Used to modify requests/responses passing through the server
         # DEPRECATED. Will be superceded by request/response interceptors.
@@ -266,8 +264,7 @@ class MitmProxy:
         if http_proxy and https_proxy:
             if http_proxy.hostport != https_proxy.hostport:
                 # We only support a single upstream mitmproxy server
-                raise ValueError('Cannot specify both http AND https '
-                                 'mitmproxy settings with mitmproxy backend')
+                raise ValueError('Cannot specify both http AND https ' 'mitmproxy settings with mitmproxy backend')
 
             conf = https_proxy
         elif http_proxy:
@@ -289,7 +286,6 @@ class MitmProxy:
 
 
 class SendToLogger:
-
     def log(self, entry):
         """Send a mitmproxy log message through our own logger."""
         getattr(logger, entry.level.replace('warn', 'warning'), logger.info)(entry.msg)

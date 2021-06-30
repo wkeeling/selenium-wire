@@ -40,9 +40,7 @@ def create(addr='127.0.0.1', port=0, options=None):
         proxy = mitmproxy.MitmProxy(addr, port, options)
     else:
         raise ValueError(
-            "Invalid backend '{}'. "
-            "Valid values are 'default' or 'mitmproxy'."
-            .format(options['backend'])
+            "Invalid backend '{}'. " "Valid values are 'default' or 'mitmproxy'.".format(options['backend'])
         )
 
     t = threading.Thread(name='Selenium Wire Proxy Server', target=proxy.serve_forever)

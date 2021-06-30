@@ -22,9 +22,7 @@ class MitmProxy:
         self.options = options
 
         # Used to stored captured requests
-        self.storage = RequestStorage(
-            base_dir=options.pop('request_storage_base_dir', None)
-        )
+        self.storage = RequestStorage(base_dir=options.pop('request_storage_base_dir', None))
         extract_cert_and_key(self.storage.home_dir)
 
         # Used to modify requests/responses passing through the server
@@ -124,7 +122,6 @@ class MitmProxy:
 
 
 class SendToLogger:
-
     def log(self, entry):
         """Send a mitmproxy log message through our own logger."""
         getattr(logger, entry.level.replace('warn', 'warning'), logger.info)(entry.msg)

@@ -1,7 +1,7 @@
 import logging
 
-from selenium.webdriver import DesiredCapabilities
 import undetected_chromedriver.v2 as uc
+from selenium.webdriver import DesiredCapabilities
 
 from seleniumwire import backend
 from seleniumwire.inspect import InspectRequestsMixin
@@ -24,10 +24,7 @@ class Chrome(InspectRequestsMixin, DriverCommonMixin, uc.Chrome):
         if seleniumwire_options is None:
             seleniumwire_options = {}
 
-        self.proxy = backend.create(
-            port=seleniumwire_options.get('port', 0),
-            options=seleniumwire_options
-        )
+        self.proxy = backend.create(port=seleniumwire_options.get('port', 0), options=seleniumwire_options)
 
         if seleniumwire_options.get('auto_config', True):
             capabilities = kwargs.get('desired_capabilities')

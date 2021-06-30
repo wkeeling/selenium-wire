@@ -197,12 +197,7 @@ class RequestModifier:
         with self._lock:
             self._rewrite_rules.clear()
 
-    def modify_request(self,
-                       request,
-                       urlattr='url',
-                       methodattr='method',
-                       headersattr='headers',
-                       bodyattr='body'):
+    def modify_request(self, request, urlattr='url', methodattr='method', headersattr='headers', bodyattr='body'):
         """Performs modifications to the request.
 
         Args:
@@ -215,18 +210,17 @@ class RequestModifier:
         override_headers = self._get_matching_overrides(self._headers, getattr(request, urlattr))
         if override_headers:
             # We're only interested in request headers
-            override_headers = {name: value for name, value in (override_headers or {}).items()
-                                if not name.lower().startswith('response:')}
+            override_headers = {
+                name: value
+                for name, value in (override_headers or {}).items()
+                if not name.lower().startswith('response:')
+            }
             self._modify_headers(getattr(request, headersattr), override_headers)
         self._modify_params(request, urlattr, methodattr, headersattr, bodyattr)
         self._modify_querystring(request, urlattr)
         self._rewrite_url(request, urlattr, headersattr)
 
-    def modify_response(self,
-                        response,
-                        request,
-                        urlattr='url',
-                        headersattr='headers'):
+    def modify_response(self, response, request, urlattr='url', headersattr='headers'):
         """Performs modifications to the response.
 
         Args:
@@ -238,9 +232,11 @@ class RequestModifier:
         override_headers = self._get_matching_overrides(self._headers, getattr(request, urlattr))
 
         # We're only interested in response headers
-        override_headers = {name.split(':', maxsplit=1)[1].strip(): value
-                            for name, value in (override_headers or {}).items()
-                            if name.lower().startswith('response:')}
+        override_headers = {
+            name.split(':', maxsplit=1)[1].strip(): value
+            for name, value in (override_headers or {}).items()
+            if name.lower().startswith('response:')
+        }
 
         if override_headers:
             self._modify_headers(getattr(response, headersattr), override_headers)

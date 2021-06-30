@@ -33,12 +33,9 @@ def test_create_har_entry():
     mock_flow.request.cookies.fields = [
         ('test_req_cookie', 'c_val1'),
         ('path', '/'),
-        ('expires', f'{start.timestamp()}')
+        ('expires', f'{start.timestamp()}'),
     ]
-    mock_flow.request.headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'test-header-2': 'bar'
-    }
+    mock_flow.request.headers = {'Content-Type': 'application/x-www-form-urlencoded', 'test-header-2': 'bar'}
     mock_flow.request.query = {'foo': 'bar'}
     mock_flow.request.urlencoded_form.items.return_value = [('a', 'b'), ('c', 'd')]
     mock_flow.request.get_text.return_value = 'a=b&c=d'
@@ -48,15 +45,13 @@ def test_create_har_entry():
     mock_flow.response.status_code = 200
     mock_flow.response.reason = 'OK'
     mock_flow.response.http_version = '1.1'
-    mock_flow.response.cookies.fields = [
-        ('test_res_cookie', ('test', {'path': '/'}))
-    ]
+    mock_flow.response.cookies.fields = [('test_res_cookie', ('test', {'path': '/'}))]
     mock_flow.response.headers = {'Content-Type': 'text/plain', 'Location': 'test_location'}
     mock_flow.response.raw_content = b'compressed'
     mock_flow.response.content = b'helloworld12345'
     mock_flow.response.get_text.return_value = 'helloworld12345'
 
-    mock_flow.server_conn.ip_address = ('10.10.10.1', )
+    mock_flow.server_conn.ip_address = ('10.10.10.1',)
 
     entry = create_har_entry(mock_flow)
 
@@ -65,13 +60,9 @@ def test_create_har_entry():
     assert entry['request']['method'] == 'POST'
     assert entry['request']['url'] == 'https://www.somewhere.com/some/path?foo=bar'
     assert entry['request']['httpVersion'] == '1.1'
-    assert entry['request']['cookies'] == [{
-        'name': 'test_req_cookie',
-        'value': 'c_val1',
-        'path': '/',
-        'httpOnly': False,
-        'secure': False
-    }]
+    assert entry['request']['cookies'] == [
+        {'name': 'test_req_cookie', 'value': 'c_val1', 'path': '/', 'httpOnly': False, 'secure': False}
+    ]
     assert entry['request']['headers'] == [
         {'name': 'Content-Type', 'value': 'application/x-www-form-urlencoded'},
         {'name': 'test-header-2', 'value': 'bar'},
@@ -83,20 +74,13 @@ def test_create_har_entry():
     assert entry['request']['bodySize'] == 7
     assert entry['request']['postData']['mimeType'] == 'application/x-www-form-urlencoded'
     assert entry['request']['postData']['text'] == 'a=b&c=d'
-    assert entry['request']['postData']['params'] == [
-        {'name': 'a', 'value': 'b'},
-        {'name': 'c', 'value': 'd'}
-    ]
+    assert entry['request']['postData']['params'] == [{'name': 'a', 'value': 'b'}, {'name': 'c', 'value': 'd'}]
     assert entry['response']['status'] == 200
     assert entry['response']['statusText'] == 'OK'
     assert entry['response']['httpVersion'] == '1.1'
-    assert entry['response']['cookies'] == [{
-        'name': 'test_res_cookie',
-        'value': 'test',
-        'path': '/',
-        'httpOnly': False,
-        'secure': False
-    }]
+    assert entry['response']['cookies'] == [
+        {'name': 'test_res_cookie', 'value': 'test', 'path': '/', 'httpOnly': False, 'secure': False}
+    ]
     assert entry['response']['headers'] == [
         {'name': 'Content-Type', 'value': 'text/plain'},
         {'name': 'Location', 'value': 'test_location'},
@@ -117,10 +101,7 @@ def test_create_har_entry():
 
 
 def test_generate_har():
-    entries = [
-        {'name': 'entry1'},
-        {'name': 'entry2'}
-    ]
+    entries = [{'name': 'entry1'}, {'name': 'entry2'}]
 
     har = generate_har(entries)
     har = json.loads(har)

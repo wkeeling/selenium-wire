@@ -6,7 +6,6 @@ from mitmproxy import ctx, http
 
 
 class InjectMessage:
-
     def load(self, loader):
         loader.add_option(
             name='message',
@@ -21,6 +20,4 @@ class InjectMessage:
         )
 
 
-addons = [
-    InjectMessage()
-]
+addons = [InjectMessage()]

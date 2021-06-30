@@ -69,11 +69,7 @@ class RequestStorage:
         self._save(request, request_dir, 'request')
 
         with self._lock:
-            self._index.append(_IndexedRequest(
-                id=request_id,
-                url=request.url,
-                has_response=False)
-            )
+            self._index.append(_IndexedRequest(id=request_id, url=request.url, has_response=False))
 
     def _save(self, obj, dirname, filename):
         with open(os.path.join(dirname, filename), 'wb') as out:
@@ -171,9 +167,7 @@ class RequestStorage:
                 # Attach the response if there is one.
                 with open(os.path.join(request_dir, 'response'), 'rb') as res:
                     response = pickle.load(res)
-                    response.body = self._decode(
-                        response.body, response.headers.get('Content-Encoding', 'identity')
-                    )
+                    response.body = self._decode(response.body, response.headers.get('Content-Encoding', 'identity'))
                     request.response = response
 
                     # The certificate data has been stored on the response but we make
@@ -313,8 +307,10 @@ class RequestStorage:
         for storage_dir in os.listdir(parent_dir):
             storage_dir = os.path.join(parent_dir, storage_dir)
             try:
-                if (os.path.getmtime(storage_dir) <
-                        (datetime.now() - timedelta(days=REMOVE_DATA_OLDER_THAN_DAYS)).timestamp()):
+                if (
+                    os.path.getmtime(storage_dir)
+                    < (datetime.now() - timedelta(days=REMOVE_DATA_OLDER_THAN_DAYS)).timestamp()
+                ):
                     shutil.rmtree(storage_dir, ignore_errors=True)
             except FileNotFoundError:
                 # Can happen if multiple instances are run concurrently
