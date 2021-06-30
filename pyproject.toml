@@ -1,6 +1,15 @@
 [tool.black]
 line-length = 119
 skip-string-normalization = true
-extend-exlcude = """
-seleniumwire/thirdparty/
-"""
+target-version = ['py38']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | dist
+  | seleniumwire/thirdparty
+)/
+'''
