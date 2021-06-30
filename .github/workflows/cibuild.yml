@@ -6,6 +6,15 @@ on:
       - master
 
 jobs:
+  isort:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v2
+      - run: python -m pip install --upgrade pip
+      - run: pip install tox
+      - run: tox -e isort
+
   black:
     runs-on: ubuntu-latest
     steps:

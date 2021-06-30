@@ -10,7 +10,6 @@ exclude = '''
   | \.tox
   | \.venv
   | dist
-  | seleniumwire/thirdparty
 )/
 '''
 
