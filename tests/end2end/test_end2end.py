@@ -33,9 +33,17 @@ def httpbin_nossl():
 
 @pytest.fixture(scope='module')
 def httpproxy():
-    httpproxy = testutils.get_proxy()
-    yield httpproxy
-    httpproxy.close()
+    with create_httpproxy() as proxy:
+        yield proxy
+
+
+@contextmanager
+def create_httpproxy(port=8086, mode='http', auth=''):
+    httpproxy = testutils.get_proxy(port, mode, auth)
+    try:
+        yield httpproxy
+    finally:
+        httpproxy.close()
 
 
 @pytest.fixture(scope='module')
@@ -76,8 +84,10 @@ def create_driver(
         seleniumwire_options=seleniumwire_options,
         desired_capabilities=desired_capabilities,
     )
-    yield driver
-    driver.quit()
+    try:
+        yield driver
+    finally:
+        driver.quit()
 
 
 def teardown_function():
@@ -283,43 +293,35 @@ def test_upstream_http_proxy(driver_path, chrome_options, httpbin, httpproxy):
 
 
 def test_upstream_http_proxy_basic_auth(driver_path, chrome_options, httpbin):
-    httpproxy = None
-
-    try:
-        httpproxy = testutils.get_proxy(mode='http', port=8088, auth='test:test')
-        sw_options = {'proxy': {'https': f'{httpproxy}'}}
+    with create_httpproxy(port=8888, auth='test:test') as httpproxy:
+        sw_options = {
+            'proxy': {
+                'https': f'{httpproxy}'
+            }
+        }
 
         with create_driver(driver_path, chrome_options, sw_options) as driver:
             driver.get(f'{httpbin}/html')
 
             assert 'This passed through a authenticated http proxy' in driver.page_source
-
-    finally:
-        if httpproxy:
-            httpproxy.close()
 
 
 def test_upstream_http_proxy_basic_auth_empty_pass(driver_path, chrome_options, httpbin):
-    httpproxy = None
-
-    try:
-        httpproxy = testutils.get_proxy(mode='http', port=8088, auth='test:')
-        sw_options = {'proxy': {'https': f'{httpproxy}'}}
+    with create_httpproxy(port=8888, auth='test:') as httpproxy:
+        sw_options = {
+            'proxy': {
+                'https': f'{httpproxy}'
+            }
+        }
 
         with create_driver(driver_path, chrome_options, sw_options) as driver:
             driver.get(f'{httpbin}/html')
 
             assert 'This passed through a authenticated http proxy' in driver.page_source
-    finally:
-        if httpproxy:
-            httpproxy.close()
 
 
 def test_upstream_http_proxy_custom_auth(driver_path, chrome_options, httpbin):
-    httpproxy = None
-
-    try:
-        httpproxy = testutils.get_proxy(mode='http', port=8088, auth='test:test')
+    with create_httpproxy(port=8088, auth='test:test'):
         sw_options = {
             'proxy': {
                 'https': 'https://localhost:8088',
@@ -331,9 +333,6 @@ def test_upstream_http_proxy_custom_auth(driver_path, chrome_options, httpbin):
             driver.get(f'{httpbin}/html')
 
             assert 'This passed through a authenticated http proxy' in driver.page_source
-    finally:
-        if httpproxy:
-            httpproxy.close()
 
 
 def test_upstream_socks_proxy(driver_path, chrome_options, httpbin, socksproxy):
