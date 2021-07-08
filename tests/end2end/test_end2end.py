@@ -19,16 +19,17 @@ from tests import utils as testutils
 
 @pytest.fixture(scope='module')
 def httpbin():
-    httpbin = testutils.get_httpbin()
-    yield httpbin
-    httpbin.close()
+    with create_httpbin() as httpbin:
+        yield httpbin
 
 
-@pytest.fixture(scope='module')
-def httpbin_nossl():
-    httpbin = testutils.get_httpbin(use_https=False)
-    yield httpbin
-    httpbin.close()
+@contextmanager
+def create_httpbin(port=8085, use_https=True):
+    httpbin = testutils.get_httpbin(port, use_https)
+    try:
+        yield httpbin
+    finally:
+        httpbin.close()
 
 
 @pytest.fixture(scope='module')
@@ -339,13 +340,14 @@ def test_upstream_socks_proxy(driver_path, chrome_options, httpbin, socksproxy):
         assert 'This passed through a socks proxy' in driver.page_source
 
 
-def test_bypass_upstream_proxy_when_target_http(driver_path, chrome_options, httpbin_nossl, httpproxy):
+def test_bypass_upstream_proxy_when_target_http(driver_path, chrome_options, httpproxy):
     sw_options = {'proxy': {'https': f'{httpproxy}', 'no_proxy': 'localhost:8085'}}
 
-    with create_driver(driver_path, chrome_options, sw_options) as driver:
-        driver.get(f'{httpbin_nossl}/html')  # Scheme is http://
+    with create_httpbin(port=9091, use_https=False) as httpbin:
+        with create_driver(driver_path, chrome_options, sw_options) as driver:
+            driver.get(f'{httpbin}/html')  # Scheme is http://
 
-        assert 'This passed through a http proxy' not in driver.page_source
+            assert 'This passed through a http proxy' not in driver.page_source
 
 
 def test_bypass_upstream_proxy_when_target_https(driver_path, chrome_options, httpbin, httpproxy):
