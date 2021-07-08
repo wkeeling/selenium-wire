@@ -58,12 +58,7 @@ def get_httpbin(port=8085, use_https=True):
 
         args.append('httpbin:app')
 
-        proc = subprocess.Popen(
-            args,
-            bufsize=0,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
+        proc = subprocess.Popen(args, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         try:
             proc.wait(timeout=2)
@@ -157,22 +152,23 @@ def get_proxy(port=8086, mode='http', auth=''):
 
     message = f"This passed through a {'authenticated ' if auth else ''}{mode} proxy"
 
-    proc = subprocess.Popen([
-        'mitmdump',
-        '--listen-port',
-        f'{port}',
-        '--set',
-        f'mode={mode_map[mode]}',
-        '--set',
-        'flow_detail=0',
-        '--set',
-        'ssl_insecure',
-        *auth_args,
-        '-s',
-        Path(__file__).parent / 'inject_message.py',
-        '--set',
-        f'message={message}',
-    ],
+    proc = subprocess.Popen(
+        [
+            'mitmdump',
+            '--listen-port',
+            f'{port}',
+            '--set',
+            f'mode={mode_map[mode]}',
+            '--set',
+            'flow_detail=0',
+            '--set',
+            'ssl_insecure',
+            *auth_args,
+            '-s',
+            Path(__file__).parent / 'inject_message.py',
+            '--set',
+            f'message={message}',
+        ],
         bufsize=0,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

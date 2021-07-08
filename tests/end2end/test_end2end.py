@@ -294,11 +294,7 @@ def test_upstream_http_proxy(driver_path, chrome_options, httpbin, httpproxy):
 
 def test_upstream_http_proxy_basic_auth(driver_path, chrome_options, httpbin):
     with create_httpproxy(port=8888, auth='test:test') as httpproxy:
-        sw_options = {
-            'proxy': {
-                'https': f'{httpproxy}'
-            }
-        }
+        sw_options = {'proxy': {'https': f'{httpproxy}'}}
 
         with create_driver(driver_path, chrome_options, sw_options) as driver:
             driver.get(f'{httpbin}/html')
@@ -308,11 +304,7 @@ def test_upstream_http_proxy_basic_auth(driver_path, chrome_options, httpbin):
 
 def test_upstream_http_proxy_basic_auth_empty_pass(driver_path, chrome_options, httpbin):
     with create_httpproxy(port=8888, auth='test:') as httpproxy:
-        sw_options = {
-            'proxy': {
-                'https': f'{httpproxy}'
-            }
-        }
+        sw_options = {'proxy': {'https': f'{httpproxy}'}}
 
         with create_driver(driver_path, chrome_options, sw_options) as driver:
             driver.get(f'{httpbin}/html')
@@ -348,12 +340,7 @@ def test_upstream_socks_proxy(driver_path, chrome_options, httpbin, socksproxy):
 
 
 def test_bypass_upstream_proxy_when_target_http(driver_path, chrome_options, httpbin_nossl, httpproxy):
-    sw_options = {
-        'proxy': {
-            'https': f'{httpproxy}',
-            'no_proxy': 'localhost:8085'
-        }
-    }
+    sw_options = {'proxy': {'https': f'{httpproxy}', 'no_proxy': 'localhost:8085'}}
 
     with create_driver(driver_path, chrome_options, sw_options) as driver:
         driver.get(f'{httpbin_nossl}/html')  # Scheme is http://
@@ -362,12 +349,7 @@ def test_bypass_upstream_proxy_when_target_http(driver_path, chrome_options, htt
 
 
 def test_bypass_upstream_proxy_when_target_https(driver_path, chrome_options, httpbin, httpproxy):
-    sw_options = {
-        'proxy': {
-            'https': f'{httpproxy}',  # Scheme is https://
-            'no_proxy': 'localhost:8085'
-        }
-    }
+    sw_options = {'proxy': {'https': f'{httpproxy}', 'no_proxy': 'localhost:8085'}}  # Scheme is https://
 
     with create_driver(driver_path, chrome_options, sw_options) as driver:
         driver.get(f'{httpbin}/html')
@@ -480,11 +462,7 @@ def test_address_in_use(driver_path, chrome_options, httpbin):
 
 
 def test_har(driver_path, chrome_options, httpbin):
-    with create_driver(
-        driver_path,
-        chrome_options,
-        {'enable_har': True}
-    ) as driver:
+    with create_driver(driver_path, chrome_options, {'enable_har': True}) as driver:
         driver.get(f'{httpbin}/html')
 
         har = json.loads(driver.har)
