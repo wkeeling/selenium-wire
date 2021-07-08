@@ -20,8 +20,8 @@ def get_httpbin(port=8085, use_https=True):
     return a Httpbin object containing the URL. This will only work for non-Windows
     hosts.
 
-    - Return a Httpbin object containing the URL of the public httpbin website,
-    https://httpbin.org
+    - If the last two steps did not yield a httpbin server, return a Httpbin object
+    containing the URL of the public httpbin website https://httpbin.org
 
     Clients should call .close() on the returned Httpbin object when they are
     finished with it.
@@ -81,7 +81,7 @@ class Httpbin:
 
         Args:
             url: The URL of the httpbin server.
-            proc: The Popen object if a httpbin server was created.
+            proc: The Popen object if a httpbin server was created locally.
         """
         self.url = url
         self.proc = proc
