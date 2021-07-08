@@ -6,7 +6,7 @@ from contextlib import closing
 from pathlib import Path
 
 
-def get_httpbin(port=8085):
+def get_httpbin(port=8085, use_https=True):
     """Get a running httpbin server instance.
 
     This function will attempt to discover a httpbin server by trying each
@@ -27,11 +27,16 @@ def get_httpbin(port=8085):
     finished with it.
 
     Args:
-        port: Optional port number that the httpbin instance is/should listen on.
+        port:
+            Optional port number that the httpbin instance is/should listen on.
+        use_https:
+            Whether the httpbin instance should use https. When True (the default)
+            the Httpbin instance will be addressable as 'https://' otherwise 'http://'.
     Returns:
         A Httpbin object containing the URL of the httpbin server.
     """
-    url = f'https://localhost:{port}'
+    scheme = 'https' if use_https else 'http'
+    url = f'{scheme}://localhost:{port}'
 
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
         if sock.connect_ex(('localhost', port)) == 0:
@@ -39,17 +44,22 @@ def get_httpbin(port=8085):
             return Httpbin(url)
 
     if os.name != 'nt':  # Gunicorn doesn't work on Windows
-        cert = Path(__file__).parent / 'server.crt'
-        key = Path(__file__).parent / 'server.key'
+        args = [
+            'gunicorn',
+            '--bind',
+            f'0.0.0.0:{port}',
+        ]
+
+        if use_https:
+            cert = Path(__file__).parent / 'server.crt'
+            key = Path(__file__).parent / 'server.key'
+            args.append(f'--certfile={cert}')
+            args.append(f'--keyfile={key}')
+
+        args.append('httpbin:app')
+
         proc = subprocess.Popen(
-            [
-                'gunicorn',
-                f'--certfile={cert}',
-                f'--keyfile={key}',
-                '--bind',
-                f'0.0.0.0:{port}',
-                'httpbin:app',
-            ],
+            args,
             bufsize=0,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -65,7 +75,7 @@ def get_httpbin(port=8085):
             return Httpbin(url, proc)
 
     print('Using httpbin.org public website')
-    return Httpbin('https://httpbin.org')
+    return Httpbin(f'{scheme}://httpbin.org')
 
 
 class Httpbin:
@@ -147,23 +157,22 @@ def get_proxy(port=8086, mode='http', auth=''):
 
     message = f"This passed through a {'authenticated ' if auth else ''}{mode} proxy"
 
-    proc = subprocess.Popen(
-        [
-            'mitmdump',
-            '--listen-port',
-            f'{port}',
-            '--set',
-            f'mode={mode_map[mode]}',
-            '--set',
-            'flow_detail=0',
-            '--set',
-            'ssl_insecure',
-            *auth_args,
-            '-s',
-            Path(__file__).parent / 'inject_message.py',
-            '--set',
-            f'message={message}',
-        ],
+    proc = subprocess.Popen([
+        'mitmdump',
+        '--listen-port',
+        f'{port}',
+        '--set',
+        f'mode={mode_map[mode]}',
+        '--set',
+        'flow_detail=0',
+        '--set',
+        'ssl_insecure',
+        *auth_args,
+        '-s',
+        Path(__file__).parent / 'inject_message.py',
+        '--set',
+        f'message={message}',
+    ],
         bufsize=0,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

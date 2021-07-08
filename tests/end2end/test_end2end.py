@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import threading
+from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import patch
 
@@ -19,6 +20,13 @@ from tests import utils as testutils
 @pytest.fixture(scope='module')
 def httpbin():
     httpbin = testutils.get_httpbin()
+    yield httpbin
+    httpbin.close()
+
+
+@pytest.fixture(scope='module')
+def httpbin_nossl():
+    httpbin = testutils.get_httpbin(use_https=False)
     yield httpbin
     httpbin.close()
 
@@ -51,23 +59,25 @@ def chrome_options():
 
 @pytest.fixture
 def driver(driver_path, chrome_options):
-    driver = create_driver(driver_path, chrome_options)
-    yield driver
-    driver.quit()
+    with create_driver(driver_path, chrome_options) as driver:
+        yield driver
 
 
+@contextmanager
 def create_driver(
     driver_path,
     chrome_options,
     seleniumwire_options=None,
     desired_capabilities=None,
 ):
-    return webdriver.Chrome(
+    driver = webdriver.Chrome(
         executable_path=driver_path,
         options=chrome_options,
         seleniumwire_options=seleniumwire_options,
         desired_capabilities=desired_capabilities,
     )
+    yield driver
+    driver.quit()
 
 
 def teardown_function():
@@ -206,8 +216,6 @@ def test_update_json_post_request(driver_path, chrome_options, httpbin):
     chrome_data_dir = Path(__file__).parent / 'chrome_tmp'
     chrome_options.add_argument(f'--user-data-dir={str(chrome_data_dir)}')
 
-    driver = create_driver(driver_path, chrome_options)
-
     def interceptor(req):
         if req.method == 'POST' and req.headers['Content-Type'] == 'application/json':
             # We expect the request body to contain the JSON:
@@ -219,19 +227,18 @@ def test_update_json_post_request(driver_path, chrome_options, httpbin):
             del req.headers['Content-Length']
             req.headers['Content-Length'] = str(len(req.body))
 
-    driver.request_interceptor = interceptor
+    with create_driver(driver_path, chrome_options) as driver:
+        driver.request_interceptor = interceptor
 
-    form = Path(__file__).parent / 'jsonform.html'
-    driver.get(f'file:///{str(form)}')
-    button = driver.find_element_by_id('submit')
-    button.click()  # Makes Ajax request so need to wait for it
-    request = driver.wait_for_request('/post')
+        form = Path(__file__).parent / 'jsonform.html'
+        driver.get(f'file:///{str(form)}')
+        button = driver.find_element_by_id('submit')
+        button.click()  # Makes Ajax request so need to wait for it
+        request = driver.wait_for_request('/post')
 
-    resp_body = json.loads(request.response.body.decode('utf-8'))
+        resp_body = json.loads(request.response.body.decode('utf-8'))
 
-    assert resp_body['json'] == {'hello': 'world', 'spam': 'eggs', 'foo': 'bar'}
-
-    driver.quit()
+        assert resp_body['json'] == {'hello': 'world', 'spam': 'eggs', 'foo': 'bar'}
 
 
 def test_block_a_request(driver, httpbin):
@@ -260,23 +267,19 @@ def test_mock_a_response(driver, httpbin):
 def test_mitmproxy_backend(driver_path, chrome_options, httpbin):
     sw_options = {'backend': 'mitmproxy'}
 
-    driver = create_driver(driver_path, chrome_options, sw_options)
-    driver.get(f'{httpbin}/html')
+    with create_driver(driver_path, chrome_options, sw_options) as driver:
+        driver.get(f'{httpbin}/html')
 
-    assert driver.last_request.response is not None
-
-    driver.quit()
+        assert driver.last_request.response is not None
 
 
 def test_upstream_http_proxy(driver_path, chrome_options, httpbin, httpproxy):
     sw_options = {'proxy': {'https': f'{httpproxy}'}}
 
-    driver = create_driver(driver_path, chrome_options, sw_options)
-    driver.get(f'{httpbin}/html')
+    with create_driver(driver_path, chrome_options, sw_options) as driver:
+        driver.get(f'{httpbin}/html')
 
-    assert 'This passed through a http proxy' in driver.page_source
-
-    driver.quit()
+        assert 'This passed through a http proxy' in driver.page_source
 
 
 def test_upstream_http_proxy_basic_auth(driver_path, chrome_options, httpbin):
@@ -286,12 +289,11 @@ def test_upstream_http_proxy_basic_auth(driver_path, chrome_options, httpbin):
         httpproxy = testutils.get_proxy(mode='http', port=8088, auth='test:test')
         sw_options = {'proxy': {'https': f'{httpproxy}'}}
 
-        driver = create_driver(driver_path, chrome_options, sw_options)
-        driver.get(f'{httpbin}/html')
+        with create_driver(driver_path, chrome_options, sw_options) as driver:
+            driver.get(f'{httpbin}/html')
 
-        assert 'This passed through a authenticated http proxy' in driver.page_source
+            assert 'This passed through a authenticated http proxy' in driver.page_source
 
-        driver.quit()
     finally:
         if httpproxy:
             httpproxy.close()
@@ -304,12 +306,10 @@ def test_upstream_http_proxy_basic_auth_empty_pass(driver_path, chrome_options, 
         httpproxy = testutils.get_proxy(mode='http', port=8088, auth='test:')
         sw_options = {'proxy': {'https': f'{httpproxy}'}}
 
-        driver = create_driver(driver_path, chrome_options, sw_options)
-        driver.get(f'{httpbin}/html')
+        with create_driver(driver_path, chrome_options, sw_options) as driver:
+            driver.get(f'{httpbin}/html')
 
-        assert 'This passed through a authenticated http proxy' in driver.page_source
-
-        driver.quit()
+            assert 'This passed through a authenticated http proxy' in driver.page_source
     finally:
         if httpproxy:
             httpproxy.close()
@@ -327,12 +327,10 @@ def test_upstream_http_proxy_custom_auth(driver_path, chrome_options, httpbin):
             },
         }
 
-        driver = create_driver(driver_path, chrome_options, sw_options)
-        driver.get(f'{httpbin}/html')
+        with create_driver(driver_path, chrome_options, sw_options) as driver:
+            driver.get(f'{httpbin}/html')
 
-        assert 'This passed through a authenticated http proxy' in driver.page_source
-
-        driver.quit()
+            assert 'This passed through a authenticated http proxy' in driver.page_source
     finally:
         if httpproxy:
             httpproxy.close()
@@ -344,44 +342,55 @@ def test_upstream_socks_proxy(driver_path, chrome_options, httpbin, socksproxy):
     """
     sw_options = {'proxy': {'https': f'{socksproxy}'}}
 
-    driver = create_driver(driver_path, chrome_options, sw_options)
-    driver.get(f'{httpbin}/html')
+    with create_driver(driver_path, chrome_options, sw_options) as driver:
+        driver.get(f'{httpbin}/html')
 
-    assert 'This passed through a socks proxy' in driver.page_source
-
-    driver.quit()
+        assert 'This passed through a socks proxy' in driver.page_source
 
 
-def test_bypass_upstream_http_proxy(driver_path, chrome_options, httpbin, httpproxy):
-    sw_options = {'proxy': {'https': f'{httpproxy}', 'no_proxy': 'localhost:8085'}}
+def test_bypass_upstream_proxy_when_target_http(driver_path, chrome_options, httpbin_nossl, httpproxy):
+    sw_options = {
+        'proxy': {
+            'https': f'{httpproxy}',
+            'no_proxy': 'localhost:8085'
+        }
+    }
 
-    driver = create_driver(driver_path, chrome_options, sw_options)
-    driver.get(f'{httpbin}/html')
+    with create_driver(driver_path, chrome_options, sw_options) as driver:
+        driver.get(f'{httpbin_nossl}/html')  # Scheme is http://
 
-    assert 'This passed through a http proxy' not in driver.page_source
+        assert 'This passed through a http proxy' not in driver.page_source
 
-    driver.quit()
+
+def test_bypass_upstream_proxy_when_target_https(driver_path, chrome_options, httpbin, httpproxy):
+    sw_options = {
+        'proxy': {
+            'https': f'{httpproxy}',  # Scheme is https://
+            'no_proxy': 'localhost:8085'
+        }
+    }
+
+    with create_driver(driver_path, chrome_options, sw_options) as driver:
+        driver.get(f'{httpbin}/html')
+
+        assert 'This passed through a http proxy' not in driver.page_source
 
 
 def test_upstream_http_proxy_env_var(driver_path, chrome_options, httpbin, httpproxy):
     with patch.dict(os.environ, {'HTTPS_PROXY': f'{httpproxy}'}):
-        driver = create_driver(driver_path, chrome_options)
-        driver.get(f'{httpbin}/html')
+        with create_driver(driver_path, chrome_options) as driver:
+            driver.get(f'{httpbin}/html')
 
-        assert 'This passed through a http proxy' in driver.page_source
-
-        driver.quit()
+            assert 'This passed through a http proxy' in driver.page_source
 
 
 def test_no_auto_config(driver_path, chrome_options, httpbin):
     sw_options = {'auto_config': False}
 
-    driver = create_driver(driver_path, chrome_options, sw_options)
-    driver.get(f'{httpbin}/html')
+    with create_driver(driver_path, chrome_options, sw_options) as driver:
+        driver.get(f'{httpbin}/html')
 
-    assert not driver.requests
-
-    driver.quit()
+        assert not driver.requests
 
 
 def test_no_auto_config_manual_proxy(driver_path, chrome_options, httpbin):
@@ -405,31 +414,27 @@ def test_no_auto_config_manual_proxy(driver_path, chrome_options, httpbin):
         'port': 8088,
     }
 
-    driver = create_driver(
+    with create_driver(
         driver_path,
         chrome_options,
         sw_options,
         capabilities,
-    )
+    ) as driver:
 
-    driver.get(f'{httpbin}/html')
-    driver.wait_for_request('/html')
-
-    driver.quit()
+        driver.get(f'{httpbin}/html')
+        driver.wait_for_request('/html')
 
 
 def test_exclude_hosts(driver_path, chrome_options, httpbin):
     httpbin2 = testutils.get_httpbin(port=8090)
     sw_options = {'exclude_hosts': ['<-loopback>', 'localhost:8085']}
 
-    driver = create_driver(driver_path, chrome_options, sw_options)
-    driver.get(f'{httpbin}/html')
-    driver.get(f'{httpbin2}/html')
+    with create_driver(driver_path, chrome_options, sw_options) as driver:
+        driver.get(f'{httpbin}/html')
+        driver.get(f'{httpbin2}/html')
 
-    assert len(driver.requests) == 1
-    assert driver.requests[0].url == f'{httpbin2}/html'
-
-    driver.quit()
+        assert len(driver.requests) == 1
+        assert driver.requests[0].url == f'{httpbin2}/html'
 
 
 @pytest.mark.skip("Fails on GitHub Actions - chromedriver threads timeout")
@@ -438,11 +443,10 @@ def test_multiple_threads(driver_path, chrome_options, httpbin):
     threads, results = [], []
 
     def run_driver():
-        driver = create_driver(driver_path, chrome_options)
-        driver.get(f'{httpbin}/html')
-        request = driver.wait_for_request('/html')
-        results.append(request)
-        driver.quit()
+        with create_driver(driver_path, chrome_options) as driver:
+            driver.get(f'{httpbin}/html')
+            request = driver.wait_for_request('/html')
+            results.append(request)
 
     for i in range(num_threads):
         t = threading.Thread(name=f'Driver thread {i + 1}', target=run_driver)
@@ -458,12 +462,10 @@ def test_multiple_threads(driver_path, chrome_options, httpbin):
 def test_ignore_http_methods(driver_path, chrome_options, httpbin):
     sw_options = {'ignore_http_methods': ['GET']}
 
-    driver = create_driver(driver_path, chrome_options, sw_options)
-    driver.get(f'{httpbin}/html')
+    with create_driver(driver_path, chrome_options, sw_options) as driver:
+        driver.get(f'{httpbin}/html')
 
-    assert not driver.requests
-
-    driver.quit()
+        assert not driver.requests
 
 
 def test_address_in_use(driver_path, chrome_options, httpbin):
@@ -472,34 +474,32 @@ def test_address_in_use(driver_path, chrome_options, httpbin):
         'port': 8089,
     }
 
-    driver = create_driver(driver_path, chrome_options, sw_options)
-
-    with pytest.raises(ServerException, match='.*Address already in use.*'):
-        create_driver(driver_path, chrome_options, sw_options)
-
-    driver.quit()
+    with create_driver(driver_path, chrome_options, sw_options):
+        with pytest.raises(ServerException, match='.*Address already in use.*'):
+            with create_driver(driver_path, chrome_options, sw_options):
+                pass
 
 
 def test_har(driver_path, chrome_options, httpbin):
-    driver = create_driver(driver_path, chrome_options, {'enable_har': True})
-    driver.get(f'{httpbin}/html')
+    with create_driver(
+        driver_path,
+        chrome_options,
+        {'enable_har': True}
+    ) as driver:
+        driver.get(f'{httpbin}/html')
 
-    har = json.loads(driver.har)
+        har = json.loads(driver.har)
 
-    assert har['log']['creator']['comment'] == f'Selenium Wire version {seleniumwire.__version__}'
-    assert len(har['log']['entries']) == 1
-    assert har['log']['entries'][0]['request']['url'] == f'{httpbin}/html'
-    assert har['log']['entries'][0]['response']['status'] == 200
-
-    driver.quit()
+        assert har['log']['creator']['comment'] == f'Selenium Wire version {seleniumwire.__version__}'
+        assert len(har['log']['entries']) == 1
+        assert har['log']['entries'][0]['request']['url'] == f'{httpbin}/html'
+        assert har['log']['entries'][0]['response']['status'] == 200
 
 
 def test_disable_capture(driver_path, chrome_options, httpbin):
     sw_options = {'disable_capture': True}
 
-    driver = create_driver(driver_path, chrome_options, sw_options)
-    driver.get(f'{httpbin}/html')
+    with create_driver(driver_path, chrome_options, sw_options) as driver:
+        driver.get(f'{httpbin}/html')
 
-    assert not driver.requests
-
-    driver.quit()
+        assert not driver.requests
