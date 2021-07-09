@@ -32,6 +32,8 @@ def get_httpbin(port=8085, use_https=True):
         use_https:
             Whether the httpbin instance should use https. When True (the default)
             the Httpbin instance will be addressable as 'https://' otherwise 'http://'.
+            Note that a different port number should be specified if there is an
+            existing httpbin instance already running and you are switching the scheme.
     Returns:
         A Httpbin object containing the URL of the httpbin server.
     """

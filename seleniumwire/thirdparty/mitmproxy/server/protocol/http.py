@@ -255,27 +255,27 @@ class HttpLayer(base.Layer):
             log.error('Invalid proxy server credentials supplied')
         return False
 
-    def _switch_mode_when_no_proxy(self, f):
-        """Checks whether the request hostname is in the no_proxy list
-        and if so, switches the mode to regular if it's upstream.
+    def _should_bypass_upstream_proxy(self, request):
+        """Whether we should bypass any upstream proxy.
+
+        This checks whether the request address is in the no_proxy list.
         """
         no_proxy = False
 
         for addr in self.config.options.no_proxy:
             host, *port = addr.split(':')
 
-            if host == f.request.host:
+            if request.host.endswith(host):
                 no_proxy = True
 
                 if port:
                     # The user has specified a port, so this also needs to match
-                    no_proxy = int(port[0]) == f.request.port
+                    no_proxy = int(port[0]) == request.port
 
             if no_proxy:
                 break
 
-        if self.mode is HTTPMode.upstream and no_proxy:
-            self.mode = HTTPMode.regular
+        return no_proxy
 
     def _process_flow(self, f):
         try:
@@ -288,6 +288,10 @@ class HttpLayer(base.Layer):
 
             f.request = request
 
+            if self.mode is HTTPMode.upstream and self._should_bypass_upstream_proxy(f.request):
+                self.set_server((f.request.host, f.request.port))
+                self.mode = HTTPMode.regular
+
             if request.first_line_format == "authority":
                 # The standards are silent on what we should do with a CONNECT
                 # request body, so although it's not common, it's allowed.
@@ -297,8 +301,6 @@ class HttpLayer(base.Layer):
                 f.request.data.trailers = self.read_request_trailers(f.request)
                 f.request.timestamp_end = time.time()
                 self.channel.ask("http_connect", f)
-
-                self._switch_mode_when_no_proxy(f)
 
                 if self.mode is HTTPMode.regular:
                     return self.handle_regular_connect(f)

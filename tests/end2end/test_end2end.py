@@ -19,6 +19,7 @@ from tests import utils as testutils
 
 @pytest.fixture(scope='module')
 def httpbin():
+    # This module scoped Httpbin fixture uses HTTPS
     with create_httpbin() as httpbin:
         yield httpbin
 
@@ -341,21 +342,23 @@ def test_upstream_socks_proxy(driver_path, chrome_options, httpbin, socksproxy):
 
 
 def test_bypass_upstream_proxy_when_target_http(driver_path, chrome_options, httpproxy):
-    sw_options = {'proxy': {'https': f'{httpproxy}', 'no_proxy': 'localhost:8085'}}
+    sw_options = {'proxy': {'https': f'{httpproxy}', 'no_proxy': 'localhost:9091'}}
 
     with create_httpbin(port=9091, use_https=False) as httpbin:
         with create_driver(driver_path, chrome_options, sw_options) as driver:
             driver.get(f'{httpbin}/html')  # Scheme is http://
 
+            assert 'Moby-Dick' in driver.page_source
             assert 'This passed through a http proxy' not in driver.page_source
 
 
 def test_bypass_upstream_proxy_when_target_https(driver_path, chrome_options, httpbin, httpproxy):
-    sw_options = {'proxy': {'https': f'{httpproxy}', 'no_proxy': 'localhost:8085'}}  # Scheme is https://
+    sw_options = {'proxy': {'https': f'{httpproxy}', 'no_proxy': 'localhost:8085'}}
 
     with create_driver(driver_path, chrome_options, sw_options) as driver:
-        driver.get(f'{httpbin}/html')
+        driver.get(f'{httpbin}/html')  # Scheme is https://
 
+        assert 'Moby-Dick' in driver.page_source
         assert 'This passed through a http proxy' not in driver.page_source
 
 
