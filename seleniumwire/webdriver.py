@@ -33,8 +33,10 @@ class DriverCommonMixin:
             'proxyType': 'manual',
             'httpProxy': '{}:{}'.format(addr, port),
             'sslProxy': '{}:{}'.format(addr, port),
-            'noProxy': options.pop('exclude_hosts', []),
         }
+        if 'exclude_hosts' in options:
+            # Only pass noProxy when we have a value to pass
+            capabilities['proxy']['noProxy'] = options['exclude_hosts']
 
         capabilities['acceptInsecureCerts'] = True
 
