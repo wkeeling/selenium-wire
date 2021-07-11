@@ -64,7 +64,7 @@ setup(
             'tox',
             'twine',
             'wheel',
-        ]
+        ],
     },
     keywords='selenium-wire',
     name='selenium-wire',

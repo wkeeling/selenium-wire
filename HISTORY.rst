@@ -1,6 +1,13 @@
 History
 ~~~~~~~
 
+4.3.2 (2021-07-11)
+------------------
+
+* Fix bug where the upstream no_proxy setting would be ignored for http hosts.
+* Prevent Firefox from bypassing Selenium Wire for localhost addresses.
+* Fix bug where DNS wasn't being resolved through the proxy for socks5h.
+
 4.3.1 (2021-06-13)
 ------------------
 
