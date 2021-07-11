@@ -6,7 +6,7 @@ from contextlib import closing
 from pathlib import Path
 
 
-def get_httpbin(port=8085):
+def get_httpbin(port=8085, use_https=True):
     """Get a running httpbin server instance.
 
     This function will attempt to discover a httpbin server by trying each
@@ -20,18 +20,25 @@ def get_httpbin(port=8085):
     return a Httpbin object containing the URL. This will only work for non-Windows
     hosts.
 
-    - Return a Httpbin object containing the URL of the public httpbin website,
-    https://httpbin.org
+    - If the last two steps did not yield a httpbin server, return a Httpbin object
+    containing the URL of the public httpbin website https://httpbin.org
 
     Clients should call .close() on the returned Httpbin object when they are
     finished with it.
 
     Args:
-        port: Optional port number that the httpbin instance is/should listen on.
+        port:
+            Optional port number that the httpbin instance is/should listen on.
+        use_https:
+            Whether the httpbin instance should use https. When True (the default)
+            the Httpbin instance will be addressable as 'https://' otherwise 'http://'.
+            Note that a different port number should be specified if there is an
+            existing httpbin instance already running and you are switching the scheme.
     Returns:
         A Httpbin object containing the URL of the httpbin server.
     """
-    url = f'https://localhost:{port}'
+    scheme = 'https' if use_https else 'http'
+    url = f'{scheme}://localhost:{port}'
 
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
         if sock.connect_ex(('localhost', port)) == 0:
@@ -39,21 +46,21 @@ def get_httpbin(port=8085):
             return Httpbin(url)
 
     if os.name != 'nt':  # Gunicorn doesn't work on Windows
-        cert = Path(__file__).parent / 'server.crt'
-        key = Path(__file__).parent / 'server.key'
-        proc = subprocess.Popen(
-            [
-                'gunicorn',
-                f'--certfile={cert}',
-                f'--keyfile={key}',
-                '--bind',
-                f'0.0.0.0:{port}',
-                'httpbin:app',
-            ],
-            bufsize=0,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
+        args = [
+            'gunicorn',
+            '--bind',
+            f'0.0.0.0:{port}',
+        ]
+
+        if use_https:
+            cert = Path(__file__).parent / 'server.crt'
+            key = Path(__file__).parent / 'server.key'
+            args.append(f'--certfile={cert}')
+            args.append(f'--keyfile={key}')
+
+        args.append('httpbin:app')
+
+        proc = subprocess.Popen(args, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         try:
             proc.wait(timeout=2)
@@ -65,7 +72,7 @@ def get_httpbin(port=8085):
             return Httpbin(url, proc)
 
     print('Using httpbin.org public website')
-    return Httpbin('https://httpbin.org')
+    return Httpbin(f'{scheme}://httpbin.org')
 
 
 class Httpbin:
@@ -76,7 +83,7 @@ class Httpbin:
 
         Args:
             url: The URL of the httpbin server.
-            proc: The Popen object if a httpbin server was created.
+            proc: The Popen object if a httpbin server was created locally.
         """
         self.url = url
         self.proc = proc
