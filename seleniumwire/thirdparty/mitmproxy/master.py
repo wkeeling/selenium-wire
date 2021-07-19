@@ -4,9 +4,16 @@ import sys
 import threading
 import traceback
 
-from seleniumwire.thirdparty.mitmproxy import (addonmanager, command,
-                                               controller, eventsequence, http,
-                                               log, options, websocket)
+from seleniumwire.thirdparty.mitmproxy import (
+    addonmanager,
+    command,
+    controller,
+    eventsequence,
+    http,
+    log,
+    options,
+    websocket,
+)
 from seleniumwire.thirdparty.mitmproxy.coretypes import basethread
 from seleniumwire.thirdparty.mitmproxy.net import server_spec
 
@@ -23,9 +30,7 @@ class ServerThread(basethread.BaseThread):
     def __init__(self, server):
         self.server = server
         address = getattr(self.server, "address", None)
-        super().__init__(
-            "ServerThread ({})".format(repr(address))
-        )
+        super().__init__("ServerThread ({})".format(repr(address)))
 
     def run(self):
         self.server.serve_forever()
@@ -33,8 +38,9 @@ class ServerThread(basethread.BaseThread):
 
 class Master:
     """
-        The master handles mitmproxy's main event loop.
+    The master handles mitmproxy's main event loop.
     """
+
     def __init__(self, event_loop, opts):
         self.should_exit = threading.Event()
         self.channel = controller.Channel(
@@ -103,7 +109,7 @@ class Master:
 
     def shutdown(self):
         """
-            Shut down the mitmproxy. This method is thread-safe.
+        Shut down the mitmproxy. This method is thread-safe.
         """
         if not self.should_exit.is_set():
             self.should_exit.set()

@@ -485,3 +485,7 @@ def test_disable_capture(driver_path, chrome_options, httpbin):
         driver.get(f'{httpbin}/html')
 
         assert not driver.requests
+
+
+def test_switch_proxy_on_the_fly():
+    pass

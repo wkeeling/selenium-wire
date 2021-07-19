@@ -12,7 +12,9 @@ from seleniumwire.utils import extract_cert_and_key, get_upstream_proxy
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_SSL_INSECURE = True
 DEFAULT_STREAM_WEBSOCKETS = True
+DEFAULT_SUPPRESS_CONNECTION_ERRORS = True
 
 
 class MitmProxy:
@@ -36,34 +38,31 @@ class MitmProxy:
         self.response_interceptor = None
 
         self._event_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self._event_loop)
 
-        # mitmproxy specific options
-        mitmproxy_opts = Options(
-            confdir=self.storage.home_dir,
-            listen_host=host,
-            listen_port=port,
-        )
+        mitmproxy_opts = Options()
 
-        # Create an instance of the mitmproxy server
         self._master = Master(self._event_loop, mitmproxy_opts)
-        self._master.server = ProxyServer(ProxyConfig(mitmproxy_opts))
         self._master.addons.add(*addons.default_addons())
         self._master.addons.add(SendToLogger())
         self._master.addons.add(InterceptRequestHandler(self))
 
-        # Update the options now all addons have been added
         mitmproxy_opts.update(
-            ssl_insecure=options.get('verify_ssl', True),
+            confdir=self.storage.home_dir,
+            listen_host=host,
+            listen_port=port,
+            ssl_insecure=options.get('verify_ssl', DEFAULT_SSL_INSECURE),
             stream_websockets=DEFAULT_STREAM_WEBSOCKETS,
-            suppress_connection_errors=options.get('suppress_connection_errors', True),
+            suppress_connection_errors=options.get('suppress_connection_errors', DEFAULT_SUPPRESS_CONNECTION_ERRORS),
             **self._get_upstream_proxy_args(),
+            # Options that are prefixed mitm_ are passed through to mitmproxy
+            **{k[5:]: v for k, v in options.items() if k.startswith('mitm_')},
         )
+
+        self._master.server = ProxyServer(ProxyConfig(mitmproxy_opts))
 
         if options.get('disable_capture', False):
             self.scopes = ['$^']
-
-        # Options that are prefixed mitm_ are passed through to mitmproxy
-        mitmproxy_opts.update(**{k[5:]: v for k, v in options.items() if k.startswith('mitm_')})
 
     def serve_forever(self):
         """Run the server."""

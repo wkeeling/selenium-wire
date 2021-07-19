@@ -9,6 +9,9 @@ class MitmProxyTest(TestCase):
 
     base_options_update = functools.partial(
         call,
+        confdir='/some/dir',
+        listen_host='somehost',
+        listen_port=12345,
         ssl_insecure=True,
         stream_websockets=True,
         suppress_connection_errors=True,
@@ -31,9 +34,7 @@ class MitmProxyTest(TestCase):
         MitmProxy(
             'somehost',
             12345,
-            {
-                'request_storage_base_dir': '/some/dir',
-            },
+            {},
         )
 
         self.mock_extract_cert_and_key.assert_called_once_with('/some/dir/.seleniumwire')
@@ -43,13 +44,16 @@ class MitmProxyTest(TestCase):
         proxy = MitmProxy(
             'somehost',
             12345,
-            {
-                'request_storage_base_dir': '/some/dir',
-            },
+            {},
         )
         self.assertEqual(self.mock_master.return_value, proxy._master)
-        self.mock_options.assert_called_once_with(
-            confdir='/some/dir/.seleniumwire', listen_host='somehost', listen_port=12345
+        self.mock_options.assert_called_once()
+        self.mock_options.return_value.update.assert_has_calls(
+            [
+                self.base_options_update(
+                    confdir='/some/dir/.seleniumwire',
+                )
+            ]
         )
         self.mock_master.assert_called_once_with(
             self.mock_asyncio.new_event_loop.return_value, self.mock_options.return_value
@@ -64,19 +68,14 @@ class MitmProxyTest(TestCase):
         self.mock_handler.assert_called_once_with(proxy)
 
     def test_update_mitmproxy_options(self):
-        MitmProxy('somehost', 12345, {'request_storage_base_dir': '/some/dir', 'mitm_test': 'foobar'})
-
-        self.mock_options.return_value.update.assert_has_calls([self.base_options_update(), call(test='foobar')])
-
-    def test_update_mitmproxy_options_with_override(self):
-        MitmProxy(
-            'somehost',
-            12345,
-            {'request_storage_base_dir': '/some/dir', 'mitm_test': 'foobar', 'mitm_confdir': '/tmp/dir'},
-        )
+        MitmProxy('somehost', 12345, {'mitm_test': 'foobar'})
 
         self.mock_options.return_value.update.assert_has_calls(
-            [self.base_options_update(), call(test='foobar', confdir='/tmp/dir')]
+            [
+                self.base_options_update(
+                    test='foobar',
+                ),
+            ]
         )
 
     def test_upstream_proxy(self):
@@ -84,7 +83,6 @@ class MitmProxyTest(TestCase):
             'somehost',
             12345,
             {
-                'request_storage_base_dir': '/some/dir',
                 'proxy': {
                     'http': 'http://proxyserver:8080',
                     # We pick https when both are specified and the same
@@ -94,7 +92,7 @@ class MitmProxyTest(TestCase):
         )
 
         self.mock_options.return_value.update.assert_has_calls(
-            [self.base_options_update(mode='upstream:https://proxyserver:8080'), call()]
+            [self.base_options_update(mode='upstream:https://proxyserver:8080')]
         )
 
     def test_upstream_proxy_single(self):
@@ -102,7 +100,6 @@ class MitmProxyTest(TestCase):
             'somehost',
             12345,
             {
-                'request_storage_base_dir': '/some/dir',
                 'proxy': {
                     'http': 'http://proxyserver:8080',
                 },
@@ -110,7 +107,7 @@ class MitmProxyTest(TestCase):
         )
 
         self.mock_options.return_value.update.assert_has_calls(
-            [self.base_options_update(mode='upstream:http://proxyserver:8080'), call()]
+            [self.base_options_update(mode='upstream:http://proxyserver:8080')]
         )
 
     def test_upstream_proxy_auth(self):
@@ -118,7 +115,6 @@ class MitmProxyTest(TestCase):
             'somehost',
             12345,
             {
-                'request_storage_base_dir': '/some/dir',
                 'proxy': {
                     'https': 'https://user:pass@proxyserver:8080',
                 },
@@ -126,7 +122,7 @@ class MitmProxyTest(TestCase):
         )
 
         self.mock_options.return_value.update.assert_has_calls(
-            [self.base_options_update(mode='upstream:https://proxyserver:8080', upstream_auth='user:pass'), call()]
+            [self.base_options_update(mode='upstream:https://proxyserver:8080', upstream_auth='user:pass')]
         )
 
     def test_upstream_proxy_auth_empty_pass(self):
@@ -134,7 +130,6 @@ class MitmProxyTest(TestCase):
             'somehost',
             12345,
             {
-                'request_storage_base_dir': '/some/dir',
                 'proxy': {
                     'https': 'https://user:@proxyserver:8080',
                 },
@@ -142,7 +137,7 @@ class MitmProxyTest(TestCase):
         )
 
         self.mock_options.return_value.update.assert_has_calls(
-            [self.base_options_update(mode='upstream:https://proxyserver:8080', upstream_auth='user:'), call()]
+            [self.base_options_update(mode='upstream:https://proxyserver:8080', upstream_auth='user:')]
         )
 
     def test_upstream_proxy_custom_auth(self):
@@ -150,7 +145,6 @@ class MitmProxyTest(TestCase):
             'somehost',
             12345,
             {
-                'request_storage_base_dir': '/some/dir',
                 'proxy': {'https': 'https://proxyserver:8080', 'custom_authorization': 'Bearer 12345'},
             },
         )
@@ -160,7 +154,6 @@ class MitmProxyTest(TestCase):
                 self.base_options_update(
                     mode='upstream:https://proxyserver:8080', upstream_custom_auth='Bearer 12345'
                 ),
-                call(),
             ]
         )
 
@@ -170,7 +163,6 @@ class MitmProxyTest(TestCase):
                 'somehost',
                 12345,
                 {
-                    'request_storage_base_dir': '/some/dir',
                     'proxy': {'http': 'http://proxyserver1:8080', 'https': 'https://proxyserver2:8080'},
                 },
             )
@@ -180,7 +172,6 @@ class MitmProxyTest(TestCase):
             'somehost',
             12345,
             {
-                'request_storage_base_dir': '/some/dir',
                 'proxy': {'https': 'https://proxyserver:8080', 'no_proxy': 'localhost:9090, example.com'},
             },
         )
@@ -190,12 +181,11 @@ class MitmProxyTest(TestCase):
                 self.base_options_update(
                     mode='upstream:https://proxyserver:8080', no_proxy=['localhost:9090', 'example.com']
                 ),
-                call(),
             ]
         )
 
     def test_disable_capture(self):
-        proxy = MitmProxy('somehost', 12345, {'request_storage_base_dir': '/some/dir', 'disable_capture': True})
+        proxy = MitmProxy('somehost', 12345, {'disable_capture': True})
 
         self.assertEqual(['$^'], proxy.scopes)
 
@@ -203,26 +193,28 @@ class MitmProxyTest(TestCase):
         proxy = MitmProxy(
             'somehost',
             12345,
-            {
-                'request_storage_base_dir': '/some/dir',
-            },
+            {},
         )
 
         self.assertEqual(self.mock_asyncio.new_event_loop.return_value, proxy._event_loop)
         self.mock_asyncio.new_event_loop.assert_called_once_with()
+        self.mock_asyncio.set_event_loop.assert_called_once_with(proxy._event_loop)
 
     def test_serve_forever(self):
         proxy = MitmProxy(
             'somehost',
             12345,
-            {
-                'request_storage_base_dir': '/some/dir',
-            },
+            {},
         )
 
         proxy.serve_forever()
 
-        self.mock_asyncio.set_event_loop.assert_called_once_with(proxy._event_loop)
+        self.mock_asyncio.set_event_loop.assert_has_calls(
+            [
+                call(proxy._event_loop),
+                call(proxy._event_loop),
+            ]
+        )
         self.mock_master.return_value.run_loop.assert_called_once_with(proxy._event_loop)
 
     def test_address(self):
@@ -230,9 +222,7 @@ class MitmProxyTest(TestCase):
         proxy = MitmProxy(
             'somehost',
             12345,
-            {
-                'request_storage_base_dir': '/some/dir',
-            },
+            {},
         )
 
         self.assertEqual(('somehost', 12345), proxy.address())
@@ -241,9 +231,7 @@ class MitmProxyTest(TestCase):
         proxy = MitmProxy(
             'somehost',
             12345,
-            {
-                'request_storage_base_dir': '/some/dir',
-            },
+            {},
         )
 
         proxy.shutdown()
@@ -254,6 +242,7 @@ class MitmProxyTest(TestCase):
     def setUp(self):
         patcher = patch('seleniumwire.server.RequestStorage')
         self.mock_storage = patcher.start()
+        self.mock_storage.return_value.home_dir = '/some/dir'
         self.addCleanup(patcher.stop)
 
         patcher = patch('seleniumwire.server.Options')

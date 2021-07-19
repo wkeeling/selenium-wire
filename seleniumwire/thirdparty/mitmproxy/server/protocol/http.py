@@ -1,3 +1,4 @@
+import base64
 import enum
 import logging
 import textwrap
@@ -9,8 +10,8 @@ from seleniumwire.thirdparty.mitmproxy import connections  # noqa
 from seleniumwire.thirdparty.mitmproxy import exceptions, flow, http
 from seleniumwire.thirdparty.mitmproxy.net import websockets
 from seleniumwire.thirdparty.mitmproxy.server.protocol import base
-from seleniumwire.thirdparty.mitmproxy.server.protocol.websocket import \
-    WebSocketLayer
+from seleniumwire.thirdparty.mitmproxy.server.protocol.websocket import WebSocketLayer
+from seleniumwire.thirdparty.mitmproxy.utils import strutils
 
 log = logging.getLogger(__name__)
 
@@ -255,28 +256,6 @@ class HttpLayer(base.Layer):
             log.error('Invalid proxy server credentials supplied')
         return False
 
-    def _should_bypass_upstream_proxy(self, request):
-        """Whether we should bypass any upstream proxy.
-
-        This checks whether the request address is in the no_proxy list.
-        """
-        no_proxy = False
-
-        for addr in self.config.options.no_proxy:
-            host, *port = addr.split(':')
-
-            if request.host.endswith(host):
-                no_proxy = True
-
-                if port:
-                    # The user has specified a port, so this also needs to match
-                    no_proxy = int(port[0]) == request.port
-
-            if no_proxy:
-                break
-
-        return no_proxy
-
     def _process_flow(self, f):
         try:
             try:
@@ -288,7 +267,7 @@ class HttpLayer(base.Layer):
 
             f.request = request
 
-            if self.mode is HTTPMode.upstream and self._should_bypass_upstream_proxy(f.request):
+            if self.mode is HTTPMode.upstream and self.should_bypass_upstream_proxy(f.request):
                 self.set_server((f.request.host, f.request.port))
                 self.mode = HTTPMode.regular
 
@@ -305,6 +284,7 @@ class HttpLayer(base.Layer):
                 if self.mode is HTTPMode.regular:
                     return self.handle_regular_connect(f)
                 elif self.mode is HTTPMode.upstream:
+                    self.apply_proxy_auth(f)
                     return self.handle_upstream_connect(f)
                 else:
                     msg = "Unexpected CONNECT request."
@@ -314,6 +294,10 @@ class HttpLayer(base.Layer):
             if not self.config.options.relax_http_form_validation:
                 validate_request_form(self.mode, request)
             self.channel.ask("requestheaders", f)
+
+            if self.mode is HTTPMode.upstream and not f.server_conn.via:
+                self.apply_proxy_auth(f)
+
             # Re-validate request form in case the user has changed something.
             if not self.config.options.relax_http_form_validation:
                 validate_request_form(self.mode, request)
@@ -553,3 +537,46 @@ class HttpLayer(base.Layer):
                 self.connect()
             if tls:
                 raise exceptions.HttpProtocolException("Cannot change scheme in upstream mitmproxy mode.")
+
+    def should_bypass_upstream_proxy(self, request):
+        """Whether we should bypass any upstream proxy.
+
+        This checks whether the request address is in the no_proxy list.
+        """
+        no_proxy = False
+
+        for addr in self.config.options.no_proxy:
+            host, *port = addr.split(':')
+
+            if request.host.endswith(host):
+                no_proxy = True
+
+                if port:
+                    # The user has specified a port, so this also needs to match
+                    no_proxy = int(port[0]) == request.port
+
+            if no_proxy:
+                break
+
+        return no_proxy
+
+    def apply_proxy_auth(self, f):
+        """Apply proxy authorization to the request if configured."""
+        auth = None
+
+        try:
+            auth = self.config.options.upstream_custom_auth
+        except AttributeError:
+            pass
+
+        if not auth:
+            try:
+                auth = self.config.options.upstream_auth
+
+                if auth:
+                    auth = b"Basic" + b" " + base64.b64encode(strutils.always_bytes(auth))
+            except AttributeError:
+                pass
+
+        if auth:
+            f.request.headers["Proxy-Authorization"] = auth
