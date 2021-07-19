@@ -57,7 +57,8 @@ setup(
             'flake8',
             'gunicorn',
             'httpbin',
-            'mitmproxy',  # Needed by the mitmproxy backend and end2end tests
+            'isort',
+            'mitmproxy==5.3.0',  # Needed by the mitmproxy backend and end2end tests
             'pre-commit',
             'pytest',
             'pytest-cov',
