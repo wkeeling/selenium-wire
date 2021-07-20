@@ -32,8 +32,10 @@ def create(*, memory_only: bool = False, **kwargs):
         or InMemoryRequestStorage when memory_only is set to True.
     """
     if memory_only:
+        log.info('Using in-memory request storage')
         return InMemoryRequestStorage(base_dir=kwargs.get('base_dir'), maxsize=kwargs.get('maxsize'))
 
+    log.info('Using default request storage')
     return RequestStorage(base_dir=kwargs.get('base_dir'))
 
 

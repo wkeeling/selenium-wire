@@ -113,8 +113,6 @@ Table of Contents
 
 - `Bot Detection`_
 
-- `Backends`_
-
 - `Certificates`_
 
 - `All Options`_
@@ -616,9 +614,7 @@ For authentication other than Basic, you can supply the full value for the ``Pro
         }
     }
 
-Note that the ``custom_authorization`` option is only supported by the `default backend`_. More info on the ``Proxy-Authorization`` header can be found `here <https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Proxy-Authorization>`__.
-
-.. _`default backend`: #backends
+More info on the ``Proxy-Authorization`` header can be found `here <https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Proxy-Authorization>`__.
 
 The proxy configuration can also be loaded through environment variables called ``HTTP_PROXY``, ``HTTPS_PROXY`` and ``NO_PROXY``:
 
@@ -681,56 +677,12 @@ For undetected_chromedriver version 2:
 
 See the `undetected_chromedriver docs <https://github.com/ultrafunkamsterdam/undetected-chromedriver>`_ for differences between the two versions.
 
-Backends
-~~~~~~~~
-
-Selenium Wire allows you to change the backend component that performs request capture. Currently two backends are supported: the backend that ships with Selenium Wire (the default) and the mitmproxy backend.
-
-The default backend is adequate for most purposes. However, in certain cases you may find you get better performance with the mitmproxy backend.
-
-The mitmproxy backend relies upon the powerful open source `mitmproxy proxy server`_ being installed in your environment.
-
-.. _`mitmproxy proxy server`: https://mitmproxy.org/
-
-To switch to the mitmproxy backend, first install the mitmproxy package:
-
-.. code:: bash
-
-    pip install 'mitmproxy<7.0.0'
-
-Once installed, set the ``backend`` option in Selenium Wire's options to ``mitmproxy``:
-
-.. code:: python
-
-    options = {
-        'backend': 'mitmproxy'
-    }
-    driver = webdriver.Chrome(seleniumwire_options=options)
-
-You can pass `mitmproxy specific options`_ to the mitmproxy backend by prefixing them with **mitm_**. For example, to change the location of the mitmproxy configuration directory which lives in your home folder by default:
-
-.. _`mitmproxy specific options`: https://docs.mitmproxy.org/stable/concepts-options/#available-options
-
-.. code:: python
-
-    options = {
-        'backend': 'mitmproxy',
-        'mitm_confdir': '/tmp/.mitmproxy'  # Switch the location to /tmp
-    }
-    driver = webdriver.Chrome(seleniumwire_options=options)
-
-Mitmproxy includes options that can help with performance such as ``mitm_stream_large_bodies``. Setting this to a low value (e.g. '1k') has been shown to improve performance, in conjunction with the use of ``driver.scopes``.
-
-*Note that the mitmproxy backend won't work with upstream SOCKS proxies.*
-
 Certificates
 ~~~~~~~~~~~~
 
-Selenium Wire uses it's own CA certificate to decrypt HTTPS traffic. It is not normally necessary for the browser to trust this certificate because Selenium Wire tells the browser to add it as an exception. This will allow the browser to function normally, but it will display a "Not Secure" message in the address bar. If you wish to get rid of this message you can install the CA certificate manually.
+Selenium Wire uses it's own root certificate to decrypt HTTPS traffic. It is not normally necessary for the browser to trust this certificate because Selenium Wire tells the browser to add it as an exception. This will allow the browser to function normally, but it will display a "Not Secure" message in the address bar. If you wish to get rid of this message you can install the root certificate manually.
 
-For the default backend, you can download the CA certificate `here <https://github.com/wkeeling/selenium-wire/raw/master/seleniumwire/ca.crt>`__. Once downloaded, navigate to "Certificates" in your browser settings and import the certificate in the "Authorities" section.
-
-If you are using the mitmproxy backend, you can follow `these instructions <https://docs.mitmproxy.org/stable/concepts-certificates/#installing-the-mitmproxy-ca-certificate-manually>`_ to install the CA certificate.
+You can download the root certificate `here <https://github.com/wkeeling/selenium-wire/raw/master/seleniumwire/ca.crt>`__. Once downloaded, navigate to "Certificates" in your browser settings and import the certificate in the "Authorities" section.
 
 All Options
 ~~~~~~~~~~~
@@ -751,16 +703,6 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
 
 ``auto_config``
     Whether Selenium Wire should auto-configure the browser for request capture. ``True`` by default.
-
-``backend``
-    The backend component that Selenium Wire will use to capture requests. The currently supported values are ``default`` (same as not specifying) or ``mitmproxy``.
-
-.. code:: python
-
-    options = {
-        'backend': 'mitmproxy'  # Use the mitmproxy backend (see limitations above)
-    }
-    driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``disable_capture``
     Disable request capture. When ``True`` nothing gets intercepted or stored. ``False`` by default.
@@ -823,7 +765,7 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``proxy``
-    The upstream proxy server configuration (if you're using a proxy).
+    The upstream `proxy server <https://github.com/wkeeling/selenium-wire#proxies>`__ configuration if you're using a proxy.
 
 .. code:: python
 
@@ -869,7 +811,6 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
 
 ``suppress_connection_errors``
     Whether to suppress connection related tracebacks. ``True`` by default, meaning that harmless errors that sometimes occur at browser shutdown do not alarm users. When suppressed, the connection error message is logged at DEBUG level without a traceback. Set to ``False`` to allow exception propagation and see full tracebacks.
-    *Applies to the default backend only.*
 
 .. code:: python
 

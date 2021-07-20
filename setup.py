@@ -24,6 +24,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
     description="Extends Selenium to give you the ability to inspect requests made by the browser.",
     license="MIT",
@@ -58,7 +59,7 @@ setup(
             'gunicorn',
             'httpbin',
             'isort',
-            'mitmproxy==5.3.0',  # Needed by the mitmproxy backend and end2end tests
+            'mitmproxy',  # Needed for end2end tests
             'mypy',
             'pre-commit',
             'pytest',
