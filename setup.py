@@ -59,6 +59,7 @@ setup(
             'httpbin',
             'isort',
             'mitmproxy==5.3.0',  # Needed by the mitmproxy backend and end2end tests
+            'mypy',
             'pre-commit',
             'pytest',
             'pytest-cov',
