@@ -656,7 +656,7 @@ To switch to the mitmproxy backend, first install the mitmproxy package:
 
 .. code:: bash
 
-    pip install mitmproxy
+    pip install 'mitmproxy<7.0.0'
 
 Once installed, set the ``backend`` option in Selenium Wire's options to ``mitmproxy``:
 
