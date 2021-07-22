@@ -81,11 +81,11 @@ class MitmProxy:
         self.storage.cleanup()
 
     def _get_storage_args(self):
-        storage_args = {'memory_only': False, 'base_dir': self.options.get('request_storage_base_dir')}
-
-        if self.options.get('request_storage') == 'memory':
-            storage_args['memory_only'] = True
-            storage_args['maxsize'] = self.options.get('request_storage_max_size')
+        storage_args = {
+            'memory_only': self.options.get('request_storage') == 'memory',
+            'base_dir': self.options.get('request_storage_base_dir'),
+            'maxsize': self.options.get('request_storage_max_size'),
+        }
 
         return storage_args
 

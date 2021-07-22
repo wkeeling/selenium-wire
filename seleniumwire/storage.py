@@ -20,20 +20,22 @@ log = logging.getLogger(__name__)
 REMOVE_DATA_OLDER_THAN_DAYS = 1
 
 
-def create(*, memory_only: bool = False, **kwargs) -> Union['RequestStorage', 'InMemoryRequestStorage']:
+def create(*, memory_only: bool = False, **kwargs):
     """Create a new storage instance.
 
     Args:
         memory_only: When True, an in-memory implementation will be used which stores
             request data in memory only and nothing on disk. Default False.
-        kwargs: Any arguments to initialise the storage with.
+        kwargs: Any arguments to initialise the storage with:
+            - base_dir: The base directory under which requests are stored
+            - maxsize: The maximum number of requests the storage can hold
     Returns: A request storage implementation, currently either RequestStorage (default)
         or InMemoryRequestStorage when memory_only is set to True.
     """
     if memory_only:
-        return InMemoryRequestStorage(**kwargs)
+        return InMemoryRequestStorage(base_dir=kwargs.get('base_dir'), maxsize=kwargs.get('maxsize'))
 
-    return RequestStorage(**kwargs)
+    return RequestStorage(base_dir=kwargs.get('base_dir'))
 
 
 class _IndexedRequest:

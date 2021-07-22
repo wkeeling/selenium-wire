@@ -27,7 +27,7 @@ class MitmProxyTest(TestCase):
         )
 
         self.assertEqual(self.mock_storage.create.return_value, proxy.storage)
-        self.mock_storage.create.assert_called_once_with(memory_only=False, base_dir='/some/dir')
+        self.mock_storage.create.assert_called_once_with(memory_only=False, base_dir='/some/dir', maxsize=None)
 
     def test_creates_in_memory_storage(self):
         proxy = MitmProxy(
