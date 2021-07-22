@@ -5,6 +5,7 @@ import os
 import shutil
 import threading
 from contextlib import contextmanager
+from glob import glob
 from pathlib import Path
 from unittest.mock import patch
 
@@ -485,6 +486,25 @@ def test_disable_capture(driver_path, chrome_options, httpbin):
         driver.get(f'{httpbin}/html')
 
         assert not driver.requests
+
+
+def test_in_memory_storage(driver_path, chrome_options, httpbin):
+    sw_options = {'request_storage': 'memory', 'enable_har': True}
+
+    with create_driver(driver_path, chrome_options, sw_options) as driver:
+        driver.get(f'{httpbin}/html'),
+        driver.get(f'{httpbin}/anything'),
+
+        assert not glob(os.path.join(driver.proxy.storage.home_dir, 'storage*'))
+        assert len(driver.requests) == 2
+        assert driver.last_request.url == f'{httpbin}/anything'
+        assert driver.wait_for_request('/anything')
+        assert [r.url for r in driver.iter_requests()] == [f'{httpbin}/html', f'{httpbin}/anything']
+        assert [e['request']['url'] for e in json.loads(driver.har)['log']['entries']] == [
+            f'{httpbin}/html',
+            f'{httpbin}/anything',
+        ]
+        assert driver.last_request.cert
 
 
 def test_switch_proxy_on_the_fly():
