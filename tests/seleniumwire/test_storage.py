@@ -16,11 +16,12 @@ from seleniumwire.storage import InMemoryRequestStorage, RequestStorage, create
 class CreateTest(TestCase):
     @patch('seleniumwire.storage.os')
     def test_create_default_storage(self, mock_os):
+        base_dir = '/some/dir'
         mock_os.path = os.path
-        storage = create(base_dir='/some/dir')
+        storage = create(base_dir=base_dir)
 
         self.assertIsInstance(storage, RequestStorage)
-        self.assertEqual(storage.home_dir, '/some/dir/.seleniumwire')
+        self.assertEqual(storage.home_dir, os.path.join(base_dir, '.seleniumwire'))
 
     def test_create_in_memory_storage(self):
         storage = create(memory_only=True, maxsize=10)

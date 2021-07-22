@@ -3,6 +3,7 @@
 import json
 import os
 import shutil
+import tempfile
 import threading
 from contextlib import contextmanager
 from glob import glob
@@ -489,7 +490,11 @@ def test_disable_capture(driver_path, chrome_options, httpbin):
 
 
 def test_in_memory_storage(driver_path, chrome_options, httpbin):
-    sw_options = {'request_storage': 'memory', 'enable_har': True}
+    sw_options = {
+        'request_storage': 'memory',
+        'request_storage_base_dir': f'{tempfile.gettempdir()}/sw_memory',
+        'enable_har': True,
+    }
 
     with create_driver(driver_path, chrome_options, sw_options) as driver:
         driver.get(f'{httpbin}/html'),

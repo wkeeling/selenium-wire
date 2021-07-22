@@ -7,10 +7,9 @@ import sys
 import tempfile
 import threading
 import uuid
-from collections import OrderedDict as ordereddict
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
 from datetime import datetime, timedelta
-from typing import Any, DefaultDict, Dict, Iterator, List, Optional, OrderedDict, Union
+from typing import DefaultDict, Iterator, List, Optional, Union
 
 from seleniumwire.request import Request, Response, WebSocketMessage
 
@@ -345,7 +344,8 @@ class InMemoryRequestStorage:
         self.home_dir: str = os.path.join(base_dir, '.seleniumwire')
 
         self._maxsize = sys.maxsize if maxsize is None else maxsize
-        self._requests: OrderedDict[str, Dict[str, Union[Request, Any]]] = ordereddict()
+        # OrderedDict doesn't support type hints before 3.7.2
+        self._requests = OrderedDict()  # type: ignore
         self._lock = threading.Lock()
 
     def save_request(self, request: Request) -> None:
@@ -453,7 +453,7 @@ class InMemoryRequestStorage:
         Returns: A list of HAR entries.
         """
         with self._lock:
-            return [v['har_entry'] for v in self._requests.values() if 'har_entry' in v]  # type: ignore
+            return [v['har_entry'] for v in self._requests.values() if 'har_entry' in v]
 
     def iter_requests(self) -> Iterator[Request]:
         """Return an iterator over the saved requests.
