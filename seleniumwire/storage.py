@@ -10,7 +10,7 @@ import uuid
 from collections import OrderedDict as ordereddict
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Dict, Iterator, List, Optional, OrderedDict, Union
+from typing import Any, DefaultDict, Dict, Iterator, List, Optional, OrderedDict, Union
 
 from seleniumwire.request import Request, Response, WebSocketMessage
 
@@ -20,10 +20,27 @@ log = logging.getLogger(__name__)
 REMOVE_DATA_OLDER_THAN_DAYS = 1
 
 
-class _IndexedRequest(dict):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__dict__ = self
+def create(*, memory_only: bool = False, **kwargs) -> Union['RequestStorage', 'InMemoryRequestStorage']:
+    """Create a new storage instance.
+
+    Args:
+        memory_only: When True, an in-memory implementation will be used which stores
+            request data in memory only and nothing on disk. Default False.
+        kwargs: Any arguments to initialise the storage with.
+    Returns: A request storage implementation, currently either RequestStorage (default)
+        or InMemoryRequestStorage when memory_only is set to True.
+    """
+    if memory_only:
+        return InMemoryRequestStorage(**kwargs)
+
+    return RequestStorage(**kwargs)
+
+
+class _IndexedRequest:
+    def __init__(self, id: str, url: str, has_response: bool):
+        self.id = id
+        self.url = url
+        self.has_response = has_response
 
 
 class RequestStorage:
@@ -35,32 +52,31 @@ class RequestStorage:
     Instances are designed to be threadsafe.
     """
 
-    def __init__(self, base_dir=None):
+    def __init__(self, base_dir: Optional[str] = None):
         """Initialises a new RequestStorage using an optional base directory.
 
         Args:
             base_dir: The directory where request and response data is stored.
-                If not specified, the current user's home folder is used.
+                If not specified, the system temp folder is used.
         """
         if base_dir is None:
-            base_dir = os.path.expanduser('~')
+            base_dir = tempfile.gettempdir()
 
-        self.home_dir = os.path.join(base_dir, '.seleniumwire')
-        self.session_dir = os.path.join(self.home_dir, 'storage-{}'.format(str(uuid.uuid4())))
+        self.home_dir: str = os.path.join(base_dir, '.seleniumwire')
+        self.session_dir: str = os.path.join(self.home_dir, 'storage-{}'.format(str(uuid.uuid4())))
         os.makedirs(self.session_dir, exist_ok=True)
         self._cleanup_old_dirs()
 
         # Index of requests received.
-        # A list of tuples: [(request id, request path, response received), ...]
-        self._index = []
+        self._index: List[_IndexedRequest] = []
 
         # Sequences of websocket messages held against the
         # id of the originating websocket request.
-        self._ws_messages = defaultdict(list)
+        self._ws_messages: DefaultDict[str, List] = defaultdict(list)
 
         self._lock = threading.Lock()
 
-    def save_request(self, request):
+    def save_request(self, request: Request) -> None:
         """Save a request to storage.
 
         Args:
@@ -76,11 +92,11 @@ class RequestStorage:
         with self._lock:
             self._index.append(_IndexedRequest(id=request_id, url=request.url, has_response=False))
 
-    def _save(self, obj, dirname, filename):
+    def _save(self, obj: Union[Request, Response, dict], dirname: str, filename: str) -> None:
         with open(os.path.join(dirname, filename), 'wb') as out:
             pickle.dump(obj, out)
 
-    def save_response(self, request_id, response):
+    def save_response(self, request_id: str, response: Response) -> None:
         """Save a response to storage against a request with the specified id.
 
         Args:
@@ -99,7 +115,7 @@ class RequestStorage:
 
         indexed_request.has_response = True
 
-    def _get_indexed_request(self, request_id):
+    def _get_indexed_request(self, request_id: str) -> Optional[_IndexedRequest]:
         with self._lock:
             index = self._index[:]
 
@@ -109,7 +125,7 @@ class RequestStorage:
 
         return None
 
-    def save_ws_message(self, request_id, message):
+    def save_ws_message(self, request_id: str, message: WebSocketMessage) -> None:
         """Save a websocket message against a request with the specified id.
 
         Args:
@@ -119,7 +135,7 @@ class RequestStorage:
         with self._lock:
             self._ws_messages[request_id].append(message)
 
-    def save_har_entry(self, request_id, entry):
+    def save_har_entry(self, request_id: str, entry: dict) -> None:
         """Save a HAR entry to storage against a request with the specified id.
 
         Args:
@@ -136,7 +152,7 @@ class RequestStorage:
 
         self._save(entry, request_dir, 'har_entry')
 
-    def load_requests(self):
+    def load_requests(self) -> List[Request]:
         """Load all previously saved requests known to the storage (known to its index).
 
         The requests are returned as a list of request objects in the order in which they
@@ -156,7 +172,7 @@ class RequestStorage:
 
         return loaded
 
-    def _load_request(self, request_id):
+    def _load_request(self, request_id: str) -> Request:
         request_dir = self._get_request_dir(request_id)
 
         with open(os.path.join(request_dir, 'request'), 'rb') as req:
@@ -184,7 +200,7 @@ class RequestStorage:
 
         return request
 
-    def load_last_request(self):
+    def load_last_request(self) -> Optional[Request]:
         """Load the last saved request.
 
         Returns: The last saved request or None if no requests have
@@ -198,7 +214,7 @@ class RequestStorage:
 
         return self._load_request(last_request.id)
 
-    def load_har_entries(self):
+    def load_har_entries(self) -> List[dict]:
         """Load all HAR entries known to this storage.
 
         Returns: A list of HAR entries.
@@ -221,7 +237,7 @@ class RequestStorage:
 
         return entries
 
-    def iter_requests(self):
+    def iter_requests(self) -> Iterator[Request]:
         """Return an iterator of requests known to the storage.
 
         Returns: An iterator of request objects.
@@ -232,7 +248,7 @@ class RequestStorage:
         for indexed_request in index:
             yield self._load_request(indexed_request.id)
 
-    def clear_requests(self):
+    def clear_requests(self) -> None:
         """Clear all requests currently known to this storage."""
         with self._lock:
             index = self._index[:]
@@ -242,7 +258,7 @@ class RequestStorage:
         for indexed_request in index:
             shutil.rmtree(self._get_request_dir(indexed_request.id), ignore_errors=True)
 
-    def find(self, pat, check_response=True):
+    def find(self, pat: str, check_response: bool = True) -> Optional[Request]:
         """Find the first request that matches the specified pattern.
 
         Requests are searched in chronological order.
@@ -266,10 +282,10 @@ class RequestStorage:
 
         return None
 
-    def _get_request_dir(self, request_id):
+    def _get_request_dir(self, request_id: str) -> str:
         return os.path.join(self.session_dir, 'request-{}'.format(request_id))
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Remove all stored requests, the storage directory containing those
         requests, and if that is the only storage directory, also the top level
         parent directory.
@@ -284,7 +300,7 @@ class RequestStorage:
             # Parent folder not empty
             pass
 
-    def _cleanup_old_dirs(self):
+    def _cleanup_old_dirs(self) -> None:
         """Clean up and remove any old storage directories that were not previously
         cleaned up properly by cleanup().
         """
@@ -311,7 +327,7 @@ class InMemoryRequestStorage:
     Instances are designed to be threadsafe.
     """
 
-    def __init__(self, base_dir=None, maxsize: int = sys.maxsize):
+    def __init__(self, base_dir: Optional[str] = None, maxsize: Optional[int] = None):
         """Initialise a new InMemoryRequestStorage.
 
         Args:
@@ -324,10 +340,10 @@ class InMemoryRequestStorage:
         if base_dir is None:
             base_dir = tempfile.gettempdir()
 
-        self.home_dir = os.path.join(base_dir, '.seleniumwire')
+        self.home_dir: str = os.path.join(base_dir, '.seleniumwire')
 
-        self._maxsize = maxsize
-        self._requests: OrderedDict[str, Dict[str, Union[Request, dict]]] = ordereddict()
+        self._maxsize = sys.maxsize if maxsize is None else maxsize
+        self._requests: OrderedDict[str, Dict[str, Union[Request, Any]]] = ordereddict()
         self._lock = threading.Lock()
 
     def save_request(self, request: Request) -> None:
@@ -435,7 +451,7 @@ class InMemoryRequestStorage:
         Returns: A list of HAR entries.
         """
         with self._lock:
-            return [v['har_entry'] for v in self._requests.values() if 'har_entry' in v]
+            return [v['har_entry'] for v in self._requests.values() if 'har_entry' in v]  # type: ignore
 
     def iter_requests(self) -> Iterator[Request]:
         """Return an iterator over the saved requests.

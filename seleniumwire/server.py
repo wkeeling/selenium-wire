@@ -1,9 +1,9 @@
 import asyncio
 import logging
 
+from seleniumwire import storage
 from seleniumwire.handler import InterceptRequestHandler
 from seleniumwire.modifier import RequestModifier
-from seleniumwire.storage import RequestStorage
 from seleniumwire.thirdparty.mitmproxy import addons
 from seleniumwire.thirdparty.mitmproxy.master import Master
 from seleniumwire.thirdparty.mitmproxy.options import Options
@@ -24,7 +24,7 @@ class MitmProxy:
         self.options = options
 
         # Used to stored captured requests
-        self.storage = RequestStorage(base_dir=options.pop('request_storage_base_dir', None))
+        self.storage = storage.create(**self._get_storage_args())
         extract_cert_and_key(self.storage.home_dir)
 
         # Used to modify requests/responses passing through the server
@@ -79,6 +79,15 @@ class MitmProxy:
         """Shutdown the server and perform any cleanup."""
         self._master.shutdown()
         self.storage.cleanup()
+
+    def _get_storage_args(self):
+        storage_args = {'memory_only': False, 'base_dir': self.options.get('request_storage_base_dir')}
+
+        if self.options.get('request_storage') == 'memory':
+            storage_args['memory_only'] = True
+            storage_args['maxsize'] = self.options.get('request_storage_max_size')
+
+        return storage_args
 
     def _get_upstream_proxy_args(self):
         proxy_config = get_upstream_proxy(self.options)

@@ -90,6 +90,7 @@ def extract_cert_and_key(dest_folder, check_exists=True):
         check_exists: If True the destination file will not be overwritten
             if it already exists.
     """
+    os.makedirs(dest_folder, exist_ok=True)
     combined_path = Path(dest_folder, COMBINED_CERT)
     if check_exists and combined_path.exists():
         return
