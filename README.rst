@@ -103,7 +103,9 @@ Table of Contents
 
 - `Limiting Request Capture`_
 
-- `In-Memory Request Storage`_
+- `Request Storage`_
+
+  * `In-Memory Storage`_
 
 - `Proxies`_
 
@@ -539,12 +541,22 @@ Selenium Wire works by redirecting browser traffic through an internal proxy ser
 
 .. _`request interceptor`: #intercepting-requests-and-responses
 
-In-Memory Request Storage
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Request Storage
+~~~~~~~~~~~~~~~
 
-By default, captured requests and responses are stored in the system temp folder (that's ``/tmp`` on Linux and usually ``C:\Users\<username>\AppData\Local\Temp`` on Windows) underneath a sub-folder called ``.seleniumwire``. You can change this location with the ``request_storage_base_dir`` `option`_.
+Captured requests and responses are stored in the system temp folder by default (that's ``/tmp`` on Linux and usually ``C:\Users\<username>\AppData\Local\Temp`` on Windows) underneath a sub-folder called ``.seleniumwire``. You can change this location with the ``request_storage_base_dir`` option:
 
-Selenium Wire also supports storing requests and responses in memory only, which may be useful in certain situations - e.g. if you're running short lived Docker containers and don't want the overhead of disk persistence. You can enable in-memory storage with the ``request_storage`` option:
+.. code:: python
+
+    options = {
+        'request_storage_base_dir': '/my/storage/folder'  # Use /my/storage/folder to store requests
+    }
+    driver = webdriver.Chrome(seleniumwire_options=options)
+
+In-Memory Storage
+-----------------
+
+Selenium Wire also supports storing requests and responses in memory only, which may be useful in certain situations - e.g. if you're running short lived Docker containers and don't want the overhead of disk persistence. You can enable in-memory storage by setting the ``request_storage`` option to ``memory``:
 
 .. code:: python
 
@@ -563,7 +575,7 @@ If you're concerned about the amount of memory that may be consumed, you can res
     }
     driver = webdriver.Chrome(seleniumwire_options=options)
 
-When the max size is reached, older requests are discarded as newer requests arrive. Be mindful that if you restrict the number of requests being stored, requests may have disappeared from storage by the time you come to retrieve them with ``driver.requests`` or ``driver.wait_for_request()`` etc.
+When the max size is reached, older requests are discarded as newer requests arrive. Keep in mind that if you restrict the number of requests being stored, requests may have disappeared from storage by the time you come to retrieve them with ``driver.requests`` or ``driver.wait_for_request()`` etc.
 
 Proxies
 ~~~~~~~
@@ -824,6 +836,16 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     }
     driver = webdriver.Chrome(seleniumwire_options=options)
 
+``request_storage``
+    The type of storage to use. Selenium Wire defaults to disk based storage, but you can switch to in-memory storage by setting this option to ``memory``:
+
+.. code:: python
+
+    options = {
+        'request_storage': 'memory'  # Store requests and responses in memory only
+    }
+    driver = webdriver.Chrome(seleniumwire_options=options)
+
 ``request_storage_base_dir``
     The location where Selenium Wire stores captured requests and responses when using its default disk based storage. This defaults to the system temp folder (that's ``/tmp`` on Linux and usually ``C:\Users\<username>\AppData\Local\Temp`` on Windows).
 
@@ -834,9 +856,16 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     }
     driver = webdriver.Chrome(seleniumwire_options=options)
 
-Note Selenium Wire can also store captured requests and responses `in memory`_.
+``request_storage_max_size``
+    The maximum number of requests to store when using in-memory storage. Unlimited by default. This option currently has no effect when using the default disk based storage.
 
-.. _`in memory`: #in-memory-request-storage
+.. code:: python
+
+    options = {
+        'request_storage': 'memory',
+        'request_storage_max_size': 100  # Store no more than 100 requests in memory
+    }
+    driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``suppress_connection_errors``
     Whether to suppress connection related tracebacks. ``True`` by default, meaning that harmless errors that sometimes occur at browser shutdown do not alarm users. When suppressed, the connection error message is logged at DEBUG level without a traceback. Set to ``False`` to allow exception propagation and see full tracebacks.
