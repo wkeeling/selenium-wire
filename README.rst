@@ -542,7 +542,7 @@ Selenium Wire works by redirecting browser traffic through an internal proxy ser
 Request Storage
 ~~~~~~~~~~~~~~~
 
-Captured requests and responses are stored in the system temp folder by default (that's ``/tmp`` on Linux and usually ``C:\Users\<username>\AppData\Local\Temp`` on Windows) underneath a sub-folder called ``.seleniumwire``. You can change this location with the ``request_storage_base_dir`` option:
+Captured requests and responses are stored in the system temp folder by default (that's ``/tmp`` on Linux and usually ``C:\Users\<username>\AppData\Local\Temp`` on Windows). You can change this location with the ``request_storage_base_dir`` option:
 
 .. code:: python
 

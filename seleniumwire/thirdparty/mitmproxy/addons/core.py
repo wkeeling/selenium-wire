@@ -1,4 +1,5 @@
 import os
+import tempfile
 import typing
 
 from seleniumwire.thirdparty.mitmproxy import command, ctx, exceptions, optmanager, platform
@@ -8,7 +9,7 @@ from seleniumwire.thirdparty.mitmproxy.net.http import status_codes
 from seleniumwire.thirdparty.mitmproxy.utils import human
 import seleniumwire.thirdparty.mitmproxy.types
 
-CONF_DIR = "~/.seleniumwire"
+CONF_DIR = os.path.join(tempfile.gettempdir(), '.seleniumwire')
 LISTEN_PORT = 8080
 
 

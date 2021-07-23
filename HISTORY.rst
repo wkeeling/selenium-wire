@@ -1,6 +1,13 @@
 History
 ~~~~~~~
 
+4.4.0 (2021-07-23)
+------------------
+
+* Introduce in-memory request storage.
+* Default request storage now uses system temp folder by default.
+* Remove mitmproxy backend. Selenium Wire uses mitmproxy by default so a separate mitmproxy backend is redundant.
+
 4.3.3 (2021-07-19)
 ------------------
 
