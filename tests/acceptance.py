@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from seleniumwire import webdriver
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 class BrowserIntegrationTest(TestCase):

@@ -26,11 +26,21 @@ class MitmProxyTest(TestCase):
             },
         )
 
-        self.assertEqual(self.mock_storage.return_value, proxy.storage)
-        self.mock_storage.assert_called_once_with(base_dir='/some/dir')
+        self.assertEqual(self.mock_storage.create.return_value, proxy.storage)
+        self.mock_storage.create.assert_called_once_with(memory_only=False, base_dir='/some/dir', maxsize=None)
+
+    def test_creates_in_memory_storage(self):
+        proxy = MitmProxy(
+            'somehost',
+            12345,
+            {'request_storage_base_dir': '/some/dir', 'request_storage': 'memory', 'request_storage_max_size': 10},
+        )
+
+        self.assertEqual(self.mock_storage.create.return_value, proxy.storage)
+        self.mock_storage.create.assert_called_once_with(memory_only=True, base_dir='/some/dir', maxsize=10)
 
     def test_extracts_cert(self):
-        self.mock_storage.return_value.home_dir = '/some/dir/.seleniumwire'
+        self.mock_storage.create.return_value.home_dir = '/some/dir/.seleniumwire'
         MitmProxy(
             'somehost',
             12345,
@@ -40,7 +50,7 @@ class MitmProxyTest(TestCase):
         self.mock_extract_cert_and_key.assert_called_once_with('/some/dir/.seleniumwire')
 
     def test_creates_master(self):
-        self.mock_storage.return_value.home_dir = '/some/dir/.seleniumwire'
+        self.mock_storage.create.return_value.home_dir = '/some/dir/.seleniumwire'
         proxy = MitmProxy(
             'somehost',
             12345,
@@ -237,12 +247,12 @@ class MitmProxyTest(TestCase):
         proxy.shutdown()
 
         self.mock_master.return_value.shutdown.assert_called_once_with()
-        self.mock_storage.return_value.cleanup.assert_called_once_with()
+        self.mock_storage.create.return_value.cleanup.assert_called_once_with()
 
     def setUp(self):
-        patcher = patch('seleniumwire.server.RequestStorage')
+        patcher = patch('seleniumwire.server.storage')
         self.mock_storage = patcher.start()
-        self.mock_storage.return_value.home_dir = '/some/dir'
+        self.mock_storage.create.return_value.home_dir = '/some/dir'
         self.addCleanup(patcher.stop)
 
         patcher = patch('seleniumwire.server.Options')

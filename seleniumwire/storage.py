@@ -1,15 +1,17 @@
-import gzip
 import logging
 import os
 import pickle
 import re
 import shutil
+import sys
+import tempfile
 import threading
 import uuid
-import zlib
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
 from datetime import datetime, timedelta
-from io import BytesIO
+from typing import DefaultDict, Iterator, List, Optional, Union
+
+from seleniumwire.request import Request, Response, WebSocketMessage
 
 log = logging.getLogger(__name__)
 
@@ -17,12 +19,33 @@ log = logging.getLogger(__name__)
 REMOVE_DATA_OLDER_THAN_DAYS = 1
 
 
-class RequestStorage:
-    """Responsible for saving request and response data that passes through the proxy server.
+def create(*, memory_only: bool = False, **kwargs):
+    """Create a new storage instance.
 
-    Requests and responses are saved separately. However, when a request is loaded, the
-    response, if there is one, is automatically loaded and attached to the request. As are
-    any websocket messages.
+    Args:
+        memory_only: When True, an in-memory implementation will be used which stores
+            request data in memory only and nothing on disk. Default False.
+        kwargs: Any arguments to initialise the storage with:
+            - base_dir: The base directory under which requests are stored
+            - maxsize: The maximum number of requests the storage can hold
+    Returns: A request storage implementation, currently either RequestStorage (default)
+        or InMemoryRequestStorage when memory_only is set to True.
+    """
+    if memory_only:
+        return InMemoryRequestStorage(base_dir=kwargs.get('base_dir'), maxsize=kwargs.get('maxsize'))
+
+    return RequestStorage(base_dir=kwargs.get('base_dir'))
+
+
+class _IndexedRequest:
+    def __init__(self, id: str, url: str, has_response: bool):
+        self.id = id
+        self.url = url
+        self.has_response = has_response
+
+
+class RequestStorage:
+    """Responsible for persistence of request and response data to disk.
 
     This implementation writes the request and response data to disk, but keeps an in-memory
     index for sequencing and fast retrieval.
@@ -30,32 +53,31 @@ class RequestStorage:
     Instances are designed to be threadsafe.
     """
 
-    def __init__(self, base_dir=None):
+    def __init__(self, base_dir: Optional[str] = None):
         """Initialises a new RequestStorage using an optional base directory.
 
         Args:
             base_dir: The directory where request and response data is stored.
-                If not specified, the current user's home folder is used.
+                If not specified, the system temp folder is used.
         """
         if base_dir is None:
-            base_dir = os.path.expanduser('~')
+            base_dir = tempfile.gettempdir()
 
-        self.home_dir = os.path.join(base_dir, '.seleniumwire')
-        self.session_dir = os.path.join(self.home_dir, 'storage-{}'.format(str(uuid.uuid4())))
+        self.home_dir: str = os.path.join(base_dir, '.seleniumwire')
+        self.session_dir: str = os.path.join(self.home_dir, 'storage-{}'.format(str(uuid.uuid4())))
         os.makedirs(self.session_dir, exist_ok=True)
         self._cleanup_old_dirs()
 
         # Index of requests received.
-        # A list of tuples: [(request id, request path, response received), ...]
-        self._index = []
+        self._index: List[_IndexedRequest] = []
 
         # Sequences of websocket messages held against the
         # id of the originating websocket request.
-        self._ws_messages = defaultdict(list)
+        self._ws_messages: DefaultDict[str, List] = defaultdict(list)
 
         self._lock = threading.Lock()
 
-    def save_request(self, request):
+    def save_request(self, request: Request) -> None:
         """Save a request to storage.
 
         Args:
@@ -71,11 +93,11 @@ class RequestStorage:
         with self._lock:
             self._index.append(_IndexedRequest(id=request_id, url=request.url, has_response=False))
 
-    def _save(self, obj, dirname, filename):
+    def _save(self, obj: Union[Request, Response, dict], dirname: str, filename: str) -> None:
         with open(os.path.join(dirname, filename), 'wb') as out:
             pickle.dump(obj, out)
 
-    def save_response(self, request_id, response):
+    def save_response(self, request_id: str, response: Response) -> None:
         """Save a response to storage against a request with the specified id.
 
         Args:
@@ -85,7 +107,7 @@ class RequestStorage:
         indexed_request = self._get_indexed_request(request_id)
 
         if indexed_request is None:
-            log.debug('Cannot save response as request %s is no longer stored' % request_id)
+            log.debug('Cannot save response as request %s is no longer stored', request_id)
             return
 
         request_dir = self._get_request_dir(request_id)
@@ -94,7 +116,7 @@ class RequestStorage:
 
         indexed_request.has_response = True
 
-    def _get_indexed_request(self, request_id):
+    def _get_indexed_request(self, request_id: str) -> Optional[_IndexedRequest]:
         with self._lock:
             index = self._index[:]
 
@@ -104,7 +126,7 @@ class RequestStorage:
 
         return None
 
-    def save_ws_message(self, request_id, message):
+    def save_ws_message(self, request_id: str, message: WebSocketMessage) -> None:
         """Save a websocket message against a request with the specified id.
 
         Args:
@@ -114,7 +136,7 @@ class RequestStorage:
         with self._lock:
             self._ws_messages[request_id].append(message)
 
-    def save_har_entry(self, request_id, entry):
+    def save_har_entry(self, request_id: str, entry: dict) -> None:
         """Save a HAR entry to storage against a request with the specified id.
 
         Args:
@@ -124,19 +146,19 @@ class RequestStorage:
         indexed_request = self._get_indexed_request(request_id)
 
         if indexed_request is None:
-            log.debug('Cannot save HAR entry as request %s is no longer stored' % request_id)
+            log.debug('Cannot save HAR entry as request %s is no longer stored', request_id)
             return
 
         request_dir = self._get_request_dir(request_id)
 
         self._save(entry, request_dir, 'har_entry')
 
-    def load_requests(self):
+    def load_requests(self) -> List[Request]:
         """Load all previously saved requests known to the storage (known to its index).
 
         The requests are returned as a list of request objects in the order in which they
         were saved. Each request will have any associated response and websocket messages
-        attached - assuming they exist.
+        attached if they exist.
 
         Returns: A list of request objects.
         """
@@ -151,7 +173,7 @@ class RequestStorage:
 
         return loaded
 
-    def _load_request(self, request_id):
+    def _load_request(self, request_id: str) -> Request:
         request_dir = self._get_request_dir(request_id)
 
         with open(os.path.join(request_dir, 'request'), 'rb') as req:
@@ -167,7 +189,6 @@ class RequestStorage:
                 # Attach the response if there is one.
                 with open(os.path.join(request_dir, 'response'), 'rb') as res:
                     response = pickle.load(res)
-                    response.body = self._decode(response.body, response.headers.get('Content-Encoding', 'identity'))
                     request.response = response
 
                     # The certificate data has been stored on the response but we make
@@ -180,26 +201,7 @@ class RequestStorage:
 
         return request
 
-    def _decode(self, data, encoding):
-        if encoding != 'identity':
-            try:
-                if encoding in ('gzip', 'x-gzip'):
-                    io = BytesIO(data)
-                    with gzip.GzipFile(fileobj=io) as f:
-                        data = f.read()
-                elif encoding == 'deflate':
-                    try:
-                        data = zlib.decompress(data)
-                    except zlib.error:
-                        data = zlib.decompress(data, -zlib.MAX_WBITS)
-                else:
-                    log.debug("Unknown Content-Encoding: %s", encoding)
-            except (OSError, EOFError, zlib.error) as e:
-                # Log a message and return the data untouched
-                log.debug('Unable to decode body: %s', str(e))
-        return data
-
-    def load_last_request(self):
+    def load_last_request(self) -> Optional[Request]:
         """Load the last saved request.
 
         Returns: The last saved request or None if no requests have
@@ -213,7 +215,7 @@ class RequestStorage:
 
         return self._load_request(last_request.id)
 
-    def load_har_entries(self):
+    def load_har_entries(self) -> List[dict]:
         """Load all HAR entries known to this storage.
 
         Returns: A list of HAR entries.
@@ -236,7 +238,7 @@ class RequestStorage:
 
         return entries
 
-    def iter_requests(self):
+    def iter_requests(self) -> Iterator[Request]:
         """Return an iterator of requests known to the storage.
 
         Returns: An iterator of request objects.
@@ -247,8 +249,8 @@ class RequestStorage:
         for indexed_request in index:
             yield self._load_request(indexed_request.id)
 
-    def clear_requests(self):
-        """Clears all requests currently known to this storage."""
+    def clear_requests(self) -> None:
+        """Clear all requests currently known to this storage."""
         with self._lock:
             index = self._index[:]
             self._index.clear()
@@ -257,7 +259,7 @@ class RequestStorage:
         for indexed_request in index:
             shutil.rmtree(self._get_request_dir(indexed_request.id), ignore_errors=True)
 
-    def find(self, pat, check_response=True):
+    def find(self, pat: str, check_response: bool = True) -> Optional[Request]:
         """Find the first request that matches the specified pattern.
 
         Requests are searched in chronological order.
@@ -281,10 +283,10 @@ class RequestStorage:
 
         return None
 
-    def _get_request_dir(self, request_id):
+    def _get_request_dir(self, request_id: str) -> str:
         return os.path.join(self.session_dir, 'request-{}'.format(request_id))
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Remove all stored requests, the storage directory containing those
         requests, and if that is the only storage directory, also the top level
         parent directory.
@@ -299,7 +301,7 @@ class RequestStorage:
             # Parent folder not empty
             pass
 
-    def _cleanup_old_dirs(self):
+    def _cleanup_old_dirs(self) -> None:
         """Clean up and remove any old storage directories that were not previously
         cleaned up properly by cleanup().
         """
@@ -317,7 +319,182 @@ class RequestStorage:
                 pass
 
 
-class _IndexedRequest(dict):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__dict__ = self
+class InMemoryRequestStorage:
+    """Keeps request and response data in memory only.
+
+    By default there is no limit on the number of requests that will be stored. This can
+    be adjusted with the 'maxsize' attribute when creating a new instance.
+
+    Instances are designed to be threadsafe.
+    """
+
+    def __init__(self, base_dir: Optional[str] = None, maxsize: Optional[int] = None):
+        """Initialise a new InMemoryRequestStorage.
+
+        Args:
+            base_dir: The directory where certificate data is stored.
+                If not specified, the system temp folder is used.
+            maxsize: The maximum number of requests to store. Default no limit.
+                When this attribute is set and the storage reaches the specified maximum
+                size, old requests are discarded sequentially as new requests arrive.
+        """
+        if base_dir is None:
+            base_dir = tempfile.gettempdir()
+
+        self.home_dir: str = os.path.join(base_dir, '.seleniumwire')
+
+        self._maxsize = sys.maxsize if maxsize is None else maxsize
+        # OrderedDict doesn't support type hints before 3.7.2
+        self._requests = OrderedDict()  # type: ignore
+        self._lock = threading.Lock()
+
+    def save_request(self, request: Request) -> None:
+        """Save a request to storage.
+
+        Args:
+            request: The request to save.
+        """
+        request.id = str(uuid.uuid4())
+
+        with self._lock:
+            if self._maxsize > 0:
+                while len(self._requests) >= self._maxsize:
+                    self._requests.popitem(last=False)
+
+                self._requests[request.id] = {
+                    'request': request,
+                }
+
+    def save_response(self, request_id: str, response: Response) -> None:
+        """Save a response to storage against a request with the specified id.
+
+        Any certificate information will be attached to the original request
+        against the request.cert attribute.
+
+        Args:
+            request_id: The id of the original request.
+            response: The response to save.
+        """
+        request = self._get_request(request_id)
+
+        if request is not None:
+            request.response = response
+            # The certificate data has been stored on the response but we make
+            # it available on the request which is a more logical location.
+            if hasattr(response, 'cert'):
+                request.cert = response.cert
+                del response.cert
+        else:
+            log.debug('Cannot save response as request %s is no longer stored' % request_id)
+
+    def save_ws_message(self, request_id: str, message: WebSocketMessage) -> None:
+        """Save a websocket message against a request with the specified id.
+
+        Args:
+            request_id: The id of the original handshake request.
+            message: The websocket message to save.
+        """
+        request = self._get_request(request_id)
+
+        if request is not None:
+            request.ws_messages.append(message)
+
+    def save_har_entry(self, request_id: str, entry: dict) -> None:
+        """Save a HAR entry to storage against a request with the specified id.
+
+        Args:
+            request_id: The id of the original request.
+            entry: The HAR entry to save.
+        """
+        with self._lock:
+            try:
+                v = self._requests[request_id]
+                v['har_entry'] = entry
+            except KeyError:
+                log.debug('Cannot save HAR entry as request %s is no longer stored', request_id)
+
+    def _get_request(self, request_id: str) -> Optional[Request]:
+        """Get a request with the specified id or None if no request found."""
+        with self._lock:
+            try:
+                return self._requests[request_id]['request']
+            except KeyError:
+                return None
+
+    def load_requests(self) -> List[Request]:
+        """Load all previously saved requests.
+
+        The requests are returned as a list of request objects in the order in which they
+        were saved.
+
+        Note that for efficiency request objects are not copied when returned, so any
+        change made to a request will also affect the stored version.
+
+        Returns: A list of request objects.
+        """
+        with self._lock:
+            return [v['request'] for v in self._requests.values()]
+
+    def load_last_request(self) -> Optional[Request]:
+        """Load the last saved request.
+
+        Returns: The last saved request or None if no requests have
+            yet been stored.
+        """
+        with self._lock:
+            try:
+                return next(reversed(self._requests.values()))['request']
+            except (StopIteration, KeyError):
+                return None
+
+    def load_har_entries(self) -> List[dict]:
+        """Load all previously saved HAR entries.
+
+        Returns: A list of HAR entries.
+        """
+        with self._lock:
+            return [v['har_entry'] for v in self._requests.values() if 'har_entry' in v]
+
+    def iter_requests(self) -> Iterator[Request]:
+        """Return an iterator over the saved requests.
+
+        Returns: An iterator of request objects.
+        """
+        with self._lock:
+            values = list(self._requests.values())
+
+        for v in values:
+            yield v['request']
+
+    def clear_requests(self) -> None:
+        """Clear all previously saved requests."""
+        with self._lock:
+            self._requests.clear()
+
+    def find(self, pat: str, check_response: bool = True) -> Optional[Request]:
+        """Find the first request that matches the specified pattern.
+
+        Requests are searched in chronological order.
+
+        Args:
+            pat: A pattern that will be searched in the request URL.
+            check_response: When a match is found, whether to check that the request has
+                a corresponding response. Where check_response=True and no response has
+                been received, this method will skip the request and continue searching.
+
+        Returns: The first request in the storage that matches the pattern,
+            or None if no requests match.
+        """
+        with self._lock:
+            for v in self._requests.values():
+                request = v['request']
+
+                if re.search(pat, request.url):
+                    if (check_response and request.response) or not check_response:
+                        return request
+
+        return None
+
+    def cleanup(self) -> None:
+        """Clear all previously saved requests."""
+        self.clear_requests()

@@ -1,8 +1,11 @@
 import collections.abc
+import gzip
 import logging
 import os
 import pkgutil
+import zlib
 from collections import namedtuple
+from io import BytesIO
 from pathlib import Path
 from urllib.request import _parse_proxy
 
@@ -87,6 +90,7 @@ def extract_cert_and_key(dest_folder, check_exists=True):
         check_exists: If True the destination file will not be overwritten
             if it already exists.
     """
+    os.makedirs(dest_folder, exist_ok=True)
     combined_path = Path(dest_folder, COMBINED_CERT)
     if check_exists and combined_path.exists():
         return
@@ -117,3 +121,33 @@ def urlsafe_address(address):
         addr = f'[{addr}]'
 
     return addr, port
+
+
+def decode(data: bytes, encoding: str) -> bytes:
+    """Attempt to decode data based on the supplied encoding.
+
+    If decoding fails, the data original data is returned.
+
+    Args:
+        data: The encoded data.
+        encoding: The encoding type.
+    Returns: The decoded data or the original data if it could
+        not be decoded.
+    """
+    if encoding != 'identity':
+        try:
+            if encoding in ('gzip', 'x-gzip'):
+                io = BytesIO(data)
+                with gzip.GzipFile(fileobj=io) as f:
+                    data = f.read()
+            elif encoding == 'deflate':
+                try:
+                    data = zlib.decompress(data)
+                except zlib.error:
+                    data = zlib.decompress(data, -zlib.MAX_WBITS)
+            else:
+                log.debug("Unknown encoding: %s", encoding)
+        except (OSError, EOFError, zlib.error) as e:
+            # Log a message and return the data untouched
+            log.debug('Error decoding data: %s', str(e))
+    return data

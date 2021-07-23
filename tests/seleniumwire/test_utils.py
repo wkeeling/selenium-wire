@@ -1,10 +1,13 @@
 import contextlib
+import gzip
 import os
+import zlib
+from io import BytesIO
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import call, mock_open, patch
 
-from seleniumwire.utils import extract_cert, extract_cert_and_key, get_upstream_proxy, urlsafe_address
+from seleniumwire.utils import decode, extract_cert, extract_cert_and_key, get_upstream_proxy, urlsafe_address
 
 
 class GetUpstreamProxyTest(TestCase):
@@ -140,7 +143,7 @@ class GetUpstreamProxyTest(TestCase):
             os.environ.update(old_environ)
 
 
-class TestExtractCert(TestCase):
+class ExtractCertTest(TestCase):
     @patch('seleniumwire.utils.os.getcwd')
     @patch('seleniumwire.utils.pkgutil')
     def test_extract_cert(self, mock_pkgutil, mock_getcwd):
@@ -166,9 +169,10 @@ class TestExtractCert(TestCase):
         mock_pkgutil.get_data.assert_called_once_with('seleniumwire', 'foo.crt')
         m_open.assert_not_called()
 
+    @patch('seleniumwire.utils.os')
     @patch('seleniumwire.utils.pkgutil')
     @patch('seleniumwire.utils.Path')
-    def test_extract_cert_and_key(self, mock_path, mock_pkgutil):
+    def test_extract_cert_and_key(self, mock_path, mock_pkgutil, mock_os):
         mock_path.return_value.exists.return_value = False
         mock_pkgutil.get_data.side_effect = (b'cert_data', b'key_data')
         m_open = mock_open()
@@ -176,13 +180,15 @@ class TestExtractCert(TestCase):
         with patch('seleniumwire.utils.open', m_open):
             extract_cert_and_key(Path('some', 'path'))
 
+        mock_os.makedirs.assert_called_once_with(Path('some', 'path'), exist_ok=True)
         mock_path.assert_called_once_with(Path('some', 'path'), 'seleniumwire-ca.pem')
         mock_pkgutil.get_data.assert_has_calls([call('seleniumwire', 'ca.crt'), call('seleniumwire', 'ca.key')])
         m_open.assert_called_once_with(mock_path.return_value, 'wb')
         m_open.return_value.write.assert_called_once_with(b'cert_datakey_data')
 
+    @patch('seleniumwire.utils.os')
     @patch('seleniumwire.utils.Path')
-    def test_extract_cert_and_key_exists(self, mock_path):
+    def test_extract_cert_and_key_exists(self, mock_path, mock_os):
         mock_path.return_value.exists.return_value = True
         m_open = mock_open()
 
@@ -191,8 +197,9 @@ class TestExtractCert(TestCase):
 
         m_open.assert_not_called()
 
+    @patch('seleniumwire.utils.os')
     @patch('seleniumwire.utils.Path')
-    def test_extract_cert_and_key_no_check(self, mock_path):
+    def test_extract_cert_and_key_no_check(self, mock_path, mock_os):
         mock_path.return_value.exists.return_value = True
         m_open = mock_open()
 
@@ -208,3 +215,24 @@ def test_urlsafe_address_ipv4():
 
 def test_urlsafe_address_ipv6():
     assert urlsafe_address(('::ffff:127.0.0.1', 9999, 0, 0)) == ('[::ffff:127.0.0.1]', 9999)
+
+
+class DecodeTest(TestCase):
+    def test_decode_gzip_data(self):
+        data = b'test response body'
+        io = BytesIO()
+
+        with gzip.GzipFile(fileobj=io, mode='wb') as f:
+            f.write(data)
+
+        self.assertEqual(decode(io.getvalue(), 'gzip'), data)
+
+    def test_decode_zlib_data(self):
+        data = zlib.compress(b'test response body')
+
+        self.assertEqual(decode(data, 'zlib'), data)
+
+    def test_decode_error(self):
+        data = b'test response body'
+
+        self.assertEqual(decode(data, 'gzip'), data)

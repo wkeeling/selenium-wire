@@ -1,4 +1,5 @@
 from unittest import TestCase
+from unittest.mock import patch
 
 from seleniumwire.request import Request, Response
 
@@ -174,18 +175,36 @@ class ResponseTest(TestCase):
         self.assertEqual('application/json', response.headers['content-type'])
 
     def test_no_body(self):
-        request = self._create_response(body=None)
+        response = self._create_response(body=None)
 
-        self.assertEqual(b'', request.body)
+        self.assertEqual(b'', response.body)
 
     def test_str_body(self):
-        request = self._create_response(body='foobar')
+        response = self._create_response(body='foobar')
 
-        self.assertEqual(b'foobar', request.body)
+        self.assertEqual(b'foobar', response.body)
 
     def test_invalid_body(self):
         with self.assertRaises(TypeError):
             self._create_response(body=object())
+
+    @patch('seleniumwire.request.decode')
+    def test_decode_body(self, mock_decode):
+        body = b'foobar'
+        mock_decode.return_value = body
+        response = self._create_response(body=body, headers=[('Content-Encoding', 'gzip')])
+
+        self.assertEqual(body, response.body)
+        mock_decode.assert_called_once_with(body, 'gzip')
+
+    @patch('seleniumwire.request.decode')
+    def test_decode_body_no_encoding(self, mock_decode):
+        body = b'foobar'
+        mock_decode.return_value = body
+        response = self._create_response(body=body)
+
+        self.assertEqual(body, response.body)
+        mock_decode.assert_called_once_with(body, 'identity')
 
     def test_response_repr(self):
         response = self._create_response()
@@ -202,14 +221,17 @@ class ResponseTest(TestCase):
 
         self.assertEqual('200 OK', str(response))
 
-    def _create_response(self, body=None):
+    def _create_response(self, body=None, headers=None):
+        if headers is None:
+            headers = [
+                ('Content-Type', 'application/json'),
+                ('Content-Length', '120'),
+            ]
+
         response = Response(
             status_code=200,
             reason='OK',
-            headers=[
-                ('Content-Type', 'application/json'),
-                ('Content-Length', '120'),
-            ],
+            headers=headers,
             body=body,
         )
         return response

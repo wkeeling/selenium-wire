@@ -2,8 +2,10 @@
 from datetime import datetime
 from http import HTTPStatus
 from http.client import HTTPMessage
-from typing import Dict, Iterable, List, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
+
+from seleniumwire.utils import decode
 
 
 class HTTPHeaders(HTTPMessage):
@@ -28,7 +30,7 @@ class Request:
             headers: The request headers as an iterable of 2-element tuples.
             body: The request body as bytes.
         """
-        self.id = None  # The id is set for captured requests
+        self.id: Optional[str] = None  # The id is set for captured requests
         self.method = method
         self.url = url
         self.headers = HTTPHeaders()
@@ -37,7 +39,7 @@ class Request:
             self.headers.add_header(k, v)
 
         self.body = body
-        self.response = None
+        self.response: Optional[Response] = None
         self.date: datetime = datetime.now()
         self.ws_messages: List[WebSocketMessage] = []
         self.cert: dict = {}
@@ -173,6 +175,7 @@ class Response:
 
         self.body = body
         self.date: datetime = datetime.now()
+        self.cert: dict = {}
 
     @property
     def body(self) -> bytes:
@@ -180,7 +183,7 @@ class Response:
 
         Returns: The response body as bytes.
         """
-        return self._body
+        return decode(self._body, self.headers.get('Content-Encoding', 'identity'))
 
     @body.setter
     def body(self, b: bytes):
