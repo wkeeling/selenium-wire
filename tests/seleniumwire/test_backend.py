@@ -1,5 +1,4 @@
 import json
-import os
 import ssl
 import urllib.error
 import urllib.request
@@ -376,8 +375,7 @@ class BackendIntegrationTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        options = {'backend': os.environ.get('SW_TEST_BACKEND', 'default')}
-        cls.backend = backend.create(options=options)
+        cls.backend = backend.create()
         cls.configure_proxy(*cls.backend.address()[:2])
         cls.httpbin = testutils.get_httpbin()
 

@@ -278,15 +278,6 @@ def test_mock_a_response(driver, httpbin):
     assert 'Hello World!' in driver.page_source
 
 
-def test_mitmproxy_backend(driver_path, chrome_options, httpbin):
-    sw_options = {'backend': 'mitmproxy'}
-
-    with create_driver(driver_path, chrome_options, sw_options) as driver:
-        driver.get(f'{httpbin}/html')
-
-        assert driver.last_request.response is not None
-
-
 def test_upstream_http_proxy(driver_path, chrome_options, httpbin, httpproxy):
     sw_options = {'proxy': {'https': f'{httpproxy}'}}
 
