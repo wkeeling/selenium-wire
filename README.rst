@@ -211,7 +211,7 @@ If the machine running the browser needs to use a different address to talk to t
 Accessing Requests
 ~~~~~~~~~~~~~~~~~~
 
-Selenium Wire captures all HTTP/HTTPS traffic made by the browser [1]_.
+Selenium Wire captures all HTTP/HTTPS traffic made by the browser [1]_. The following attributes provide access to requests and responses.
 
 ``driver.requests``
     The list of captured requests in chronological order.
@@ -289,7 +289,7 @@ Request objects have the following attributes.
     The query string, e.g. ``foo=bar&spam=eggs``
 
 ``response``
-   The response associated with the request. This will be ``None`` if the request has no response.
+   The `response object`_ associated with the request. This will be ``None`` if the request has no response.
 
 ``url``
     The request URL, e.g. ``https://server/some/path/index.html?foo=bar&spam=eggs``
@@ -304,6 +304,8 @@ Request objects have the following methods.
 
 ``create_response(status_code, headers=(), body=b'')``
     Create a response and return it without sending any data to the remote server. For use within request interceptors. See `Example: Mock a response`_.
+
+.. _`response object`: #response-objects
 
 WebSocketMessage Objects
 ------------------------
@@ -343,7 +345,7 @@ Response objects have the following attributes.
 Intercepting Requests and Responses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Selenium Wire allows you to modify requests and responses on the fly using interceptors. An interceptor is a function that gets invoked with requests and responses as they pass through Selenium Wire. Within an interceptor you can modify the request and response as you see fit.
+As well as capturing requests and responses, Selenium Wire allows you to modify them on the fly using interceptors. An interceptor is a function that gets invoked with requests and responses as they pass through Selenium Wire. Within an interceptor you can modify the request and response as you see fit.
 
 You set your interceptor functions using the ``driver.request_interceptor`` and ``driver.response_interceptor`` attributes before you start using the driver. A request interceptor should accept a single argument for the request. A response interceptor should accept two arguments, one for the originating request and one for the response.
 
