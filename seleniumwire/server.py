@@ -38,7 +38,6 @@ class MitmProxy:
         self.response_interceptor = None
 
         self._event_loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self._event_loop)
 
         mitmproxy_opts = Options()
 

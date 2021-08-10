@@ -208,7 +208,6 @@ class MitmProxyTest(TestCase):
 
         self.assertEqual(self.mock_asyncio.new_event_loop.return_value, proxy._event_loop)
         self.mock_asyncio.new_event_loop.assert_called_once_with()
-        self.mock_asyncio.set_event_loop.assert_called_once_with(proxy._event_loop)
 
     def test_serve_forever(self):
         proxy = MitmProxy(
@@ -219,12 +218,7 @@ class MitmProxyTest(TestCase):
 
         proxy.serve_forever()
 
-        self.mock_asyncio.set_event_loop.assert_has_calls(
-            [
-                call(proxy._event_loop),
-                call(proxy._event_loop),
-            ]
-        )
+        self.mock_asyncio.set_event_loop.assert_called_once_with(proxy._event_loop)
         self.mock_master.return_value.run_loop.assert_called_once_with(proxy._event_loop)
 
     def test_address(self):
