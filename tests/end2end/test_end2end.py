@@ -488,8 +488,8 @@ def test_in_memory_storage(driver_path, chrome_options, httpbin):
     }
 
     with create_driver(driver_path, chrome_options, sw_options) as driver:
-        driver.get(f'{httpbin}/html'),
-        driver.get(f'{httpbin}/anything'),
+        driver.get(f'{httpbin}/html')
+        driver.get(f'{httpbin}/anything')
 
         assert not glob(os.path.join(driver.proxy.storage.home_dir, 'storage*'))
         assert len(driver.requests) == 2
@@ -503,5 +503,18 @@ def test_in_memory_storage(driver_path, chrome_options, httpbin):
         assert driver.last_request.cert
 
 
-def test_switch_proxy_on_the_fly():
-    pass
+def test_switch_proxy_on_the_fly(driver_path, chrome_options, httpbin):
+    with create_httpproxy() as httpproxy:
+        sw_options = {'proxy': {'https': f'{httpproxy}'}}
+
+        with create_driver(driver_path, chrome_options, sw_options) as driver:
+            driver.get(f'{httpbin}/html')
+
+            assert 'This passed through a http proxy' in driver.page_source
+
+            with create_httpproxy(port=8087, auth='test:test') as authproxy:
+                driver.proxy.https = str(authproxy)  # Switch the proxy on the same driver instance
+
+                driver.get(f'{httpbin}/html')
+
+                assert 'This passed through a authenticated http proxy' in driver.page_source
