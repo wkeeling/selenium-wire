@@ -7,6 +7,7 @@ import zlib
 from collections import namedtuple
 from io import BytesIO
 from pathlib import Path
+from typing import Dict, NamedTuple
 from urllib.request import _parse_proxy
 
 log = logging.getLogger(__name__)
@@ -64,6 +65,51 @@ def get_upstream_proxy(options):
             merged[proxy_type] = conf(*_parse_proxy(merged[proxy_type]))
 
     return merged
+
+
+def build_proxy_args(proxy_config: Dict[str, NamedTuple]) -> Dict[str, str]:
+    """Build the arguments needed to pass an upstream proxy to mitmproxy.
+
+    Args:
+        proxy_config: The proxy config parsed out of the Selenium Wire options.
+    Returns: A dictionary of arguments suitable for passing to mitmproxy.
+    """
+    http_proxy = proxy_config.get('http')
+    https_proxy = proxy_config.get('https')
+    conf = None
+
+    if http_proxy and https_proxy:
+        if http_proxy.hostport != https_proxy.hostport:  # noqa
+            # We only support a single upstream proxy server
+            raise ValueError('Different settings for http and https proxy servers not supported')
+
+        conf = https_proxy
+    elif http_proxy:
+        conf = http_proxy
+    elif https_proxy:
+        conf = https_proxy
+
+    args = {}
+
+    if conf:
+        scheme, username, password, hostport = conf
+
+        args['mode'] = 'upstream:{}://{}'.format(scheme, hostport)
+
+        if username:
+            args['upstream_auth'] = '{}:{}'.format(username, password)
+
+        custom_auth = proxy_config.get('custom_authorization')
+
+        if custom_auth:
+            args['upstream_custom_auth'] = custom_auth
+
+        no_proxy = proxy_config.get('no_proxy')
+
+        if no_proxy:
+            args['no_proxy'] = no_proxy
+
+    return args
 
 
 def extract_cert(cert_name='ca.crt'):

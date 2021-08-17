@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from selenium.webdriver import ActionChains  # noqa
 from selenium.webdriver import FirefoxOptions  # noqa
 from selenium.webdriver import FirefoxProfile  # noqa
@@ -12,7 +14,7 @@ from selenium.webdriver import Safari as _Safari
 
 from seleniumwire import backend
 from seleniumwire.inspect import InspectRequestsMixin
-from seleniumwire.utils import urlsafe_address
+from seleniumwire.utils import build_proxy_args, get_upstream_proxy, urlsafe_address
 
 
 class DriverCommonMixin:
@@ -46,6 +48,52 @@ class DriverCommonMixin:
         """Shutdown Selenium Wire and then quit the webdriver."""
         self.backend.shutdown()
         super().quit()
+
+    @property
+    def proxy(self) -> Dict[str, Any]:
+        """Get the proxy configuration for the driver."""
+
+        conf = {}
+        mode = getattr(self.backend.master.options, 'mode')
+
+        if mode and mode.startswith('upstream'):
+            upstream = mode.split('upstream:')[1]
+            scheme, *rest = upstream.split('://')
+
+            auth = getattr(self.backend.master.options, 'upstream_auth')
+
+            if auth:
+                conf[scheme] = f'{scheme}://{auth}@{rest[0]}'
+            else:
+                conf[scheme] = f'{scheme}://{rest[0]}'
+
+        no_proxy = getattr(self.backend.master.options, 'no_proxy')
+
+        if no_proxy:
+            conf['no_proxy'] = ','.join(no_proxy)
+
+        custom_auth = getattr(self.backend.master.options, 'upstream_custom_auth')
+
+        if custom_auth:
+            conf['custom_authorization'] = custom_auth
+
+        return conf
+
+    @proxy.setter
+    def proxy(self, proxy_conf: Dict[str, Any]):
+        """Set the proxy configuration for the driver.
+
+        The configuration should be a dictionary:
+
+        webdriver.proxy = {
+            'https': 'https://user:pass@server:port',
+            'no_proxy': 'localhost,127.0.0.1',
+        }
+
+        Args:
+            proxy_conf: The proxy configuration.
+        """
+        self.backend.master.options.update(**build_proxy_args(get_upstream_proxy({'proxy': proxy_conf})))
 
 
 class Firefox(InspectRequestsMixin, DriverCommonMixin, _Firefox):
