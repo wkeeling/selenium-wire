@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+4.5.0 (2021-08-19)
+------------------
+
+* Allow upstream proxy to be changed on the fly.
+
 4.4.1 (2021-08-10)
 ------------------
 
