@@ -7,7 +7,14 @@ from pathlib import Path
 from unittest import TestCase
 from unittest.mock import call, mock_open, patch
 
-from seleniumwire.utils import decode, extract_cert, extract_cert_and_key, get_upstream_proxy, urlsafe_address
+from seleniumwire.utils import (
+    build_proxy_args,
+    decode,
+    extract_cert,
+    extract_cert_and_key,
+    get_upstream_proxy,
+    urlsafe_address,
+)
 
 
 class GetUpstreamProxyTest(TestCase):
@@ -141,6 +148,82 @@ class GetUpstreamProxyTest(TestCase):
         finally:
             os.environ.clear()
             os.environ.update(old_environ)
+
+
+class BuildProxyArgsTest(TestCase):
+    def test_args_both_schemes(self):
+        options = {
+            'proxy': {
+                'http': 'http://proxyserver:8080',
+                # We pick https when both are specified and the same
+                'https': 'https://proxyserver:8080',
+            },
+        }
+
+        args = build_proxy_args(get_upstream_proxy(options))
+
+        self.assertEqual(args, {'mode': 'upstream:https://proxyserver:8080'})
+
+    def test_args_single_scheme(self):
+        options = {
+            'proxy': {
+                'http': 'http://proxyserver:8080',
+            },
+        }
+
+        args = build_proxy_args(get_upstream_proxy(options))
+
+        self.assertEqual(args, {'mode': 'upstream:http://proxyserver:8080'})
+
+    def test_different_schemes(self):
+        options = {
+            'proxy': {'http': 'http://proxyserver1:8080', 'https': 'https://proxyserver2:8080'},
+        }
+
+        with self.assertRaises(ValueError):
+            build_proxy_args(get_upstream_proxy(options))
+
+    def test_args_auth(self):
+        options = {
+            'proxy': {
+                'https': 'https://user:pass@proxyserver:8080',
+            },
+        }
+
+        args = build_proxy_args(get_upstream_proxy(options))
+
+        self.assertEqual(args, {'mode': 'upstream:https://proxyserver:8080', 'upstream_auth': 'user:pass'})
+
+    def test_args_auth_empty_password(self):
+        options = {
+            'proxy': {
+                'https': 'https://user:@proxyserver:8080',
+            },
+        }
+
+        args = build_proxy_args(get_upstream_proxy(options))
+
+        self.assertEqual(args, {'mode': 'upstream:https://proxyserver:8080', 'upstream_auth': 'user:'})
+
+    def test_args_custom_auth(self):
+        options = {
+            'proxy': {'https': 'https://proxyserver:8080', 'custom_authorization': 'Bearer 12345'},
+        }
+
+        args = build_proxy_args(get_upstream_proxy(options))
+
+        self.assertEqual(args, {'mode': 'upstream:https://proxyserver:8080', 'upstream_custom_auth': 'Bearer 12345'})
+
+    def test_args_no_proxy(self):
+        options = {
+            'proxy': {'https': 'https://proxyserver:8080', 'no_proxy': 'localhost:9090, example.com'},
+        }
+
+        args = build_proxy_args(get_upstream_proxy(options))
+
+        self.assertEqual(
+            args, {'mode': 'upstream:https://proxyserver:8080', 'no_proxy': ['localhost:9090', 'example.com']}
+        )
 
 
 class ExtractCertTest(TestCase):

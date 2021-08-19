@@ -111,6 +111,8 @@ Table of Contents
 
   * `SOCKS`_
 
+  * `Switching Dynamically`_
+
 - `Bot Detection`_
 
 - `Certificates`_
@@ -649,6 +651,24 @@ As well as ``socks5``, the schemes ``socks4`` and ``socks5h`` are supported. Use
 **Using Selenium Wire with Tor**
 
 See `this example <https://gist.github.com/woswos/38b921f0b82de009c12c6494db3f50c5>`_ if you want to run Selenium Wire with Tor.
+
+Switching Dynamically
+---------------------
+
+If you want to change the proxy settings for an existing driver instance, use the ``driver.proxy`` attribute:
+
+.. code:: python
+
+    driver.get(...)  # Using some initial proxy
+
+    # Change the proxy
+    driver.proxy = {
+        'https': 'https://user:pass@192.168.10.100:8888',
+    }
+
+    driver.get(...)  # These requests will use the new proxy
+
+This mechanism also supports the ``no_proxy`` and ``custom_authorization`` options.
 
 Bot Detection
 ~~~~~~~~~~~~~

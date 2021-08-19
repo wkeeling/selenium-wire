@@ -23,18 +23,18 @@ class InspectRequestsMixin:
             A list of Request instances representing the requests made
             between the browser and server.
         """
-        return self.proxy.storage.load_requests()
+        return self.backend.storage.load_requests()
 
     @requests.deleter
     def requests(self):
-        self.proxy.storage.clear_requests()
+        self.backend.storage.clear_requests()
 
     def iter_requests(self) -> Iterator[Request]:
         """Return an iterator of requests.
 
         Returns: An iterator.
         """
-        yield from self.proxy.storage.iter_requests()
+        yield from self.backend.storage.iter_requests()
 
     @property
     def last_request(self) -> Optional[Request]:
@@ -46,7 +46,7 @@ class InspectRequestsMixin:
             A Request instance representing the last request made, or
             None if no requests have been made.
         """
-        return self.proxy.storage.load_last_request()
+        return self.backend.storage.load_last_request()
 
     def wait_for_request(self, pat: str, timeout: Union[int, float] = 10) -> Request:
         """Wait up to the timeout period for a request matching the specified
@@ -73,7 +73,7 @@ class InspectRequestsMixin:
         start = time.time()
 
         while time.time() - start < timeout:
-            request = self.proxy.storage.find(pat)
+            request = self.backend.storage.find(pat)
 
             if request is None:
                 time.sleep(1 / 5)
@@ -91,7 +91,7 @@ class InspectRequestsMixin:
 
         Returns: A JSON string of HAR data.
         """
-        return har.generate_har(self.proxy.storage.load_har_entries())
+        return har.generate_har(self.backend.storage.load_har_entries())
 
     @property
     def header_overrides(self):
@@ -119,7 +119,7 @@ class InspectRequestsMixin:
                 ('*.somewhere-else.com.*', {'User-Agent': 'Chrome'})
             ]
         """
-        return self.proxy.modifier.headers
+        return self.backend.modifier.headers
 
     @header_overrides.setter
     def header_overrides(self, headers):
@@ -129,7 +129,7 @@ class InspectRequestsMixin:
         else:
             self._validate_headers(headers)
 
-        self.proxy.modifier.headers = headers
+        self.backend.modifier.headers = headers
 
     def _validate_headers(self, headers):
         for v in headers.values():
@@ -138,7 +138,7 @@ class InspectRequestsMixin:
 
     @header_overrides.deleter
     def header_overrides(self):
-        del self.proxy.modifier.headers
+        del self.backend.modifier.headers
 
     @property
     def param_overrides(self):
@@ -164,15 +164,15 @@ class InspectRequestsMixin:
                 ('*.somewhere-else.com.*', {'x': 'y'}),
             ]
         """
-        return self.proxy.modifier.params
+        return self.backend.modifier.params
 
     @param_overrides.setter
     def param_overrides(self, params):
-        self.proxy.modifier.params = params
+        self.backend.modifier.params = params
 
     @param_overrides.deleter
     def param_overrides(self):
-        del self.proxy.modifier.params
+        del self.backend.modifier.params
 
     @property
     def body_overrides(self):
@@ -194,15 +194,15 @@ class InspectRequestsMixin:
                 ('*.somewhere-else.com.*', '{"x":"y"}'),
             ]
         """
-        return self.proxy.modifier.bodies
+        return self.backend.modifier.bodies
 
     @body_overrides.setter
     def body_overrides(self, bodies):
-        self.proxy.modifier.bodies = bodies
+        self.backend.modifier.bodies = bodies
 
     @body_overrides.deleter
     def body_overrides(self):
-        del self.proxy.modifier.bodies
+        del self.backend.modifier.bodies
 
     @property
     def querystring_overrides(self):
@@ -223,15 +223,15 @@ class InspectRequestsMixin:
                 ('*.somewhere-else.com.*', 'a=b&c=d'),
             ]
         """
-        return self.proxy.modifier.querystring
+        return self.backend.modifier.querystring
 
     @querystring_overrides.setter
     def querystring_overrides(self, querystrings):
-        self.proxy.modifier.querystring = querystrings
+        self.backend.modifier.querystring = querystrings
 
     @querystring_overrides.deleter
     def querystring_overrides(self):
-        del self.proxy.modifier.querystring
+        del self.backend.modifier.querystring
 
     @property
     def rewrite_rules(self):
@@ -248,15 +248,15 @@ class InspectRequestsMixin:
                 (r'https://docs.python.org/2/', r'https://docs.python.org/3/'),
             ]
         """
-        return self.proxy.modifier.rewrite_rules
+        return self.backend.modifier.rewrite_rules
 
     @rewrite_rules.setter
     def rewrite_rules(self, rewrite_rules):
-        self.proxy.modifier.rewrite_rules = rewrite_rules
+        self.backend.modifier.rewrite_rules = rewrite_rules
 
     @rewrite_rules.deleter
     def rewrite_rules(self):
-        del self.proxy.modifier.rewrite_rules
+        del self.backend.modifier.rewrite_rules
 
     @property
     def scopes(self) -> List[str]:
@@ -271,15 +271,15 @@ class InspectRequestsMixin:
                 '.*github.*'
             ]
         """
-        return self.proxy.scopes
+        return self.backend.scopes
 
     @scopes.setter
     def scopes(self, scopes: List[str]):
-        self.proxy.scopes = scopes
+        self.backend.scopes = scopes
 
     @scopes.deleter
     def scopes(self):
-        self.proxy.scopes = []
+        self.backend.scopes = []
 
     @property
     def request_interceptor(self) -> callable:
@@ -288,15 +288,15 @@ class InspectRequestsMixin:
         The callable must accept a single argument for the request
         being intercepted.
         """
-        return self.proxy.request_interceptor
+        return self.backend.request_interceptor
 
     @request_interceptor.setter
     def request_interceptor(self, interceptor: callable):
-        self.proxy.request_interceptor = interceptor
+        self.backend.request_interceptor = interceptor
 
     @request_interceptor.deleter
     def request_interceptor(self):
-        self.proxy.request_interceptor = None
+        self.backend.request_interceptor = None
 
     @property
     def response_interceptor(self) -> callable:
@@ -305,14 +305,14 @@ class InspectRequestsMixin:
         The callable must accept two arguments: the response being
         intercepted and the originating request.
         """
-        return self.proxy.response_interceptor
+        return self.backend.response_interceptor
 
     @response_interceptor.setter
     def response_interceptor(self, interceptor: callable):
         if len(inspect.signature(interceptor).parameters) != 2:
             raise RuntimeError('A response interceptor takes two parameters: the request and response')
-        self.proxy.response_interceptor = interceptor
+        self.backend.response_interceptor = interceptor
 
     @response_interceptor.deleter
     def response_interceptor(self):
-        self.proxy.response_interceptor = None
+        self.backend.response_interceptor = None

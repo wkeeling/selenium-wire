@@ -21,13 +21,13 @@ def create(addr='127.0.0.1', port=0, options=None):
     if options is None:
         options = {}
 
-    proxy = MitmProxy(addr, port, options)
+    backend = MitmProxy(addr, port, options)
 
-    t = threading.Thread(name='Selenium Wire Proxy Server', target=proxy.serve_forever)
+    t = threading.Thread(name='Selenium Wire Proxy Server', target=backend.serve_forever)
     t.daemon = not options.get('standalone')
     t.start()
 
-    addr, port, *_ = proxy.address()
+    addr, port, *_ = backend.address()
     log.info('Created proxy listening on %s:%s', addr, port)
 
-    return proxy
+    return backend

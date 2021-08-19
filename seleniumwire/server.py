@@ -8,7 +8,7 @@ from seleniumwire.thirdparty.mitmproxy import addons
 from seleniumwire.thirdparty.mitmproxy.master import Master
 from seleniumwire.thirdparty.mitmproxy.options import Options
 from seleniumwire.thirdparty.mitmproxy.server import ProxyConfig, ProxyServer
-from seleniumwire.utils import extract_cert_and_key, get_upstream_proxy
+from seleniumwire.utils import build_proxy_args, extract_cert_and_key, get_upstream_proxy
 
 logger = logging.getLogger(__name__)
 
@@ -41,10 +41,10 @@ class MitmProxy:
 
         mitmproxy_opts = Options()
 
-        self._master = Master(self._event_loop, mitmproxy_opts)
-        self._master.addons.add(*addons.default_addons())
-        self._master.addons.add(SendToLogger())
-        self._master.addons.add(InterceptRequestHandler(self))
+        self.master = Master(self._event_loop, mitmproxy_opts)
+        self.master.addons.add(*addons.default_addons())
+        self.master.addons.add(SendToLogger())
+        self.master.addons.add(InterceptRequestHandler(self))
 
         mitmproxy_opts.update(
             confdir=self.storage.home_dir,
@@ -53,12 +53,12 @@ class MitmProxy:
             ssl_insecure=options.get('verify_ssl', DEFAULT_SSL_INSECURE),
             stream_websockets=DEFAULT_STREAM_WEBSOCKETS,
             suppress_connection_errors=options.get('suppress_connection_errors', DEFAULT_SUPPRESS_CONNECTION_ERRORS),
-            **self._get_upstream_proxy_args(),
+            **build_proxy_args(get_upstream_proxy(self.options)),
             # Options that are prefixed mitm_ are passed through to mitmproxy
             **{k[5:]: v for k, v in options.items() if k.startswith('mitm_')},
         )
 
-        self._master.server = ProxyServer(ProxyConfig(mitmproxy_opts))
+        self.master.server = ProxyServer(ProxyConfig(mitmproxy_opts))
 
         if options.get('disable_capture', False):
             self.scopes = ['$^']
@@ -66,17 +66,17 @@ class MitmProxy:
     def serve_forever(self):
         """Run the server."""
         asyncio.set_event_loop(self._event_loop)
-        self._master.run_loop(self._event_loop)
+        self.master.run_loop(self._event_loop)
 
     def address(self):
         """Get a tuple of the address and port the proxy server
         is listening on.
         """
-        return self._master.server.address
+        return self.master.server.address
 
     def shutdown(self):
         """Shutdown the server and perform any cleanup."""
-        self._master.shutdown()
+        self.master.shutdown()
         self.storage.cleanup()
 
     def _get_storage_args(self):
@@ -87,45 +87,6 @@ class MitmProxy:
         }
 
         return storage_args
-
-    def _get_upstream_proxy_args(self):
-        proxy_config = get_upstream_proxy(self.options)
-        http_proxy = proxy_config.get('http')
-        https_proxy = proxy_config.get('https')
-        conf = None
-
-        if http_proxy and https_proxy:
-            if http_proxy.hostport != https_proxy.hostport:
-                # We only support a single upstream proxy server
-                raise ValueError('Different settings for http and https proxy servers not supported')
-
-            conf = https_proxy
-        elif http_proxy:
-            conf = http_proxy
-        elif https_proxy:
-            conf = https_proxy
-
-        args = {}
-
-        if conf:
-            scheme, username, password, hostport = conf
-
-            args['mode'] = 'upstream:{}://{}'.format(scheme, hostport)
-
-            if username:
-                args['upstream_auth'] = '{}:{}'.format(username, password)
-
-            custom_auth = proxy_config.get('custom_authorization')
-
-            if custom_auth:
-                args['upstream_custom_auth'] = custom_auth
-
-            no_proxy = proxy_config.get('no_proxy')
-
-            if no_proxy:
-                args['no_proxy'] = no_proxy
-
-        return args
 
 
 class SendToLogger:

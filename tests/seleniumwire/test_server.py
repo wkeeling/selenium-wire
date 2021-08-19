@@ -50,13 +50,18 @@ class MitmProxyTest(TestCase):
         self.mock_extract_cert_and_key.assert_called_once_with('/some/dir/.seleniumwire')
 
     def test_creates_master(self):
+        self.mock_get_upstream_proxy.return_value = 'mock proxy'
         self.mock_storage.create.return_value.home_dir = '/some/dir/.seleniumwire'
         proxy = MitmProxy(
             'somehost',
             12345,
-            {},
+            {
+                'proxy': {
+                    'http': 'http://proxyserver:8080',
+                },
+            },
         )
-        self.assertEqual(self.mock_master.return_value, proxy._master)
+        self.assertEqual(self.mock_master.return_value, proxy.master)
         self.mock_options.assert_called_once()
         self.mock_options.return_value.update.assert_has_calls(
             [
@@ -76,6 +81,14 @@ class MitmProxyTest(TestCase):
         )
         self.mock_addons.default_addons.assert_called_once_with()
         self.mock_handler.assert_called_once_with(proxy)
+        self.mock_get_upstream_proxy.assert_called_once_with(
+            {
+                'proxy': {
+                    'http': 'http://proxyserver:8080',
+                },
+            },
+        )
+        self.mock_build_proxy_args.assert_called_once_with('mock proxy')
 
     def test_update_mitmproxy_options(self):
         MitmProxy('somehost', 12345, {'mitm_test': 'foobar'})
@@ -84,112 +97,6 @@ class MitmProxyTest(TestCase):
             [
                 self.base_options_update(
                     test='foobar',
-                ),
-            ]
-        )
-
-    def test_upstream_proxy(self):
-        MitmProxy(
-            'somehost',
-            12345,
-            {
-                'proxy': {
-                    'http': 'http://proxyserver:8080',
-                    # We pick https when both are specified and the same
-                    'https': 'https://proxyserver:8080',
-                },
-            },
-        )
-
-        self.mock_options.return_value.update.assert_has_calls(
-            [self.base_options_update(mode='upstream:https://proxyserver:8080')]
-        )
-
-    def test_upstream_proxy_single(self):
-        MitmProxy(
-            'somehost',
-            12345,
-            {
-                'proxy': {
-                    'http': 'http://proxyserver:8080',
-                },
-            },
-        )
-
-        self.mock_options.return_value.update.assert_has_calls(
-            [self.base_options_update(mode='upstream:http://proxyserver:8080')]
-        )
-
-    def test_upstream_proxy_auth(self):
-        MitmProxy(
-            'somehost',
-            12345,
-            {
-                'proxy': {
-                    'https': 'https://user:pass@proxyserver:8080',
-                },
-            },
-        )
-
-        self.mock_options.return_value.update.assert_has_calls(
-            [self.base_options_update(mode='upstream:https://proxyserver:8080', upstream_auth='user:pass')]
-        )
-
-    def test_upstream_proxy_auth_empty_pass(self):
-        MitmProxy(
-            'somehost',
-            12345,
-            {
-                'proxy': {
-                    'https': 'https://user:@proxyserver:8080',
-                },
-            },
-        )
-
-        self.mock_options.return_value.update.assert_has_calls(
-            [self.base_options_update(mode='upstream:https://proxyserver:8080', upstream_auth='user:')]
-        )
-
-    def test_upstream_proxy_custom_auth(self):
-        MitmProxy(
-            'somehost',
-            12345,
-            {
-                'proxy': {'https': 'https://proxyserver:8080', 'custom_authorization': 'Bearer 12345'},
-            },
-        )
-
-        self.mock_options.return_value.update.assert_has_calls(
-            [
-                self.base_options_update(
-                    mode='upstream:https://proxyserver:8080', upstream_custom_auth='Bearer 12345'
-                ),
-            ]
-        )
-
-    def test_upstream_proxy_different(self):
-        with self.assertRaises(ValueError):
-            MitmProxy(
-                'somehost',
-                12345,
-                {
-                    'proxy': {'http': 'http://proxyserver1:8080', 'https': 'https://proxyserver2:8080'},
-                },
-            )
-
-    def test_upstream_proxy_no_proxy(self):
-        MitmProxy(
-            'somehost',
-            12345,
-            {
-                'proxy': {'https': 'https://proxyserver:8080', 'no_proxy': 'localhost:9090, example.com'},
-            },
-        )
-
-        self.mock_options.return_value.update.assert_has_calls(
-            [
-                self.base_options_update(
-                    mode='upstream:https://proxyserver:8080', no_proxy=['localhost:9090', 'example.com']
                 ),
             ]
         )
@@ -284,3 +191,12 @@ class MitmProxyTest(TestCase):
         patcher = patch('seleniumwire.server.extract_cert_and_key')
         self.mock_extract_cert_and_key = patcher.start()
         self.addCleanup(patcher.stop)
+
+        patcher = patch('seleniumwire.server.get_upstream_proxy')
+        self.mock_get_upstream_proxy = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = patch('seleniumwire.server.build_proxy_args')
+        self.mock_build_proxy_args = patcher.start()
+        self.addCleanup(patcher.stop)
+        self.mock_build_proxy_args.return_value = {}

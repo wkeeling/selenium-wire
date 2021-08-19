@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from selenium.webdriver import ActionChains  # noqa
 from selenium.webdriver import FirefoxOptions  # noqa
 from selenium.webdriver import FirefoxProfile  # noqa
@@ -12,7 +14,7 @@ from selenium.webdriver import Safari as _Safari
 
 from seleniumwire import backend
 from seleniumwire.inspect import InspectRequestsMixin
-from seleniumwire.utils import urlsafe_address
+from seleniumwire.utils import build_proxy_args, get_upstream_proxy, urlsafe_address
 
 
 class DriverCommonMixin:
@@ -27,7 +29,7 @@ class DriverCommonMixin:
         # instances sharing the same capabilities dict.
         capabilities = dict(capabilities)
 
-        addr, port = urlsafe_address(self.proxy.address())
+        addr, port = urlsafe_address(self.backend.address())
 
         capabilities['proxy'] = {
             'proxyType': 'manual',
@@ -44,8 +46,54 @@ class DriverCommonMixin:
 
     def quit(self):
         """Shutdown Selenium Wire and then quit the webdriver."""
-        self.proxy.shutdown()
+        self.backend.shutdown()
         super().quit()
+
+    @property
+    def proxy(self) -> Dict[str, Any]:
+        """Get the proxy configuration for the driver."""
+
+        conf = {}
+        mode = getattr(self.backend.master.options, 'mode')
+
+        if mode and mode.startswith('upstream'):
+            upstream = mode.split('upstream:')[1]
+            scheme, *rest = upstream.split('://')
+
+            auth = getattr(self.backend.master.options, 'upstream_auth')
+
+            if auth:
+                conf[scheme] = f'{scheme}://{auth}@{rest[0]}'
+            else:
+                conf[scheme] = f'{scheme}://{rest[0]}'
+
+        no_proxy = getattr(self.backend.master.options, 'no_proxy')
+
+        if no_proxy:
+            conf['no_proxy'] = ','.join(no_proxy)
+
+        custom_auth = getattr(self.backend.master.options, 'upstream_custom_auth')
+
+        if custom_auth:
+            conf['custom_authorization'] = custom_auth
+
+        return conf
+
+    @proxy.setter
+    def proxy(self, proxy_conf: Dict[str, Any]):
+        """Set the proxy configuration for the driver.
+
+        The configuration should be a dictionary:
+
+        webdriver.proxy = {
+            'https': 'https://user:pass@server:port',
+            'no_proxy': 'localhost,127.0.0.1',
+        }
+
+        Args:
+            proxy_conf: The proxy configuration.
+        """
+        self.backend.master.options.update(**build_proxy_args(get_upstream_proxy({'proxy': proxy_conf})))
 
 
 class Firefox(InspectRequestsMixin, DriverCommonMixin, _Firefox):
@@ -60,7 +108,7 @@ class Firefox(InspectRequestsMixin, DriverCommonMixin, _Firefox):
         if seleniumwire_options is None:
             seleniumwire_options = {}
 
-        self.proxy = backend.create(port=seleniumwire_options.get('port', 0), options=seleniumwire_options)
+        self.backend = backend.create(port=seleniumwire_options.get('port', 0), options=seleniumwire_options)
 
         if seleniumwire_options.get('auto_config', True):
             capabilities = kwargs.get('capabilities', kwargs.get('desired_capabilities'))
@@ -96,7 +144,7 @@ class Chrome(InspectRequestsMixin, DriverCommonMixin, _Chrome):
         if seleniumwire_options is None:
             seleniumwire_options = {}
 
-        self.proxy = backend.create(port=seleniumwire_options.get('port', 0), options=seleniumwire_options)
+        self.backend = backend.create(port=seleniumwire_options.get('port', 0), options=seleniumwire_options)
 
         if seleniumwire_options.get('auto_config', True):
             capabilities = kwargs.get('desired_capabilities')
@@ -138,7 +186,7 @@ class Safari(InspectRequestsMixin, DriverCommonMixin, _Safari):
         # be passed in the options.
         assert 'port' in seleniumwire_options, 'You must set a port number in the seleniumwire_options'
 
-        self.proxy = backend.create(port=seleniumwire_options.pop('port', 0), options=seleniumwire_options)
+        self.backend = backend.create(port=seleniumwire_options.pop('port', 0), options=seleniumwire_options)
 
         super().__init__(*args, **kwargs)
 
@@ -161,7 +209,7 @@ class Edge(InspectRequestsMixin, DriverCommonMixin, _Edge):
         # be passed in the options.
         assert 'port' in seleniumwire_options, 'You must set a port number in the seleniumwire_options'
 
-        self.proxy = backend.create(port=seleniumwire_options.pop('port', 0), options=seleniumwire_options)
+        self.backend = backend.create(port=seleniumwire_options.pop('port', 0), options=seleniumwire_options)
 
         super().__init__(*args, **kwargs)
 
@@ -178,7 +226,7 @@ class Remote(InspectRequestsMixin, DriverCommonMixin, _Remote):
         if seleniumwire_options is None:
             seleniumwire_options = {}
 
-        self.proxy = backend.create(
+        self.backend = backend.create(
             addr=seleniumwire_options.pop('addr', '127.0.0.1'),
             port=seleniumwire_options.get('port', 0),
             options=seleniumwire_options,
