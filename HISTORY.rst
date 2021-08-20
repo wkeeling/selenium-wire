@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+4.5.1 (2021-08-20)
+------------------
+
+* Fix attribute error preventing undetected chromedriver from starting.
+
 4.5.0 (2021-08-19)
 ------------------
 
