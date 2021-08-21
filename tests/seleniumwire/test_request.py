@@ -1,5 +1,4 @@
 from unittest import TestCase
-from unittest.mock import patch
 
 from seleniumwire.request import Request, Response
 
@@ -187,24 +186,6 @@ class ResponseTest(TestCase):
     def test_invalid_body(self):
         with self.assertRaises(TypeError):
             self._create_response(body=object())
-
-    @patch('seleniumwire.request.decode')
-    def test_decode_body(self, mock_decode):
-        body = b'foobar'
-        mock_decode.return_value = body
-        response = self._create_response(body=body, headers=[('Content-Encoding', 'gzip')])
-
-        self.assertEqual(body, response.body)
-        mock_decode.assert_called_once_with(body, 'gzip')
-
-    @patch('seleniumwire.request.decode')
-    def test_decode_body_no_encoding(self, mock_decode):
-        body = b'foobar'
-        mock_decode.return_value = body
-        response = self._create_response(body=body)
-
-        self.assertEqual(body, response.body)
-        mock_decode.assert_called_once_with(body, 'identity')
 
     def test_response_repr(self):
         response = self._create_response()
