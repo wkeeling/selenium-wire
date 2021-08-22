@@ -171,15 +171,23 @@ class RequestStorage:
 
         for indexed_request in index:
             request = self._load_request(indexed_request.id)
-            loaded.append(request)
+
+            if request is not None:
+                loaded.append(request)
 
         return loaded
 
-    def _load_request(self, request_id: str) -> Request:
+    def _load_request(self, request_id: str) -> Optional[Request]:
         request_dir = self._get_request_dir(request_id)
 
         with open(os.path.join(request_dir, 'request'), 'rb') as req:
-            request = pickle.load(req)
+            try:
+                request = pickle.load(req)
+            except Exception:
+                # Errors may sometimes occur with unpickling - e.g.
+                # sometimes data hasn't been fully flushed to disk
+                # by the OS by the time we come to unpickle it.
+                return None
 
             ws_messages = self._ws_messages.get(request.id)
 

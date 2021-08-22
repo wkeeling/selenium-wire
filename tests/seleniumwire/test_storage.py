@@ -175,6 +175,19 @@ class RequestStorageTest(TestCase):
         self.assertIsNone(requests[0].response)
         self.assertIsNone(requests[1].response)
 
+    @patch('seleniumwire.storage.pickle')
+    def test_load_requests_unpickle_error(self, mock_pickle):
+        request_1 = self._create_request()
+        request_2 = self._create_request()
+        mock_pickle.load.side_effect = [Exception, request_2]
+        self.storage.save_request(request_1)
+        self.storage.save_request(request_2)
+
+        requests = self.storage.load_requests()
+
+        self.assertEqual(1, len(requests))
+        self.assertEqual(request_2.id, requests[0].id)
+
     def test_iter_requests(self):
         request_1 = self._create_request()
         request_2 = self._create_request()
