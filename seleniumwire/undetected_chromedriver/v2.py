@@ -40,16 +40,15 @@ class Chrome(InspectRequestsMixin, DriverCommonMixin, uc.Chrome):
         except KeyError:
             chrome_options = ChromeOptions()
 
-        # Prevent Chrome from bypassing the Selenium Wire proxy
-        # for localhost addresses.
-        chrome_options.add_argument('--proxy-bypass-list=<-loopback>')
-
         log.info('Using undetected_chromedriver.v2')
 
         # We need to point Chrome back to Selenium Wire since the executable
         # will be started separately by undetected_chromedriver.
         addr, port = urlsafe_address(self.backend.address())
         chrome_options.add_argument(f'--proxy-server={addr}:{port}')
+        chrome_options.add_argument(
+            f"--proxy-bypass-list={','.join(seleniumwire_options.get('exclude_hosts', ['<-loopback>']))}"
+        )
 
         kwargs['options'] = chrome_options
 
