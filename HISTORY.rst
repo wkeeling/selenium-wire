@@ -1,6 +1,13 @@
 History
 ~~~~~~~
 
+4.5.2 (2021-08-23)
+------------------
+
+* Fix bug where automatic decoding of response body would break page loading when using response interceptors.
+* Fix bug where exclude_hosts had no effect when using undetected_chromedriver.v2.
+* Fix occasional unpickle error when stored requests are asked for before they have been fully flushed to disk.
+
 4.5.1 (2021-08-20)
 ------------------
 
