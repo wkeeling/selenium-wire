@@ -329,7 +329,14 @@ Response Objects
 Response objects have the following attributes.
 
 ``body``
-    The response body as ``bytes``. If the response has no body the value of ``body`` will be empty, i.e. ``b''``.
+    The response body as ``bytes``. If the response has no body the value of ``body`` will be empty, i.e. ``b''``. Sometimes the body may have been encoded by the server - e.g. compressed. You can prevent this with the ``disable_encoding`` `option`_. To manually decode an encoded response body you can do:
+
+.. code:: python
+
+    from seleniumwire.utils import decode
+
+    body = decode(response.body, response.headers.get('Content-Encoding', 'identity'))
+
 
 ``date``
     The datetime the response was received.
@@ -737,7 +744,7 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``disable_encoding``
-    Ask the server to send back un-compressed data. ``False`` by default. When ``True`` this sets the ``Accept-Encoding`` header to ``identity`` for all outbound requests. Note that it won't always work - sometimes the server may ignore it.
+    Ask the server to send back uncompressed data. ``False`` by default. When ``True`` this sets the ``Accept-Encoding`` header to ``identity`` for all outbound requests. Note that it won't always work - sometimes the server may ignore it.
 
 .. code:: python
 

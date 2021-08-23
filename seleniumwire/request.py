@@ -5,8 +5,6 @@ from http.client import HTTPMessage
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
-from seleniumwire.utils import decode
-
 
 class HTTPHeaders(HTTPMessage):
     """A dict-like data-structure to hold HTTP headers.
@@ -183,7 +181,7 @@ class Response:
 
         Returns: The response body as bytes.
         """
-        return decode(self._body, self.headers.get('Content-Encoding', 'identity'))
+        return self._body
 
     @body.setter
     def body(self, b: bytes):

@@ -208,6 +208,22 @@ def test_add_response_header(driver, httpbin):
     assert 'Herman Melville' not in driver.page_source
 
 
+def test_interceptor_does_not_modify_body(driver, httpbin):
+    """There should be no change to the size of the response body if a
+    response interceptor does not modify it. Originally the cause of #375.
+    """
+    size = 0
+
+    def interceptor(req, res):
+        nonlocal size
+        size = len(res.body)
+
+    driver.response_interceptor = interceptor
+    driver.get(f'{httpbin}/html')
+
+    assert size and len(driver.last_request.response.body) == size
+
+
 def test_add_request_parameter(driver, httpbin):
     def interceptor(req):
         params = req.params
