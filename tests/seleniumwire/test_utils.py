@@ -303,19 +303,21 @@ def test_urlsafe_address_ipv6():
 class DecodeTest(TestCase):
     def test_decode_gzip_data(self):
         data = b'test response body'
-        io = BytesIO()
+        compressed = BytesIO()
 
-        with gzip.GzipFile(fileobj=io, mode='wb') as f:
+        with gzip.GzipFile(fileobj=compressed, mode='wb') as f:
             f.write(data)
 
-        self.assertEqual(decode(io.getvalue(), 'gzip'), data)
+        self.assertEqual(decode(compressed.getvalue(), 'gzip'), data)
 
     def test_decode_zlib_data(self):
-        data = zlib.compress(b'test response body')
+        data = b'test response body'
+        compressed = zlib.compress(data)
 
-        self.assertEqual(decode(data, 'zlib'), data)
+        self.assertEqual(decode(compressed, 'deflate'), data)
 
     def test_decode_error(self):
         data = b'test response body'
 
-        self.assertEqual(decode(data, 'gzip'), data)
+        with self.assertRaises(ValueError):
+            self.assertEqual(decode(data, 'gzip'), data)

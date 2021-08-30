@@ -33,6 +33,7 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'blinker>=1.4',
+        'brotli>=1.0.9',
         'certifi>=2019.9.11',
         "h2>=4.0; python_version>='3.6.0'",
         "hyperframe>=6.0; python_version>='3.6.0'",
@@ -43,6 +44,7 @@ setup(
         'pysocks>=1.7.1',
         'selenium>=3.4.0',
         'wsproto>=0.14',
+        'zstandard>=0.14.1',
     ],
     extras_require={
         ':sys_platform == "win32"': [

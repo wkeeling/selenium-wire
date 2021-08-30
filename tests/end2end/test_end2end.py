@@ -533,3 +533,14 @@ def test_switch_proxy_on_the_fly(driver_path, chrome_options, httpbin, httpproxy
             driver.get(f'{httpbin}/html')
 
             assert 'This passed through a authenticated http proxy' in driver.page_source
+
+
+def test_har_encoded_brotli_response(driver_path, chrome_options, httpbin):
+    with create_driver(driver_path, chrome_options, {'enable_har': True}) as driver:
+        driver.get(f'{httpbin}/brotli')
+
+        har = json.loads(driver.har)
+
+        assert len(har['log']['entries']) == 1
+        assert har['log']['entries'][0]['request']['url'] == f'{httpbin}/brotli'
+        assert har['log']['entries'][0]['response']['status'] == 200
