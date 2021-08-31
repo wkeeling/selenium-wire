@@ -1,14 +1,13 @@
 import collections.abc
-import gzip
 import logging
 import os
 import pkgutil
-import zlib
 from collections import namedtuple
-from io import BytesIO
 from pathlib import Path
 from typing import Dict, NamedTuple
 from urllib.request import _parse_proxy
+
+from seleniumwire.thirdparty.mitmproxy.net.http import encoding as decoder
 
 log = logging.getLogger(__name__)
 
@@ -172,28 +171,12 @@ def urlsafe_address(address):
 def decode(data: bytes, encoding: str) -> bytes:
     """Attempt to decode data based on the supplied encoding.
 
-    If decoding fails, the data original data is returned.
+    If decoding fails a ValueError is raised.
 
     Args:
         data: The encoded data.
         encoding: The encoding type.
-    Returns: The decoded data or the original data if it could
-        not be decoded.
+    Returns: The decoded data.
+    Raises: ValueError if the data could not be decoded.
     """
-    if encoding != 'identity':
-        try:
-            if encoding in ('gzip', 'x-gzip'):
-                io = BytesIO(data)
-                with gzip.GzipFile(fileobj=io) as f:
-                    data = f.read()
-            elif encoding == 'deflate':
-                try:
-                    data = zlib.decompress(data)
-                except zlib.error:
-                    data = zlib.decompress(data, -zlib.MAX_WBITS)
-            else:
-                log.debug("Unknown encoding: %s", encoding)
-        except (OSError, EOFError, zlib.error) as e:
-            # Log a message and return the data untouched
-            log.debug('Error decoding data: %s', str(e))
-    return data
+    return decoder.decode(data, encoding)
