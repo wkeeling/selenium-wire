@@ -2,10 +2,9 @@ import collections.abc
 import logging
 import os
 import pkgutil
-from collections import namedtuple
 from pathlib import Path
-from typing import Dict, NamedTuple
-from urllib.request import _parse_proxy
+from typing import Dict, List, Sequence, Union
+from urllib.request import _parse_proxy  # type: ignore
 
 from seleniumwire.thirdparty.mitmproxy.net.http import encoding as decoder
 
@@ -16,7 +15,7 @@ ROOT_KEY = 'ca.key'
 COMBINED_CERT = 'seleniumwire-ca.pem'
 
 
-def get_upstream_proxy(options):
+def get_upstream_proxy(options: Dict[str, Union[str, Dict]]) -> Dict[str, str]:
     """Get the upstream proxy configuration from the options dictionary.
     This will be overridden with any configuration found in the environment
     variables HTTP_PROXY, HTTPS_PROXY, NO_PROXY
@@ -34,13 +33,16 @@ def get_upstream_proxy(options):
         options: The selenium wire options.
     Returns: A dictionary.
     """
-    proxy_options = (options or {}).pop('proxy', {})
+    try:
+        proxy_options: Dict[str, str] = options['proxy']  # type: ignore
+    except KeyError:
+        proxy_options = {}
 
     http_proxy = os.environ.get('HTTP_PROXY')
     https_proxy = os.environ.get('HTTPS_PROXY')
     no_proxy = os.environ.get('NO_PROXY')
 
-    merged = {}
+    merged: Dict[str, str] = {}
 
     if http_proxy:
         merged['http'] = http_proxy
@@ -51,22 +53,10 @@ def get_upstream_proxy(options):
 
     merged.update(proxy_options)
 
-    no_proxy = merged.get('no_proxy')
-    if isinstance(no_proxy, str):
-        merged['no_proxy'] = [h.strip() for h in no_proxy.split(',')]
-
-    conf = namedtuple('ProxyConf', 'scheme username password hostport')
-
-    for proxy_type in ('http', 'https'):
-        # Parse the upstream proxy URL into (scheme, username, password, hostport)
-        # for ease of access.
-        if merged.get(proxy_type) is not None:
-            merged[proxy_type] = conf(*_parse_proxy(merged[proxy_type]))
-
     return merged
 
 
-def build_proxy_args(proxy_config: Dict[str, NamedTuple]) -> Dict[str, str]:
+def build_proxy_args(proxy_config: Dict[str, str]) -> Dict[str, Union[str, List[str]]]:
     """Build the arguments needed to pass an upstream proxy to mitmproxy.
 
     Args:
@@ -77,21 +67,15 @@ def build_proxy_args(proxy_config: Dict[str, NamedTuple]) -> Dict[str, str]:
     https_proxy = proxy_config.get('https')
     conf = None
 
-    if http_proxy and https_proxy:
-        if http_proxy.hostport != https_proxy.hostport:  # noqa
-            # We only support a single upstream proxy server
-            raise ValueError('Different settings for http and https proxy servers not supported')
-
+    if https_proxy:
         conf = https_proxy
     elif http_proxy:
         conf = http_proxy
-    elif https_proxy:
-        conf = https_proxy
 
-    args = {}
+    args: Dict[str, Union[str, List[str]]] = {}
 
     if conf:
-        scheme, username, password, hostport = conf
+        scheme, username, password, hostport = _parse_proxy(conf)
 
         args['mode'] = 'upstream:{}://{}'.format(scheme, hostport)
 
@@ -106,17 +90,17 @@ def build_proxy_args(proxy_config: Dict[str, NamedTuple]) -> Dict[str, str]:
         no_proxy = proxy_config.get('no_proxy')
 
         if no_proxy:
-            args['no_proxy'] = no_proxy
+            args['no_proxy'] = [h.strip() for h in no_proxy.split(',')]
 
     return args
 
 
-def extract_cert(cert_name='ca.crt'):
+def extract_cert(cert_name: str = 'ca.crt') -> None:
     """Extracts the root certificate to the current working directory."""
 
-    try:
-        cert = pkgutil.get_data(__package__, cert_name)
-    except FileNotFoundError:
+    cert = pkgutil.get_data(__package__, cert_name)
+
+    if cert is None:
         log.error("Invalid certificate '{}'".format(cert_name))
     else:
         with open(Path(os.getcwd(), cert_name), 'wb') as out:
@@ -124,7 +108,7 @@ def extract_cert(cert_name='ca.crt'):
         log.info('{} extracted. You can now import this into a browser.'.format(cert_name))
 
 
-def extract_cert_and_key(dest_folder, check_exists=True):
+def extract_cert_and_key(dest_folder: Union[str, Path], check_exists: bool = True) -> None:
     """Extracts the root certificate and key and combines them into a
     single file called seleniumwire-ca.pem in the specified destination
     folder.
@@ -143,11 +127,14 @@ def extract_cert_and_key(dest_folder, check_exists=True):
     root_cert = pkgutil.get_data(__package__, ROOT_CERT)
     root_key = pkgutil.get_data(__package__, ROOT_KEY)
 
-    with open(combined_path, 'wb') as f_out:
-        f_out.write(root_cert + root_key)
+    if root_cert is None or root_key is None:
+        log.error('Root certificate and/or key missing')
+    else:
+        with open(combined_path, 'wb') as f_out:
+            f_out.write(root_cert + root_key)
 
 
-def is_list_alike(container):
+def is_list_alike(container: Union[str, Sequence]) -> bool:
     return isinstance(container, collections.abc.Sequence) and not isinstance(container, str)
 
 
@@ -168,7 +155,7 @@ def urlsafe_address(address):
     return addr, port
 
 
-def decode(data: bytes, encoding: str) -> bytes:
+def decode(data: bytes, encoding: str) -> Union[None, str, bytes]:
     """Attempt to decode data based on the supplied encoding.
 
     If decoding fails a ValueError is raised.
