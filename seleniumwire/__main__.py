@@ -2,6 +2,7 @@ import argparse
 import logging
 import signal
 from argparse import RawDescriptionHelpFormatter
+from typing import Callable, Dict
 
 from seleniumwire import backend, utils
 
@@ -23,10 +24,13 @@ def standalone_proxy(port=0, addr='127.0.0.1'):
     signal.signal(signal.SIGINT, lambda *_: b.shutdown())
 
 
+# Mapping of command names to the command callables
+COMMANDS: Dict[str, Callable] = {'extractcert': utils.extract_cert, 'standaloneproxy': standalone_proxy}
+
+
 if __name__ == '__main__':
-    commands = {'extractcert': utils.extract_cert, 'standaloneproxy': standalone_proxy}
     parser = argparse.ArgumentParser(
-        description='\n\nsupported commands: \n  %s' % '\n  '.join(sorted(commands)),
+        description='\n\nsupported commands: \n  %s' % '\n  '.join(sorted(COMMANDS)),
         formatter_class=RawDescriptionHelpFormatter,
         usage='python -m seleniumwire <command>',
     )
@@ -40,10 +44,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     pargs = [arg for arg in args.args if '=' not in arg and arg is not args.command]
-    kwargs = dict([tuple(arg.split('=')) for arg in args.args if '=' in arg])
+    kwargs: Dict[str, str] = dict([arg.split('=') for arg in args.args if '=' in arg])
 
     try:
-        commands[args.command](*pargs, **kwargs)
+        COMMANDS[args.command](*pargs, **kwargs)
     except KeyError:
         print("Unsupported command '{}' (use --help for list of commands)".format(args.command))
     except TypeError as e:
