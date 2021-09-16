@@ -15,6 +15,7 @@ class ClientHello:
         self.cipher_suites: bytes
         self.compression_methods: bytes
         self.extensions: bytes
+        self.server_name: bytes
 
         self._parse(raw_message)
 
@@ -31,6 +32,19 @@ class ClientHello:
         self.compression_methods, raw_message = self._take(raw_message, compression_methods_len[0])
         extensions_len, raw_message = self._take(raw_message, 2)
         self.extensions, raw_message = self._take(raw_message, struct.unpack('>H', extensions_len)[0])
+        self.server_name = bytes()
+
+        extensions = self.extensions
+
+        # Find the server name extension
+        while extensions:
+            ext_type, extensions = self._take(extensions, 2)
+            length, extensions = self._take(extensions, 2)
+            body, extensions = self._take(extensions, struct.unpack('>H', length)[0])
+
+            if ext_type == bytes.fromhex('0000'):  # Server name
+                self.server_name = ext_type + length + body
+                break
 
     def _take(self, remaining: bytes, count: int) -> Tuple[bytes, bytes]:
         prefix = remaining[:count]
@@ -39,3 +53,18 @@ class ClientHello:
 
     def to_bytes(self) -> bytes:
         """Convert the ClientHello object into a sequence of bytes."""
+        message = bytearray()
+        message.extend(self.record_header)
+        message.extend(self.handshake_header)
+        message.extend(self.client_version)
+        message.extend(self.client_random)
+        message.append(len(self.session_id))
+        message.extend(self.session_id)
+        message.extend(struct.pack('>H', len(self.cipher_suites)))
+        message.extend(self.cipher_suites)
+        message.append(len(self.compression_methods))
+        message.extend(self.compression_methods)
+        message.extend(struct.pack('>H', len(self.extensions)))
+        message.extend(self.extensions)
+
+        return bytes(message)
