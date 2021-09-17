@@ -97,4 +97,6 @@ class TestClientHello:
         assert client_hello.server_name == bytes.fromhex('000000160014000011737461636b6f766572666c6f772e636f6d')
 
     def test_to_bytes(self, client_hello):
-        assert client_hello.raw_message == client_hello.to_bytes()
+        b = client_hello.to_bytes()
+        assert client_hello.raw_message == b
+        assert len(b[len(client_hello.record_header):]) == 512  # fmt: skip

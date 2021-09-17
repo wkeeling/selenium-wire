@@ -1,5 +1,5 @@
 import struct
-from typing import Tuple
+from typing import Generator, Tuple
 
 
 class ClientHello:
@@ -34,14 +34,8 @@ class ClientHello:
         self.extensions, raw_message = self._take(raw_message, struct.unpack('>H', extensions_len)[0])
         self.server_name = bytes()
 
-        extensions = self.extensions
-
         # Find the server name extension
-        while extensions:
-            ext_type, extensions = self._take(extensions, 2)
-            length, extensions = self._take(extensions, 2)
-            body, extensions = self._take(extensions, struct.unpack('>H', length)[0])
-
+        for ext_type, length, body in self.iter_extensions():
             if ext_type == bytes.fromhex('0000'):  # Server name
                 self.server_name = ext_type + length + body
                 break
@@ -51,8 +45,27 @@ class ClientHello:
         remaining = remaining[count:]
         return prefix, remaining
 
+    def iter_extensions(self) -> Generator[(bytes, bytes, bytes)]:
+        """Iterate the extensions in the Client Hello.
+
+        Return:
+            a generator that yields 3-element tuples of:
+            (extension type, extension len, extension body)
+        """
+        extensions = self.extensions
+
+        while extensions:
+            ext_type, extensions = self._take(extensions, 2)
+            length, extensions = self._take(extensions, 2)
+            body, extensions = self._take(extensions, struct.unpack('>H', length)[0])
+
+            yield ext_type, length, body
+
     def to_bytes(self) -> bytes:
-        """Convert the ClientHello object into a sequence of bytes."""
+        """Convert the ClientHello object into a sequence of bytes.
+
+        The message is guaranteed to be exactly 512 bytes excluding the record header.
+        """
         message = bytearray()
         message.extend(self.record_header)
         message.extend(self.handshake_header)
@@ -66,5 +79,21 @@ class ClientHello:
         message.extend(self.compression_methods)
         message.extend(struct.pack('>H', len(self.extensions)))
         message.extend(self.extensions)
+
+        if len(message) - len(self.record_header) > 512:
+            # Message is larger than the max size of 512 bytes
+            # Drop all the extensions
+            message = message[: -len(self.extensions)]
+
+            # Re-add the extensions apart from the final padding extension
+            for ext_type, length, body in self.iter_extensions():
+                if ext_type != bytes.fromhex('0015'):
+                    message.extend(ext_type + length + body)
+
+            # Add the padding extension to make up to the remaining 512
+            message.extend(bytes.fromhex('0015'))
+            pad_size = len(message) - len(self.record_header) - 2
+            message.extend(struct.pack('>H', pad_size))
+            message.extend(bytes.fromhex('00') * pad_size)
 
         return bytes(message)
