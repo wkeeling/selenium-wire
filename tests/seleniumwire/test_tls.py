@@ -1,38 +1,46 @@
+import logging
+
 import pytest
 
 from seleniumwire.tls import ClientHello
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class TestClientHello:
     @pytest.fixture
     def message(self):
         """
-        Handshake Protocol: Client Hello
-        Handshake Type: Client Hello (1)
-        Length: 508
-        Version: TLS 1.2 (0x0303)
-        Random: b15270347a92b97bbf91fce1f03d9232d6322bf1175d2f30...
-        Session ID Length: 32
-        Session ID: 0b5dcd017b0dc64100918d6e5e9b2d5f356792839af72656...
-        Cipher Suites Length: 36
-        Cipher Suites (18 suites)
-        Compression Methods Length: 1
-        Compression Methods (1 method)
-        Extensions Length: 399
-        Extension: server_name (len=22)
-        Extension: extended_master_secret (len=0)
-        Extension: renegotiation_info (len=1)
-        Extension: supported_groups (len=14)
-        Extension: ec_point_formats (len=2)
-        Extension: SessionTicket TLS (len=0)
-        Extension: application_layer_protocol_negotiation (len=14)
-        Extension: status_request (len=5)
-        Extension: key_share (len=107)
-        Extension: supported_versions (len=5)
-        Extension: signature_algorithms (len=24)
-        Extension: psk_key_exchange_modes (len=2)
-        Extension: Unknown type 28 (len=2)
-        Extension: padding (len=145)
+        TLSv1.2 Record Layer: Handshake Protocol: Client Hello
+            Content Type: Handshake (22)
+            Version: TLS 1.0 (0x0301)
+            Length: 512
+            Handshake Protocol: Client Hello
+                Handshake Type: Client Hello (1)
+                Length: 508
+                Version: TLS 1.2 (0x0303)
+                Random: b15270347a92b97bbf91fce1f03d9232d6322bf1175d2f30...
+                Session ID Length: 32
+                Session ID: 0b5dcd017b0dc64100918d6e5e9b2d5f356792839af72656...
+                Cipher Suites Length: 36
+                Cipher Suites (18 suites)
+                Compression Methods Length: 1
+                Compression Methods (1 method)
+                Extensions Length: 399
+                Extension: server_name (len=22)
+                Extension: extended_master_secret (len=0)
+                Extension: renegotiation_info (len=1)
+                Extension: supported_groups (len=14)
+                Extension: ec_point_formats (len=2)
+                Extension: SessionTicket TLS (len=0)
+                Extension: application_layer_protocol_negotiation (len=14)
+                Extension: status_request (len=5)
+                Extension: key_share (len=107)
+                Extension: supported_versions (len=5)
+                Extension: signature_algorithms (len=24)
+                Extension: psk_key_exchange_modes (len=2)
+                Extension: Unknown type 28 (len=2)
+                Extension: padding (len=145)
         """
         return bytes.fromhex(
             '1603010200010001fc0303b15270347a92b97bbf91fce1f03d9232d6322bf1175d2f303b4ec4be3cdbe95a200b5dcd017b0dc641'
@@ -97,6 +105,69 @@ class TestClientHello:
         assert client_hello.server_name == bytes.fromhex('000000160014000011737461636b6f766572666c6f772e636f6d')
 
     def test_to_bytes(self, client_hello):
-        b = client_hello.to_bytes()
-        assert client_hello.raw_message == b
-        assert len(b[len(client_hello.record_header):]) == 512  # fmt: skip
+        message = client_hello.to_bytes()
+        assert client_hello.raw_message == message
+        assert len(message[len(client_hello.record_header):]) == 512  # fmt: skip
+
+    def test_override_client_hello(self):
+        # Input Message
+        #
+        # Record header: 160301012a
+        # Handshake header: 01000126
+        # Client version: 0303
+        # Client random: 9bf07320a759c133f2f2aae1a59726fd3efcd3c0acf7fef4fcdc931ad8ecb2a2
+        # Session ID length: 20
+        # Session ID: 0ceddfb789db7cf367250d713a3d8817f21ce7dcea9697c905559ed840757b0b
+        # Cipher suite length: 001c
+        # Cipher suites: 130213031301c02bc02fc02cc030c013c014009c009d002f003500ff
+        # Compression methods length: 01
+        # Compression methods: 00
+        # Extensions length: 00c1
+        # Extensions: 0000001600140000117777772e77696b6970656469612e6f7267000b000403000102000a000c000a001d0017001e001
+        # 90018002300000010000e000c02683208687474702f312e310016000000170000000d0030002e040305030603080708080809080a08
+        # 0b080408050806040105010601030302030301020103020202040205020602002b0009080304030303020301002d000201010033002
+        # 60024001d00201ea4db09f47b924d1f2f788d6312464ac65194276f94fe97a2db4d05843ce812
+        sw_message = bytes.fromhex(
+            '160301012a0100012603039bf07320a759c133f2f2aae1a59726fd3efcd3c0acf7fef4fcdc931ad8ecb2a2200ceddfb789db7cf3'
+            '67250d713a3d8817f21ce7dcea9697c905559ed840757b0b001c130213031301c02bc02fc02cc030c013c014009c009d002f0035'
+            '00ff010000c10000001600140000117777772e77696b6970656469612e6f7267000b000403000102000a000c000a001d0017001e'
+            '00190018002300000010000e000c02683208687474702f312e310016000000170000000d0030002e040305030603080708080809'
+            '080a080b080408050806040105010601030302030301020103020202040205020602002b0009080304030303020301002d000201'
+            '01003300260024001d00201ea4db09f47b924d1f2f788d6312464ac65194276f94fe97a2db4d05843ce812'
+        )
+
+        ciphers_override = bytes.fromhex('130113031302c02bc02fcca9cca8c02cc030c00ac009c013c014009c009d002f0035000a')
+        extensions_override = bytes.fromhex(
+            '000000160014000011737461636b6f766572666c6f772e636f6d00170000ff01000100000a000e000c001d001700180019010'
+            '00101000b00020100002300000010000e000c02683208687474702f312e310005000501000000000033006b0069001d00206d'
+            '3798e9e78a240c97a4f78f9d97ceb6f9634a96d230e6b10e7eb8c9f9faef3a00170041041b5a526b58f2338d963577bbf8524'
+            'd65ff1763bb9ebdb507663c05ea75438da7976e75732f1e123f01d7f2d12397f183420addcb8271112bc59631016580ac6500'
+            '2b00050403040303000d0018001604030503060308040805080604010501060102030201002d00020101001c0002400100150'
+            '09100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+            '00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+            '0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+        )
+
+        client_hello = ClientHello(sw_message)
+        client_hello.cipher_suites = ciphers_override
+        client_hello.extensions = extensions_override
+
+        # Expected output message
+        #
+        # Record header: 160301012a
+        # Handshake header: 01000126
+        # Client version: 0303
+        # Client random: 9bf07320a759c133f2f2aae1a59726fd3efcd3c0acf7fef4fcdc931ad8ecb2a2
+        # Session ID length: 20
+        # Session ID: 0ceddfb789db7cf367250d713a3d8817f21ce7dcea9697c905559ed840757b0b
+        # Cipher suite length: 0024
+        # Cipher suites: 130113031302c02bc02fcca9cca8c02cc030c00ac009c013c014009c009d002f0035000a
+        # Compression methods length: 01
+        # Compression methods: 00
+        # Extensions length: 018f
+        # Extensions: 000000160014000011737461636b6f766572666c6f772e636f6d00170000ff01000100000a000e000c001d00170018001901000101000b00020100002300000010000e000c02683208687474702f312e310005000501000000000033006b0069001d00206d3798e9e78a240c97a4f78f9d97ceb6f9634a96d230e6b10e7eb8c9f9faef3a00170041041b5a526b58f2338d963577bbf8524d65ff1763bb9ebdb507663c05ea75438da7976e75732f1e123f01d7f2d12397f183420addcb8271112bc59631016580ac65002b00050403040303000d0018001604030503060308040805080604010501060102030201002d00020101001c0002400100150093000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+        message = client_hello.to_bytes()
+
+        assert message == bytes.fromhex(
+            '160301012a0100012603039bf07320a759c133f2f2aae1a59726fd3efcd3c0acf7fef4fcdc931ad8ecb2a2200ceddfb789db7cf367250d713a3d8817f21ce7dcea9697c905559ed840757b0b0024130113031302c02bc02fcca9cca8c02cc030c00ac009c013c014009c009d002f0035000a0100018f000000160014000011737461636b6f766572666c6f772e636f6d00170000ff01000100000a000e000c001d00170018001901000101000b00020100002300000010000e000c02683208687474702f312e310005000501000000000033006b0069001d00206d3798e9e78a240c97a4f78f9d97ceb6f9634a96d230e6b10e7eb8c9f9faef3a00170041041b5a526b58f2338d963577bbf8524d65ff1763bb9ebdb507663c05ea75438da7976e75732f1e123f01d7f2d12397f183420addcb8271112bc59631016580ac65002b00050403040303000d0018001604030503060308040805080604010501060102030201002d00020101001c000240010015009100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+        )
