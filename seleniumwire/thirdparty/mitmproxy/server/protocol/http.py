@@ -324,11 +324,11 @@ class HttpLayer(base.Layer):
             f.request = None
             f.error = flow.Error(str(e))
             self.channel.ask("error", f)
-            self.log(
-                "request",
-                "warn",
-                ["HTTP protocol error in client request: {}".format(e)]
-            )
+            msg = "HTTP protocol error in client request: {}".format(e)
+            if self.config.options.suppress_connection_errors:
+                self.log("request", "debug", [msg])
+            else:
+                self.log("request", "warn", [msg])
             return False
 
         self.log("request", "debug", [repr(request)])
