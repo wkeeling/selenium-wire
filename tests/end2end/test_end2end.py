@@ -3,6 +3,7 @@
 import json
 import os
 import shutil
+import socket
 import tempfile
 import threading
 from contextlib import contextmanager
@@ -544,3 +545,17 @@ def test_har_encoded_brotli_response(driver_path, chrome_options, httpbin):
         assert len(har['log']['entries']) == 1
         assert har['log']['entries'][0]['request']['url'] == f'{httpbin}/brotli'
         assert har['log']['entries'][0]['response']['status'] == 200
+
+
+def test_socket_timeout(driver, httpbin):
+    """Setting a timeout on the socket puts the socket into non-blocking mode.
+    This causes OpenSSL's handshake mechanism to raise an EWOULDBLOCK error,
+    which in turn causes the request to fail.
+
+    Selenium Wire has been modified to handle this error and retry the handshake
+    operation - so we expect the request to succeed.
+    """
+    socket.setdefaulttimeout(60)
+    driver.get(f'{httpbin}/html')
+
+    assert driver.requests

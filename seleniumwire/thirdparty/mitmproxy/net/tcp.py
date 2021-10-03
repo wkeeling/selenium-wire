@@ -384,18 +384,13 @@ class TCPClient(_Connection):
             sni=sni,
             **sslctx_kwargs
         )
+        sock = self.connection
         self.connection = SSL.Connection(context, self.connection)
         if sni:
             self.sni = sni
             self.connection.set_tlsext_host_name(sni.encode("idna"))
         self.connection.set_connect_state()
-        try:
-            self.connection.do_handshake()
-        except SSL.Error as v:
-            if self.ssl_verification_error:
-                raise self.ssl_verification_error
-            else:
-                raise exceptions.TlsException("SSL handshake error: %s" % repr(v))
+        do_ssl_handshake(sock, self.connection)
 
         self.cert = certs.Cert(self.connection.get_peer_certificate())
 
@@ -479,6 +474,37 @@ class TCPClient(_Connection):
             return b""
 
 
+def do_ssl_handshake(sock, ssl_connection):
+    """Peform the SSL handshake.
+
+    If a timeout has been set on the socket externally, it causes OpenSSL
+    to raise EWOULDBLOCK which breaks the handshake. This function will
+    catch that condition and will retry the operation until it succeeds or
+    some other error occurs.
+
+    See https://github.com/pyca/pyopenssl/issues/168 for more information.
+
+    Args:
+        sock: The underlying socket.
+        ssl_connection: The OpenSSL Connection object.
+    """
+    while True:
+        try:
+            ssl_connection.do_handshake()
+        except SSL.WantReadError:
+            rd, _, _ = select.select([sock], [], [], sock.gettimeout())
+            if not rd:
+                raise exceptions.TcpTimeout("Select timed out")
+            continue
+        except SSL.Error as e:
+            verification_error = getattr(ssl_connection, "cert_error", None)
+            if verification_error:
+                raise verification_error
+            else:
+                raise exceptions.TlsException("SSL handshake error: %s" % repr(e))
+        break
+
+
 class BaseHandler(_Connection):
 
     """
@@ -501,10 +527,11 @@ class BaseHandler(_Connection):
             cert=cert,
             key=key,
             **sslctx_kwargs)
+        sock = self.connection
         self.connection = SSL.Connection(context, self.connection)
         self.connection.set_accept_state()
         try:
-            self.connection.do_handshake()
+            do_ssl_handshake(sock, self.connection)
         except SSL.Error as v:
             raise exceptions.TlsException("SSL handshake error: %s" % repr(v))
         self.tls_established = True
