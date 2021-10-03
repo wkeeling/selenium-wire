@@ -1,6 +1,13 @@
 History
 ~~~~~~~
 
+4.5.3 (2021-10-03)
+------------------
+
+* Fix bug where setting a socket timeout would break the SSL handshake.
+* Support for brotli and zstd content encoding.
+* Suppress HTTP protocol warning.
+
 4.5.2 (2021-08-23)
 ------------------
 
