@@ -29,11 +29,11 @@ def httpbin():
 
 @contextmanager
 def create_httpbin(port=8085, use_https=True):
-    httpbin = testutils.get_httpbin(port, use_https)
+    httpbin = testutils.Httpbin(port, use_https)
     try:
         yield httpbin
     finally:
-        httpbin.close()
+        httpbin.shutdown()
 
 
 @pytest.fixture(scope='module')
@@ -44,18 +44,18 @@ def httpproxy():
 
 @contextmanager
 def create_httpproxy(port=8086, mode='http', auth=''):
-    httpproxy = testutils.get_proxy(port, mode, auth)
+    httpproxy = testutils.Proxy(port, mode, auth)
     try:
         yield httpproxy
     finally:
-        httpproxy.close()
+        httpproxy.shutdown()
 
 
 @pytest.fixture(scope='module')
 def socksproxy():
-    httpproxy = testutils.get_proxy(port=8087, mode='socks')
+    httpproxy = testutils.Proxy(port=8087, mode='socks')
     yield httpproxy
-    httpproxy.close()
+    httpproxy.shutdown()
 
 
 @pytest.fixture
@@ -422,7 +422,7 @@ def test_no_auto_config_manual_proxy(driver_path, chrome_options, httpbin):
 
 
 def test_exclude_hosts(driver_path, chrome_options, httpbin):
-    httpbin2 = testutils.get_httpbin(port=8090)
+    httpbin2 = testutils.Httpbin(port=8090)
     sw_options = {'exclude_hosts': ['<-loopback>', 'localhost:8085']}
 
     with create_driver(driver_path, chrome_options, sw_options) as driver:

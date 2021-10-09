@@ -1,51 +1,35 @@
 import os
 import shutil
-import socket
 import subprocess
-from contextlib import closing
 from pathlib import Path
 
 
-def get_httpbin(port=8085, use_https=True):
-    """Get a running httpbin server instance.
+class Httpbin:
+    """Create and manage a httpbin server.
 
-    This function will attempt to discover a httpbin server by trying each
-    of the following steps in turn:
+    Creating a new instance of this class will spawn a httpbin server
+    in a subprocess. Clients should call the shutdown() method when they
+    are finished with the server.
 
-    - Check to see if anything is listening on the given port on localhost.
-    If so, assume it's a httpbin server and return a Httpbin object containing
-    the URL.
-
-    - Attempt to start a local httpbin server on the given port and, if successful,
-    return a Httpbin object containing the URL. This will only work for non-Windows
-    hosts.
-
-    - If the last two steps did not yield a httpbin server, return a Httpbin object
-    containing the URL of the public httpbin website https://httpbin.org
-
-    Clients should call .close() on the returned Httpbin object when they are
-    finished with it.
-
-    Args:
-        port:
-            Optional port number that the httpbin instance is/should listen on.
-        use_https:
-            Whether the httpbin instance should use https. When True (the default)
-            the Httpbin instance will be addressable as 'https://' otherwise 'http://'.
-            Note that a different port number should be specified if there is an
-            existing httpbin instance already running and you are switching the scheme.
-    Returns:
-        A Httpbin object containing the URL of the httpbin server.
+    Only compatible on non-Windows systems.
     """
-    scheme = 'https' if use_https else 'http'
-    url = f'{scheme}://localhost:{port}'
 
-    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
-        if sock.connect_ex(('localhost', port)) == 0:
-            print(f'Using existing httpbin server at {url}')
-            return Httpbin(url)
+    def __init__(self, port: int = 8085, use_https: bool = True):
+        """Create a new httpbin server.
 
-    if os.name != 'nt':  # Gunicorn doesn't work on Windows
+        Args:
+            port:
+                Optional port number that the httpbin instance should listen on.
+            use_https:
+                Whether the httpbin instance should use https. When True (the default)
+                the httpbin instance will be addressable as 'https://' otherwise 'http://'.
+        """
+        scheme = 'https' if use_https else 'http'
+        self.url = f'{scheme}://localhost:{port}'
+
+        # Gunicorn doesn't work on Windows
+        assert os.name != 'nt', 'The httpbin utility does not run on Windows'
+
         args = [
             'gunicorn',
             '--bind',
@@ -60,36 +44,18 @@ def get_httpbin(port=8085, use_https=True):
 
         args.append('httpbin:app')
 
-        proc = subprocess.Popen(args, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.proc = subprocess.Popen(args, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         try:
-            proc.wait(timeout=2)
+            self.proc.wait(timeout=2)
             # If we're here, wait() has returned meaning no process
-            print(f'httpbin failed to start: {proc.stderr.read().decode()}')
+            raise RuntimeError(f'httpbin failed to start: {self.proc.stderr.read().decode()}')
         except subprocess.TimeoutExpired:
             # Server running
-            print(f'Created new httpbin server at {url}')
-            return Httpbin(url, proc)
+            print(f'Created new httpbin server at {self.url}')
 
-    print('Using httpbin.org public website')
-    return Httpbin(f'{scheme}://httpbin.org')
-
-
-class Httpbin:
-    """Represents a running httpbin server."""
-
-    def __init__(self, url, proc=None):
-        """Initialise a new Httpbin with a URL and optional Popen object.
-
-        Args:
-            url: The URL of the httpbin server.
-            proc: The Popen object if a httpbin server was created locally.
-        """
-        self.url = url
-        self.proc = proc
-
-    def close(self):
-        """Close any resources associated with the httpbin server."""
+    def shutdown(self):
+        """Shutdownthe httpbin server."""
         if self.proc:
             self.proc.terminate()
 
@@ -97,7 +63,7 @@ class Httpbin:
         return self.url
 
 
-def get_headless_chromium():
+def get_headless_chromium() -> str:
     """Get the path to a headless chromium executable uncompressing the
     executable if required.
 
@@ -114,12 +80,11 @@ def get_headless_chromium():
     return str(bin_path)
 
 
-def get_proxy(port=8086, mode='http', auth=''):
-    """Get a running proxy server instance.
+class Proxy:
+    """Create and manage a mitmdump proxy server.
 
-    This function will return a Proxy object containing the URL of a running
-    proxy server. The URL scheme is based on the supplied mode: 'http'
-    (the default) and 'socks' are supported.
+    The proxy supports two URL schemes which based on the supplied mode: 'http'
+    (the default) and 'socks'.
 
     The proxy will modify HTML responses by adding a comment just before the
     closing </body> tag. The text of the comment will depend on what mode the
@@ -132,86 +97,70 @@ def get_proxy(port=8086, mode='http', auth=''):
 
     Note: authenticated socks proxy not currently supported by mitmdump.
 
-    Clients should call .close() on the returned Proxy object when they are
-    finished with it.
-
-    Args:
-        port: Optional port number the proxy server should listen on.
-        mode: Optional mode the proxy server will be started in.
-            Either 'http' (the default) or 'socks'.
-        auth: When supplied, proxy authentication will be enabled.
-            The value should be a string in the format: 'username:password'
-    Returns: A Proxy object containing the URL of the proxy server.
+    Clients should call the shutdown() method when they are finished with the
+    server.
     """
-    assert mode in ('http', 'socks'), "mode must be one of 'http' or 'socks'"
 
-    mode_map = {
-        'http': 'regular',
-        'socks': 'socks5',
-    }
-
-    auth_args = ['--set', f'proxyauth={auth}'] if auth else []
-
-    message = f"This passed through a {'authenticated ' if auth else ''}{mode} proxy"
-
-    proc = subprocess.Popen(
-        [
-            'mitmdump',
-            '--listen-port',
-            f'{port}',
-            '--set',
-            f'mode={mode_map[mode]}',
-            '--set',
-            'flow_detail=0',
-            '--set',
-            'ssl_insecure',
-            *auth_args,
-            '-s',
-            Path(__file__).parent / 'inject_message.py',
-            '--set',
-            f'message={message}',
-        ],
-        bufsize=0,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-
-    try:
-        proc.wait(timeout=2)
-        # If we're here, wait() has returned meaning no process
-        raise RuntimeError(f'Proxy server failed to start: {proc.stderr.read().decode()}')
-    except subprocess.TimeoutExpired:
-        if auth:
-            auth = f'{auth}@'
-        # Server running
-        if mode == 'http':
-            url = f'https://{auth}localhost:{port}'
-        else:
-            url = f'socks5://{auth}localhost:{port}'
-        print(f'Created new proxy server at {url}')
-        return Proxy(url, proc)
-
-
-class Proxy:
-    """Represents a running proxy server."""
-
-    def __init__(self, url, proc):
-        """Initialise a new Proxy with a URL and Popen object.
+    def __init__(self, port: int = 8086, mode: str = 'http', auth: str = ''):
+        """Create a new mitmdump proxy server.
 
         Args:
-            url: The URL of the proxy server.
-            proc: The Popen object of the proxy server.
+            port: Optional port number the proxy server should listen on.
+            mode: Optional mode the proxy server will be started in.
+                Either 'http' (the default) or 'socks'.
+            auth: When supplied, proxy authentication will be enabled.
+                The value should be a string in the format: 'username:password'
         """
-        self.url = url
-        self.proc = proc
+        assert mode in ('http', 'socks'), "mode must be one of 'http' or 'socks'"
 
-    def close(self):
-        """Close any resources associated with the proxy server."""
+        mode_map = {
+            'http': 'regular',
+            'socks': 'socks5',
+        }
+
+        auth_args = ['--set', f'proxyauth={auth}'] if auth else []
+
+        message = f"This passed through a {'authenticated ' if auth else ''}{mode} proxy"
+
+        self.proc = subprocess.Popen(
+            [
+                'mitmdump',
+                '--listen-port',
+                f'{port}',
+                '--set',
+                f'mode={mode_map[mode]}',
+                '--set',
+                'flow_detail=0',
+                '--set',
+                'ssl_insecure',
+                *auth_args,
+                '-s',
+                Path(__file__).parent / 'inject_message.py',
+                '--set',
+                f'message={message}',
+            ],
+            bufsize=0,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        try:
+            self.proc.wait(timeout=2)
+            # If we're here, wait() has returned meaning no process
+            raise RuntimeError(f'Proxy server failed to start: {self.proc.stderr.read().decode()}')
+        except subprocess.TimeoutExpired:
+            # Server running
+            if auth:
+                auth = f'{auth}@'
+            if mode == 'http':
+                self.url = f'https://{auth}localhost:{port}'
+            else:
+                self.url = f'socks5://{auth}localhost:{port}'
+            print(f'Created new proxy server at {self.url}')
+
+    def shutdown(self):
+        """Shutdown the proxy server."""
         self.proc.terminate()
 
     def __str__(self):
         return self.url
-
-
-if __name__ == '__main__':
-    get_httpbin()
