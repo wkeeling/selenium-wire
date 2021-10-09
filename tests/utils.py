@@ -63,7 +63,7 @@ class Httpbin:
         return self.url
 
 
-def get_headless_chromium():
+def get_headless_chromium() -> str:
     """Get the path to a headless chromium executable uncompressing the
     executable if required.
 
@@ -101,7 +101,7 @@ class Proxy:
     server.
     """
 
-    def __init__(self, port=8086, mode='http', auth=''):
+    def __init__(self, port: int = 8086, mode: str = 'http', auth: str = ''):
         """Create a new mitmdump proxy server.
 
         Args:

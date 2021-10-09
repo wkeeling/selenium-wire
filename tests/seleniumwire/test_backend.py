@@ -1,4 +1,5 @@
 import json
+import os
 import ssl
 import urllib.error
 import urllib.request
@@ -376,12 +377,13 @@ class BackendIntegrationTest(TestCase):
     def setUpClass(cls):
         cls.backend = backend.create()
         cls.configure_proxy(*cls.backend.address()[:2])
-        cls.httpbin = testutils.Httpbin()
+        cls.httpbin = testutils.Httpbin() if os.name != 'nt' else 'https://httpbin.org'
 
     @classmethod
     def tearDownClass(cls):
         cls.backend.shutdown()
-        cls.httpbin.shutdown()
+        if os.name != 'nt':
+            cls.httpbin.shutdown()
 
     def tearDown(self):
         del self.backend.modifier.headers
