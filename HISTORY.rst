@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+4.5.4 (2021-10-23)
+------------------
+
+* Fix bug preventing request capture when using Firefox and Selenium >= 4.0.0
+
 4.5.3 (2021-10-03)
 ------------------
 
