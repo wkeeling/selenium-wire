@@ -1,5 +1,7 @@
 from typing import Any, Dict
 
+import selenium
+from packaging import version
 from selenium.webdriver import ActionChains  # noqa
 from selenium.webdriver import FirefoxOptions  # noqa
 from selenium.webdriver import FirefoxProfile  # noqa
@@ -16,11 +18,13 @@ from seleniumwire import backend
 from seleniumwire.inspect import InspectRequestsMixin
 from seleniumwire.utils import build_proxy_args, get_upstream_proxy, urlsafe_address
 
+USING_SELENIUM_V4 = version.parse(getattr(selenium, '__version__', '0')) >= version.parse('4.0.0')
+
 
 class DriverCommonMixin:
     """Operations common to all webdriver types."""
 
-    def _configure(self, capabilities, options):
+    def _configure(self, capabilities: Dict[str, Any], seleniumwire_options: Dict[str, Any]) -> Dict[str, Any]:
         """Configure the desired capabilities for request
         capture. Modifications are made in a copy of
         the original dictionary and the copy returned.
@@ -36,9 +40,9 @@ class DriverCommonMixin:
             'httpProxy': '{}:{}'.format(addr, port),
             'sslProxy': '{}:{}'.format(addr, port),
         }
-        if 'exclude_hosts' in options:
+        if 'exclude_hosts' in seleniumwire_options:
             # Only pass noProxy when we have a value to pass
-            capabilities['proxy']['noProxy'] = options['exclude_hosts']
+            capabilities['proxy']['noProxy'] = seleniumwire_options['exclude_hosts']
 
         capabilities['acceptInsecureCerts'] = True
 
@@ -110,24 +114,39 @@ class Firefox(InspectRequestsMixin, DriverCommonMixin, _Firefox):
 
         self.backend = backend.create(port=seleniumwire_options.get('port', 0), options=seleniumwire_options)
 
+        try:
+            firefox_options = kwargs['options']
+        except KeyError:
+            firefox_options = FirefoxOptions()
+            kwargs['options'] = firefox_options
+
+        # Prevent Firefox from bypassing the Selenium Wire proxy
+        # for localhost addresses.
+        firefox_options.set_preference('network.proxy.allow_hijacking_localhost', True)
+
         if seleniumwire_options.get('auto_config', True):
             capabilities = kwargs.get('capabilities', kwargs.get('desired_capabilities'))
             if capabilities is None:
-                capabilities = DesiredCapabilities.FIREFOX
+                capabilities = DesiredCapabilities.FIREFOX.copy()
 
             capabilities = self._configure(capabilities, seleniumwire_options)
 
             kwargs['capabilities'] = capabilities
 
-        try:
-            firefox_options = kwargs['options']
-        except KeyError:
-            firefox_options = FirefoxOptions()
+            if USING_SELENIUM_V4:
+                # From Selenium v4.0.0 it seems that the browser's proxy settings
+                # can no longer be passed using desired capabilities and we must
+                # use the options object instead.
+                proxy = Proxy()
+                proxy.http_proxy = capabilities['proxy']['httpProxy']
+                proxy.ssl_proxy = capabilities['proxy']['sslProxy']
 
-        # Prevent Firefox from bypassing the Selenium Wire proxy
-        # for localhost addresses.
-        firefox_options.set_preference('network.proxy.allow_hijacking_localhost', True)
-        kwargs['options'] = firefox_options
+                try:
+                    proxy.no_proxy = capabilities['proxy']['noProxy']
+                except KeyError:
+                    pass
+
+                firefox_options.proxy = proxy
 
         super().__init__(*args, **kwargs)
 
@@ -149,7 +168,7 @@ class Chrome(InspectRequestsMixin, DriverCommonMixin, _Chrome):
         if seleniumwire_options.get('auto_config', True):
             capabilities = kwargs.get('desired_capabilities')
             if capabilities is None:
-                capabilities = DesiredCapabilities.CHROME
+                capabilities = DesiredCapabilities.CHROME.copy()
 
             capabilities = self._configure(capabilities, seleniumwire_options)
 
@@ -235,7 +254,7 @@ class Remote(InspectRequestsMixin, DriverCommonMixin, _Remote):
         if seleniumwire_options.get('auto_config', True):
             capabilities = kwargs.get('desired_capabilities')
             if capabilities is None:
-                capabilities = DesiredCapabilities.FIREFOX
+                capabilities = DesiredCapabilities.FIREFOX.copy()
 
             capabilities = self._configure(capabilities, seleniumwire_options)
 
