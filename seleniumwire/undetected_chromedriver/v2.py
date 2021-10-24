@@ -3,7 +3,6 @@ import logging
 import undetected_chromedriver.v2 as uc
 from selenium.webdriver import DesiredCapabilities
 
-from seleniumwire import backend
 from seleniumwire.inspect import InspectRequestsMixin
 from seleniumwire.utils import urlsafe_address
 from seleniumwire.webdriver import DriverCommonMixin
@@ -24,14 +23,15 @@ class Chrome(InspectRequestsMixin, DriverCommonMixin, uc.Chrome):
         if seleniumwire_options is None:
             seleniumwire_options = {}
 
-        self.backend = backend.create(port=seleniumwire_options.get('port', 0), options=seleniumwire_options)
+        config = self._setup_backend(seleniumwire_options)
 
         if seleniumwire_options.get('auto_config', True):
             capabilities = kwargs.get('desired_capabilities')
             if capabilities is None:
                 capabilities = DesiredCapabilities.CHROME
+            capabilities = capabilities.copy()
 
-            capabilities = self._configure(capabilities, seleniumwire_options)
+            capabilities.update(config)
 
             kwargs['desired_capabilities'] = capabilities
 
