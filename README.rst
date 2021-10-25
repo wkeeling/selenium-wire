@@ -329,7 +329,7 @@ Response Objects
 Response objects have the following attributes.
 
 ``body``
-    The response body as ``bytes``. If the response has no body the value of ``body`` will be empty, i.e. ``b''``. Sometimes the body may have been encoded by the server - e.g. compressed. You can prevent this with the ``disable_encoding`` `option`_. To manually decode an encoded response body you can do:
+    The response body as ``bytes``. If the response has no body the value of ``body`` will be empty, i.e. ``b''``. Sometimes the body may have been compressed by the server. You can prevent this with the ``disable_encoding`` `option`_. To manually decode an encoded response body you can do:
 
 .. code:: python
 
