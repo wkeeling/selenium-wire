@@ -1,7 +1,12 @@
 from typing import Any, Dict
 
 import selenium
-from packaging import version
+
+try:
+    from packaging.version import parse as parse_version
+except ImportError:
+    from pkg_resources import parse_version
+
 from selenium.webdriver import ActionChains  # noqa
 from selenium.webdriver import FirefoxOptions  # noqa
 from selenium.webdriver import FirefoxProfile  # noqa
@@ -18,7 +23,7 @@ from seleniumwire import backend
 from seleniumwire.inspect import InspectRequestsMixin
 from seleniumwire.utils import build_proxy_args, get_upstream_proxy, urlsafe_address
 
-SELENIUM_V4 = version.parse(getattr(selenium, '__version__', '0')) >= version.parse('4.0.0')
+SELENIUM_V4 = parse_version(getattr(selenium, '__version__', '0')) >= parse_version('4.0.0')
 
 
 class DriverCommonMixin:
