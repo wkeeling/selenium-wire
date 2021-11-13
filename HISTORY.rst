@@ -1,6 +1,12 @@
 History
 ~~~~~~~
 
+4.5.5 (2021-11-13)
+------------------
+
+* Fix issue where missing 'packaging' module prevents Selenium Wire from starting.
+* Fix deprecation warnings with desired capabilities.
+
 4.5.4 (2021-10-23)
 ------------------
 
