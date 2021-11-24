@@ -175,7 +175,9 @@ class Chrome(InspectRequestsMixin, DriverCommonMixin, _Chrome):
             seleniumwire_options = {}
 
         try:
-            chrome_options = kwargs['options']
+            # Pop-out the chrome_options argument and always use the options
+            # argument to pass to the superclass.
+            chrome_options = kwargs.pop('chrome_options', None) or kwargs['options']
         except KeyError:
             chrome_options = ChromeOptions()
 

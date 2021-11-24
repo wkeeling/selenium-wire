@@ -3,7 +3,7 @@ from unittest.mock import patch
 import pytest
 from selenium.webdriver.common.proxy import ProxyType
 
-from seleniumwire.webdriver import Chrome, Firefox
+from seleniumwire.webdriver import Chrome, ChromeOptions, Firefox
 
 
 @pytest.fixture(autouse=True)
@@ -165,7 +165,14 @@ class TestChromeWebDriver:
 
         assert capabilties['test'] == 'capability'
 
-    def test_no_auto_config(self, firefox_super_kwargs):
-        Firefox(seleniumwire_options={'auto_config': False}, capabilities={'test': 'capability'})
+    def test_no_auto_config(self, chrome_super_kwargs):
+        Chrome(seleniumwire_options={'auto_config': False}, capabilities={'test': 'capability'})
 
-        assert firefox_super_kwargs['options'].proxy is None
+        assert 'proxy' not in chrome_super_kwargs['options'].capabilities
+
+    def test_chrome_options(self, chrome_super_kwargs):
+        options = ChromeOptions()
+        Chrome(chrome_options=options, seleniumwire_options={})
+
+        assert 'chrome_options' not in chrome_super_kwargs
+        assert chrome_super_kwargs['options'] == options
