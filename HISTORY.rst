@@ -1,6 +1,12 @@
 History
 ~~~~~~~
 
+4.5.6 (2021-11-26)
+------------------
+
+* Fix bug where using the chrome_options argument would prevent request capture.
+* Fix issue where Proxy-Connection header was being propagated.
+
 4.5.5 (2021-11-13)
 ------------------
 
