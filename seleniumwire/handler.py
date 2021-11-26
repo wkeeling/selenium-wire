@@ -69,6 +69,10 @@ class InterceptRequestHandler:
         if self.proxy.options.get('disable_encoding') is True:
             flow.request.headers['Accept-Encoding'] = 'identity'
 
+        # Remove legacy header if present
+        if 'Proxy-Connection' in flow.request.headers:
+            del flow.request.headers['Proxy-Connection']
+
     def in_scope(self, request):
         if request.method in self.proxy.options.get('ignore_http_methods', ['OPTIONS']):
             return False

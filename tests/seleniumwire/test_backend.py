@@ -373,6 +373,14 @@ class BackendIntegrationTest(TestCase):
 
         self.assertEqual(b'helloworld', last_request.response.body)
 
+    def test_filters_out_proxy_connection_header(self):
+        self.make_request(f'{self.httpbin}/headers', headers={'Proxy-Connection': 'test'})
+
+        last_request = self.backend.storage.load_last_request()
+
+        data = json.loads(last_request.response.body.decode('utf-8'))
+        self.assertNotIn('Proxy-Connection', data['headers'])
+
     @classmethod
     def setUpClass(cls):
         cls.backend = backend.create()
@@ -411,13 +419,20 @@ class BackendIntegrationTest(TestCase):
         opener = urllib.request.build_opener(https_handler, proxy_handler)
         urllib.request.install_opener(opener)
 
-    def make_request(self, url, method='GET', data=None):
+    def make_request(self, url, method='GET', headers=None, data=None):
+        if headers is None:
+            headers = {}
+
         request = urllib.request.Request(url, method=method, data=data)
         request.add_header(
             'User-Agent',
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 '
             '(KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36',
         )
+
+        for header, value in headers.items():
+            request.add_header(header, value)
+
         with urllib.request.urlopen(request, timeout=5) as response:
             html = response.read()
 
