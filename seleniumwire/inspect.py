@@ -1,8 +1,8 @@
 import inspect
 import time
-from typing import Iterator, List, Optional, Union
+from typing import Callable, Iterator, List, Optional, Union
 
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException  # type: ignore
 
 from seleniumwire import har
 from seleniumwire.request import Request
@@ -23,18 +23,18 @@ class InspectRequestsMixin:
             A list of Request instances representing the requests made
             between the browser and server.
         """
-        return self.backend.storage.load_requests()
+        return self.backend.storage.load_requests()  # type: ignore
 
     @requests.deleter
     def requests(self):
-        self.backend.storage.clear_requests()
+        self.backend.storage.clear_requests()  # type: ignore
 
     def iter_requests(self) -> Iterator[Request]:
         """Return an iterator of requests.
 
         Returns: An iterator.
         """
-        yield from self.backend.storage.iter_requests()
+        yield from self.backend.storage.iter_requests()  # type: ignore
 
     @property
     def last_request(self) -> Optional[Request]:
@@ -46,7 +46,7 @@ class InspectRequestsMixin:
             A Request instance representing the last request made, or
             None if no requests have been made.
         """
-        return self.backend.storage.load_last_request()
+        return self.backend.storage.load_last_request()  # type: ignore
 
     def wait_for_request(self, pat: str, timeout: Union[int, float] = 10) -> Request:
         """Wait up to the timeout period for a request matching the specified
@@ -73,7 +73,7 @@ class InspectRequestsMixin:
         start = time.time()
 
         while time.time() - start < timeout:
-            request = self.backend.storage.find(pat)
+            request = self.backend.storage.find(pat)  # type: ignore
 
             if request is None:
                 time.sleep(1 / 5)
@@ -91,7 +91,7 @@ class InspectRequestsMixin:
 
         Returns: A JSON string of HAR data.
         """
-        return har.generate_har(self.backend.storage.load_har_entries())
+        return har.generate_har(self.backend.storage.load_har_entries())  # type: ignore
 
     @property
     def header_overrides(self):
@@ -119,7 +119,7 @@ class InspectRequestsMixin:
                 ('*.somewhere-else.com.*', {'User-Agent': 'Chrome'})
             ]
         """
-        return self.backend.modifier.headers
+        return self.backend.modifier.headers  # type: ignore
 
     @header_overrides.setter
     def header_overrides(self, headers):
@@ -129,16 +129,16 @@ class InspectRequestsMixin:
         else:
             self._validate_headers(headers)
 
-        self.backend.modifier.headers = headers
+        self.backend.modifier.headers = headers  # type: ignore
 
     def _validate_headers(self, headers):
         for v in headers.values():
             if v is not None:
                 assert isinstance(v, str), 'Header values must be strings'
 
-    @header_overrides.deleter
+    @header_overrides.deleter  # type: ignore
     def header_overrides(self):
-        del self.backend.modifier.headers
+        del self.backend.modifier.headers  # type: ignore
 
     @property
     def param_overrides(self):
@@ -164,15 +164,15 @@ class InspectRequestsMixin:
                 ('*.somewhere-else.com.*', {'x': 'y'}),
             ]
         """
-        return self.backend.modifier.params
+        return self.backend.modifier.params  # type: ignore
 
     @param_overrides.setter
     def param_overrides(self, params):
-        self.backend.modifier.params = params
+        self.backend.modifier.params = params  # type: ignore
 
     @param_overrides.deleter
     def param_overrides(self):
-        del self.backend.modifier.params
+        del self.backend.modifier.params  # type: ignore
 
     @property
     def body_overrides(self):
@@ -194,15 +194,15 @@ class InspectRequestsMixin:
                 ('*.somewhere-else.com.*', '{"x":"y"}'),
             ]
         """
-        return self.backend.modifier.bodies
+        return self.backend.modifier.bodies  # type: ignore
 
     @body_overrides.setter
     def body_overrides(self, bodies):
-        self.backend.modifier.bodies = bodies
+        self.backend.modifier.bodies = bodies  # type: ignore
 
     @body_overrides.deleter
     def body_overrides(self):
-        del self.backend.modifier.bodies
+        del self.backend.modifier.bodies  # type: ignore
 
     @property
     def querystring_overrides(self):
@@ -223,15 +223,15 @@ class InspectRequestsMixin:
                 ('*.somewhere-else.com.*', 'a=b&c=d'),
             ]
         """
-        return self.backend.modifier.querystring
+        return self.backend.modifier.querystring  # type: ignore
 
     @querystring_overrides.setter
     def querystring_overrides(self, querystrings):
-        self.backend.modifier.querystring = querystrings
+        self.backend.modifier.querystring = querystrings  # type: ignore
 
     @querystring_overrides.deleter
     def querystring_overrides(self):
-        del self.backend.modifier.querystring
+        del self.backend.modifier.querystring  # type: ignore
 
     @property
     def rewrite_rules(self):
@@ -248,15 +248,15 @@ class InspectRequestsMixin:
                 (r'https://docs.python.org/2/', r'https://docs.python.org/3/'),
             ]
         """
-        return self.backend.modifier.rewrite_rules
+        return self.backend.modifier.rewrite_rules  # type: ignore
 
     @rewrite_rules.setter
     def rewrite_rules(self, rewrite_rules):
-        self.backend.modifier.rewrite_rules = rewrite_rules
+        self.backend.modifier.rewrite_rules = rewrite_rules  # type: ignore
 
     @rewrite_rules.deleter
     def rewrite_rules(self):
-        del self.backend.modifier.rewrite_rules
+        del self.backend.modifier.rewrite_rules  # type: ignore
 
     @property
     def scopes(self) -> List[str]:
@@ -271,48 +271,48 @@ class InspectRequestsMixin:
                 '.*github.*'
             ]
         """
-        return self.backend.scopes
+        return self.backend.scopes  # type: ignore
 
     @scopes.setter
     def scopes(self, scopes: List[str]):
-        self.backend.scopes = scopes
+        self.backend.scopes = scopes  # type: ignore
 
     @scopes.deleter
     def scopes(self):
-        self.backend.scopes = []
+        self.backend.scopes = []  # type: ignore
 
     @property
-    def request_interceptor(self) -> callable:
+    def request_interceptor(self) -> Callable:
         """A callable that will be used to intercept/modify requests.
 
         The callable must accept a single argument for the request
         being intercepted.
         """
-        return self.backend.request_interceptor
+        return self.backend.request_interceptor  # type: ignore
 
     @request_interceptor.setter
-    def request_interceptor(self, interceptor: callable):
-        self.backend.request_interceptor = interceptor
+    def request_interceptor(self, interceptor: Callable):
+        self.backend.request_interceptor = interceptor  # type: ignore
 
     @request_interceptor.deleter
     def request_interceptor(self):
-        self.backend.request_interceptor = None
+        self.backend.request_interceptor = None  # type: ignore
 
     @property
-    def response_interceptor(self) -> callable:
+    def response_interceptor(self) -> Callable:
         """A callable that will be used to intercept/modify responses.
 
         The callable must accept two arguments: the response being
         intercepted and the originating request.
         """
-        return self.backend.response_interceptor
+        return self.backend.response_interceptor  # type: ignore
 
     @response_interceptor.setter
-    def response_interceptor(self, interceptor: callable):
+    def response_interceptor(self, interceptor: Callable):
         if len(inspect.signature(interceptor).parameters) != 2:
             raise RuntimeError('A response interceptor takes two parameters: the request and response')
-        self.backend.response_interceptor = interceptor
+        self.backend.response_interceptor = interceptor  # type: ignore
 
     @response_interceptor.deleter
     def response_interceptor(self):
-        self.backend.response_interceptor = None
+        self.backend.response_interceptor = None  # type: ignore

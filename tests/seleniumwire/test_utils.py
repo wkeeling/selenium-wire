@@ -241,9 +241,10 @@ class ExtractCertTest(TestCase):
         m_open.assert_called_once_with(Path('cwd', 'ca.crt'), 'wb')
         m_open.return_value.write.assert_called_once_with(b'cert_data')
 
+    @patch('seleniumwire.utils.log')
     @patch('seleniumwire.utils.pkgutil')
-    def test_extract_cert_not_found(self, mock_pkgutil):
-        mock_pkgutil.get_data.side_effect = FileNotFoundError
+    def test_extract_cert_not_found(self, mock_pkgutil, mock_log):
+        mock_pkgutil.get_data.return_value = None
         m_open = mock_open()
 
         with patch('seleniumwire.utils.open', m_open):
@@ -251,6 +252,7 @@ class ExtractCertTest(TestCase):
 
         mock_pkgutil.get_data.assert_called_once_with('seleniumwire', 'foo.crt')
         m_open.assert_not_called()
+        mock_log.error.assert_called_once()
 
     @patch('seleniumwire.utils.os')
     @patch('seleniumwire.utils.pkgutil')
@@ -290,6 +292,21 @@ class ExtractCertTest(TestCase):
             extract_cert_and_key(Path('some', 'path'), check_exists=False)
 
         m_open.assert_called_once()
+
+    @patch('seleniumwire.utils.log')
+    @patch('seleniumwire.utils.os')
+    @patch('seleniumwire.utils.pkgutil')
+    @patch('seleniumwire.utils.Path')
+    def test_extract_cert_and_key_not_found(self, mock_path, mock_pkgutil, mock_os, mock_log):
+        mock_path.return_value.exists.return_value = False
+        mock_pkgutil.get_data.side_effect = (None, None)
+        m_open = mock_open()
+
+        with patch('seleniumwire.utils.open', m_open):
+            extract_cert_and_key(Path('some', 'path'))
+
+        m_open.assert_not_called()
+        mock_log.error.assert_called_once()
 
 
 def test_urlsafe_address_ipv4():

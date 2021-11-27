@@ -21,3 +21,9 @@ repos:
       args: [--config=.flake8]
       language: system
       files: \.py$
+    - id: mypy
+      name: mypy
+      entry: mypy
+      stages: [commit]
+      language: system
+      files: \.py$

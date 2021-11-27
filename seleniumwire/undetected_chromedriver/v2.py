@@ -1,7 +1,7 @@
 import logging
 
-import undetected_chromedriver.v2 as uc
-from selenium.webdriver import DesiredCapabilities
+import undetected_chromedriver.v2 as uc  # type: ignore
+from selenium.webdriver import DesiredCapabilities  # type: ignore
 
 from seleniumwire.inspect import InspectRequestsMixin
 from seleniumwire.utils import urlsafe_address

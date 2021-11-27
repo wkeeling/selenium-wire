@@ -67,25 +67,25 @@ class DriverCommonMixin:
         """Get the proxy configuration for the driver."""
 
         conf = {}
-        mode = getattr(self.backend.master.options, 'mode')
+        mode = getattr(self.backend.master.options, 'mode')  # type: ignore
 
         if mode and mode.startswith('upstream'):
             upstream = mode.split('upstream:')[1]
             scheme, *rest = upstream.split('://')
 
-            auth = getattr(self.backend.master.options, 'upstream_auth')
+            auth = getattr(self.backend.master.options, 'upstream_auth')  # type: ignore
 
             if auth:
                 conf[scheme] = f'{scheme}://{auth}@{rest[0]}'
             else:
                 conf[scheme] = f'{scheme}://{rest[0]}'
 
-        no_proxy = getattr(self.backend.master.options, 'no_proxy')
+        no_proxy = getattr(self.backend.master.options, 'no_proxy')  # type: ignore
 
         if no_proxy:
             conf['no_proxy'] = ','.join(no_proxy)
 
-        custom_auth = getattr(self.backend.master.options, 'upstream_custom_auth')
+        custom_auth = getattr(self.backend.master.options, 'upstream_custom_auth')  # type: ignore
 
         if custom_auth:
             conf['custom_authorization'] = custom_auth
@@ -106,7 +106,9 @@ class DriverCommonMixin:
         Args:
             proxy_conf: The proxy configuration.
         """
-        self.backend.master.options.update(**build_proxy_args(get_upstream_proxy({'proxy': proxy_conf})))
+        self.backend.master.options.update(  # type: ignore
+            **build_proxy_args(get_upstream_proxy({'proxy': proxy_conf}))
+        )
 
 
 class Firefox(InspectRequestsMixin, DriverCommonMixin, _Firefox):

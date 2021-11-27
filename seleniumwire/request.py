@@ -19,6 +19,8 @@ class HTTPHeaders(HTTPMessage):
 class Request:
     """Represents an HTTP request."""
 
+    _body: bytes
+
     def __init__(self, *, method: str, url: str, headers: Iterable[Tuple[str, str]], body: bytes = b''):
         """Initialise a new Request object.
 
@@ -119,7 +121,7 @@ class Request:
         """
         return urlsplit(self.url).netloc
 
-    @path.setter
+    @path.setter  # type: ignore
     def path(self, p: str):
         parts = list(urlsplit(self.url))
         parts[2] = p
