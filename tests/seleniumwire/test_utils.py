@@ -267,26 +267,57 @@ class ExtractCertTest(TestCase):
         mock_path.assert_called_once_with(Path('some', 'path'), 'seleniumwire-ca.pem')
         mock_pkgutil.get_data.assert_has_calls([call('seleniumwire', 'ca.crt'), call('seleniumwire', 'ca.key')])
         m_open.assert_called_once_with(mock_path.return_value, 'wb')
-        m_open.return_value.write.assert_called_once_with(b'cert_datakey_data')
+        m_open.return_value.write.assert_called_once_with(b'cert_data\nkey_data')
 
     @patch('seleniumwire.utils.os')
+    @patch('seleniumwire.utils.pkgutil')
     @patch('seleniumwire.utils.Path')
-    def test_extract_cert_and_key_exists(self, mock_path, mock_os):
-        mock_path.return_value.exists.return_value = True
+    def test_extract_user_supplied_cert_and_key(self, mock_path, mock_pkgutil, mock_os):
+        mock_path.return_value.exists.return_value = False
+        mock_path.return_value.read_bytes.side_effect = (b'cert_data', b'key_data')
         m_open = mock_open()
 
         with patch('seleniumwire.utils.open', m_open):
+            extract_cert_and_key(Path('some', 'path'), cert_path='cert_path', key_path='key_path')
+
+        mock_os.makedirs.assert_called_once_with(Path('some', 'path'), exist_ok=True)
+        mock_path.assert_has_calls(
+            [
+                call(Path('some', 'path'), 'seleniumwire-ca.pem'),
+                call().exists(),
+                call('cert_path'),
+                call().read_bytes(),
+                call('key_path'),
+                call().read_bytes(),
+            ]
+        )
+        assert mock_pkgutil.get_data.call_count == 0
+        m_open.assert_called_once_with(mock_path.return_value, 'wb')
+        m_open.return_value.write.assert_called_once_with(b'cert_data\nkey_data')
+
+    @patch('seleniumwire.utils.Path')
+    def test_extract_user_supplied_cert_missing_key(self, mock_path):
+        mock_path.return_value.exists.return_value = False
+
+        with patch('seleniumwire.utils.os'), self.assertRaises(ValueError):
+            extract_cert_and_key(Path('some', 'path'), cert_path='cert_path')
+
+    @patch('seleniumwire.utils.Path')
+    def test_extract_cert_and_key_exists(self, mock_path):
+        mock_path.return_value.exists.return_value = True
+        m_open = mock_open()
+
+        with patch('seleniumwire.utils.os'), patch('seleniumwire.utils.open', m_open):
             extract_cert_and_key(Path('some', 'path'))
 
         m_open.assert_not_called()
 
-    @patch('seleniumwire.utils.os')
     @patch('seleniumwire.utils.Path')
-    def test_extract_cert_and_key_no_check(self, mock_path, mock_os):
+    def test_extract_cert_and_key_no_check(self, mock_path):
         mock_path.return_value.exists.return_value = True
         m_open = mock_open()
 
-        with patch('seleniumwire.utils.open', m_open):
+        with patch('seleniumwire.utils.os'), patch('seleniumwire.utils.open', m_open):
             extract_cert_and_key(Path('some', 'path'), check_exists=False)
 
         m_open.assert_called_once()
