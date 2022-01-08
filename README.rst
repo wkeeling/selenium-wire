@@ -117,6 +117,8 @@ Table of Contents
 
 - `Certificates`_
 
+  * `Using Your Own Certificate`_
+
 - `All Options`_
 
 - `License`_
@@ -553,12 +555,12 @@ Selenium Wire works by redirecting browser traffic through an internal proxy ser
 Request Storage
 ~~~~~~~~~~~~~~~
 
-Captured requests and responses are stored in the system temp folder by default (that's ``/tmp`` on Linux and usually ``C:\Users\<username>\AppData\Local\Temp`` on Windows). You can change this location with the ``request_storage_base_dir`` option:
+Captured requests and responses are stored in the system temp folder by default (that's ``/tmp`` on Linux and usually ``C:\Users\<username>\AppData\Local\Temp`` on Windows) in a sub-folder called ``.seleniumwire``. To change where the ``.seleniumwire`` folder gets created you can use the ``request_storage_base_dir`` option:
 
 .. code:: python
 
     options = {
-        'request_storage_base_dir': '/my/storage/folder'  # Use /my/storage/folder to store requests
+        'request_storage_base_dir': '/my/storage/folder'  # .seleniumwire will get created here
     }
     driver = webdriver.Chrome(seleniumwire_options=options)
 
@@ -709,9 +711,16 @@ See the `undetected_chromedriver docs <https://github.com/ultrafunkamsterdam/und
 Certificates
 ~~~~~~~~~~~~
 
-Selenium Wire uses it's own root certificate to decrypt HTTPS traffic. It is not normally necessary for the browser to trust this certificate because Selenium Wire tells the browser to add it as an exception. This will allow the browser to function normally, but it will display a "Not Secure" message in the address bar. If you wish to get rid of this message you can install the root certificate manually.
+Selenium Wire uses it's own root certificate to decrypt HTTPS traffic. It is not normally necessary for the browser to trust this certificate because Selenium Wire tells the browser to add it as an exception. This will allow the browser to function normally, but it will display a "Not Secure" message (and/or unlocked padlock) in the address bar. If you wish to get rid of this message you can install the root certificate manually.
 
 You can download the root certificate `here <https://github.com/wkeeling/selenium-wire/raw/master/seleniumwire/ca.crt>`__. Once downloaded, navigate to "Certificates" in your browser settings and import the certificate in the "Authorities" section.
+
+Using Your Own Certificate
+--------------------------
+
+If you would like to use your own root certificate you can supply the path to the certificate and the private key using the ``ca_cert`` and ``ca_key`` options.
+
+If you do specify your own certificate, be sure to manually delete Selenium Wire's `temporary storage folder <#request-storage>`_. This will clear out any existing certificates that may have been cached from previous runs.
 
 All Options
 ~~~~~~~~~~~
@@ -732,6 +741,26 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
 
 ``auto_config``
     Whether Selenium Wire should auto-configure the browser for request capture. ``True`` by default.
+
+``ca_cert``
+    The path to a root (CA) certificate if you prefer to use your own certificate rather than use the default.
+
+.. code:: python
+
+    options = {
+        'ca_cert': '/path/to/ca.crt'  # Use own root certificate
+    }
+    driver = webdriver.Chrome(seleniumwire_options=options)
+
+``ca_key``
+    The path to the private key if you're using your own root certificate. The key must always be supplied when using your own certificate.
+
+.. code:: python
+
+    options = {
+        'ca_key': '/path/to/ca.key'  # Path to private key
+    }
+    driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``disable_capture``
     Disable request capture. When ``True`` nothing gets intercepted or stored. ``False`` by default.
@@ -818,12 +847,12 @@ A summary of all options that can be passed to Selenium Wire via the ``seleniumw
     driver = webdriver.Chrome(seleniumwire_options=options)
 
 ``request_storage_base_dir``
-    The location where Selenium Wire stores captured requests and responses when using its default disk based storage. This defaults to the system temp folder (that's ``/tmp`` on Linux and usually ``C:\Users\<username>\AppData\Local\Temp`` on Windows).
+    The base location where Selenium Wire stores captured requests and responses when using its default disk based storage. This defaults to the system temp folder (that's ``/tmp`` on Linux and usually ``C:\Users\<username>\AppData\Local\Temp`` on Windows). A sub-folder called ``.seleniumwire`` will get created here to store the captured data.
 
 .. code:: python
 
     options = {
-        'request_storage_base_dir': '/my/storage/folder'  # Use /my/storage/folder to store requests
+        'request_storage_base_dir': '/my/storage/folder'  # .seleniumwire will get created here
     }
     driver = webdriver.Chrome(seleniumwire_options=options)
 
