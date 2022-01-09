@@ -535,6 +535,23 @@ def test_switch_proxy_on_the_fly(driver_path, chrome_options, httpbin, httpproxy
 
             assert 'This passed through a authenticated http proxy' in driver.page_source
 
+        assert driver.last_request.cert
+
+
+def test_clear_proxy_on_the_fly(driver_path, chrome_options, httpbin, httpproxy):
+    sw_options = {'proxy': {'https': f'{httpproxy}'}}
+
+    with create_driver(driver_path, chrome_options, sw_options) as driver:
+        driver.get(f'{httpbin}/html')
+
+        assert 'This passed through a http proxy' in driver.page_source
+
+        driver.proxy = {}
+
+        driver.get(f'{httpbin}/html')
+
+        assert 'This passed through a http proxy' not in driver.page_source
+
 
 def test_har_encoded_brotli_response(driver_path, chrome_options, httpbin):
     with create_driver(driver_path, chrome_options, {'enable_har': True}) as driver:

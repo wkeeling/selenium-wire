@@ -19,9 +19,8 @@ from selenium.webdriver import Firefox as _Firefox
 from selenium.webdriver import Remote as _Remote
 from selenium.webdriver import Safari as _Safari
 
-from seleniumwire import backend
+from seleniumwire import backend, utils
 from seleniumwire.inspect import InspectRequestsMixin
-from seleniumwire.utils import build_proxy_args, get_upstream_proxy, urlsafe_address
 
 SELENIUM_V4 = parse_version(getattr(selenium, '__version__', '0')) >= parse_version('4.0.0')
 
@@ -39,7 +38,7 @@ class DriverCommonMixin:
             options=seleniumwire_options,
         )
 
-        addr, port = urlsafe_address(self.backend.address())
+        addr, port = utils.urlsafe_address(self.backend.address())
 
         config = {
             'proxy': {
@@ -106,7 +105,19 @@ class DriverCommonMixin:
         Args:
             proxy_conf: The proxy configuration.
         """
-        self.backend.master.options.update(**build_proxy_args(get_upstream_proxy({'proxy': proxy_conf})))
+        options = self.backend.master.options
+
+        if proxy_conf:
+            options.update(**utils.build_proxy_args(utils.get_upstream_proxy({'proxy': proxy_conf})))
+        else:
+            options.update(
+                **{
+                    utils.MITM_MODE: options.default(utils.MITM_MODE),
+                    utils.MITM_UPSTREAM_AUTH: options.default(utils.MITM_UPSTREAM_AUTH),
+                    utils.MITM_UPSTREAM_CUSTOM_AUTH: options.default(utils.MITM_UPSTREAM_CUSTOM_AUTH),
+                    utils.MITM_NO_PROXY: options.default(utils.MITM_NO_PROXY),
+                }
+            )
 
 
 class Firefox(InspectRequestsMixin, DriverCommonMixin, _Firefox):

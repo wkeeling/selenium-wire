@@ -675,6 +675,8 @@ If you want to change the proxy settings for an existing driver instance, use th
 
     driver.get(...)  # These requests will use the new proxy
 
+To clear a proxy, set ``driver.proxy`` to an empty dict ``{}``.
+
 This mechanism also supports the ``no_proxy`` and ``custom_authorization`` options.
 
 Bot Detection
