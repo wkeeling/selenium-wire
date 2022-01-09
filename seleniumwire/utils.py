@@ -15,6 +15,11 @@ ROOT_CERT = 'ca.crt'
 ROOT_KEY = 'ca.key'
 COMBINED_CERT = 'seleniumwire-ca.pem'
 
+MITM_MODE = 'mode'
+MITM_UPSTREAM_AUTH = 'upstream_auth'
+MITM_UPSTREAM_CUSTOM_AUTH = 'upstream_custom_auth'
+MITM_NO_PROXY = 'no_proxy'
+
 
 def get_upstream_proxy(options):
     """Get the upstream proxy configuration from the options dictionary.
@@ -93,20 +98,20 @@ def build_proxy_args(proxy_config: Dict[str, NamedTuple]) -> Dict[str, str]:
     if conf:
         scheme, username, password, hostport = conf
 
-        args['mode'] = 'upstream:{}://{}'.format(scheme, hostport)
+        args[MITM_MODE] = 'upstream:{}://{}'.format(scheme, hostport)
 
         if username:
-            args['upstream_auth'] = '{}:{}'.format(username, password)
+            args[MITM_UPSTREAM_AUTH] = '{}:{}'.format(username, password)
 
         custom_auth = proxy_config.get('custom_authorization')
 
         if custom_auth:
-            args['upstream_custom_auth'] = custom_auth
+            args[MITM_UPSTREAM_CUSTOM_AUTH] = custom_auth
 
         no_proxy = proxy_config.get('no_proxy')
 
         if no_proxy:
-            args['no_proxy'] = no_proxy
+            args[MITM_NO_PROXY] = no_proxy
 
     return args
 
