@@ -25,7 +25,7 @@ class MitmProxy:
 
         # Used to stored captured requests
         self.storage = storage.create(**self._get_storage_args())
-        extract_cert_and_key(self.storage.home_dir)
+        extract_cert_and_key(self.storage.home_dir, cert_path=options.get('ca_cert'), key_path=options.get('ca_key'))
 
         # Used to modify requests/responses passing through the server
         # DEPRECATED. Will be superceded by request/response interceptors.

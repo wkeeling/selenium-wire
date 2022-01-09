@@ -129,7 +129,7 @@ def extract_cert(cert_name='ca.crt'):
         log.info('{} extracted. You can now import this into a browser.'.format(cert_name))
 
 
-def extract_cert_and_key(dest_folder, check_exists=True):
+def extract_cert_and_key(dest_folder, cert_path=None, key_path=None, check_exists=True):
     """Extracts the root certificate and key and combines them into a
     single file called seleniumwire-ca.pem in the specified destination
     folder.
@@ -137,19 +137,30 @@ def extract_cert_and_key(dest_folder, check_exists=True):
     Args:
         dest_folder: The destination folder that the combined certificate
             and key will be written to.
-        check_exists: If True the destination file will not be overwritten
-            if it already exists.
+        cert_path: Optional path to the root certificate. When not supplied
+            selenium wire's own root certificate will be used.
+        key_path: Optional path to the private key. When not supplied
+            selenium wire's own private key will be used. Note that the key
+            must always be supplied when a certificate is supplied.
+        check_exists: If True the combined file will not be overwritten
+            if it already exists in the destination folder.
     """
     os.makedirs(dest_folder, exist_ok=True)
     combined_path = Path(dest_folder, COMBINED_CERT)
     if check_exists and combined_path.exists():
         return
 
-    root_cert = pkgutil.get_data(__package__, ROOT_CERT)
-    root_key = pkgutil.get_data(__package__, ROOT_KEY)
+    if cert_path is not None and key_path is not None:
+        root_cert = Path(cert_path).read_bytes()
+        root_key = Path(key_path).read_bytes()
+    elif cert_path is not None or key_path is not None:
+        raise ValueError('A certificate and key must both be supplied')
+    else:
+        root_cert = pkgutil.get_data(__package__, ROOT_CERT)
+        root_key = pkgutil.get_data(__package__, ROOT_KEY)
 
     with open(combined_path, 'wb') as f_out:
-        f_out.write(root_cert + root_key)
+        f_out.write(root_cert + b'\n' + root_key)
 
 
 def is_list_alike(container):

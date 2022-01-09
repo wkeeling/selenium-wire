@@ -47,7 +47,9 @@ class MitmProxyTest(TestCase):
             {},
         )
 
-        self.mock_extract_cert_and_key.assert_called_once_with('/some/dir/.seleniumwire')
+        self.mock_extract_cert_and_key.assert_called_once_with(
+            '/some/dir/.seleniumwire', cert_path=None, key_path=None
+        )
 
     def test_creates_master(self):
         self.mock_get_upstream_proxy.return_value = 'mock proxy'
