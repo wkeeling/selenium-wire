@@ -1,6 +1,12 @@
 History
 ~~~~~~~
 
+4.6.0 (2022-01-10)
+------------------
+
+* Configurable root certificate and private key.
+* Fix bug where it was not possible to clear a proxy once set.
+
 4.5.6 (2021-11-26)
 ------------------
 
