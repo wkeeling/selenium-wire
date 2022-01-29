@@ -181,12 +181,9 @@ class RequestStorage:
         request_dir = self._get_request_dir(request_id)
 
         with open(os.path.join(request_dir, 'request'), 'rb') as req:
-            try:
-                request = pickle.load(req)
-            except Exception:
-                # Errors may sometimes occur with unpickling - e.g.
-                # sometimes data hasn't been fully flushed to disk
-                # by the OS by the time we come to unpickle it.
+            request = self._unpickle(req)
+
+            if request is None:
                 return None
 
             ws_messages = self._ws_messages.get(request.id)
@@ -198,18 +195,36 @@ class RequestStorage:
             try:
                 # Attach the response if there is one.
                 with open(os.path.join(request_dir, 'response'), 'rb') as res:
-                    response = pickle.load(res)
-                    request.response = response
+                    response = self._unpickle(res)
 
-                    # The certificate data has been stored on the response but we make
-                    # it available on the request which is a more logical location.
-                    if hasattr(response, 'cert'):
-                        request.cert = response.cert
-                        del response.cert
+                    if response is not None:
+                        request.response = response
+
+                        # The certificate data has been stored on the response but we make
+                        # it available on the request which is a more logical location.
+                        if hasattr(response, 'cert'):
+                            request.cert = response.cert
+                            del response.cert
             except (FileNotFoundError, EOFError):
                 pass
 
         return request
+
+    def _unpickle(self, f):
+        """Unpickle the object specified by the file f.
+
+        If unpickling fails return None.
+        """
+        try:
+            return pickle.load(f)
+        except Exception:
+            # Errors may sometimes occur with unpickling - e.g.
+            # sometimes data hasn't been fully flushed to disk
+            # by the OS by the time we come to unpickle it.
+            if log.isEnabledFor(logging.DEBUG):
+                log.exception('Error unpickling object')
+
+            return None
 
     def load_last_request(self) -> Optional[Request]:
         """Load the last saved request.
@@ -240,8 +255,10 @@ class RequestStorage:
 
             try:
                 with open(os.path.join(request_dir, 'har_entry'), 'rb') as f:
-                    entry = pickle.load(f)
-                    entries.append(entry)
+                    entry = self._unpickle(f)
+
+                    if entry is not None:
+                        entries.append(entry)
             except FileNotFoundError:
                 # HAR entries aren't necessarily saved with each request.
                 pass
