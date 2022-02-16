@@ -694,21 +694,19 @@ If you wish to take advantage of this make sure you have undetected_chromedriver
 
     pip install undetected-chromedriver
 
-Then you can select the version of undetected_chromedriver you want to use by importing ``Chrome`` and ``ChromeOptions`` from the appropriate package.
-
-For undetected_chromedriver version 1:
+Then in your code, import the ``seleniumwire.undetected_chromedriver`` package:
 
 .. code:: python
 
-    from seleniumwire.undetected_chromedriver import Chrome, ChromeOptions
+    import seleniumwire.undetected_chromedriver as uc
 
-For undetected_chromedriver version 2:
+    chrome_options = uc.ChromeOptions()
 
-.. code:: python
+    driver = uc.Chrome(
+        options=chrome_options,
+        seleniumwire_options={}
+    )
 
-    from seleniumwire.undetected_chromedriver.v2 import Chrome, ChromeOptions
-
-See the `undetected_chromedriver docs <https://github.com/ultrafunkamsterdam/undetected-chromedriver>`_ for differences between the two versions.
 
 Certificates
 ~~~~~~~~~~~~
