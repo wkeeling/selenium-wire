@@ -61,7 +61,7 @@ setup(
             'gunicorn',
             'httpbin',
             'isort',
-            'mitmproxy',  # Needed for end2end tests
+            "mitmproxy>5.3.0; python_version>='3.8.0'",  # Needed for end2end tests
             'mypy',
             'pre-commit',
             'pytest',
