@@ -1,6 +1,12 @@
 History
 ~~~~~~~
 
+4.6.1 (2022-02-21)
+------------------
+
+* Fix compatibility issue with undetected_chromedriver.
+* Handle occasional unpickle error when loading captured requests from disk.
+
 4.6.0 (2022-01-10)
 ------------------
 
