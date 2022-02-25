@@ -1,23 +1,29 @@
 repos:
-- repo: local
+- repo: https://github.com/PyCQA/isort
+  rev: 5.10.1
   hooks:
     - id: isort
-      name: isort
-      entry: isort
-      stages: [commit]
-      language: system
-      files: \.py$
+- repo: https://github.com/psf/black
+  rev: 22.1.0
+  hooks:
     - id: black
-      name: black
-      entry: black
-      stages: [commit]
       args: [--config=pyproject.toml]
-      language: system
-      files: \.py$
+- repo: https://github.com/pycqa/flake8
+  rev: 4.0.1
+  hooks:
     - id: flake8
-      name: flake8
-      entry: flake8
-      stages: [commit]
       args: [--config=.flake8]
-      language: system
-      files: \.py$
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.1.0
+  hooks:
+    - id: trailing-whitespace
+      args: ["--markdown-linebreak-ext=md,markdown"]
+    - id: end-of-file-fixer
+    - id: check-yaml
+    - id: check-ast
+    - id: fix-byte-order-marker
+    - id: check-merge-conflict
+    - id: debug-statements
+    - id: detect-private-key
+    - id: detect-aws-credentials
+      args: ["--allow-missing-credentials"]
