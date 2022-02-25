@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+4.6.2 (2022-02-25)
+------------------
+
+* Fix import error with missing TouchActions in Selenium>4.1.0
+
 4.6.1 (2022-02-21)
 ------------------
 
