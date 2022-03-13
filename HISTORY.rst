@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+4.6.3 (2022-03-13)
+------------------
+
+* Fix bug with dynamic switching of upstream proxy.
+
 4.6.2 (2022-02-25)
 ------------------
 
