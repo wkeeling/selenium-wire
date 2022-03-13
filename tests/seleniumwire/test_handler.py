@@ -10,8 +10,6 @@ from seleniumwire.thirdparty.mitmproxy.net.http.headers import Headers
 class InterceptRequestHandlerTest(TestCase):
     def setUp(self):
         self.proxy = Mock()
-        self.proxy.storage = Mock()
-        self.proxy.modifier = Mock()
         self.proxy.options = {}
         self.proxy.scopes = []
         self.proxy.request_interceptor = None
@@ -150,7 +148,7 @@ class InterceptRequestHandlerTest(TestCase):
 
         self.handler.response(self.mock_flow)
 
-        self.assertEqual(0, self.proxy.storage.save_response.call_count)
+        self.proxy.storage.save_response.assert_not_called()
 
     def test_ignore_request_url_out_of_scope(self):
         self.mock_flow.request.url = 'https://server2/some/path'
@@ -163,7 +161,7 @@ class InterceptRequestHandlerTest(TestCase):
         # self.handler.requestheaders(self.mock_flow)
         self.handler.request(self.mock_flow)
 
-        self.assertEqual(0, self.proxy.storage.save_request.call_count)
+        self.proxy.storage.save_request.assert_not_called()
 
     def test_ignore_request_method_out_of_scope(self):
         self.mock_flow.request.url = 'https://server2/some/path'
@@ -175,7 +173,7 @@ class InterceptRequestHandlerTest(TestCase):
 
         self.handler.request(self.mock_flow)
 
-        self.assertEqual(0, self.proxy.storage.save_request.call_count)
+        self.proxy.storage.save_request.assert_not_called()
 
     def test_stream_request_out_of_scope(self):
         self.mock_flow.request.url = 'https://server2/some/path'
@@ -286,7 +284,7 @@ class InterceptRequestHandlerTest(TestCase):
             mock_hasattr.return_value = False
             self.handler.websocket_message(self.mock_flow)
 
-        self.assertEqual(0, self.proxy.storage.save_ws_message.call_count)
+        self.proxy.storage.save_ws_message.assert_not_called()
 
     @patch('seleniumwire.handler.har')
     def test_save_har_entry(self, mock_har):
@@ -311,8 +309,8 @@ class InterceptRequestHandlerTest(TestCase):
 
         self.handler.response(self.mock_flow)
 
-        self.assertEqual(0, self.proxy.storage.save_har_entry.call_count)
-        self.assertEqual(0, mock_har.create_har_entry.call_count)
+        self.proxy.storage.save_har_entry.assert_not_called()
+        mock_har.create_har_entry.assert_not_called()
 
     def test_mismatched_upstream_proxy(self):
         self.mock_flow.server_conn.via = Mock(address=('localhost', 8081))
