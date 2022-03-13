@@ -26,6 +26,14 @@ class InterceptRequestHandler:
             flow.request.stream = False
 
     def request(self, flow):
+        if flow.server_conn.via:
+            if flow.server_conn.via.address != self.proxy.master.server.config.upstream_server.address:
+                # If the flow's upstream proxy doesn't match what's currently configured
+                # (which may happen if the proxy configuration has been changed since the
+                # flow was started) we need to tell the client to re-establish a connection.
+                flow.client_conn.finish()
+                return
+
         # Make any modifications to the original request
         # DEPRECATED. This will be replaced by request_interceptor
         self.proxy.modifier.modify_request(flow.request, bodyattr='raw_content')
