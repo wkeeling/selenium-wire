@@ -1,9 +1,10 @@
 from unittest.mock import patch
 
 import pytest
+from selenium.webdriver import chrome
 from selenium.webdriver.common.proxy import ProxyType
 
-from seleniumwire.webdriver import Chrome, ChromeOptions, Firefox
+from seleniumwire.webdriver import Chrome, ChromeOptions, Firefox, Safari
 
 
 @pytest.fixture(autouse=True)
@@ -36,6 +37,17 @@ class TestFirefoxWebDriver:
         assert firefox.backend
         mock_backend.create.assert_called_once_with(addr='127.0.0.1', port=0, options={})
         mock_backend.create.return_value.address.assert_called_once_with()
+
+    def test_pass_backend(self):
+        from seleniumwire import backend
+        with patch.object(backend, "create") as mock_create:
+            mock_create.return_value.address.return_value = ('127.0.0.1', 12345)
+            mitm_proxy = backend.create(addr='127.0.0.1', port=0, options={})
+            firefox = Firefox(mitm_proxy=mitm_proxy)
+
+        assert firefox.backend
+        mock_create.assert_called_once_with(addr='127.0.0.1', port=0, options={})
+        mock_create.return_value.address.assert_called_once_with()
 
     def test_allow_hijacking_localhost(self, firefox_super_kwargs):
         Firefox()
@@ -127,6 +139,17 @@ class TestChromeWebDriver:
         assert chrome.backend
         mock_backend.create.assert_called_once_with(addr='127.0.0.1', port=0, options={})
         mock_backend.create.return_value.address.assert_called_once_with()
+
+    def test_pass_backend(self):
+        from seleniumwire import backend
+        with patch.object(backend, "create") as mock_create:
+            mock_create.return_value.address.return_value = ('127.0.0.1', 12345)
+            mitm_proxy = backend.create(addr='127.0.0.1', port=0, options={})
+            chrome = Chrome(mitm_proxy=mitm_proxy)
+
+        assert chrome.backend
+        mock_create.assert_called_once_with(addr='127.0.0.1', port=0, options={})
+        mock_create.return_value.address.assert_called_once_with()
 
     def test_proxy_bypass_list(self, chrome_super_kwargs):
         Chrome()

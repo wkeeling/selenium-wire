@@ -12,6 +12,7 @@ except ImportError as e:
 from seleniumwire.inspect import InspectRequestsMixin
 from seleniumwire.utils import urlsafe_address
 from seleniumwire.webdriver import DriverCommonMixin
+from seleniumwire.server import MitmProxy
 
 log = logging.getLogger(__name__)
 
@@ -20,16 +21,20 @@ class Chrome(InspectRequestsMixin, DriverCommonMixin, uc.Chrome):
     """Extends the undetected_chrome Chrome webdriver to provide additional
     methods for inspecting requests."""
 
-    def __init__(self, *args, seleniumwire_options=None, **kwargs):
+    def __init__(self, *args, seleniumwire_options=None, mitm_proxy: MitmProxy = None, **kwargs):
         """Initialise a new Chrome WebDriver instance.
 
         Args:
             seleniumwire_options: The seleniumwire options dictionary.
+            mitm_proxy: if you pass your own MitmProxy, seleniumwire will use it insteadof creating a new one
         """
         if seleniumwire_options is None:
             seleniumwire_options = {}
 
-        config = self._setup_backend(seleniumwire_options)
+        if mitm_proxy is None:
+            config = self._setup_backend(seleniumwire_options)
+        else:
+            config = self._set_backend(mitm_proxy, seleniumwire_options)
 
         if seleniumwire_options.get('auto_config', True):
             capabilities = kwargs.get('desired_capabilities')
