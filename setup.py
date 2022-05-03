@@ -43,6 +43,7 @@ setup(
         'pyparsing>=2.4.2',
         'pysocks>=1.7.1',
         'selenium>=3.4.0',
+        'werkzeug==2.0.3',
         'wsproto>=0.14',
         'zstandard>=0.14.1',
     ],
