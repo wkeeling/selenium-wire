@@ -69,6 +69,7 @@ setup(
             'pytest-cov',
             'tox',
             'twine',
+            'werkzeug==2.0.3',
             'wheel',
         ],
     },
