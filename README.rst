@@ -97,6 +97,7 @@ Table of Contents
   * `Example: Add a response header`_
   * `Example: Add a request parameter`_
   * `Example: Update JSON in a POST request body`_
+  * `Example: Basic authentication`_
   * `Example: Block a request`_
   * `Example: Mock a response`_
   * `Unset an interceptor`_
@@ -445,6 +446,30 @@ Example: Update JSON in a POST request body
 
     driver.request_interceptor = interceptor
     driver.get(...)
+
+Example: Basic authentication
+-----------------------------
+
+If a site requires a username/password, you can use an interceptor to pass the authentication credentials with each request. This will stop the browser from displaying a username/password popup.
+
+.. code:: python
+
+    import base64
+
+    auth = (
+        base64.encodebytes('my_username:my_password'.encode())
+        .decode()
+        .strip()
+    )
+
+    def interceptor(request):
+        if req.host == 'host_that_needs_auth':
+            req.headers['Authorization'] = f'Basic {auth}'
+
+    driver.request_interceptor = interceptor
+    driver.get(...)
+
+    # Credentials will be transmitted with every request to "host_that_needs_auth"
 
 Example: Block a request
 ------------------------
