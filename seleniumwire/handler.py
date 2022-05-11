@@ -58,7 +58,7 @@ class InterceptRequestHandler:
                 )
             else:
                 flow.request.method = request.method
-                flow.request.url = request.url
+                flow.request.url = request.url.replace('wss://', 'https://', 1)
                 flow.request.headers = self._to_headers_obj(request.headers)
                 flow.request.raw_content = request.body
 
@@ -141,9 +141,9 @@ class InterceptRequestHandler:
         )
 
         # For websocket requests, the scheme of the request is overwritten with https
-        # in the initial CONNECT request so this hack explicitly sets the scheme back to wss.
+        # in the initial CONNECT request so we set the scheme back to wss for capture.
         if websockets.check_handshake(request.headers) and websockets.check_client_version(request.headers):
-            request.url = request.url.replace('https', 'wss', 1)
+            request.url = request.url.replace('https://', 'wss://', 1)
 
         request.response = response
 
