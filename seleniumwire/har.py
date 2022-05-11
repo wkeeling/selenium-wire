@@ -173,7 +173,7 @@ def generate_har(entries: List[dict]) -> str:
             "version": "1.2",
             "creator": {
                 "name": "Selenium Wire HAR dump",
-                "version": "0.1",
+                "version": seleniumwire.__version__,
                 "comment": f"Selenium Wire version {seleniumwire.__version__}",
             },
             "entries": entries,
