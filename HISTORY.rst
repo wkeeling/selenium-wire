@@ -1,6 +1,11 @@
 History
 ~~~~~~~
 
+4.6.4 (2022-05-11)
+------------------
+
+* Fix bug where setting an interceptor would break websocket requests.
+
 4.6.3 (2022-03-13)
 ------------------
 
