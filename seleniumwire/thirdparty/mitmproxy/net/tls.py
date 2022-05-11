@@ -196,6 +196,13 @@ def _create_ssl_context(
 
     # Cipher List
     if cipher_list:
+        # print(f'old ciphers: {cipher_list}')
+        # ciphers = cipher_list.split(':')
+        # import random
+        # idx = random.randint(0, len(ciphers) - 1)
+        # ciphers[idx+1: idx+2] = [ciphers[idx]]
+        # cipher_list = ':'.join(ciphers)
+        # print(f'new ciphers: {cipher_list}')
         try:
             context.set_cipher_list(cipher_list.encode())
         except SSL.Error as v:
