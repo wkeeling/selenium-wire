@@ -140,7 +140,7 @@ Browser Setup
 
 No specific configuration should be necessary except to ensure that you have downloaded the `ChromeDriver`_ and `GeckoDriver`_ for Chrome and Firefox to be remotely controlled, the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on your PATH.
 
-.. _`ChromeDriver`: https://sites.google.com/a/chromium.org/chromedriver/
+.. _`ChromeDriver`: https://sites.google.com/chromium.org/driver/
 
 .. _`GeckoDriver`: https://github.com/mozilla/geckodriver/
 
