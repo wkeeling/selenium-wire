@@ -12,7 +12,7 @@ from seleniumwire.utils import build_proxy_args, extract_cert_and_key, get_upstr
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_SSL_INSECURE = True
+DEFAULT_VERIFY_SSL = False
 DEFAULT_STREAM_WEBSOCKETS = True
 DEFAULT_SUPPRESS_CONNECTION_ERRORS = True
 
@@ -50,7 +50,7 @@ class MitmProxy:
             confdir=self.storage.home_dir,
             listen_host=host,
             listen_port=port,
-            ssl_insecure=options.get('verify_ssl', DEFAULT_SSL_INSECURE),
+            ssl_insecure=not options.get('verify_ssl', DEFAULT_VERIFY_SSL),
             stream_websockets=DEFAULT_STREAM_WEBSOCKETS,
             suppress_connection_errors=options.get('suppress_connection_errors', DEFAULT_SUPPRESS_CONNECTION_ERRORS),
             **build_proxy_args(get_upstream_proxy(self.options)),

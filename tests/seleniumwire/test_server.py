@@ -152,6 +152,17 @@ class MitmProxyTest(TestCase):
         self.mock_master.return_value.shutdown.assert_called_once_with()
         self.mock_storage.create.return_value.cleanup.assert_called_once_with()
 
+    def test_verify_ssl(self):
+        MitmProxy('somehost', 12345, {'verify_ssl': True})
+
+        self.mock_options.return_value.update.assert_has_calls(
+            [
+                self.base_options_update(
+                    ssl_insecure=False,
+                ),
+            ]
+        )
+
     def setUp(self):
         patcher = patch('seleniumwire.server.storage')
         self.mock_storage = patcher.start()
