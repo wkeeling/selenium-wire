@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 import pytest
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.by import By
 
 import seleniumwire
 from seleniumwire import webdriver
@@ -263,7 +264,7 @@ def test_update_json_post_request(driver_path, chrome_options, httpbin):
 
         form = Path(__file__).parent / 'jsonform.html'
         driver.get(f'file:///{str(form)}')
-        button = driver.find_element_by_id('submit')
+        button = driver.find_element(By.ID, 'submit')
         button.click()  # Makes Ajax request so need to wait for it
         request = driver.wait_for_request('/post')
 
