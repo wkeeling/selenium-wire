@@ -25,6 +25,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
     description="Extends Selenium to give you the ability to inspect requests made by the browser.",
     license="MIT",
@@ -43,7 +44,6 @@ setup(
         'pyparsing>=2.4.2',
         'pysocks>=1.7.1',
         'selenium>=3.4.0',
-        'werkzeug==2.0.3',
         'wsproto>=0.14',
         'zstandard>=0.14.1',
     ],
@@ -80,6 +80,6 @@ setup(
     test_suite='tests.seleniumwire',
     tests_require=['pytest'],
     url='https://github.com/wkeeling/selenium-wire',
-    version='4.6.4',
+    version='4.6.5',
     zip_safe=False,
 )
