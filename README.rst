@@ -463,8 +463,8 @@ If a site requires a username/password, you can use an interceptor to pass the a
     )
 
     def interceptor(request):
-        if req.host == 'host_that_needs_auth':
-            req.headers['Authorization'] = f'Basic {auth}'
+        if request.host == 'host_that_needs_auth':
+            request.headers['Authorization'] = f'Basic {auth}'
 
     driver.request_interceptor = interceptor
     driver.get(...)
