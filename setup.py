@@ -80,6 +80,6 @@ setup(
     test_suite='tests.seleniumwire',
     tests_require=['pytest'],
     url='https://github.com/wkeeling/selenium-wire',
-    version='4.6.5',
+    version='4.6.4',
     zip_safe=False,
 )
