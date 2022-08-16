@@ -374,7 +374,7 @@ Example: Add a request header
 
     # All requests will now contain New-Header
 
-How can I check that a header has been set correctly? You can print the headers from captured requests after the page has loaded (using ``driver.requests``), or alternatively point the webdriver at https://httpbin.org/headers which will echo the request headers back to the browser so you can view them.
+How can I check that a header has been set correctly? You can print the headers from captured requests after the page has loaded using ``driver.requests``, or alternatively point the webdriver at https://httpbin.org/headers which will echo the request headers back to the browser so you can view them.
 
 Example: Replace an existing request header
 -------------------------------------------
@@ -450,7 +450,7 @@ Example: Update JSON in a POST request body
 Example: Basic authentication
 -----------------------------
 
-If a site requires a username/password, you can use an interceptor to pass the authentication credentials with each request. This will stop the browser from displaying a username/password popup.
+If a site requires a username/password, you can use a request interceptor to add authentication credentials to each request. This will stop the browser from displaying a username/password pop-up.
 
 .. code:: python
 
