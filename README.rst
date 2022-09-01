@@ -9,7 +9,7 @@ Selenium Wire extends `Selenium's <https://www.selenium.dev/documentation/en/>`_
 .. image:: https://codecov.io/gh/wkeeling/selenium-wire/branch/master/graph/badge.svg
         :target: https://codecov.io/gh/wkeeling/selenium-wire
 
-.. image:: https://img.shields.io/badge/python-3.6%2C%203.7%2C%203.8%2C%203.9%2C%203.10-blue.svg
+.. image:: https://img.shields.io/badge/python-3.7%2C%203.8%2C%203.9%2C%203.10-blue.svg
         :target: https://pypi.python.org/pypi/selenium-wire
 
 .. image:: https://img.shields.io/pypi/v/selenium-wire.svg
@@ -69,9 +69,9 @@ Features
 Compatibilty
 ~~~~~~~~~~~~
 
-* Python 3.6+
-* Selenium 3.4.0+
-* Chrome, Firefox and Remote Webdriver supported
+* Python 3.7+
+* Selenium 4.0.0+
+* Chrome, Firefox, Edge and Remote Webdriver supported
 
 Table of Contents
 ~~~~~~~~~~~~~~~~~
@@ -138,16 +138,16 @@ If you get an error about not being able to build cryptography you may be runnin
 Browser Setup
 -------------
 
-No specific configuration should be necessary except to ensure that you have downloaded the `ChromeDriver`_ and `GeckoDriver`_ for Chrome and Firefox to be remotely controlled, the same as if you were using Selenium directly. Once downloaded, these executables should be placed somewhere on your PATH.
+No specific configuration should be necessary except to ensure that you have downloaded the relevent webdriver executable for your browser and placed it somewhere on your system PATH.
 
-.. _`ChromeDriver`: https://sites.google.com/chromium.org/driver/
-
-.. _`GeckoDriver`: https://github.com/mozilla/geckodriver/
+- `Download <https://sites.google.com/chromium.org/driver/>`__ webdriver for Chrome
+- `Download <https://github.com/mozilla/geckodriver/>`__ webdriver for Firefox
+- `Download <https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/>`__ webdriver for Edge
 
 OpenSSL
 -------
 
-Selenium Wire requires OpenSSL for decrypting HTTPS requests. This is normally already installed on most systems, but if it's not you can install it with:
+Selenium Wire requires OpenSSL for decrypting HTTPS requests. This is probably already installed on your system (you can check by running ``openssl version`` on the command line). If it's not installed you can install it with:
 
 **Linux**
 
@@ -181,23 +181,29 @@ Ensure that you import ``webdriver`` from the ``seleniumwire`` package:
 
     from seleniumwire import webdriver
 
-For sub-packages of ``webdriver``, you should continue to import these directly from ``selenium``. For example, to import ``WebDriverWait``:
+Then just instantiate the webdriver as you would if you were using Selenium directly. You can pass in any desired capabilities or browser specific options - such as the executable path, headless mode etc. Selenium Wire also has it's `own options`_ that can be passed in the ``seleniumwire_options`` attribute.
+
+.. code:: python
+
+    # Create the driver with no options (use defaults)
+    driver = webdriver.Chrome()
+
+    # Create using browser specific options and Selenium Wire options
+    driver = webdriver.Chrome(
+        options = webdriver.ChromeOptions(...),
+        seleniumwire_options={...}
+    )
+
+.. _`own options`: #all-options
+
+Note that for sub-packages of ``webdriver``, you should continue to import these directly from ``selenium``. For example, to import ``WebDriverWait``:
 
 .. code:: python
 
     # Sub-packages of webdriver must still be imported from `selenium` itself
     from selenium.webdriver.support.ui import WebDriverWait
 
-**Chrome and Firefox**
-
-For Chrome and Firefox you don't need to do anything special. Just instantiate the webdriver as you would normally with ``webdriver.Chrome()`` or ``webdriver.Firefox()`` passing in any `desired capabilities`_ and browser specific options for `Chrome`_ or `Firefox`_ , such as the executable path, headless mode etc. Selenium Wire also has it's `own options`_ that can be passed in the ``seleniumwire_options`` attribute.
-
-.. _`own options`: #all-options
-.. _`desired capabilities`: https://selenium-python.readthedocs.io/api.html#desired-capabilities
-.. _`Chrome`: https://selenium-python.readthedocs.io/api.html#module-selenium.webdriver.chrome.options
-.. _`Firefox`: https://selenium-python.readthedocs.io/api.html#module-selenium.webdriver.firefox.options
-
-**Remote**
+**Remote Webdriver**
 
 Selenium Wire has limited support for using the remote webdriver client. When you create an instance of the remote webdriver, you need to specify the hostname or IP address of the machine (or container) running Selenium Wire. This allows the remote instance to communicate back to Selenium Wire with its requests and responses.
 

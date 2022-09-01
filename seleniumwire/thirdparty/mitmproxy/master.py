@@ -79,7 +79,7 @@ class Master:
 
     def run_loop(self, loop):
         self.start()
-        asyncio.ensure_future(self.running())
+        asyncio.ensure_future(self.running(), loop=loop)
 
         exc = None
         try:
