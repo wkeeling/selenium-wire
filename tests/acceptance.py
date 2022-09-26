@@ -85,9 +85,8 @@ class BrowserIntegrationTest(TestCase):
         driver.quit()
 
     def test_edge_can_access_requests(self):
-        url = 'https://google.com/'
-        options = {'port': 12345}
-        driver = webdriver.Edge(seleniumwire_options=options)
+        url = 'https://www.wikipedia.org/'
+        driver = webdriver.Edge()
         driver.get(url)
 
         request = driver.wait_for_request(url)

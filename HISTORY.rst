@@ -1,6 +1,13 @@
 History
 ~~~~~~~
 
+5.0.0 (2022-09-26)
+------------------
+
+* Add support for Microsoft Edge to webdriver
+* Drop support for Python 3.6
+* Fix compatibility issue with PyOpenSSL
+
 4.6.5 (2022-07-09)
 ------------------
 

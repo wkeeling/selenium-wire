@@ -661,7 +661,7 @@ class TCPServer:
                         target=self.connection_thread,
                         args=(connection, client_address),
                     )
-                    t.setDaemon(1)
+                    t.daemon = True
                     try:
                         t.start()
                     except threading.ThreadError:

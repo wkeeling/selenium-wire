@@ -20,6 +20,7 @@ except ImportError:
 from selenium.webdriver import Chrome as _Chrome
 from selenium.webdriver import ChromeOptions, DesiredCapabilities
 from selenium.webdriver import Edge as _Edge
+from selenium.webdriver import EdgeOptions
 from selenium.webdriver import Firefox as _Firefox
 from selenium.webdriver import Remote as _Remote
 from selenium.webdriver import Safari as _Safari
@@ -209,7 +210,7 @@ class Chrome(InspectRequestsMixin, DriverCommonMixin, _Chrome):
                 for key, value in config.items():
                     chrome_options.set_capability(key, value)
             except AttributeError:
-                # Earlier versions of the Chrome webdriver API require the
+                # Earlier versions of the Chromium webdriver API require the
                 # DesiredCapabilities to be explicitly passed.
                 caps = kwargs.setdefault('desired_capabilities', DesiredCapabilities.CHROME.copy())
                 caps.update(config)
@@ -252,13 +253,29 @@ class Edge(InspectRequestsMixin, DriverCommonMixin, _Edge):
         if seleniumwire_options is None:
             seleniumwire_options = {}
 
-        # Edge does not support automatic proxy configuration through the
-        # DesiredCapabilities API, and thus has to be configured manually.
-        # Whatever port number is chosen for that manual configuration has to
-        # be passed in the options.
-        assert 'port' in seleniumwire_options, 'You must set a port number in the seleniumwire_options'
+        try:
+            # Pop-out the edge_options argument and always use the options
+            # argument to pass to the superclass.
+            edge_options = kwargs.pop('edge_options', None) or kwargs['options']
+        except KeyError:
+            edge_options = EdgeOptions()
 
-        self._setup_backend(seleniumwire_options)
+        # Prevent Edge from bypassing the Selenium Wire proxy
+        # for localhost addresses.
+        edge_options.add_argument('--proxy-bypass-list=<-loopback>')
+        kwargs['options'] = edge_options
+
+        config = self._setup_backend(seleniumwire_options)
+
+        if seleniumwire_options.get('auto_config', True):
+            try:
+                for key, value in config.items():
+                    edge_options.set_capability(key, value)
+            except AttributeError:
+                # Earlier versions of the Chromium webdriver API require the
+                # DesiredCapabilities to be explicitly passed.
+                caps = kwargs.setdefault('desired_capabilities', DesiredCapabilities.CHROME.copy())
+                caps.update(config)
 
         super().__init__(*args, **kwargs)
 
