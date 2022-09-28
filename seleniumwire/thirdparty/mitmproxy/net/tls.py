@@ -40,16 +40,12 @@ VERSION_CHOICES = {
     # SSLv23_METHOD + NO_SSLv2 + NO_SSLv3 == TLS 1.0+
     # TLSv1_METHOD would be TLS 1.0 only
     "secure": (DEFAULT_METHOD, DEFAULT_OPTIONS),
-    "SSLv2": (SSL.SSLv2_METHOD, BASIC_OPTIONS),
-    "SSLv3": (SSL.SSLv3_METHOD, BASIC_OPTIONS),
     "TLSv1": (SSL.TLSv1_METHOD, BASIC_OPTIONS),
     "TLSv1_1": (SSL.TLSv1_1_METHOD, BASIC_OPTIONS),
     "TLSv1_2": (SSL.TLSv1_2_METHOD, BASIC_OPTIONS),
 }
 
 METHOD_NAMES = {
-    SSL.SSLv2_METHOD: "SSLv2",
-    SSL.SSLv3_METHOD: "SSLv3",
     SSL.SSLv23_METHOD: "SSLv23",
     SSL.TLSv1_METHOD: "TLSv1",
     SSL.TLSv1_1_METHOD: "TLSv1.1",
@@ -151,7 +147,7 @@ def _create_ssl_context(
     """
     Creates an SSL Context.
 
-    :param method: One of SSLv2_METHOD, SSLv3_METHOD, SSLv23_METHOD, TLSv1_METHOD, TLSv1_1_METHOD, or TLSv1_2_METHOD
+    :param method: One of SSLv23_METHOD, TLSv1_METHOD, TLSv1_1_METHOD, or TLSv1_2_METHOD
     :param options: A bit field consisting of OpenSSL.SSL.OP_* values
     :param verify: A bit field consisting of OpenSSL.SSL.VERIFY_* values
     :param ca_path: Path to a directory of trusted CA certificates prepared using the c_rehash tool
