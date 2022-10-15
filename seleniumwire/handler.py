@@ -176,7 +176,7 @@ class InterceptRequestHandler:
         return response
 
     def _to_headers_obj(self, headers):
-        return Headers([(k.encode('utf-8'), v.encode('utf-8')) for k, v in headers.items()])
+        return Headers([(k.encode('utf-8'), str(v).encode('utf-8')) for k, v in headers.items()])
 
     def websocket_message(self, flow):
         if hasattr(flow.handshake_flow.request, 'id'):
