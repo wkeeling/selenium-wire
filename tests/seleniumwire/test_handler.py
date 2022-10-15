@@ -206,6 +206,7 @@ class InterceptRequestHandlerTest(TestCase):
             req.url = 'https://www.google.com/foo/bar?x=y'
             req.body = b'foobarbaz'
             req.headers['a'] = 'b'
+            req.headers['c'] = 1
 
         self.proxy.request_interceptor = intercept
 
@@ -213,7 +214,7 @@ class InterceptRequestHandlerTest(TestCase):
 
         self.assertEqual('POST', self.mock_flow.request.method)
         self.assertEqual('https://www.google.com/foo/bar?x=y', self.mock_flow.request.url)
-        self.assertEqual({'Accept-Encoding': 'identity', 'a': 'b'}, dict(self.mock_flow.request.headers))
+        self.assertEqual({'Accept-Encoding': 'identity', 'a': 'b', 'c': '1'}, dict(self.mock_flow.request.headers))
         self.assertEqual(b'foobarbaz', self.mock_flow.request.raw_content)
 
     def test_request_interceptor_creates_response(self):
@@ -248,6 +249,7 @@ class InterceptRequestHandlerTest(TestCase):
                 res.status_code = 201
                 res.reason = 'Created'
                 res.headers['a'] = 'b'
+                res.headers['c'] = 1
                 res.body = b'foobarbaz'
 
         self.proxy.response_interceptor = intercept
@@ -256,7 +258,7 @@ class InterceptRequestHandlerTest(TestCase):
 
         self.assertEqual(201, self.mock_flow.response.status_code)
         self.assertEqual('Created', self.mock_flow.response.reason)
-        self.assertEqual({'Content-Length': '6', 'a': 'b'}, dict(self.mock_flow.response.headers))
+        self.assertEqual({'Content-Length': '6', 'a': 'b', 'c': '1'}, dict(self.mock_flow.response.headers))
         self.assertEqual(b'foobarbaz', self.mock_flow.response.raw_content)
 
     def test_save_websocket_message(self):
