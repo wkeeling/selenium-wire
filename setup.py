@@ -43,7 +43,7 @@ setup(
         'pyOpenSSL>=19.1.0,<=22.0.0',
         'pyparsing>=2.4.2',
         'pysocks>=1.7.1',
-        'selenium>=3.4.0',
+        'selenium>=4.0.0',
         'wsproto>=0.14',
         'zstandard>=0.14.1',
     ],

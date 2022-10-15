@@ -188,7 +188,7 @@ Then just instantiate the webdriver as you would if you were using Selenium dire
     # Create the driver with no options (use defaults)
     driver = webdriver.Chrome()
 
-    # Create using browser specific options and Selenium Wire options
+    # Or create using browser specific options and/or seleniumwire_options options
     driver = webdriver.Chrome(
         options = webdriver.ChromeOptions(...),
         seleniumwire_options={...}
@@ -285,7 +285,7 @@ Request objects have the following attributes.
     A dictionary-like object of request headers. Headers are case-insensitive and duplicates are permitted. Asking for ``request.headers['user-agent']`` will return the value of the ``User-Agent`` header. If you wish to replace a header, make sure you delete the existing header first with ``del request.headers['header-name']``, otherwise you'll create a duplicate.
 
 ``host``
-    The request host, e.g. ``wwww.example.com``
+    The request host, e.g. ``www.example.com``
 
 ``method``
     The HTTP method, e.g. ``GET`` or ``POST`` etc.
@@ -303,7 +303,7 @@ Request objects have the following attributes.
    The `response object`_ associated with the request. This will be ``None`` if the request has no response.
 
 ``url``
-    The request URL, e.g. ``https://server/some/path/index.html?foo=bar&spam=eggs``
+    The request URL, e.g. ``https://www.example.com/some/path/index.html?foo=bar&spam=eggs``
 
 ``ws_messages``
     Where the request is a websocket handshake request (normally with a URL starting ``wss://``) then ``ws_messages`` will contain a list of any websocket messages sent and received. See `WebSocketMessage Objects`_.
