@@ -1,6 +1,13 @@
 History
 ~~~~~~~
 
+5.1.0 (2022-10-15)
+------------------
+
+* Drop support for Selenium<4.0.0.
+* Drop support for SSLv2 and SSLv3.
+* Fix bug where setting non-string header values would cause an interceptor to fail.
+
 5.0.0 (2022-09-26)
 ------------------
 
