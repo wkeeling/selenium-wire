@@ -40,7 +40,7 @@ setup(
         "hyperframe>=6.0; python_version>='3.6.0'",
         'kaitaistruct>=0.7',
         'pyasn1>=0.3.1',
-        'pyOpenSSL>=19.1.0,<=22.0.0',
+        'pyOpenSSL>=22.0.0',
         'pyparsing>=2.4.2',
         'pysocks>=1.7.1',
         'selenium>=3.4.0',
