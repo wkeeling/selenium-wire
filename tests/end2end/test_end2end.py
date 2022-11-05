@@ -352,6 +352,15 @@ def test_upstream_socks_proxy(driver_path, chrome_options, httpbin, socksproxy):
         assert 'This passed through a socks proxy' in driver.page_source
 
 
+def test_bypass_upstream_socks_proxy(driver_path, chrome_options, httpbin, socksproxy):
+    sw_options = {'proxy': {'https': f'{socksproxy}', 'no_proxy': 'localhost:8085'}}
+
+    with create_driver(driver_path, chrome_options, sw_options) as driver:
+        driver.get(f'{httpbin}/html')
+
+        assert 'This passed through a socks proxy' not in driver.page_source
+
+
 def test_bypass_upstream_proxy_when_target_http(driver_path, chrome_options, httpproxy):
     sw_options = {'proxy': {'https': f'{httpproxy}', 'no_proxy': 'localhost:9091'}}
 
