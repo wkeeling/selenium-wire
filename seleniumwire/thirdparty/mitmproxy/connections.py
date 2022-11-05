@@ -310,13 +310,17 @@ class SocksServerConnection(ServerConnection):
     def __init__(self, socks_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.socks_config = socks_config
+        self.use_socks = True
 
     def getaddrinfo(self, host, port, *args, **kwargs):
-        if self.socks_config.scheme == "socks5h":
+        if self.use_socks and self.socks_config.scheme == "socks5h":
             return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (host, port))]
         return super().getaddrinfo(host, port, *args, **kwargs)
 
     def makesocket(self, family, type, proto):
+        if not self.use_socks:
+            return super().makesocket(family, type, proto)
+
         try:
             socks_type = dict(
                 socks4=socks.PROXY_TYPE_SOCKS4,

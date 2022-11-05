@@ -267,9 +267,11 @@ class HttpLayer(base.Layer):
 
             f.request = request
 
-            if self.mode is HTTPMode.upstream and self.should_bypass_upstream_proxy(f.request):
+            if (self.mode is HTTPMode.upstream or "socks" in self.config.options.mode) and \
+                    self.matches_no_proxy(f.request):
                 self.set_server((f.request.host, f.request.port))
                 self.mode = HTTPMode.regular
+                self.server_conn.use_socks = False
 
             if request.first_line_format == "authority":
                 # The standards are silent on what we should do with a CONNECT
@@ -538,7 +540,7 @@ class HttpLayer(base.Layer):
             if tls:
                 raise exceptions.HttpProtocolException("Cannot change scheme in upstream mitmproxy mode.")
 
-    def should_bypass_upstream_proxy(self, request):
+    def matches_no_proxy(self, request):
         """Whether we should bypass any upstream proxy.
 
         This checks whether the request address is in the no_proxy list.
