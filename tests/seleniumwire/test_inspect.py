@@ -64,7 +64,15 @@ class InspectRequestsMixinTest(TestCase):
         request = self.driver.wait_for_request('/some/path')
 
         self.assertIsNotNone(request)
-        self.mock_backend.storage.find.assert_called_once_with('/some/path')
+        self.mock_backend.storage.find.assert_called_once_with('/some/path', check_response=False)
+
+    def test_wait_for_request_with_response(self):
+        self.mock_backend.storage.find.return_value = Mock()
+
+        request = self.driver.wait_for_request('/some/path', check_response=True)
+
+        self.assertIsNotNone(request)
+        self.mock_backend.storage.find.assert_called_once_with('/some/path', check_response=True)
 
     def test_wait_for_request_timeout(self):
         self.mock_backend.storage.find.return_value = None
