@@ -297,11 +297,10 @@ class RequestStorage:
         with self._lock:
             for i, indexed_request in enumerate(self._index):
                 if indexed_request.id == request_id:
-                    request_index = i
                     break
             else:
                 raise KeyError("Could not find any request with the specified id '{}'!".format(request_id))
-            del self._index[i]
+            del self._index[i]  # i will be index at break
 
         shutil.rmtree(self._get_request_dir(indexed_request.id), ignore_errors=True)
 
