@@ -82,6 +82,20 @@ class InspectRequestsMixin:
 
         raise TimeoutException('Timed out after {}s waiting for request matching {}'.format(timeout, pat))
 
+    def delete_request(self, request_id) -> None:
+        """Clear a specific request.
+
+        Args:
+            request_id: id of request to clear.
+        Raises:
+            KeyError if no request matching the specified id could be found
+        """
+        # I believe that changing the 'requests* property to return an
+        # instance supporting __delitem__ would provide a better API for
+        # users, but this may break some backwards compatibilty or lead
+        # to unexpected behavior.
+        self.backend.storage.clear_request_by_id(request_id)
+
     @property
     def har(self) -> str:
         """Get a HAR archive of HTTP transactions that have taken place.

@@ -283,6 +283,19 @@ class RequestStorageTest(TestCase):
         self.assertFalse(requests)
         self.assertFalse(glob.glob(os.path.join(self.base_dir, '.seleniumwire', 'storage-*', '*')))
 
+    def test_clear_request_by_id(self):
+        request_1 = self._create_request()
+        request_2 = self._create_request()
+        self.storage.save_request(request_1)
+        self.storage.save_request(request_2)
+
+        self.storage.clear_request_by_id(request_2.id)
+        requests = self.storage.load_requests()
+
+        self.assertEqual(len(requests), 1)  # only request_2 should have been cleared
+        self.assertEqual(requests[0].id, request_1.id)
+        self.assertEqual(len(glob.glob(os.path.join(self.base_dir, '.seleniumwire', 'storage-*', '*'))), 1)
+
     def test_get_home_dir(self):
         self.assertEqual(os.path.join(self.base_dir, '.seleniumwire'), self.storage.home_dir)
 
@@ -489,6 +502,18 @@ class InMemoryRequestStorageTest(TestCase):
         requests = self.storage.load_requests()
 
         self.assertFalse(requests)
+
+    def test_clear_request_by_id(self):
+        request_1 = self._create_request()
+        request_2 = self._create_request()
+        self.storage.save_request(request_1)
+        self.storage.save_request(request_2)
+
+        self.storage.clear_request_by_id(request_2.id)
+        requests = self.storage.load_requests()
+
+        self.assertEqual(len(requests), 1)  # only request_2 should have been cleared
+        self.assertEqual(requests[0].id, request_1.id)
 
     def test_cleanup(self):
         request_1 = self._create_request()

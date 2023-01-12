@@ -32,6 +32,11 @@ class InspectRequestsMixinTest(TestCase):
 
         self.mock_backend.storage.clear_requests.assert_called_once_with()
 
+    def test_delete_request(self):
+        self.driver.delete_request("foo")
+
+        self.mock_backend.storage.clear_request_by_id.assert_called_once_with("foo")
+
     def test_iter_requests(self):
         self.mock_backend.storage.iter_requests.return_value = iter([Mock()])
 

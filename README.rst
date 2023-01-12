@@ -263,6 +263,12 @@ To clear previously captured requests and HAR entries, use ``del``:
 
     del driver.requests
 
+Alternatively, you can discard a specific captured request using ``.delete_request()``:
+
+.. code:: python
+
+    driver.delete_request(request.id)
+
 .. [1] Selenium Wire ignores OPTIONS requests by default, as these are typically uninteresting and just add overhead. If you want to capture OPTIONS requests, you need to set the ``ignore_http_methods`` `option`_ to ``[]``.
 
 .. _`option`: #all-options
