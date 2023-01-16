@@ -184,7 +184,7 @@ def urlsafe_address(address):
     return addr, port
 
 
-def decode(data: bytes, encoding: str) -> bytes:
+def decode(data: bytes, encoding: str, errors='strict') -> bytes:
     """Attempt to decode data based on the supplied encoding.
 
     If decoding fails a ValueError is raised.
@@ -195,4 +195,4 @@ def decode(data: bytes, encoding: str) -> bytes:
     Returns: The decoded data.
     Raises: ValueError if the data could not be decoded.
     """
-    return decoder.decode(data, encoding)
+    return decoder.decode(data, encoding, errors)
