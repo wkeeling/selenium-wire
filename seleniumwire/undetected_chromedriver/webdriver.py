@@ -31,20 +31,20 @@ class Chrome(InspectRequestsMixin, DriverCommonMixin, uc.Chrome):
 
         config = self._setup_backend(seleniumwire_options)
 
+        try:
+            chrome_options = kwargs['options']
+        except KeyError:
+            chrome_options = ChromeOptions()
+
         if seleniumwire_options.get('auto_config', True):
             capabilities = kwargs.get('desired_capabilities')
             if capabilities is None:
                 capabilities = DesiredCapabilities.CHROME
             capabilities = capabilities.copy()
-
             capabilities.update(config)
 
-            kwargs['desired_capabilities'] = capabilities
-
-        try:
-            chrome_options = kwargs['options']
-        except KeyError:
-            chrome_options = ChromeOptions()
+            for key, value in capabilities.items():
+                chrome_options.set_capability(key, value)
 
         log.info('Using undetected_chromedriver')
 
