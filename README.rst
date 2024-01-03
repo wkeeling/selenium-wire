@@ -1,3 +1,5 @@
+**Selenium Wire is no longer being maintained. Thank you for your support and all your contributions.**
+
 Selenium Wire
 =============
 
