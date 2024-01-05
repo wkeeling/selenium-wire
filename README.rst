@@ -196,6 +196,25 @@ Then just instantiate the webdriver as you would if you were using Selenium dire
         seleniumwire_options={...}
     )
 
+By default, the webdriver will not be in headless mode. To run it in headless mode, you can do the following:
+
+.. code:: python
+
+        from seleniumwire.webdriver import Chrome
+        from selenium.webdriver.chrome.options import Options
+
+        # to run the browser in headless mode, add the following argument:
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+
+        # add your your selenium-wire Options here ex. proxy  
+        sw_options = {}
+       
+        
+        driver = Chrome(seleniumwire_options=sw_options, chrome_options=chrome_options)
+
+
+
 .. _`own options`: #all-options
 
 Note that for sub-packages of ``webdriver``, you should continue to import these directly from ``selenium``. For example, to import ``WebDriverWait``:
