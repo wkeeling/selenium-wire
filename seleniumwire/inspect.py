@@ -292,6 +292,8 @@ class InspectRequestsMixin:
 
     @request_interceptor.setter
     def request_interceptor(self, interceptor: callable):
+        if len(inspect.signature(interceptor).parameters) != 1:
+            raise RuntimeError('A request interceptor takes one parameters: the request')
         self.backend.request_interceptor = interceptor
 
     @request_interceptor.deleter
