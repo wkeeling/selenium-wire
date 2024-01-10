@@ -4,7 +4,7 @@ This code has been taken from the har_dump.py addon in the mitmproxy project.
 """
 import base64
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import List, Set
 
 import seleniumwire
@@ -139,7 +139,8 @@ def _format_cookies(cookie_list):
         # Expiration time needs to be formatted
         expire_ts = cookies.get_expiration_ts(attrs)
         if expire_ts is not None:
-            cookie_har["expires"] = datetime.fromtimestamp(expire_ts, timezone.utc).isoformat()
+            expire = datetime(1970, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=expire_ts)
+            cookie_har["expires"] = expire.isoformat()
 
         rv.append(cookie_har)
 
