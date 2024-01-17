@@ -286,6 +286,24 @@ class RequestStorage:
         for indexed_request in index:
             shutil.rmtree(self._get_request_dir(indexed_request.id), ignore_errors=True)
 
+    def clear_request_by_id(self, request_id: str) -> None:
+        """Clear a specific request.
+
+        Args:
+            request_id: id of request to clear.
+        Raises:
+            KeyError if no request matching the specified id could be found
+        """
+        with self._lock:
+            for i, indexed_request in enumerate(self._index):
+                if indexed_request.id == request_id:
+                    break
+            else:
+                raise KeyError("Could not find any request with the specified id '{}'!".format(request_id))
+            del self._index[i]  # i will be index at break
+
+        shutil.rmtree(self._get_request_dir(indexed_request.id), ignore_errors=True)
+
     def find(self, pat: str, check_response: bool = True) -> Optional[Request]:
         """Find the first request that matches the specified pattern.
 
@@ -497,6 +515,19 @@ class InMemoryRequestStorage:
         """Clear all previously saved requests."""
         with self._lock:
             self._requests.clear()
+
+    def clear_request_by_id(self, request_id: str) -> None:
+        """Clear a specific request.
+
+        Args:
+            request_id: id of request to clear.
+        Raises:
+            KeyError if no request matching the specified id could be found
+        """
+        with self._lock:
+            if request_id not in self._requests:
+                raise KeyError("Could not find any request with the specified id '{}'!".format(request_id))
+            del self._requests[request_id]
 
     def find(self, pat: str, check_response: bool = True) -> Optional[Request]:
         """Find the first request that matches the specified pattern.

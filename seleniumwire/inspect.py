@@ -48,7 +48,7 @@ class InspectRequestsMixin:
         """
         return self.backend.storage.load_last_request()
 
-    def wait_for_request(self, pat: str, timeout: Union[int, float] = 10) -> Request:
+    def wait_for_request(self, pat: str, timeout: Union[int, float] = 10, check_response: bool = False) -> Request:
         """Wait up to the timeout period for a request matching the specified
         pattern to be seen.
 
@@ -63,6 +63,7 @@ class InspectRequestsMixin:
         Args:
             pat: The pat of the request to look for. A regex can be supplied.
             timeout: The maximum time to wait in seconds. Default 10s.
+            check_response: If nonzero, only match requests with a response.
 
         Returns:
             The request.
@@ -73,7 +74,7 @@ class InspectRequestsMixin:
         start = time.time()
 
         while time.time() - start < timeout:
-            request = self.backend.storage.find(pat)
+            request = self.backend.storage.find(pat, check_response=check_response)
 
             if request is None:
                 time.sleep(1 / 5)
@@ -81,6 +82,20 @@ class InspectRequestsMixin:
                 return request
 
         raise TimeoutException('Timed out after {}s waiting for request matching {}'.format(timeout, pat))
+
+    def delete_request(self, request_id) -> None:
+        """Clear a specific request.
+
+        Args:
+            request_id: id of request to clear.
+        Raises:
+            KeyError if no request matching the specified id could be found
+        """
+        # I believe that changing the 'requests* property to return an
+        # instance supporting __delitem__ would provide a better API for
+        # users, but this may break some backwards compatibilty or lead
+        # to unexpected behavior.
+        self.backend.storage.clear_request_by_id(request_id)
 
     @property
     def har(self) -> str:

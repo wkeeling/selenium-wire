@@ -32,6 +32,11 @@ class InspectRequestsMixinTest(TestCase):
 
         self.mock_backend.storage.clear_requests.assert_called_once_with()
 
+    def test_delete_request(self):
+        self.driver.delete_request("foo")
+
+        self.mock_backend.storage.clear_request_by_id.assert_called_once_with("foo")
+
     def test_iter_requests(self):
         self.mock_backend.storage.iter_requests.return_value = iter([Mock()])
 
@@ -59,7 +64,15 @@ class InspectRequestsMixinTest(TestCase):
         request = self.driver.wait_for_request('/some/path')
 
         self.assertIsNotNone(request)
-        self.mock_backend.storage.find.assert_called_once_with('/some/path')
+        self.mock_backend.storage.find.assert_called_once_with('/some/path', check_response=False)
+
+    def test_wait_for_request_with_response(self):
+        self.mock_backend.storage.find.return_value = Mock()
+
+        request = self.driver.wait_for_request('/some/path', check_response=True)
+
+        self.assertIsNotNone(request)
+        self.mock_backend.storage.find.assert_called_once_with('/some/path', check_response=True)
 
     def test_wait_for_request_timeout(self):
         self.mock_backend.storage.find.return_value = None

@@ -232,8 +232,8 @@ Selenium Wire captures all HTTP/HTTPS traffic made by the browser [1]_. The foll
 ``driver.last_request``
     Convenience attribute for retrieving the most recently captured request. This is more efficient than using ``driver.requests[-1]``.
 
-``driver.wait_for_request(pat, timeout=10)``
-    This method will wait until it sees a request matching a pattern. The ``pat`` attribute will be matched within the request URL. ``pat`` can be a simple substring or a regular expression. Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action and it will return the first request it finds. Also note that since ``pat`` can be a regular expression, you must escape special characters such as question marks with a slash. A ``TimeoutException`` is raised if no match is found within the timeout period.
+``driver.wait_for_request(pat, timeout=10, check_response=False)``
+    This method will wait until it sees a request matching a pattern. The ``pat`` attribute will be matched within the request URL. ``pat`` can be a simple substring or a regular expression. Note that ``driver.wait_for_request()`` doesn't *make* a request, it just *waits* for a previous request made by some other action and it will return the first request it finds. Also note that since ``pat`` can be a regular expression, you must escape special characters such as question marks with a slash. The ``check_response`` parameter controlls whether this method should wait until a request has received a response. A ``TimeoutException`` is raised if no match is found within the timeout period.
 
     For example, to wait for an AJAX request to return after a button is clicked:
 
@@ -264,6 +264,12 @@ To clear previously captured requests and HAR entries, use ``del``:
 .. code:: python
 
     del driver.requests
+
+Alternatively, you can discard a specific captured request using ``.delete_request()``:
+
+.. code:: python
+
+    driver.delete_request(request.id)
 
 .. [1] Selenium Wire ignores OPTIONS requests by default, as these are typically uninteresting and just add overhead. If you want to capture OPTIONS requests, you need to set the ``ignore_http_methods`` `option`_ to ``[]``.
 
